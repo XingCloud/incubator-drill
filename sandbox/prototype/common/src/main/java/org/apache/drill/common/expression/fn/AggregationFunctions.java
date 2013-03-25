@@ -36,13 +36,4 @@ public class AggregationFunctions implements CallProvider {
     };
   }
 
-  //wcl
-  public static FunctionDefinition getFunctionDefintion(String name){
-
-    Map<String, Integer> funtionMap = new HashMap<String,Integer>();
-    funtionMap.put("count",0);
-    funtionMap.put("sum",1);
-
-    return new AggregationFunctions().getFunctionDefintions()[funtionMap.get(name)];
-  }
 }

@@ -41,7 +41,6 @@ public class ReferenceInterpreter {
   private LogicalPlan plan;
   private ROPConverter converter;
   private IteratorRegistry registry;
-  private List<List<RecordPointer>> records = new ArrayList<>(); //wcl
   
   public ReferenceInterpreter(LogicalPlan p, IteratorRegistry r, EvaluatorFactory builder, RSERegistry rses){
     this.plan = p;
@@ -63,7 +62,6 @@ public class ReferenceInterpreter {
     
     for(SinkROP r : sinks){
       outcomes.add(r.run(new BasicStatusHandle()));
-        records.add(r.getRecords());//wcl
     }
     
     return outcomes;
@@ -71,10 +69,6 @@ public class ReferenceInterpreter {
   
   public void cleanup(){
     
-  }
-  //wcl
-  public List<List<RecordPointer>> getRecords(){
-    return records;
   }
   
   public static void main(String[] args) throws Exception{

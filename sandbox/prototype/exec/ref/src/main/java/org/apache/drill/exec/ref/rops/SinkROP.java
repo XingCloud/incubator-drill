@@ -26,7 +26,6 @@ public interface SinkROP {
   
   public RunOutcome run(StatusHandle handle);
 
-    public List<RecordPointer>  getRecords();
   public interface StatusHandle{
     public void progress(long bytes, long records);
     public boolean okToContinue();

@@ -36,7 +36,6 @@ public abstract class BaseSinkROP<T extends SinkOperator> extends SingleInputROP
   
   protected RecordIterator iter;
   protected RecordPointer record;
-    public List<RecordPointer> records = new ArrayList<>();//wcl
   
   public BaseSinkROP(T config) {
     super(config);
@@ -80,7 +79,6 @@ public abstract class BaseSinkROP<T extends SinkOperator> extends SingleInputROP
             break;
           } else {
             pos = sinkRecord(record);
-            records.add(record.copy());
           }
         }
         handle.progress(pos, recordCount);
@@ -108,11 +106,6 @@ public abstract class BaseSinkROP<T extends SinkOperator> extends SingleInputROP
     return new RunOutcome(outcome, pos, recordCount, exception);
 
   }
-
-    //wcl
-    public List<RecordPointer> getRecords(){
-        return records;
-    }
 
   /**
    * 
