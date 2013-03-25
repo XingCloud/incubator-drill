@@ -72,7 +72,6 @@ public class SegmentROP extends AbstractBlockingOperator<Segment> {
         previousKeys = e.getKey();
         segmentKey++;
       }
-      r.addField(new FieldReference("segmentvalue"), new ScalarValues.StringScalar(e.getKey().toString()));//wcl
       r.addField(outputSegmentKey, new ScalarValues.LongScalar(segmentKey));
       return NextOutcome.INCREMENTED_SCHEMA_CHANGED;
     }

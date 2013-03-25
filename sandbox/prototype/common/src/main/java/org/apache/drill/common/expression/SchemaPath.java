@@ -134,4 +134,7 @@ public class SchemaPath extends LogicalExpressionBase{
     return "SchemaPath [rootSegment=" + rootSegment + "]";
   }
 
+
+
+
 }

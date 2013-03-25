@@ -26,9 +26,6 @@ import org.apache.drill.common.expression.types.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class BooleanFunctions implements CallProvider {
   static final Logger logger = LoggerFactory.getLogger(BooleanFunctions.class);
 
