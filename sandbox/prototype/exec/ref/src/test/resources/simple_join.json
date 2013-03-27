@@ -50,7 +50,7 @@
          op: "join",
          left: 1,
          right: 2,
-         type: "inner",
+         type: "outer",
          conditions: [
             {
                relationship: "==",
