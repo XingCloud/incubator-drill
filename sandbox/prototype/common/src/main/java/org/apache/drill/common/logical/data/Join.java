@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -33,7 +33,7 @@ public class Join extends LogicalOperatorBase {
 
   public static enum JoinType{
     LEFT, INNER, OUTER;
-
+    
     public static JoinType resolve(String val){
       for(JoinType jt : JoinType.values()){
         if(jt.name().equalsIgnoreCase(val)) return jt;
@@ -41,7 +41,7 @@ public class Join extends LogicalOperatorBase {
       throw new ExpressionParsingException(String.format("Unable to determine join type for value '%s'.", val));
     }
   }
-
+  
   @JsonCreator
   public Join(@JsonProperty("left") LogicalOperator left, @JsonProperty("right") LogicalOperator right, @JsonProperty("conditions") JoinCondition[] conditions, @JsonProperty("type") String type) {
     super();
@@ -64,12 +64,12 @@ public class Join extends LogicalOperatorBase {
 
   public void setLeft(LogicalOperator left) {
     this.left = left;
-    left.registerAsSubscriber(this);//wcl
+    left.registerAsSubscriber(this);
   }
 
   public void setRight(LogicalOperator right) {
     this.right = right;
-    right.registerAsSubscriber(this);//wcl
+    right.registerAsSubscriber(this);
   }
 
   public JoinCondition[] getConditions() {
@@ -80,7 +80,7 @@ public class Join extends LogicalOperatorBase {
   public JoinType getJointType(){
     return type;
   }
-
+  
   public String getType(){
     return type.name();
   }

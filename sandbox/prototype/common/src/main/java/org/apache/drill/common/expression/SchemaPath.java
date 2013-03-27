@@ -133,8 +133,8 @@ public class SchemaPath extends LogicalExpressionBase{
   public String toString() {
     return "SchemaPath [rootSegment=" + rootSegment + "]";
   }
-
-
-
+  
+  
+  
 
 }

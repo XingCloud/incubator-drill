@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,14 +34,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class LogicalOperatorBase implements LogicalOperator{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LogicalOperatorBase.class);
-
+  
 	private List<LogicalOperator> children = new ArrayList<LogicalOperator>();
 	private String memo;
-
+	
 	public final int hashCode(){
 	  return super.hashCode();
 	}
-
+	
 	@Override
 	public void setupAndValidate(List<LogicalOperator> operators, Collection<ValidationError> errors) {
 	  // TODO: remove this and implement individually.
@@ -55,14 +55,14 @@ public abstract class LogicalOperatorBase implements LogicalOperator{
 
   @Override
   public void clearAllSubscribers() {
-      children.clear();
+    children.clear();
   }
 
   @Override
   public List<LogicalOperator> getAllSubscribers() {
-      return children;
+    return children;
   }
-
+  
   @Override
   public void accept(OpVisitor visitor) {
     if(visitor.enter(this)){
@@ -83,7 +83,7 @@ public abstract class LogicalOperatorBase implements LogicalOperator{
     return this.getClass().getSimpleName() + " [memo=" + memo + "]";
   }
 
-  @JsonInclude(Include.NON_EMPTY)
+  @JsonInclude(Include.NON_EMPTY) 
   @JsonProperty("memo")
   public String getMemo(){
     return memo;
@@ -92,14 +92,14 @@ public abstract class LogicalOperatorBase implements LogicalOperator{
   public void setMemo(String memo) {
     this.memo = memo;
   }
-
+ 
   public synchronized static Class<?>[] getSubTypes(DrillConfig config){
     Class<?>[] ops = PathScanner.scanForImplementationsArr(LogicalOperator.class, config.getStringList(CommonConstants.LOGICAL_OPERATOR_SCAN_PACKAGES));
     logger.debug("Adding Logical Operator sub types: {}", ((Object) ops) );
     return ops;
   }
-
-
-
+  
+  
+  
 
 }

@@ -28,7 +28,6 @@ import org.apache.drill.exec.ref.values.ScalarValues.BooleanScalar;
 public class ComparisonEvaluators {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ComparisonEvaluators.class);
 
-  //wcl
   @FunctionEvaluator("and")
   public static class And extends BaseBasicEvaluator{
     private final BasicEvaluator left;
@@ -122,7 +121,7 @@ public class ComparisonEvaluators {
     }
     
   }
-
+  
   @FunctionEvaluator("greater than or equal to")
   public static class GreaterOrEqualTo extends ComparisonEvaluator{
 

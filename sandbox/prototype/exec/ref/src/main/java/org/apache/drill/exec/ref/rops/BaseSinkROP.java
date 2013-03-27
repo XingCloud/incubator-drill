@@ -18,8 +18,6 @@
 package org.apache.drill.exec.ref.rops;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import org.apache.drill.common.logical.data.SinkOperator;
@@ -64,47 +62,43 @@ public abstract class BaseSinkROP<T extends SinkOperator> extends SingleInputROP
   @Override
   public RunOutcome run(StatusHandle handle) {
     Throwable exception = null;
-    final int runsize = 100000;//wcl
+    final int runsize = 100000;
     int recordCount = 0;
     OutcomeType outcome = OutcomeType.FAILED;
-    long pos = -1;
-    try {
-      long xx = 0;
-      while (true) {
-        boolean more = true;
-        for (; recordCount < runsize; recordCount++) {
-          NextOutcome r = iter.next();
-          if (r == NextOutcome.NONE_LEFT) {
-            more = false;
-            break;
-          } else {
-            pos = sinkRecord(record);
-          }
-        }
-        handle.progress(pos, recordCount);
-        if (!handle.okToContinue()) {
-          logger.debug("Told to cancel, breaking run.");
-          System.out.println("Told to cancel, breaking run.");
-          outcome = OutcomeType.CANCELED;
+    long pos = -1; 
+    try{
+    while(true){
+      boolean more = true;
+      for(;recordCount < runsize; recordCount++){
+        NextOutcome r = iter.next();
+        if(r == NextOutcome.NONE_LEFT){
+          more = false;
           break;
-        } else if (!more) {
-          outcome = OutcomeType.SUCCESS;
-          logger.debug("Breaking because no more records were found.");
-          System.out.println("Breaking because no more records were found.");
-          break;
-        } else {
-          logger.debug("No problems, doing next progress iteration.");
-          System.out.println("No problems, doing next progress iteration.");
+        }else{
+          pos = sinkRecord(record);
         }
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.out.println(e.getMessage());
-      exception = e;
+      handle.progress(pos, recordCount);
+      if(!handle.okToContinue()){
+        logger.debug("Told to cancel, breaking run.");
+        outcome = OutcomeType.CANCELED;
+        break;
+      }else if(!more){
+        outcome = OutcomeType.SUCCESS;
+        logger.debug("Breaking because no more records were found.");
+        break;
+      }else{
+        logger.debug("No problems, doing next progress iteration.");
+      }
+      
     }
+    }catch(Exception e){
+      exception = e ;
+    }
+    
     cleanup(outcome);
     return new RunOutcome(outcome, pos, recordCount, exception);
-
+    
   }
 
   /**

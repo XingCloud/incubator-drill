@@ -54,7 +54,7 @@ public class AdjacencyList<N extends Node<?>> {
   
   public void printEdges(){
     for (Edge<N> e : adjacencies.values()) {
-      System.out.println(e.from.index  + "(" + e.from.toString() + ") -> " + e.to.index + "(" + e.to.toString() + ")");
+      System.out.println(e.from.index + " -> " + e.to.index);
     }
   }
   
