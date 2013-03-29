@@ -94,6 +94,11 @@ public abstract class LogicalOperatorBase implements LogicalOperator{
     logger.debug("Adding Logical Operator sub types: {}", ((Object) ops) );
     return ops;
   }
+
+    @Override
+    public  List<LogicalOperator> getAllSubscribers() {
+        return new ArrayList<LogicalOperator>(this.children);
+    }
   
   
   

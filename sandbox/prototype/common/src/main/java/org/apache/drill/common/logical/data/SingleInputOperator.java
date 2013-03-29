@@ -40,7 +40,8 @@ public abstract class SingleInputOperator extends LogicalOperatorBase{
       this.input.unregisterSubscriber(this);
     }
     this.input = input;
-    input.registerAsSubscriber(this);
+    if (input != null)
+        input.registerAsSubscriber(this);
   }
 
   

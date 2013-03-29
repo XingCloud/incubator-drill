@@ -39,7 +39,6 @@ public interface LogicalOperator extends Iterable<LogicalOperator>{
   public void registerAsSubscriber(LogicalOperator operator);
   public void unregisterSubscriber(LogicalOperator operator);
 	public void setupAndValidate(List<LogicalOperator> operators, Collection<ValidationError> errors);
-	
-	
+	public List<LogicalOperator> getAllSubscribers();
 
 }
