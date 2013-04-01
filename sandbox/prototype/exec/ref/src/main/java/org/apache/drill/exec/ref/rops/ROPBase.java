@@ -22,7 +22,7 @@ import org.apache.drill.exec.ref.*;
 import org.apache.drill.exec.ref.eval.EvaluatorFactory;
 import org.apache.drill.exec.ref.exceptions.SetupException;
 
-public abstract class ROPBase<T extends LogicalOperator> implements ROP{
+public abstract class ROPBase<T extends LogicalOperator> extends ReentrantROPBase implements ROP, ReentrantROP{
 
   private boolean alreadyUsed = false;
   protected final T config;
