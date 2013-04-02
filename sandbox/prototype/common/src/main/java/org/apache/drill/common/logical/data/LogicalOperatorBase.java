@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.drill.common.config.CommonConstants;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.visitors.OpVisitor;
@@ -95,10 +96,11 @@ public abstract class LogicalOperatorBase implements LogicalOperator{
     return ops;
   }
 
-    @Override
-    public  List<LogicalOperator> getAllSubscribers() {
-        return new ArrayList<LogicalOperator>(this.children);
-    }
+  @JsonIgnore
+  @Override
+  public List<LogicalOperator> getAllSubscribers() {
+    return new ArrayList<LogicalOperator>(this.children);
+  }
   
   
   
