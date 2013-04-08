@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.drill.common.logical.data.LogicalOperator;
 import org.apache.drill.exec.ref.exceptions.SetupException;
 import org.apache.drill.exec.ref.rops.ROP;
+import org.apache.drill.exec.ref.rops.ReentrantROP;
 import org.apache.drill.exec.ref.rops.SinkROP;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -57,7 +58,7 @@ public class IteratorRegistry {
     List<ROP> refOps = map.get(o);
     List<RecordIterator> iterators = new ArrayList<RecordIterator>(refOps.size());
     for(ROP r : refOps){
-      RecordIterator iterator = r.getOutput();
+      RecordIterator iterator = (r instanceof ReentrantROP)?((ReentrantROP)r).pickOutput():r.getOutput();
       if(iterator == null) throw new SetupException(String.format("The provided iterator for the reference operator %s is null.", r));
       iterators.add(iterator);
     }

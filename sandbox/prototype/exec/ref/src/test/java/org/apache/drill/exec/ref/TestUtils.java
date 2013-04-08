@@ -15,6 +15,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,10 +44,10 @@ public class TestUtils {
   /**
    *
    * @param resourcePath path for json plan file
-   * @param recordCount expected record count
+   * @param outcomeCount expected outcome count
    * @throws Exception
    */
-  public static void assertProduceCount(String resourcePath, int recordCount) throws Exception {
+  public static void assertProduceCount(String resourcePath, int outcomeCount) throws Exception {
     DrillConfig config = DrillConfig.create();
     final BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>(100);
     config.setSinkQueues(0, queue);
@@ -55,7 +56,7 @@ public class TestUtils {
     ReferenceInterpreter i = new ReferenceInterpreter(plan, ir, new BasicEvaluatorFactory(ir), new RSERegistry(config));
     i.setup();
     Collection<RunOutcome> outcomes = i.run();
-    assertEquals(outcomes.iterator().next().records, recordCount);
+    assertEquals(queue.size(), outcomeCount);
   }
 
   /**
