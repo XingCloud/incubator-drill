@@ -17,18 +17,9 @@
  ******************************************************************************/
 package org.apache.drill.exec.ref.rops;
 
-import org.apache.drill.exec.ref.TestUtils;
-import org.junit.Test;
+import org.apache.drill.exec.ref.RecordIterator;
 
-public class JoinROPTest {
-
-  @Test
-  public void testJoin() throws Exception{
-    TestUtils.assertProduceCount("/join/simple_join.json", 6);
-  }
-  
-  @Test
-  public void testJoin2() throws Exception{
-    TestUtils.assertProduceCount("/join/dag_join0.json", 12);
-  }
+public interface ReentrantROP {
+  RecordIterator pickOutput();
+  void discardOutput(RecordIterator iterator);  
 }
