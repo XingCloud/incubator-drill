@@ -74,6 +74,7 @@ class ROPConverter {
       if (c instanceof SetupException) {
         throw (SetupException) c;
       } else {
+        e.printStackTrace();
         throw new RuntimeException("Failure while trying to run convertSpecific conversion of operator type "
             + o.getClass().getSimpleName(), c);
       }

@@ -63,6 +63,8 @@ QMark    : '?';
 Colon    : ':';
 SingleQuote: '\'';
 
+LIKE : 'like';
+
 Bool
   :  'true' 
   |  'false'

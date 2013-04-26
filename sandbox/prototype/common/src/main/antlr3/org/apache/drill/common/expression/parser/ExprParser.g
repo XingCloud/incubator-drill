@@ -150,7 +150,7 @@ equExpr returns [LogicalExpression e]
   ;
 
 relExpr returns [LogicalExpression e]
-  :  left=addExpr {$e = $left.e; } (cmpr = (GTEquals | LTEquals | GT | LT) right=addExpr {$e = registry.createExpression($cmpr.text, $left.e, $right.e); } )? 
+  :  left=addExpr {$e = $left.e; } (cmpr = (GTEquals | LTEquals | GT | LT | LIKE) right=addExpr {$e = registry.createExpression($cmpr.text, $left.e, $right.e); } )? 
   ;
 
 addExpr returns [LogicalExpression e]

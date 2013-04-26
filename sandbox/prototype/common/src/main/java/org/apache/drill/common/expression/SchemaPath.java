@@ -122,9 +122,9 @@ public class SchemaPath extends LogicalExpressionBase{
 	
   @Override
   public void addToString(StringBuilder sb) {
-    sb.append("'");
+    //sb.append("'");
     sb.append(originalPath);
-    sb.append("'");
+    //sb.append("'");
   }
 
 
