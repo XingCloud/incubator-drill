@@ -1,5 +1,7 @@
 package org.apache.drill.exec.record;
 
+import org.apache.drill.exec.proto.SchemaDefProtos;
+
 /**
  * Created with IntelliJ IDEA.
  * User: witwolf
@@ -9,4 +11,5 @@ package org.apache.drill.exec.record;
 public interface DrillValue {
     public abstract boolean isVector();
     public abstract DrillValue compareTo(DrillValue other);
+    public abstract SchemaDefProtos.MinorType getMinorType();
 }

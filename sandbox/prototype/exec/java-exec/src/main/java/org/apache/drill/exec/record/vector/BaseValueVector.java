@@ -22,6 +22,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.Random;
 
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.proto.UserBitShared.FieldMetadata;
 import org.apache.drill.exec.record.DeadBuf;
 import org.apache.drill.exec.record.MaterializedField;
@@ -170,5 +171,10 @@ public abstract class BaseValueVector<T extends BaseValueVector<T>> implements V
     public void setField(MaterializedField field) {
         this.field = field;
 
+    }
+
+    @Override
+    public SchemaDefProtos.MinorType getMinorType() {
+        return field.getType().getMinorType();
     }
 }

@@ -28,7 +28,7 @@
             @id: 2,
             child: 1,
             pop: "filter",
-            expr: "((blue > 0) && (green < 0))",
+            expr: "((blue > 1 + 2) && (green < 0))",
             selectivity: 0.8
         },
         {
