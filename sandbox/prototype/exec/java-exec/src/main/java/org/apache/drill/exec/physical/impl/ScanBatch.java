@@ -145,8 +145,10 @@ public class ScanBatch extends BaseRecordBatch {
         return record;
     }
 
+
     @Override
     public void setupEvals() {
 
     }
 }
+
