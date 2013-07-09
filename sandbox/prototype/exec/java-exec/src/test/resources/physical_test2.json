@@ -15,18 +15,34 @@
             	{records: 100, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
             	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "INT", mode: "REQUIRED"}
+            	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]},
             	{records: 100, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
             	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "INT", mode: "REQUIRED"}
+            	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]}
             ]
         },
-        {
+       {
             @id: 2,
             child: 1,
+            pop: "filter",
+            expr: "((blue > 0) && (green < 0))",
+            selectivity: 0.8
+        },
+        {
+            @id: 3,
+            child: 2,
+            pop: "project",
+            exprs: [
+                {ref: "blue",expr: "blue"} ,
+                {ref: "red",expr: "red"}
+                ]
+        },
+        {
+            @id: 4,
+            child: 3,
             pop: "screen"
         }
     ]    

@@ -67,6 +67,8 @@ public interface RecordBatch {
    */
   public void kill();
 
+  public abstract ValueVector getValueVector(int fieldId) throws  InvalidValueAccessor;
+
 
   public abstract <T extends ValueVector<T>> T getValueVector(int fieldId, Class<T> clazz) throws InvalidValueAccessor;
 
@@ -88,5 +90,8 @@ public interface RecordBatch {
    * @return
    */
   public WritableBatch getWritableBatch();
+
+
+  public RecordPointer getRecordPointer();
 
 }

@@ -1,6 +1,7 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 
 public class NullableBit extends NullableValueVector<NullableBit, Bit>{
@@ -16,5 +17,15 @@ public class NullableBit extends NullableValueVector<NullableBit, Bit>{
     public void set(int index) {
         setNotNull(index);
         value.set(index);
+    }
+
+    @Override
+    public DrillValue compareTo(DrillValue other) {
+        return null;
+    }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
     }
 }

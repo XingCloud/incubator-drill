@@ -22,13 +22,7 @@ import java.util.Iterator;
 import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.proto.UserBitShared.RecordBatchDef;
-import org.apache.drill.exec.record.BatchSchema;
-import org.apache.drill.exec.record.InvalidValueAccessor;
-import org.apache.drill.exec.record.RawFragmentBatch;
-import org.apache.drill.exec.record.RawFragmentBatchProvider;
-import org.apache.drill.exec.record.RecordBatch;
-import org.apache.drill.exec.record.RecordBatchLoader;
-import org.apache.drill.exec.record.WritableBatch;
+import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.RecordBatch.IterOutcome;
 import org.apache.drill.exec.record.vector.ValueVector;
 
@@ -98,6 +92,14 @@ public class WireRecordBatch implements RecordBatch{
   public WritableBatch getWritableBatch() {
     return batchLoader.getWritableBatch();
   }
-  
-  
+
+    @Override
+    public RecordPointer getRecordPointer() {
+        return null;
+    }
+
+    @Override
+    public ValueVector getValueVector(int fieldId) throws InvalidValueAccessor {
+        return null;
+    }
 }

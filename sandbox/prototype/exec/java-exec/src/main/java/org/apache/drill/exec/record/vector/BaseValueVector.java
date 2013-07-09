@@ -32,7 +32,7 @@ public abstract class BaseValueVector<T extends BaseValueVector<T>> implements V
   protected final BufferAllocator allocator;
   protected ByteBuf data = DeadBuf.DEAD_BUFFER;
   protected int maxValueCount = 0;
-  protected final MaterializedField field;
+  protected  MaterializedField field;
   private int recordCount;
   
   public BaseValueVector(MaterializedField field, BufferAllocator allocator) {
@@ -145,13 +145,25 @@ public abstract class BaseValueVector<T extends BaseValueVector<T>> implements V
   @Override
   public void randomizeData() {
     if(this.data != DeadBuf.DEAD_BUFFER){
-      Random r = new Random();
+      Random r = new Random(System.currentTimeMillis());
+
       for(int i =0; i < data.capacity()-8; i+=8){
         data.setLong(i, r.nextLong());
       }
     }
     
   }
-  
-  
+
+
+    @Override
+    public boolean isVector() {
+        return true;
+    }
+
+
+    @Override
+    public void setField(MaterializedField field) {
+        this.field = field;
+
+    }
 }

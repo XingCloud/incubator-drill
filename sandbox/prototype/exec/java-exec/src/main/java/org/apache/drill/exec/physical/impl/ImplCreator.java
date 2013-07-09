@@ -17,6 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,11 +27,7 @@ import org.apache.drill.exec.physical.base.AbstractPhysicalVisitor;
 import org.apache.drill.exec.physical.base.FragmentRoot;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.Scan;
-import org.apache.drill.exec.physical.config.MockScanBatchCreator;
-import org.apache.drill.exec.physical.config.MockScanPOP;
-import org.apache.drill.exec.physical.config.RandomReceiver;
-import org.apache.drill.exec.physical.config.Screen;
-import org.apache.drill.exec.physical.config.SingleSender;
+import org.apache.drill.exec.physical.config.*;
 import org.apache.drill.exec.record.RecordBatch;
 
 import com.google.common.base.Preconditions;
@@ -43,6 +40,9 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   private ScreenCreator sc = new ScreenCreator();
   private RandomReceiverCreator rrc = new RandomReceiverCreator();
   private SingleSenderCreator ssc = new SingleSenderCreator();
+  private FilterBatchCreator fc = new FilterBatchCreator();
+  private ProjectBatchCreator pc = new ProjectBatchCreator();
+
   private RootExec root = null;
   
   private ImplCreator(){}
@@ -56,7 +56,7 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   public RecordBatch visitScan(Scan<?> scan, FragmentContext context) throws ExecutionSetupException {
     Preconditions.checkNotNull(scan);
     Preconditions.checkNotNull(context);
-    
+
     if(scan instanceof MockScanPOP){
       return msc.getBatch(context, (MockScanPOP) scan, Collections.<RecordBatch> emptyList());
     }else{
@@ -72,9 +72,17 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     return null;
   }
 
-  
-  
-  @Override
+    @Override
+    public RecordBatch visitFilter(Filter filter, FragmentContext value) throws ExecutionSetupException {
+        return fc.getBatch(value,filter, Arrays.asList(filter.getChild().accept(this,value))) ;
+    }
+
+    @Override
+    public RecordBatch visitProject(Project project, FragmentContext value) throws ExecutionSetupException {
+        return pc.getBatch(value,project,Arrays.asList(project.getChild().accept(this,value)));
+    }
+
+    @Override
   public RecordBatch visitSingleSender(SingleSender op, FragmentContext context) throws ExecutionSetupException {
     root = ssc.getRoot(context, op, getChildren(op, context));
     return null;

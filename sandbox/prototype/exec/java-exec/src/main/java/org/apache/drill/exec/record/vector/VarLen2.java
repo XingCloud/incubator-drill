@@ -18,6 +18,7 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 
 public class VarLen2 extends VariableVector<VarLen2, Fixed2>{
@@ -32,5 +33,13 @@ public class VarLen2 extends VariableVector<VarLen2, Fixed2>{
     return new Fixed2(null, allocator);
   }
 
+    @Override
+    public DrillValue compareTo(DrillValue other) {
+        return null;
+    }
 
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
 }

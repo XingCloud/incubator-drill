@@ -18,6 +18,7 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 
 public class Fixed12 extends AbstractFixedValueVector<Fixed12>{
@@ -32,4 +33,14 @@ public class Fixed12 extends AbstractFixedValueVector<Fixed12>{
   public Object getObject(int index) {
     return null;
   }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
+
+    @Override
+    public DrillValue compareTo(DrillValue other) {
+        return null;
+    }
 }

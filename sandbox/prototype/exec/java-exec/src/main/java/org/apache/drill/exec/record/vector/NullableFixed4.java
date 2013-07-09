@@ -18,6 +18,7 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 
 public final class NullableFixed4 extends NullableValueVector<NullableFixed4, Fixed4>{
@@ -41,4 +42,14 @@ public final class NullableFixed4 extends NullableValueVector<NullableFixed4, Fi
       setNotNull(index);
       value.setFloat4(index, val);
   }
+
+    @Override
+    public DrillValue compareTo(DrillValue other) {
+        return null;
+    }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
 }
