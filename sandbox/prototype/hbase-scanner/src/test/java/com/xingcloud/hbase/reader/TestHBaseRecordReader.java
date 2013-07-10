@@ -29,7 +29,7 @@ public class TestHBaseRecordReader {
         byte[] srk= Bytes.toBytes("20121106heartbeat.xFFxC7x00'x07xA2");
         byte[] enk=Bytes.toBytes("20121201visit");
         HBaseScanPOP.HBaseScanEntry entry=new HBaseScanPOP.HBaseScanEntry(100,types,srk,enk,"sof-dsk_deu");
-        HBaseRecordReader reader=new HBaseRecordReader(entry);
+        HBaseRecordReader reader=new HBaseRecordReader(null,entry);
         List<RecordReader> readerList=new ArrayList<RecordReader>();
         readerList.add(reader);
         Iterator<RecordReader> iter=readerList.iterator();

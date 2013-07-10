@@ -47,7 +47,8 @@ public class HBaseRecordReader implements RecordReader {
     private int BATCHRECORDCOUNT=1024;
     private Filter filter;
 
-    public HBaseRecordReader(HBaseScanPOP.HBaseScanEntry config){
+    public HBaseRecordReader(FragmentContext context,HBaseScanPOP.HBaseScanEntry config){
+        this.context=context;
         this.config = config;
         this.StartKey=config.getSrk();
         this.EndKey=config.getEnk();
@@ -62,7 +63,8 @@ public class HBaseRecordReader implements RecordReader {
             //LOG.error("Init HBaseRecordReader error! MSG: " + e.getMessage());
         }
     }
-    public HBaseRecordReader(HBaseScanPOP.HBaseScanEntry config, Filter filter){
+    public HBaseRecordReader(FragmentContext context,HBaseScanPOP.HBaseScanEntry config, Filter filter){
+        this.context=context;
         this.config = config;
         this.StartKey=config.getSrk();
         this.EndKey=config.getEnk();
@@ -78,6 +80,39 @@ public class HBaseRecordReader implements RecordReader {
         }
         this.filter=filter;
     }
+    public HBaseRecordReader(FragmentContext context,String tableName,String StartDay,String EndDay,
+                             String l0,String l1,String l2,String l3,String l4,Filter filter){
+        this.context=context;
+        this.filter=filter;
+        try{
+        for(String day=StartDay;compareDate(day,EndDay)<0;day=calDay(day,1)){
+            //String event=getEventStr(l0,l1,l2,l3,l4);
+            LOG.info("Begin to init scanner for Start row key: " + StartKey
+                     + " End row key: " + EndKey + " Table name: " + tableName);
+            String srk=day+l0;
+            String enk=getNextEvent(srk);
+            TableScanner scanner=new TableScanner(Bytes.toBytes(srk),Bytes.toBytes(enk),tableName,false,false);
+            scanners.add(scanner);
+        }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    private String getEventStr(String l0, String l1, String l2, String l3, String l4) {
+        String event="";
+        if(l0!=null)event+=l0+".";
+        if(l1!=null)event+=l1+".";
+        if(l2!=null)event+=l2+".";
+        if(l3!=null)event+=l3+".";
+        if(l4!=null)event+=l4+".";
+        return event;
+    }
+    private String getNextEventStr(String l0,String l1,String l2, String l3,String l4){
+        return null;
+    }
+
 
     private String getTableNameTest(String rootPath) {
         return rootPath.replace("xadrill","-");
@@ -109,7 +144,9 @@ public class HBaseRecordReader implements RecordReader {
 
         MaterializedField f = MaterializedField.create(new SchemaPath(name), fieldId, 0, type);
         ValueVector<?> v;
-        BufferAllocator allocator=new DirectBufferAllocator();
+        BufferAllocator allocator;
+        if(context!=null)allocator=context.getAllocator();
+        else allocator=new DirectBufferAllocator();
         //v = TypeHelper.getNewVector(f, context.getAllocator());
         v=TypeHelper.getNewVector(f,allocator);
         v.allocateNew(length);
@@ -161,6 +198,7 @@ public class HBaseRecordReader implements RecordReader {
         boolean next=PutValuesToVectors(kv,valueVectors,recordSetSize);
         if(!next)return recordSetSize;
         recordSetSize++;
+        LOG.info("get record size "+recordSetSize);
         }
     }
     public boolean PutValuesToVectors(KeyValue kv,ValueVector<?>[] valueVectors,int recordSetSize){
