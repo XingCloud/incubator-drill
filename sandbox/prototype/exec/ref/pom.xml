@@ -13,6 +13,20 @@
 
 	<name>Logical Plan Execution Reference Implementation</name>
 
+    <repositories>
+        <repository>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <id>xamavenrepo</id>
+            <name>xamavenrepo</name>
+            <url>http://xamavenrepo:8081/archiva/repository/internal</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+    
 	<dependencies>
 
 		<dependency>
@@ -22,6 +36,7 @@
 		</dependency>
 
 		<dependency>
+<<<<<<< HEAD
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-core</artifactId>
 			<version>1.1.1</version>
@@ -35,6 +50,24 @@
 					<groupId>commons-logging</groupId>
 				</exclusion>
 			</exclusions>
+=======
+			<!--<groupId>org.apache.hadoop</groupId>-->
+			<!--<artifactId>hadoop-core</artifactId>-->
+			<!--<version>1.1.0</version>-->
+            <groupId>hadoop-core</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>0.20</version>
+			<!--<exclusions>-->
+				<!--<exclusion>-->
+					<!--<artifactId>jets3t</artifactId>-->
+					<!--<groupId>net.java.dev.jets3t</groupId>-->
+				<!--</exclusion>-->
+				<!--<exclusion>-->
+					<!--<artifactId>commons-logging</artifactId>-->
+					<!--<groupId>commons-logging</groupId>-->
+				<!--</exclusion>-->
+			<!--</exclusions>-->
+>>>>>>> origin/master
 		</dependency>
 
 
@@ -45,11 +78,25 @@
 			<version>0.4.2</version>
 		</dependency>
 
+<<<<<<< HEAD
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-examples</artifactId>
 			<version>1.1.1</version>
 		</dependency>
+=======
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.5</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+>>>>>>> origin/master
 	</dependencies>
 
   <build>

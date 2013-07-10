@@ -18,6 +18,7 @@
 package org.apache.drill.common.expression;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,5 +85,12 @@ public class FunctionRegistry {
       first = createExpression(opTypes.get(i), args);
     }
     return first;
+  }
+
+  public static void main(String[] args) {
+    FunctionRegistry fr=new FunctionRegistry(DrillConfig.create());
+//    for(Map.Entry<String, FunctionDefinition> entry:fr.funcMap.entrySet()){
+//      System.out.println(entry.getKey()+" - "+entry.getValue().getName());
+//    }
   }
 }
