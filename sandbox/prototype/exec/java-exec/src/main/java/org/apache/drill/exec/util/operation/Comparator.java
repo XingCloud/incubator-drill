@@ -3,6 +3,7 @@ package org.apache.drill.exec.util.operation;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.values.NumericValue;
+import org.apache.drill.exec.record.values.ScalarValues;
 import org.apache.drill.exec.record.vector.*;
 
 /**
@@ -56,7 +57,6 @@ public class Comparator {
 
     }
 
-
     private static Fixed1 V2O(ValueVector left, DrillValue right) {
         Fixed1 v = O2V(right, left);
         for (int i = 0; i < v.getRecordCount(); i++) {
@@ -89,7 +89,7 @@ public class Comparator {
                         b = (byte) (l == i ? 0 : l > i ? 1 : -1);
                         v.setByte(j, b);
                     }
-                    return v;
+                    break;
                 case DECIMAL4:
                 case FLOAT4:
                     double d = n.getAsDouble();
@@ -100,28 +100,33 @@ public class Comparator {
                         b = (byte) (d == f ? 0 : d > f ? 1 : -1);
                         v.setByte(j, b);
                     }
-                    return v;
+                    break;
                 case BIGINT:
                 case UINT8:
                 case DECIMAL8:
                     l = n.getAsLong();
                     Fixed8 longs = (Fixed8) right;
-                    long bigInt ;
+                    long bigInt;
                     for (j = 0; j < recordCount; j++) {
                         bigInt = longs.getBigInt(j);
                         b = (byte) (l == bigInt ? 0 : l > bigInt ? 1 : -1);
                         v.setByte(j, b);
                     }
-                    return v;
+                    break;
             }
         } else {
-            // String
+            String leftString = ((ScalarValues.StringScalar) left).getString().toString();
+            String rightString;
+            VarLen4 strs = (VarLen4) right;
+            for (j = 0; j < recordCount; j++) {
+                v.setByte(j, (byte) leftString.compareTo(new String((byte[]) strs.getObject(j))));
+            }
         }
-        return null;
+        return v;
     }
 
     private static Fixed1 O2O(DrillValue left, DrillValue right) {
-        Fixed1 fixed1 = new Fixed1(null,BufferAllocator.getAllocator(null));
+        Fixed1 fixed1 = new Fixed1(null, BufferAllocator.getAllocator(null));
         fixed1.allocateNew(1);
         fixed1.setRecordCount(1);
         // TODO
