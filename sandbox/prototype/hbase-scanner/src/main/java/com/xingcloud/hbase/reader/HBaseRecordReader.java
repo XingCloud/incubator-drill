@@ -228,6 +228,9 @@ public class HBaseRecordReader implements RecordReader {
                 int previousOffset=lengthbuf.getInt(recordSetSize);
                 if(recordSetSize==0)previousOffset=0;
                 int offset=previousOffset+resultBytes.length;
+
+                LOG.info(recordSetSize+"previous offset "+previousOffset);
+                LOG.info(recordSetSize+"offset "+offset);
                 if(offset>lengthbuf.capacity()*4)return false;
                 ((VarLen4)valueVector).setBytes(recordSetSize,resultBytes);
                 valueVector.setRecordCount(recordSetSize);
