@@ -30,7 +30,7 @@ import org.apache.drill.exec.store.RecordReader;
 import java.util.List;
 
 public class MockScanBatchCreator implements BatchCreator<MockScanPOP>{
-  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockScanBatchCreator.class);
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockScanBatchCreator.class);
 
   @Override
   public RecordBatch getBatch(FragmentContext context, MockScanPOP config, List<RecordBatch> children) throws ExecutionSetupException {
