@@ -30,8 +30,8 @@ import java.util.Iterator;
 
 @JsonTypeName("join")
 public class Join extends LogicalOperatorBase {
-  private final LogicalOperator left;
-  private final LogicalOperator right;
+  private LogicalOperator left;
+  private LogicalOperator right;
   private final JoinType type;
   private final JoinCondition[] conditions;
 
@@ -64,6 +64,22 @@ public class Join extends LogicalOperatorBase {
 
   public LogicalOperator getRight() {
     return right;
+  }
+
+  public void setLeft(LogicalOperator left) {
+    if(this.left != null){
+      this.left.unregisterSubscriber(this);      
+    }
+    this.left = left;
+    this.left.registerAsSubscriber(this);
+  }
+
+  public void setRight(LogicalOperator right) {
+    if(this.right != null){
+      this.right.unregisterSubscriber(this);
+    }
+    this.right = right;
+    this.right.registerAsSubscriber(this);
   }
 
   public JoinCondition[] getConditions() {

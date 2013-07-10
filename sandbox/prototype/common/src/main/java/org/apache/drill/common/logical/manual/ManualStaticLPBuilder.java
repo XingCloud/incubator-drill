@@ -16,6 +16,7 @@ import org.apache.drill.common.expression.ValueExpressions;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.StorageEngineConfig;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
+import org.apache.drill.common.logical.data.Distinct;
 import org.apache.drill.common.logical.data.Filter;
 import org.apache.drill.common.logical.data.LogicalOperator;
 import org.apache.drill.common.logical.data.NamedExpression;
@@ -123,7 +124,7 @@ public class ManualStaticLPBuilder {
   }
 
   public static LogicalPlan buildStaticLogicalPlanManually(String projectId, String event, String date,
-                                                           boolean distinct) throws IOException {
+                                                           boolean isDistinct) throws IOException {
     List<LogicalOperator> logicalOperators = new ArrayList<>();
     FunctionRegistry functionRegistry = new FunctionRegistry(DrillConfig.create());
 
@@ -142,6 +143,12 @@ public class ManualStaticLPBuilder {
     logicalOperators.add(filter);
 
     // Build distinction
+    Distinct distinct = null;
+    if (isDistinct) {
+      distinct = new Distinct(null, new FieldReference("uid"));
+      distinct.setInput(filter);
+      logicalOperators.add(distinct);
+    }
 
     // Build collapsing aggregation
     CollapsingAggregate collapsingAggregate;
@@ -154,7 +161,13 @@ public class ManualStaticLPBuilder {
     namedExpression = new NamedExpression(functionRegistry.createExpression("count", countOn),
                                           new FieldReference("uid"));
     collapsingAggregate = new CollapsingAggregate(within, target, carryovers, new NamedExpression[]{namedExpression});
-    collapsingAggregate.setInput(filter);
+
+    if (distinct == null) {
+      collapsingAggregate.setInput(filter);
+    } else {
+      collapsingAggregate.setInput(distinct);
+    }
+
     logicalOperators.add(collapsingAggregate);
 
     // Output
@@ -184,6 +197,8 @@ public class ManualStaticLPBuilder {
   public static void main(String[] args) throws IOException {
     DrillConfig c = DrillConfig.create();
     LogicalPlan logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708", false);
+    System.out.println(logicalPlan.unparse(c));
+    logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708", true);
     System.out.println(logicalPlan.unparse(c));
 
   }

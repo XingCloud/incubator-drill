@@ -24,7 +24,7 @@ public class TestSelect {
   public static void testSimpleSelect() throws JSQLParserException {
     String sql;
     sql = "SELECT count( distinct `sof-dsk_deu`.uid) AS cnt from `sof-dsk_deu` WHERE `sof-dsk_deu`.l0 = 'visit' AND `sof-dsk_deu`.date = '20130225'";
-//    sql = "SELECT count( distinct `sof-dsk_deu`.uid) AS cnt from `sof-dsk_deu` WHERE `sof-dsk_deu`.l0 = 'visit'";
+    sql = "SELECT count( distinct `sof-dsk_deu`.uid) AS cnt from `sof-dsk_deu`";
     Statement statement = PARSER.parse(new StringReader(sql));
     StatementDeParser deParser = new StatementDeParser(new StringBuffer());
     statement.accept(deParser);
@@ -32,23 +32,15 @@ public class TestSelect {
 
     Select select = (Select) statement;
     PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-    Column column;
-    Expression where = plainSelect.getWhere();
-    BinaryExpression be=(BinaryExpression)where;
-    be= (BinaryExpression) be.getLeftExpression();
-
-    column= (Column) be.getLeftExpression();
-    System.out.println(column.getColumnName());
-    System.out.println(be.getRightExpression() .getClass());
 
     System.out.println("---------------------------------");
     SelectExpressionItem sei;
     Function f;
     ExpressionList eList;
-    for(Object o:plainSelect.getSelectItems()){
-      sei= (SelectExpressionItem) o;
-      f= (Function) sei.getExpression();
-      eList=f.getParameters();
+    for (Object o : plainSelect.getSelectItems()) {
+      sei = (SelectExpressionItem) o;
+      f = (Function) sei.getExpression();
+      eList = f.getParameters();
       System.out.println(eList.getExpressions().get(0).getClass());
     }
   }
