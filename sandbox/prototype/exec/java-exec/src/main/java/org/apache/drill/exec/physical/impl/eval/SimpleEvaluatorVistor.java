@@ -24,9 +24,15 @@ public class SimpleEvaluatorVistor implements ExprVisitor<BasicEvaluator> {
 
     private RecordPointer record;
 
+    private List<AggregatingEvaluator> aggregators = new ArrayList<>();
+
     public SimpleEvaluatorVistor(RecordPointer record) {
         super();
         this.record = record;
+    }
+
+    public List<AggregatingEvaluator> getAggregators() {
+        return aggregators;
     }
 
     @Override
@@ -42,14 +48,14 @@ public class SimpleEvaluatorVistor implements ExprVisitor<BasicEvaluator> {
 
         FunctionArguments args = new FunctionArguments(onlyConstants, includesAggregates, evals, call);
         if (call.getDefinition().isAggregating()) {
-            // TODO
+            BasicEvaluator e = FunctionEvaluatorRegistry.getEvaluator(call.getDefinition().getName(),args,record);
+            aggregators.add((AggregatingEvaluator) e);
+            return e;
         } else {
             BasicEvaluator eval = FunctionEvaluatorRegistry.getEvaluator(call.getDefinition().getName(), args, record);
             return eval;
 
         }
-
-        return null;
     }
 
     @Override

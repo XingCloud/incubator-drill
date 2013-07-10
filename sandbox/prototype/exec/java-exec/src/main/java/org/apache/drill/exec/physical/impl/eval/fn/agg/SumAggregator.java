@@ -34,11 +34,30 @@ public class SumAggregator implements AggregatingEvaluator {
         DrillValue dv = child.eval();
         if (dv.isVector()) {
             ValueVector vv = (ValueVector) dv;
+            int recordCount = vv.getRecordCount();
+            int i;
+            long sum = 0;
             switch (vv.getField().getType().getMinorType()) {
-                 // TODO
+                case BIGINT:
+                case UINT8:
+                    Fixed8 longs = (Fixed8) vv;
+                    for (i = 0; i < recordCount; i++) {
+                        sum += longs.getBigInt(i);
+                    }
+                    l += sum;
+                    d += sum;
+                    break;
+                case FLOAT8:
+                case DECIMAL8:
+                    integer = false;
+                    Fixed8 doubles = (Fixed8) vv;
+                    for (i = 0; i < recordCount; i++) {
+                        d += doubles.getFloat8(i);
+                    }
+                    break;
             }
         } else {
-
+            //
         }
     }
 
@@ -52,7 +71,8 @@ public class SumAggregator implements AggregatingEvaluator {
         } else {
             value.setFloat8(0, d);
         }
-        l = 0 ; d = 0;
+        l = 0;
+        d = 0;
         return value;
     }
 
