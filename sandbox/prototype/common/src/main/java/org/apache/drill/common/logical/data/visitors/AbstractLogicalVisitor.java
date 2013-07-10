@@ -23,9 +23,9 @@ import org.apache.drill.common.logical.data.*;
 public abstract class AbstractLogicalVisitor<T, X, E extends Throwable> implements LogicalVisitor<T, X, E> {
 
     public T visitOp(LogicalOperator op, X value) throws E{
-        throw new UnsupportedOperationException(String.format(
-                "The LogicalVisitor of type %s does not currently support visiting the PhysicalOperator type %s.", this
-                .getClass().getCanonicalName(), op.getClass().getCanonicalName()));
+      throw new UnsupportedOperationException(String.format(
+        "The LogicalVisitor of type %s does not currently support visiting the PhysicalOperator type %s.",
+        this.getClass().getCanonicalName(), op.getClass().getCanonicalName()));
     }
 
     @Override
