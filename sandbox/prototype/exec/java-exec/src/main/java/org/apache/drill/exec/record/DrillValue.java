@@ -10,6 +10,6 @@ import org.apache.drill.exec.proto.SchemaDefProtos;
  */
 public interface DrillValue {
     public abstract boolean isVector();
-    public abstract DrillValue compareTo(DrillValue other);
     public abstract SchemaDefProtos.MinorType getMinorType();
+    public abstract boolean isNumeric();
 }

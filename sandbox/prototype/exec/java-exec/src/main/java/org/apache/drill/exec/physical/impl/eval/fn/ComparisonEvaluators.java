@@ -10,6 +10,7 @@ import org.apache.drill.exec.record.RecordPointer;
 import org.apache.drill.exec.record.vector.Bit;
 import org.apache.drill.exec.record.vector.Fixed1;
 import org.apache.drill.exec.record.vector.ValueVector;
+import org.apache.drill.exec.util.operation.Comparator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,8 +21,8 @@ import org.apache.drill.exec.record.vector.ValueVector;
 public class ComparisonEvaluators {
 
     private abstract static class ComparisonEvaluator extends BaseBasicEvaluator {
-        private final BasicEvaluator left;
-        private final BasicEvaluator right;
+        protected final BasicEvaluator left;
+        protected final BasicEvaluator right;
 
         public ComparisonEvaluator(RecordPointer record, FunctionArguments args) {
             super(args.isOnlyConstants(), record);
@@ -29,23 +30,6 @@ public class ComparisonEvaluators {
             this.right = args.getEvaluator(1);
 
         }
-
-        @Override
-        public DrillValue eval() {
-            DrillValue lv = left.eval();
-            DrillValue lr = right.eval();
-            Fixed1 fixed1 = (Fixed1) lv.compareTo(lr);
-            Bit bits = new Bit(null, BufferAllocator.getAllocator(null));
-            bits.allocateNew(fixed1.getRecordCount());
-            bits.setRecordCount(fixed1.getRecordCount());
-            for (int i = 0; i < fixed1.getRecordCount(); i++) {
-                if (valid(fixed1.getByte(i)))
-                    bits.set(i);
-            }
-            return bits;
-        }
-
-        public abstract boolean valid(byte b);
     }
 
     @FunctionEvaluator("equal")
@@ -55,8 +39,8 @@ public class ComparisonEvaluators {
         }
 
         @Override
-        public boolean valid(byte b) {
-            return b == 0;
+        public DrillValue eval() {
+            return Comparator.Equal(left.eval(),right.eval());
         }
     }
 
@@ -68,9 +52,10 @@ public class ComparisonEvaluators {
         }
 
         @Override
-        public boolean valid(byte b) {
-            return b > 0;
+        public DrillValue eval() {
+            return Comparator.GreaterThan(left.eval(),right.eval());
         }
+
     }
 
     @FunctionEvaluator("less than")
@@ -81,10 +66,9 @@ public class ComparisonEvaluators {
         }
 
         @Override
-        public boolean valid(byte i) {
-            return i < 0;
+        public DrillValue eval() {
+           return Comparator.LessThan(left.eval(),right.eval()) ;
         }
-
     }
 
     @FunctionEvaluator("less than or equal to")
@@ -95,10 +79,9 @@ public class ComparisonEvaluators {
         }
 
         @Override
-        public boolean valid(byte i) {
-            return i <= 0;
+        public DrillValue eval() {
+            return Comparator.LessEqual(left.eval(),right.eval());
         }
-
     }
 
     @FunctionEvaluator("greater than or equal to")
@@ -109,10 +92,9 @@ public class ComparisonEvaluators {
         }
 
         @Override
-        public boolean valid(byte i) {
-            return i >= 0;
+        public DrillValue eval() {
+            return Comparator.GreaterEqual(left.eval(),right.eval());
         }
-
     }
 
     @FunctionEvaluator("and")

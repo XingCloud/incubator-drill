@@ -1,7 +1,6 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 
 public class NullableVarLen4 extends NullableValueVector<NullableVarLen4, VarLen4> {
@@ -18,11 +17,6 @@ public class NullableVarLen4 extends NullableValueVector<NullableVarLen4, VarLen
     public void setBytes(int index, byte[] bytes) {
         setNotNull(index);
         value.setBytes(index, bytes);
-    }
-
-    @Override
-    public DrillValue compareTo(DrillValue other) {
-        return null;
     }
 
     @Override

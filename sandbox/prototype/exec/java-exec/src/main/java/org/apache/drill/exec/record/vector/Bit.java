@@ -17,12 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.record.vector;
 
-import org.apache.drill.common.expression.types.DataType;
 import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.physical.RecordField.ValueMode;
-import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
-import org.apache.hadoop.io.SequenceFile;
 
 /**
  * Describes a vector which holds a number of true/false values.
@@ -173,26 +169,4 @@ public class Bit extends AbstractFixedValueVector<Bit> {
 
     }
 
-    @Override
-    public DrillValue compareTo(DrillValue other) {
-        if (other instanceof Bit) {
-            // only support equal to
-            Bit bits = new Bit(null, this.allocator);
-            bits.allocateNew(this.capacity());
-            if (getRecordCount() != ((Bit) other).getRecordCount()) {
-                // TODO
-            }
-            for (int i = 0; i < getRecordCount(); i++) {
-                if (getBit(i) == ((Bit) other).getBit(i)) {
-                    bits.set(i);
-                }
-            }
-            return bits;
-
-        } else {
-            // TODO
-            throw new RuntimeException("");
-        }
-
-    }
 }

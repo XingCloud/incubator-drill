@@ -18,7 +18,6 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -52,8 +51,4 @@ public class VarLen4 extends VariableVector<VarLen4, Fixed4>{
 
     }
 
-    @Override
-    public DrillValue compareTo(DrillValue other) {
-        return null;
-    }
 }

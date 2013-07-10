@@ -1,6 +1,7 @@
 package org.apache.drill.exec.record.values;
 
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes;
+import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.DrillValue;
 
 import java.math.BigDecimal;
@@ -60,8 +61,8 @@ public class ScalarValues {
         }
 
         @Override
-        public DrillValue compareTo(DrillValue other) {
-            return null;
+        public SchemaDefProtos.MinorType getMinorType() {
+            return SchemaDefProtos.MinorType.BIGINT;
         }
     }
 
@@ -104,8 +105,8 @@ public class ScalarValues {
         }
 
         @Override
-        public DrillValue compareTo(DrillValue other) {
-            return null;
+        public SchemaDefProtos.MinorType getMinorType() {
+            return  SchemaDefProtos.MinorType.BIGINT;
         }
     }
 
@@ -137,8 +138,8 @@ public class ScalarValues {
         }
 
         @Override
-        public DrillValue compareTo(DrillValue other) {
-            return null;
+        public SchemaDefProtos.MinorType getMinorType() {
+            return SchemaDefProtos.MinorType.FLOAT4;
         }
     }
 
@@ -165,8 +166,8 @@ public class ScalarValues {
         }
 
         @Override
-        public DrillValue compareTo(DrillValue other) {
-            return null;
+        public SchemaDefProtos.MinorType getMinorType() {
+            return SchemaDefProtos.MinorType.FLOAT8;
         }
     }
 
@@ -198,8 +199,13 @@ public class ScalarValues {
         }
 
         @Override
-        public DrillValue compareTo(DrillValue other) {
-            return null;
+        public SchemaDefProtos.MinorType getMinorType() {
+            return SchemaDefProtos.MinorType.BOOLEAN;
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return false;
         }
     }
 
@@ -231,8 +237,13 @@ public class ScalarValues {
         }
 
         @Override
-        public DrillValue compareTo(DrillValue other) {
+        public SchemaDefProtos.MinorType getMinorType() {
             return null;
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return false;
         }
     }
 }

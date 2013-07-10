@@ -47,6 +47,11 @@ public abstract class  NumericValue  implements DrillValue,BasicEvaluator{
     }
 
     @Override
+    public boolean isNumeric() {
+        return true;
+    }
+
+    @Override
     public DrillValue eval() {
         return this;
     }

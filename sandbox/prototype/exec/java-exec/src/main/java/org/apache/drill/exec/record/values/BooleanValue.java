@@ -10,4 +10,5 @@ import org.apache.drill.exec.record.DrillValue;
  */
 public interface BooleanValue extends DrillValue{
     public boolean getBoolean();
+
 }

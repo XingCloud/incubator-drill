@@ -21,10 +21,12 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.Random;
 
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.proto.UserBitShared.FieldMetadata;
 import org.apache.drill.exec.record.DeadBuf;
+import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 
 public abstract class BaseValueVector<T extends BaseValueVector<T>> implements ValueVector<T> {
@@ -176,5 +178,10 @@ public abstract class BaseValueVector<T extends BaseValueVector<T>> implements V
     @Override
     public SchemaDefProtos.MinorType getMinorType() {
         return field.getType().getMinorType();
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return false;
     }
 }
