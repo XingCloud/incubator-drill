@@ -70,14 +70,14 @@ public class Comparator {
     }
 
     private static Fixed1 O2V(DrillValue left, ValueVector right) {
+        Fixed1 v = new Fixed1(right.getField(), BufferAllocator.getAllocator(null));
+        int recordCount = right.getRecordCount();
+        v.allocateNew(recordCount);
+        v.setRecordCount(recordCount);
+        int j = 0;
+        byte b = 0;
         if (left.isNumeric()) {
             NumericValue n = (NumericValue) left;
-            Fixed1 v = new Fixed1(right.getField(), BufferAllocator.getAllocator(null));
-            int recordCount = right.getRecordCount();
-            v.allocateNew(recordCount);
-            v.setRecordCount(recordCount);
-            int j = 0;
-            byte b = 0;
             switch (right.getMinorType()) {
                 case INT:
                 case UINT4:
@@ -121,7 +121,11 @@ public class Comparator {
     }
 
     private static Fixed1 O2O(DrillValue left, DrillValue right) {
-        return null;
+        Fixed1 fixed1 = new Fixed1(null,BufferAllocator.getAllocator(null));
+        fixed1.allocateNew(1);
+        fixed1.setRecordCount(1);
+        // TODO
+        return fixed1;
     }
 
     private static Bit transferFrom(Fixed1 fixed1, RELATION relation, byte value) {

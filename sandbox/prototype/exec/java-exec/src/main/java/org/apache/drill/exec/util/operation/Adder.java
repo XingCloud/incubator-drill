@@ -12,24 +12,34 @@ import org.apache.drill.exec.record.vector.ValueVector;
  */
 public class Adder {
 
-    public static ValueVector Add(DrillValue left , DrillValue right){
+    public static ValueVector Add(DrillValue left, DrillValue right) {
+        if (left.isVector()) {
+            if (right.isVector()) {
+                return V2V((ValueVector) left, (ValueVector) right);
+            } else {
+                return V2O((ValueVector) left, (NumericValue) right);
+            }
+        } else {
+            if (right.isVector()) {
+                return V2O((ValueVector) right, (NumericValue) left);
+            } else {
+                return O2O((NumericValue) left, (NumericValue) right);
+            }
+        }
+    }
 
+    private static ValueVector V2V(ValueVector left, ValueVector right) {
         return null;
     }
 
-    private static ValueVector V2V(ValueVector left ,ValueVector right){
+
+    private static ValueVector V2O(ValueVector left, NumericValue right) {
         return null;
     }
 
-    private  static ValueVector O2V(NumericValue left,ValueVector right){
+    private static ValueVector O2O(NumericValue left, NumericValue right) {
         return null;
     }
 
-    private  static ValueVector V2O(ValueVector left,NumericValue right){
-        return O2V(right,left);
-    }
 
-    private static ValueVector O2O(NumericValue left,NumericValue right){
-        return null;
-    }
 }
