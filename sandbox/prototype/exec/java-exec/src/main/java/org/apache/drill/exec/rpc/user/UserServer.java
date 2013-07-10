@@ -17,28 +17,20 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.user;
 
+import com.google.protobuf.MessageLite;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-
 import org.apache.drill.exec.physical.impl.materialize.QueryWritableBatch;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
-import org.apache.drill.exec.proto.UserProtos.BitToUserHandshake;
-import org.apache.drill.exec.proto.UserProtos.RequestResults;
-import org.apache.drill.exec.proto.UserProtos.RpcType;
-import org.apache.drill.exec.proto.UserProtos.RunQuery;
-import org.apache.drill.exec.proto.UserProtos.UserToBitHandshake;
-import org.apache.drill.exec.rpc.BasicServer;
-import org.apache.drill.exec.rpc.RemoteConnection;
-import org.apache.drill.exec.rpc.Response;
-import org.apache.drill.exec.rpc.RpcException;
-import org.apache.drill.exec.rpc.RpcOutcomeListener;
+import org.apache.drill.exec.rpc.*;
 import org.apache.drill.exec.work.user.UserWorker;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.MessageLite;
+import java.io.IOException;
+
+import static org.apache.drill.exec.proto.UserProtos.*;
 
 public class UserServer extends BasicServer<RpcType, UserServer.UserClientConnection> {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserServer.class);
@@ -73,18 +65,29 @@ public class UserServer extends BasicServer<RpcType, UserServer.UserClientConnec
     case RpcType.RUN_QUERY_VALUE:
       // logger.debug("Received query to run.  Returning query handle.");
       try {
-        RunQuery query = RunQuery.PARSER.parseFrom(new ByteBufInputStream(pBody));
-        return new Response(RpcType.QUERY_HANDLE, worker.submitWork(connection, query));
-      } catch (InvalidProtocolBufferException e) {
+
+          RunQuery query = null;
+          try {
+              query = RunQuery.parseFrom(new ByteBufInputStream(pBody));
+          } catch (IOException e) {
+              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          }
+          return new Response(RpcType.QUERY_HANDLE, worker.submitWork(connection, query));
+      } catch (Exception e) {
         throw new RpcException("Failure while decoding RunQuery body.", e);
       }
 
     case RpcType.REQUEST_RESULTS_VALUE:
       // logger.debug("Received results requests.  Returning empty query result.");
       try {
-        RequestResults req = RequestResults.PARSER.parseFrom(new ByteBufInputStream(pBody));
-        return new Response(RpcType.QUERY_RESULT, worker.getResult(connection, req));
-      } catch (InvalidProtocolBufferException e) {
+          RequestResults req = null;
+          try {
+              req = RequestResults.parseFrom(new ByteBufInputStream(pBody));
+          } catch (IOException e) {
+              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          }
+          return new Response(RpcType.QUERY_RESULT, worker.getResult(connection, req));
+      } catch (Exception e) {
         throw new RpcException("Failure while decoding RequestResults body.", e);
       }
 
@@ -100,7 +103,7 @@ public class UserServer extends BasicServer<RpcType, UserServer.UserClientConnec
     }
 
     public void sendResult(RpcOutcomeListener<Ack> listener, QueryWritableBatch result){
-      logger.debug("Sending result to client with {}", result);
+      //logger.debug("Sending result to client with {}", result);
       send(listener, this, RpcType.QUERY_RESULT, result.getHeader(), Ack.class, result.getBuffers());
     }
 
@@ -113,11 +116,11 @@ public class UserServer extends BasicServer<RpcType, UserServer.UserClientConnec
   
   @Override
   protected ServerHandshakeHandler<UserToBitHandshake> getHandshakeHandler(UserClientConnection connection) {
-    return new ServerHandshakeHandler<UserToBitHandshake>(RpcType.HANDSHAKE, UserToBitHandshake.PARSER){
+    return new ServerHandshakeHandler<UserToBitHandshake>(RpcType.HANDSHAKE, UserToBitHandshake.class){
 
       @Override
       public MessageLite getHandshakeResponse(UserToBitHandshake inbound) throws Exception {
-        logger.debug("Handling handshake from user to bit. {}", inbound);
+        //logger.debug("Handling handshake from user to bit. {}", inbound);
         if(inbound.getRpcVersion() != UserRpcConfig.RPC_VERSION) throw new RpcException(String.format("Invalid rpc version.  Expected %d, actual %d.", inbound.getRpcVersion(), UserRpcConfig.RPC_VERSION));
         return BitToUserHandshake.newBuilder().setRpcVersion(UserRpcConfig.RPC_VERSION).build();
       }

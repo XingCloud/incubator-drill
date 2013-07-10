@@ -17,10 +17,9 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.config;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.google.common.base.Preconditions;
 import org.apache.drill.exec.physical.EndpointAffinity;
 import org.apache.drill.exec.physical.OperatorCost;
 import org.apache.drill.exec.physical.ReadEntry;
@@ -34,17 +33,13 @@ import org.apache.drill.exec.proto.SchemaDefProtos.MajorType;
 import org.apache.drill.exec.proto.SchemaDefProtos.MinorType;
 import org.apache.drill.exec.record.vector.TypeHelper;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.google.common.base.Preconditions;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 @JsonTypeName("mock-scan")
 public class MockScanPOP extends AbstractScan<MockScanPOP.MockScanEntry> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockScanPOP.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockScanPOP.class);
 
   private final String url;
   private  LinkedList<MockScanEntry>[] mappings;

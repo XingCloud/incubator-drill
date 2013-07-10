@@ -18,10 +18,9 @@
 package org.apache.drill.exec.physical.base;
 
 import org.apache.drill.common.graph.GraphVisitor;
-import org.apache.drill.exec.physical.OperatorCost;
 
 public abstract class AbstractBase implements PhysicalOperator{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractBase.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractBase.class);
 
 
 

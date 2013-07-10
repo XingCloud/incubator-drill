@@ -21,7 +21,7 @@ import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
 
 public class EndpointAffinity implements Comparable<EndpointAffinity>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EndpointAffinity.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EndpointAffinity.class);
   
   private DrillbitEndpoint endpoint;
   private float affinity = 0.0f;

@@ -17,23 +17,16 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.bit;
 
-import io.netty.channel.Channel;
-
-import java.util.Iterator;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.google.common.collect.Maps;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
-import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.server.BootStrapContext;
 import org.apache.drill.exec.work.batch.BitComHandler;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.CheckedFuture;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentMap;
 
 public class ConnectionManagerRegistry implements Iterable<BitConnectionManager>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ConnectionManagerRegistry.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ConnectionManagerRegistry.class);
   
   private final ConcurrentMap<DrillbitEndpoint, BitConnectionManager> registry = Maps.newConcurrentMap();
   

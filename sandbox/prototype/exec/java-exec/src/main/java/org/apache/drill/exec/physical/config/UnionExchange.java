@@ -17,25 +17,21 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.config;
 
-import java.util.List;
-
-import org.apache.drill.common.exceptions.PhysicalOperatorSetupException;
-import org.apache.drill.exec.physical.base.AbstractExchange;
-import org.apache.drill.exec.physical.base.ExchangeCost;
-import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.base.PhysicalVisitor;
-import org.apache.drill.exec.physical.base.Receiver;
-import org.apache.drill.exec.physical.base.Sender;
-import org.apache.drill.exec.physical.base.Size;
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.apache.drill.common.exceptions.PhysicalOperatorSetupException;
+import org.apache.drill.exec.physical.base.AbstractExchange;
+import org.apache.drill.exec.physical.base.PhysicalOperator;
+import org.apache.drill.exec.physical.base.Receiver;
+import org.apache.drill.exec.physical.base.Sender;
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+
+import java.util.List;
 
 @JsonTypeName("union-exchange")
 public class UnionExchange extends AbstractExchange{
 
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UnionExchange.class);
+ // static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UnionExchange.class);
 
   private List<DrillbitEndpoint> senderLocations;
   private DrillbitEndpoint destinationLocation;

@@ -17,17 +17,17 @@
  ******************************************************************************/
 package org.apache.drill.exec.coord;
 
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+
 import java.io.Closeable;
 import java.util.Collection;
-
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
 /**
  * Pluggable interface built to manage cluster coordination. Allows Drillbit or DrillClient to register its capabilities
  * as well as understand other node's existence and capabilities.
  **/
 public abstract class ClusterCoordinator implements Closeable {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ClusterCoordinator.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ClusterCoordinator.class);
 
   /**
    * Start the cluster coordinator.  Millis to wait is   

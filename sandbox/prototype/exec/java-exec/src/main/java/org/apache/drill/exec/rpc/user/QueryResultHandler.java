@@ -17,11 +17,9 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.user;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 import io.netty.buffer.ByteBuf;
-
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-
 import org.apache.drill.exec.proto.UserBitShared.QueryId;
 import org.apache.drill.exec.proto.UserProtos.QueryResult;
 import org.apache.drill.exec.rpc.BaseRpcOutcomeListener;
@@ -29,8 +27,8 @@ import org.apache.drill.exec.rpc.RpcBus;
 import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.rpc.RpcOutcomeListener;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Encapsulates the future management of query submissions. This entails a potential race condition. Normal ordering is:
@@ -51,7 +49,7 @@ public class QueryResultHandler {
   }
   
   public void batchArrived(ByteBuf pBody, ByteBuf dBody) throws RpcException {
-    final QueryResult result = RpcBus.get(pBody, QueryResult.PARSER);
+    final QueryResult result = RpcBus.get(pBody, QueryResult.class);
     final QueryResultBatch batch = new QueryResultBatch(result, dBody);
     UserResultsListener l = resultsListener.get(result.getQueryId());
     // logger.debug("For QueryId [{}], retrieved result listener {}", result.getQueryId(), l);

@@ -17,8 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.ops;
 
-import java.util.Collection;
-
 import org.apache.drill.exec.cache.DistributedCache;
 import org.apache.drill.exec.planner.PhysicalPlanReader;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -26,8 +24,10 @@ import org.apache.drill.exec.proto.UserBitShared.QueryId;
 import org.apache.drill.exec.rpc.bit.BitCom;
 import org.apache.drill.exec.server.DrillbitContext;
 
+import java.util.Collection;
+
 public class QueryContext {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(QueryContext.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(QueryContext.class);
   
   private QueryId queryId;
   private DrillbitContext drillbitContext;

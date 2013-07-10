@@ -17,18 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.bit;
 
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.MessageLite;
 import org.apache.drill.exec.rpc.DrillRpcFuture;
 import org.apache.drill.exec.rpc.RpcCheckedFuture;
-import org.apache.drill.exec.rpc.RpcConnectionHandler;
 import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.rpc.RpcOutcomeListener;
 
-import com.google.common.util.concurrent.CheckedFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.MessageLite;
-
 public abstract class FutureBitCommand<T extends MessageLite> implements BitCommand<T> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FutureBitCommand.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FutureBitCommand.class);
 
   protected final SettableFuture<T> settableFuture;
   private final RpcCheckedFuture<T> parentFuture;

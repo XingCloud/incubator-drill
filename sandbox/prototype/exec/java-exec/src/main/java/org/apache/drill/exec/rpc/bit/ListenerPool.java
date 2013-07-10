@@ -17,17 +17,17 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.bit;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import org.apache.drill.exec.proto.ExecProtos.FragmentHandle;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus;
 import org.apache.drill.exec.proto.UserBitShared.QueryId;
 import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.work.foreman.FragmentStatusListener;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 public class ListenerPool {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ListenerPool.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ListenerPool.class);
   
   private final ConcurrentMap<QueryId, FragmentStatusListener> listeners;
   
@@ -36,12 +36,12 @@ public class ListenerPool {
   }
   
   public void removeFragmentStatusListener(FragmentHandle handle) throws RpcException{
-    logger.debug("Removing framgent status listener for handle {}.", handle);
+    //logger.debug("Removing framgent status listener for handle {}.", handle);
     listeners.remove(handle);
   }
   
   public void addFragmentStatusListener(FragmentHandle handle, FragmentStatusListener listener) throws RpcException{
-    logger.debug("Adding framgent status listener for handle {}.", handle);
+    //logger.debug("Adding framgent status listener for handle {}.", handle);
     FragmentStatusListener old = listeners.putIfAbsent(handle.getQueryId(), listener);
     if(old != null) throw new RpcException("Failure.  The provided handle already exists in the listener pool.  You need to remove one listener before adding another.");
   }
@@ -50,7 +50,7 @@ public class ListenerPool {
     FragmentStatusListener l = listeners.get(status.getHandle().getQueryId());
     if(l == null){
       
-      logger.error("A fragment message arrived but there was no registered listener for that message for handle {}.", status.getHandle());
+      //logger.error("A fragment message arrived but there was no registered listener for that message for handle {}.", status.getHandle());
       return;
     }else{
       l.statusUpdate(status);

@@ -38,7 +38,7 @@ import com.google.protobuf.MessageLite;
 
 public class BitClient  extends BasicClient<RpcType, BitConnection, BitHandshake, BitHandshake>{
 
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitClient.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitClient.class);
 
   private final BitComHandler handler;
   private final DrillbitEndpoint remoteEndpoint;
@@ -48,7 +48,7 @@ public class BitClient  extends BasicClient<RpcType, BitConnection, BitHandshake
   private final DrillbitEndpoint localIdentity;
   
   public BitClient(DrillbitEndpoint remoteEndpoint, DrillbitEndpoint localEndpoint, BitComHandler handler, BootStrapContext context, CloseHandlerCreator closeHandlerFactory, ListenerPool listeners) {
-    super(BitRpcConfig.MAPPING, context.getAllocator().getUnderlyingAllocator(), context.getBitLoopGroup(), RpcType.HANDSHAKE, BitHandshake.class, BitHandshake.PARSER);
+    super(BitRpcConfig.MAPPING, context.getAllocator().getUnderlyingAllocator(), context.getBitLoopGroup(), RpcType.HANDSHAKE, BitHandshake.class, BitHandshake.class);
     this.localIdentity = localEndpoint;
     this.remoteEndpoint = remoteEndpoint;
     this.handler = handler;

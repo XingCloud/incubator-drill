@@ -17,17 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.work;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 import org.apache.drill.exec.cache.DistributedCache;
 import org.apache.drill.exec.coord.ClusterCoordinator;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -43,11 +34,15 @@ import org.apache.drill.exec.work.foreman.Foreman;
 import org.apache.drill.exec.work.fragment.IncomingFragmentHandler;
 import org.apache.drill.exec.work.user.UserWorker;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.*;
 
 public class WorkManager implements Closeable{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WorkManager.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WorkManager.class);
   
   private Set<IncomingFragmentHandler> incomingFragments = Collections.newSetFromMap(Maps.<IncomingFragmentHandler, Boolean> newConcurrentMap());
 
@@ -148,16 +143,16 @@ public class WorkManager implements Closeable{
   public void run() {
     try {
     while(true){
-      logger.debug("Polling for pending work tasks.");
+      //logger.debug("Polling for pending work tasks.");
       Runnable r = pendingTasks.poll(10, TimeUnit.SECONDS);
       if(r != null){
-        logger.debug("Starting pending task {}", r);
+        //logger.debug("Starting pending task {}", r);
         executor.execute(r);  
       }
       
     }
     } catch (InterruptedException e) {
-      logger.info("Work Manager stopping as it was interrupted.");
+      //logger.info("Work Manager stopping as it was interrupted.");
     }
   }
    

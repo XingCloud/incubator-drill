@@ -17,29 +17,27 @@
  ******************************************************************************/
 package org.apache.drill.exec.record;
 
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
+import com.carrotsearch.hppc.procedures.IntObjectProcedure;
+import com.google.common.collect.Lists;
 import io.netty.buffer.ByteBuf;
-
-import java.util.List;
-
 import org.apache.drill.exec.proto.UserBitShared.FieldMetadata;
 import org.apache.drill.exec.proto.UserBitShared.RecordBatchDef;
 import org.apache.drill.exec.record.vector.ValueVector;
 
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
-import com.carrotsearch.hppc.procedures.IntObjectProcedure;
-import com.google.common.collect.Lists;
+import java.util.List;
 
 /**
  * A specialized version of record batch that can moves out buffers and preps them for writing. 
  */
 public class WritableBatch {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WritableBatch.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WritableBatch.class);
   
   private final RecordBatchDef def;
   private final ByteBuf[] buffers;
   
   public WritableBatch(RecordBatchDef def, List<ByteBuf> buffers) {
-    logger.debug("Created new writable batch with def {} and buffers {}", def, buffers);
+    //logger.debug("Created new writable batch with def {} and buffers {}", def, buffers);
     this.def = def;
     this.buffers = buffers.toArray(new ByteBuf[buffers.size()]);
   }

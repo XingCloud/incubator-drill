@@ -17,9 +17,9 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.config;
 
-import java.beans.Transient;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.exec.physical.base.AbstractExchange;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
@@ -27,13 +27,11 @@ import org.apache.drill.exec.physical.base.Receiver;
 import org.apache.drill.exec.physical.base.Sender;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import java.util.List;
 
 @JsonTypeName("hash-to-random-exchange")
 public class HashToRandomExchange extends AbstractExchange{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HashToRandomExchange.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HashToRandomExchange.class);
 
   
   private final LogicalExpression expr;

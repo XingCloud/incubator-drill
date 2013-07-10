@@ -17,29 +17,27 @@
  ******************************************************************************/
 package org.apache.drill.exec.cache;
 
+import com.hazelcast.core.HazelcastInstance;
 import org.apache.drill.exec.proto.ExecProtos.FragmentHandle;
 import org.apache.drill.exec.proto.ExecProtos.PlanFragment;
 import org.apache.drill.exec.proto.ExecProtos.WorkQueueStatus;
 
-import com.google.protobuf.Parser;
-import com.hazelcast.core.HazelcastInstance;
-
 public class ProtoBufImpl {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProtoBufImpl.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProtoBufImpl.class);
   
   public static class HWorkQueueStatus extends ProtoBufWrap<WorkQueueStatus>{
-    public HWorkQueueStatus() {super(WorkQueueStatus.PARSER);}
-    public HWorkQueueStatus(WorkQueueStatus value) {super(value, WorkQueueStatus.PARSER);}
+    public HWorkQueueStatus() {super(WorkQueueStatus.class);}
+    public HWorkQueueStatus(WorkQueueStatus value) {super(value, WorkQueueStatus.class);}
   }
   
   public static class HFragmentHandle extends ProtoBufWrap<FragmentHandle>{
-    public HFragmentHandle() {super(FragmentHandle.PARSER);}
-    public HFragmentHandle(FragmentHandle value) {super(value, FragmentHandle.PARSER);}
+    public HFragmentHandle() {super(FragmentHandle.class);}
+    public HFragmentHandle(FragmentHandle value) {super(value, FragmentHandle.class);}
   }
   
   public static class HPlanFragment extends ProtoBufWrap<PlanFragment>{
-    public HPlanFragment() {super(PlanFragment.PARSER);}
-    public HPlanFragment(PlanFragment value) {super(value, PlanFragment.PARSER);}
+    public HPlanFragment() {super(PlanFragment.class);}
+    public HPlanFragment(PlanFragment value) {super(value, PlanFragment.class);}
   }
   
   public static class HandlePlan extends ProtoMap<FragmentHandle, PlanFragment, HFragmentHandle, HPlanFragment>{

@@ -20,19 +20,8 @@ package org.apache.drill.exec.schema;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
-import org.apache.drill.common.expression.SchemaPath;
-import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.proto.SchemaDefProtos;
-import org.apache.drill.exec.record.MaterializedField;
-import org.apache.drill.exec.record.vector.*;
-import org.apache.drill.exec.store.BatchExceededException;
-import org.apache.drill.exec.store.VectorHolder;
 
-import java.nio.charset.Charset;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static org.apache.drill.exec.proto.SchemaDefProtos.*;
+import static org.apache.drill.exec.proto.SchemaDefProtos.MajorType;
 
 public abstract class Field {
     final MajorType fieldType;

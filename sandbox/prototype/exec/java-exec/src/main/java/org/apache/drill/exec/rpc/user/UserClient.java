@@ -42,7 +42,7 @@ public class UserClient extends BasicClientWithConnection<RpcType, UserToBitHand
   private final QueryResultHandler queryResultHandler = new QueryResultHandler();
 
   public UserClient(ByteBufAllocator alloc, EventLoopGroup eventLoopGroup) {
-    super(UserRpcConfig.MAPPING, alloc, eventLoopGroup, RpcType.HANDSHAKE, BitToUserHandshake.class, BitToUserHandshake.PARSER);
+    super(UserRpcConfig.MAPPING, alloc, eventLoopGroup, RpcType.HANDSHAKE, BitToUserHandshake.class, BitToUserHandshake.class);
   }
 
   public void submitQuery(UserResultsListener resultsListener, RunQuery query) throws RpcException {
@@ -82,7 +82,7 @@ public class UserClient extends BasicClientWithConnection<RpcType, UserToBitHand
 
   @Override
   protected void validateHandshake(BitToUserHandshake inbound) throws RpcException {
-    logger.debug("Handling handshake from bit to user. {}", inbound);
+    //logger.debug("Handling handshake from bit to user. {}", inbound);
     if (inbound.getRpcVersion() != UserRpcConfig.RPC_VERSION)
       throw new RpcException(String.format("Invalid rpc version.  Expected %d, actual %d.", inbound.getRpcVersion(),
           UserRpcConfig.RPC_VERSION));

@@ -17,24 +17,22 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
+import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.WireFormat;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
-
-import java.io.OutputStream;
-
 import org.apache.drill.exec.proto.GeneralRPCProtos.CompleteRpcMessage;
 import org.apache.drill.exec.proto.GeneralRPCProtos.RpcHeader;
 
-import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.WireFormat;
+import java.io.OutputStream;
 
 /**
  * Converts an RPCMessage into wire format.
  */
 class RpcEncoder extends ChannelOutboundMessageHandlerAdapter<OutboundRpcMessage>{
-  final org.slf4j.Logger logger;
+  //final org.slf4j.Logger logger;
   
   static final int HEADER_TAG = makeTag(CompleteRpcMessage.HEADER_FIELD_NUMBER, WireFormat.WIRETYPE_LENGTH_DELIMITED);
   static final int PROTOBUF_BODY_TAG = makeTag(CompleteRpcMessage.PROTOBUF_BODY_FIELD_NUMBER, WireFormat.WIRETYPE_LENGTH_DELIMITED);
@@ -44,7 +42,7 @@ class RpcEncoder extends ChannelOutboundMessageHandlerAdapter<OutboundRpcMessage
   static final int RAW_BODY_TAG_LENGTH = getRawVarintSize(RAW_BODY_TAG);
   
   public RpcEncoder(String name){
-    this.logger = org.slf4j.LoggerFactory.getLogger(RpcEncoder.class.getCanonicalName() + "." + name);
+    //this.logger = org.slf4j.LoggerFactory.getLogger(RpcEncoder.class.getCanonicalName() + "." + name);
   }
   
   @Override
@@ -54,7 +52,7 @@ class RpcEncoder extends ChannelOutboundMessageHandlerAdapter<OutboundRpcMessage
     }
     
     try{
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Encoding outbound message {}", msg);
+      //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Encoding outbound message {}", msg);
       // first we build the RpcHeader 
       RpcHeader header = RpcHeader.newBuilder() //
           .setMode(msg.mode) //
@@ -94,7 +92,7 @@ class RpcEncoder extends ChannelOutboundMessageHandlerAdapter<OutboundRpcMessage
       // if exists, write data body and tag.
       // TODO: is it possible to avoid this copy, i think so...
       if(msg.getRawBodySize() > 0){
-        if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Writing raw body of size {}", msg.getRawBodySize());
+        //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Writing raw body of size {}", msg.getRawBodySize());
         cos.writeRawVarint32(RAW_BODY_TAG);
         cos.writeRawVarint32(rawBodyLength);
         cos.flush(); // need to flush so that dbody goes after if cos is caching.
@@ -104,8 +102,8 @@ class RpcEncoder extends ChannelOutboundMessageHandlerAdapter<OutboundRpcMessage
       }else{
         cos.flush();
       }
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Wrote message with length header of {} bytes and body of {} bytes.", getRawVarintSize(fullLength), fullLength);
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Sent message.  Ending writer index was {}.", buf.writerIndex());
+     // if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Wrote message with length header of {} bytes and body of {} bytes.", getRawVarintSize(fullLength), fullLength);
+     // if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Sent message.  Ending writer index was {}.", buf.writerIndex());
     
     }finally{
       // make sure to release Rpc Messages unerlying byte buffers.

@@ -17,12 +17,10 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
-import io.netty.buffer.ByteBuf;
-
 import org.apache.drill.exec.proto.GeneralRPCProtos.RpcMode;
 
 public abstract class RpcMessage {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcMessage.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcMessage.class);
   
   public RpcMode mode;
   public int rpcType;

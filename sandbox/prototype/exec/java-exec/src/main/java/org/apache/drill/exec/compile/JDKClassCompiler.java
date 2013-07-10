@@ -17,6 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.exec.compile;
 
+import com.beust.jcommander.internal.Lists;
+import org.codehaus.commons.compiler.CompileException;
+import org.codehaus.commons.compiler.Location;
+import org.codehaus.commons.compiler.jdk.ByteArrayJavaFileManager;
+import org.codehaus.commons.compiler.jdk.ByteArrayJavaFileManager.ByteArrayJavaFileObject;
+
+import javax.tools.*;
+import javax.tools.JavaCompiler.CompilationTask;
+import javax.tools.JavaFileObject.Kind;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -27,26 +36,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
-import javax.tools.JavaCompiler.CompilationTask;
-import javax.tools.JavaFileObject.Kind;
-import javax.tools.SimpleJavaFileObject;
-import javax.tools.StandardLocation;
-import javax.tools.ToolProvider;
-
-import org.codehaus.commons.compiler.CompileException;
-import org.codehaus.commons.compiler.Location;
-import org.codehaus.commons.compiler.jdk.ByteArrayJavaFileManager;
-import org.codehaus.commons.compiler.jdk.ByteArrayJavaFileManager.ByteArrayJavaFileObject;
-
-import com.beust.jcommander.internal.Lists;
-
 class JDKClassCompiler implements ClassCompiler {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(JDKClassCompiler.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(JDKClassCompiler.class);
 
   private boolean debugLines;
   private boolean debugVars;

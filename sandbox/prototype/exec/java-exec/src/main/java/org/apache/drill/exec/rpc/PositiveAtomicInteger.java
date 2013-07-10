@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * An atomic integer that only ever returns 0 > MAX_INT and then starts over.  Should never has a negative overflow.
  */
 public class PositiveAtomicInteger {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PositiveAtomicInteger.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PositiveAtomicInteger.class);
   
   private final AtomicInteger internal = new AtomicInteger(Integer.MIN_VALUE);
   

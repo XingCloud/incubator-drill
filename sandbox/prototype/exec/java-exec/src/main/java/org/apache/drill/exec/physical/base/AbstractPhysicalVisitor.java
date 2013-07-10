@@ -29,7 +29,7 @@ import org.apache.drill.exec.physical.config.Sort;
 import org.apache.drill.exec.physical.config.UnionExchange;
 
 public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> implements PhysicalVisitor<T, X, E> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractPhysicalVisitor.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractPhysicalVisitor.class);
 
   @Override
   public T visitExchange(Exchange exchange, X value) throws E{

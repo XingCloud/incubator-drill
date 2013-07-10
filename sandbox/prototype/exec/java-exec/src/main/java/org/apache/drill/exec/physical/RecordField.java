@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RecordField {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RecordField.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RecordField.class);
 
   
   private DataType type;

@@ -17,21 +17,18 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.config;
 
-import java.io.IOException;
-import java.util.Collection;
-
+import com.google.common.collect.ListMultimap;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.store.AbstractStorageEngine;
 import org.apache.drill.exec.store.RecordReader;
-import org.apache.drill.exec.store.StorageEngine;
-import org.apache.drill.exec.store.StorageEngine.ReadEntry;
 
-import com.google.common.collect.ListMultimap;
+import java.io.IOException;
+import java.util.Collection;
 
 public class MockStorageEngine extends AbstractStorageEngine{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockStorageEngine.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockStorageEngine.class);
 
   @Override
   public boolean supportsRead() {

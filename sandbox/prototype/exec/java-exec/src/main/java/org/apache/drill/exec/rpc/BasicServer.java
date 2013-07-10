@@ -17,6 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
+import com.google.protobuf.Internal.EnumLite;
+import com.google.protobuf.MessageLite;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -27,16 +29,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-
-import java.io.IOException;
-import java.net.BindException;
-
 import org.apache.drill.exec.exception.DrillbitStartupException;
 import org.apache.drill.exec.proto.GeneralRPCProtos.RpcMode;
 
-import com.google.protobuf.Internal.EnumLite;
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
+import java.io.IOException;
+import java.net.BindException;
 
 /**
  * A server is bound to a port and is responsible for responding to various type of requests. In some cases, the inbound
@@ -92,7 +89,7 @@ public abstract class BasicServer<T extends EnumLite, C extends RemoteConnection
 
   protected static abstract class ServerHandshakeHandler<T extends MessageLite> extends AbstractHandshakeHandler<T> {
 
-    public ServerHandshakeHandler(EnumLite handshakeType, Parser<T> parser) {
+    public ServerHandshakeHandler(EnumLite handshakeType, Class<T> parser) {
       super(handshakeType, parser);
     }
 

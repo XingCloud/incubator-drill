@@ -17,8 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.bit;
 
-import java.util.concurrent.ConcurrentMap;
-
+import com.google.common.io.Closeables;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.exception.DrillbitStartupException;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -26,14 +25,11 @@ import org.apache.drill.exec.server.BootStrapContext;
 import org.apache.drill.exec.work.batch.BitComHandler;
 import org.apache.drill.exec.work.fragment.IncomingFragmentHandler;
 
-import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
-
 /**
  * Manages communication tunnels between nodes.
  */
 public class BitComImpl implements BitCom {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitComImpl.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitComImpl.class);
 
   private final ListenerPool listeners;
   private volatile BitServer server;

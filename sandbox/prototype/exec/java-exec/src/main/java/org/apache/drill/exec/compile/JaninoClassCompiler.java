@@ -17,21 +17,16 @@
  ******************************************************************************/
 package org.apache.drill.exec.compile;
 
+import org.apache.drill.exec.exception.ClassTransformationException;
+import org.codehaus.commons.compiler.CompileException;
+import org.codehaus.janino.*;
+import org.codehaus.janino.util.ClassFile;
+
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.apache.drill.exec.exception.ClassTransformationException;
-import org.codehaus.commons.compiler.CompileException;
-import org.codehaus.janino.ClassLoaderIClassLoader;
-import org.codehaus.janino.IClassLoader;
-import org.codehaus.janino.Java;
-import org.codehaus.janino.Parser;
-import org.codehaus.janino.Scanner;
-import org.codehaus.janino.UnitCompiler;
-import org.codehaus.janino.util.ClassFile;
-
 public class JaninoClassCompiler implements ClassCompiler{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(JaninoClassCompiler.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(JaninoClassCompiler.class);
 
   private IClassLoader compilationClassLoader;
 

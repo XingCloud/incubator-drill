@@ -20,7 +20,7 @@ package org.apache.drill.exec.exception;
 import org.apache.drill.common.exceptions.DrillException;
 
 public class DrillbitStartupException extends DrillException{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillbitStartupException.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillbitStartupException.class);
 
   public DrillbitStartupException() {
     super();

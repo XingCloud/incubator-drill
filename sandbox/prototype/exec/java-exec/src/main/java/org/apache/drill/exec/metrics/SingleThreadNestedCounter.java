@@ -26,7 +26,7 @@ import com.yammer.metrics.Counter;
  * that this one writer, many reader safe.
  */
 public class SingleThreadNestedCounter {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SingleThreadNestedCounter.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SingleThreadNestedCounter.class);
 
   private volatile long count;
   private final Counter counter;

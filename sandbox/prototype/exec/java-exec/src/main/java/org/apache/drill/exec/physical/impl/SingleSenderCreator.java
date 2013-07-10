@@ -17,8 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import java.util.List;
-
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.SingleSender;
@@ -31,6 +29,8 @@ import org.apache.drill.exec.rpc.BaseRpcOutcomeListener;
 import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.rpc.bit.BitTunnel;
 
+import java.util.List;
+
 public class SingleSenderCreator implements RootCreator<SingleSender>{
 
   @Override
@@ -42,7 +42,7 @@ public class SingleSenderCreator implements RootCreator<SingleSender>{
   
   
   private static class SingleSenderRootExec implements RootExec{
-    static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SingleSenderRootExec.class);
+    //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SingleSenderRootExec.class);
     private RecordBatch incoming;
     private BitTunnel tunnel;
     private FragmentHandle handle;
@@ -66,7 +66,7 @@ public class SingleSenderCreator implements RootCreator<SingleSender>{
         return false;
       }
       IterOutcome out = incoming.next();
-      logger.debug("Outcome of sender next {}", out);
+      //logger.debug("Outcome of sender next {}", out);
       switch(out){
       case STOP:
       case NONE:
@@ -104,7 +104,7 @@ public class SingleSenderCreator implements RootCreator<SingleSender>{
       public void success(Ack value) {
         if(value.getOk()) return;
         
-        logger.error("Downstream fragment was not accepted.  Stopping future sends.");
+        //logger.error("Downstream fragment was not accepted.  Stopping future sends.");
         // if we didn't get ack ok, we'll need to kill the query.
         context.fail(new RpcException("A downstream fragment batch wasn't accepted.  This fragment thus fails."));
         stop();

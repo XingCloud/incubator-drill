@@ -22,7 +22,7 @@ import org.apache.drill.exec.record.RawFragmentBatchProvider;
 import org.apache.drill.exec.rpc.RemoteConnection.ConnectionThrottle;
 
 public interface RawBatchBuffer extends RawFragmentBatchProvider{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RawBatchBuffer.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RawBatchBuffer.class);
   
   public void enqueue(ConnectionThrottle throttle, RawFragmentBatch batch);
   

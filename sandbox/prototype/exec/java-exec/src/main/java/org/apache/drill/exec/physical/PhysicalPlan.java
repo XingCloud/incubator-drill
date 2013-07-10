@@ -17,17 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical;
 
-import java.io.IOException;
-import java.util.List;
-
-import org.apache.drill.common.PlanProperties;
-import org.apache.drill.common.config.DrillConfig;
-import org.apache.drill.common.graph.Graph;
-import org.apache.drill.common.graph.GraphAlgos;
-import org.apache.drill.exec.physical.base.Leaf;
-import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.base.Root;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -35,10 +24,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.collect.Lists;
+import org.apache.drill.common.PlanProperties;
+import org.apache.drill.common.graph.Graph;
+import org.apache.drill.common.graph.GraphAlgos;
+import org.apache.drill.exec.physical.base.Leaf;
+import org.apache.drill.exec.physical.base.PhysicalOperator;
+import org.apache.drill.exec.physical.base.Root;
+
+import java.io.IOException;
+import java.util.List;
 
 @JsonPropertyOrder({ "head", "graph" })
 public class PhysicalPlan {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalPlan.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalPlan.class);
   
   PlanProperties properties;
   

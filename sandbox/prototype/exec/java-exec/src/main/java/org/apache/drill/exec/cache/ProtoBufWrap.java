@@ -17,27 +17,28 @@
  ******************************************************************************/
 package org.apache.drill.exec.cache;
 
+import com.google.protobuf.MessageLite;
+import com.hazelcast.nio.DataSerializable;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
-import org.apache.drill.exec.proto.ExecProtos.WorkQueueStatus;
-
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
-import com.hazelcast.nio.DataSerializable;
+//import com.google.protobuf.Parser;
 
 public abstract class ProtoBufWrap<T extends MessageLite> implements DataSerializable{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProtoBufWrap.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProtoBufWrap.class);
   
   T value;
-  final Parser<T> parser;
+  final Class<T> parser;
   
-  public ProtoBufWrap(Parser<T> parser){
+  public ProtoBufWrap(Class<T> parser){
     this(null, parser);
   }
   
-  public ProtoBufWrap(T value, Parser<T> parser){
+  public ProtoBufWrap(T value, Class<T> parser){
     this.value = value;
     this.parser = parser;
   }
@@ -47,7 +48,19 @@ public abstract class ProtoBufWrap<T extends MessageLite> implements DataSeriali
     int len = arg0.readShort();
     byte[] b = new byte[len];
     arg0.readFully(b);
-    this.value = parser.parseFrom(b);
+      Method method= null;
+      try {
+          method = parser.getDeclaredMethod("parseFrom",new Class[]{byte[].class});
+      } catch (NoSuchMethodException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+      try {
+          this.value=(T)method.invoke(null,b);
+      } catch (IllegalAccessException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      } catch (InvocationTargetException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
   }
 
   @Override

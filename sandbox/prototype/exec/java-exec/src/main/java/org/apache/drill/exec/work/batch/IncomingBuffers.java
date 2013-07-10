@@ -17,10 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.work.batch;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.drill.exec.exception.FragmentSetupException;
 import org.apache.drill.exec.physical.base.AbstractPhysicalVisitor;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
@@ -28,15 +26,14 @@ import org.apache.drill.exec.physical.base.Receiver;
 import org.apache.drill.exec.record.RawFragmentBatch;
 import org.apache.drill.exec.rpc.RemoteConnection.ConnectionThrottle;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Determines when a particular fragment has enough data for each of its receiving exchanges to commence execution.  Also monitors whether we've collected all incoming data.
  */
 public class IncomingBuffers {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(IncomingBuffers.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(IncomingBuffers.class);
 
   private final AtomicInteger streamsRemaining = new AtomicInteger(0);
   private final AtomicInteger remainingRequired = new AtomicInteger(0);
@@ -47,7 +44,7 @@ public class IncomingBuffers {
     CountRequiredFragments reqFrags = new CountRequiredFragments();
     root.accept(reqFrags, counts);
     
-    logger.debug("Came up with a list of {} required fragments.  Fragments {}", remainingRequired.get(), counts);
+    //logger.debug("Came up with a list of {} required fragments.  Fragments {}", remainingRequired.get(), counts);
     fragCounts = ImmutableMap.copyOf(counts);
 
     // Determine the total number of incoming streams that will need to be completed before we are finished.
@@ -61,7 +58,7 @@ public class IncomingBuffers {
 
   public boolean batchArrived(ConnectionThrottle throttle, RawFragmentBatch batch) throws FragmentSetupException {
     // no need to do anything if we've already enabled running.
-    logger.debug("New Batch Arrived {}", batch);
+    //logger.debug("New Batch Arrived {}", batch);
     if(batch.getHeader().getIsLastBatch()){
       streamsRemaining.decrementAndGet();
     }

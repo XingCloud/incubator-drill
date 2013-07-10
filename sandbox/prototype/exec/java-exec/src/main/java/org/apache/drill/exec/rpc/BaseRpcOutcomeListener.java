@@ -18,7 +18,7 @@
 package org.apache.drill.exec.rpc;
 
 public class BaseRpcOutcomeListener<T> implements RpcOutcomeListener<T> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BaseRpcOutcomeListener.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BaseRpcOutcomeListener.class);
 
   @Override
   public void failed(RpcException ex) {

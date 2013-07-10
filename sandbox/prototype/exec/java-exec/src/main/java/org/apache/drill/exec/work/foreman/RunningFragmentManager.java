@@ -17,10 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.exec.work.foreman;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.collect.Maps;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.FragmentRoot;
@@ -45,13 +42,15 @@ import org.apache.drill.exec.work.batch.IncomingBuffers;
 import org.apache.drill.exec.work.foreman.Foreman.ForemanManagerListener;
 import org.apache.drill.exec.work.fragment.LocalFragmentHandler;
 
-import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Each Foreman holds its own fragment manager.  This manages the events associated with execution of a particular query across all fragments.  
  */
 class RunningFragmentManager implements FragmentStatusListener{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RunningFragmentManager.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RunningFragmentManager.class);
   
   public Map<FragmentHandle, FragmentData> map = Maps.newHashMap(); // doesn't need to be
   private final TunnelManager tun;
@@ -96,7 +95,7 @@ class RunningFragmentManager implements FragmentStatusListener{
   }
     
   private void sendRemoteFragment(PlanFragment fragment){
-    logger.debug("Sending remote fragment to node {} with data {}", fragment.getAssignment(), fragment.getFragmentJson());
+    //logger.debug("Sending remote fragment to node {} with data {}", fragment.getAssignment(), fragment.getFragmentJson());
     map.put(fragment.getHandle(), new FragmentData(fragment.getHandle(), fragment.getAssignment(), false));
     FragmentSubmitListener listener = new FragmentSubmitListener(fragment.getAssignment(), fragment);
     tun.get(fragment.getAssignment()).sendFragment(listener, fragment);
@@ -105,7 +104,7 @@ class RunningFragmentManager implements FragmentStatusListener{
   
   @Override
   public void statusUpdate(FragmentStatus status) {
-    logger.debug("New fragment status was provided to Foreman of {}", status);
+    //logger.debug("New fragment status was provided to Foreman of {}", status);
     switch(status.getState()){
     case AWAITING_ALLOCATION:
       updateStatus(status);
@@ -180,13 +179,13 @@ class RunningFragmentManager implements FragmentStatusListener{
 
     @Override
     public void failed(RpcException ex) {
-      logger.error("Failure while attempting to cancel fragment {} on endpoint {}.", value, endpoint, ex);
+      //logger.error("Failure while attempting to cancel fragment {} on endpoint {}.", value, endpoint, ex);
     }
 
     @Override
     public void success(Ack value) {
       if(!value.getOk()){
-        logger.warn("Remote node {} responded negative on cancellation request for fragment {}.", endpoint, value);
+        //logger.warn("Remote node {} responded negative on cancellation request for fragment {}.", endpoint, value);
       }
       // do nothing.
     }
@@ -207,7 +206,7 @@ class RunningFragmentManager implements FragmentStatusListener{
 
     @Override
     public void failed(RpcException ex) {
-      logger.debug("Failure while sending fragment.  Stopping query.", ex);
+      //logger.debug("Failure while sending fragment.  Stopping query.", ex);
       stopQuery();
     }
 

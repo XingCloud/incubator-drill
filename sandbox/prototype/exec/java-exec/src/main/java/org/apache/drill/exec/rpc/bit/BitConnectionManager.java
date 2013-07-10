@@ -17,25 +17,22 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.bit;
 
+import com.google.protobuf.MessageLite;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.GenericFutureListener;
-
-import java.io.Closeable;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.rpc.RpcConnectionHandler;
-import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.server.BootStrapContext;
 import org.apache.drill.exec.work.batch.BitComHandler;
 
-import com.google.protobuf.MessageLite;
+import java.io.Closeable;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Manager all connections between two particular bits.
  */
 public class BitConnectionManager implements Closeable{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitConnectionManager.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitConnectionManager.class);
   
   private final DrillbitEndpoint endpoint;
   private final AtomicReference<BitConnection> connectionHolder;
@@ -58,7 +55,7 @@ public class BitConnectionManager implements Closeable{
   }
   
   public <R extends MessageLite> BitCommand<R> runCommand(BitCommand<R> cmd){
-    logger.debug("Running command {}", cmd);
+    //logger.debug("Running command {}", cmd);
     BitConnection connection = connectionHolder.get();
     if(connection != null){
       if(connection.isActive()){
@@ -152,7 +149,7 @@ public class BitConnectionManager implements Closeable{
 
         if(closeOnDupe){
           // close the incoming because another channel was created in the mean time (unless this is a self connection).
-          logger.debug("Closing incoming connection because a connection was already set.");
+          //logger.debug("Closing incoming connection because a connection was already set.");
           incoming.getChannel().close();
         }
         delegate.connectionSucceeded(connection);
@@ -172,7 +169,7 @@ public class BitConnectionManager implements Closeable{
   
   public void addServerConnection(BitConnection connection){
     // if the connection holder is not set, set it to this incoming connection.
-    logger.debug("Setting server connection.");
+    //logger.debug("Setting server connection.");
     this.connectionHolder.compareAndSet(null, connection);
   }
 

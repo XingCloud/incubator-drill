@@ -17,11 +17,12 @@
  ******************************************************************************/
 package org.apache.drill.common.logical;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.graph.Graph;
@@ -29,21 +30,14 @@ import org.apache.drill.common.graph.GraphAlgos;
 import org.apache.drill.common.logical.data.LogicalOperator;
 import org.apache.drill.common.logical.data.SinkOperator;
 import org.apache.drill.common.logical.data.SourceOperator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 @JsonPropertyOrder({ "head", "storage", "query" })
 public class LogicalPlan {
-  static final Logger logger = LoggerFactory.getLogger(LogicalPlan.class);
+  //static final Logger logger = LoggerFactory.getLogger(LogicalPlan.class);
 
   private final PlanProperties properties;
   private final Map<String, StorageEngineConfig> storageEngineMap;

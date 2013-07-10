@@ -17,19 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.coord;
 
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Collections2.transform;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.drill.common.config.DrillConfig;
-import org.apache.drill.exec.ExecConstants;
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
-
 import com.google.common.base.Function;
 import com.netflix.curator.RetryPolicy;
 import com.netflix.curator.framework.CuratorFramework;
@@ -42,6 +29,18 @@ import com.netflix.curator.x.discovery.ServiceDiscoveryBuilder;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.details.ServiceCache;
 import com.netflix.curator.x.discovery.details.ServiceCacheListener;
+import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.exec.ExecConstants;
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Collections2.transform;
 
 /**
  * Manages cluster coordination utilizing zookeeper. *
@@ -115,7 +114,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
 
     @Override
     public void cacheChanged() {
-      logger.debug("Cache changed, updating.");
+      //logger.debug("Cache changed, updating.");
       updateEndpoints();
     }
   }
@@ -170,7 +169,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
           }
         });
     } catch (Exception e) {
-      logger.error("Failure while update Drillbit service location cache.", e);
+      //logger.error("Failure while update Drillbit service location cache.", e);
     }
   }
 

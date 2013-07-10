@@ -17,23 +17,14 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import java.util.Iterator;
-
 import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.proto.UserBitShared.RecordBatchDef;
-import org.apache.drill.exec.record.BatchSchema;
-import org.apache.drill.exec.record.InvalidValueAccessor;
-import org.apache.drill.exec.record.RawFragmentBatch;
-import org.apache.drill.exec.record.RawFragmentBatchProvider;
-import org.apache.drill.exec.record.RecordBatch;
-import org.apache.drill.exec.record.RecordBatchLoader;
-import org.apache.drill.exec.record.WritableBatch;
-import org.apache.drill.exec.record.RecordBatch.IterOutcome;
+import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.vector.ValueVector;
 
 public class WireRecordBatch implements RecordBatch{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WireRecordBatch.class);
+ // static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WireRecordBatch.class);
 
   private RecordBatchLoader batchLoader;
   private RawFragmentBatchProvider fragProvider;
@@ -78,7 +69,7 @@ public class WireRecordBatch implements RecordBatch{
     try{
       if(batch == null) return IterOutcome.NONE;
 
-      logger.debug("Next received batch {}", batch);
+      //logger.debug("Next received batch {}", batch);
 
       RecordBatchDef rbd = batch.getHeader().getDef();
       boolean schemaChanged = batchLoader.load(rbd, batch.getBody());

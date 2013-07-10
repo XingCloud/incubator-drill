@@ -17,14 +17,13 @@
  ******************************************************************************/
 package org.apache.drill.exec.cache;
 
-import java.io.IOException;
-import java.util.Map;
-
+import com.google.common.collect.Maps;
 import org.apache.drill.exec.exception.DrillbitStartupException;
 import org.apache.drill.exec.proto.ExecProtos.FragmentHandle;
 import org.apache.drill.exec.proto.ExecProtos.PlanFragment;
 
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.util.Map;
 
 public class LocalCache implements DistributedCache {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LocalCache.class);

@@ -17,31 +17,20 @@
  ******************************************************************************/
 package org.apache.drill.exec.work.batch;
 
-import static org.apache.drill.exec.rpc.RpcBus.get;
+import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
-
-import java.io.IOException;
-import java.util.concurrent.ConcurrentMap;
-
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.exception.FragmentSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.FragmentRoot;
 import org.apache.drill.exec.physical.impl.ImplCreator;
 import org.apache.drill.exec.physical.impl.RootExec;
-import org.apache.drill.exec.proto.ExecProtos.BitHandshake;
-import org.apache.drill.exec.proto.ExecProtos.BitStatus;
-import org.apache.drill.exec.proto.ExecProtos.FragmentHandle;
-import org.apache.drill.exec.proto.ExecProtos.FragmentRecordBatch;
-import org.apache.drill.exec.proto.ExecProtos.FragmentStatus;
-import org.apache.drill.exec.proto.ExecProtos.PlanFragment;
-import org.apache.drill.exec.proto.ExecProtos.RpcType;
+import org.apache.drill.exec.proto.ExecProtos;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
 import org.apache.drill.exec.record.RawFragmentBatch;
 import org.apache.drill.exec.rpc.Acks;
 import org.apache.drill.exec.rpc.RemoteConnection;
 import org.apache.drill.exec.rpc.Response;
-import org.apache.drill.exec.rpc.RpcConstants;
 import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.rpc.bit.BitConnection;
 import org.apache.drill.exec.rpc.bit.BitRpcConfig;
@@ -52,13 +41,16 @@ import org.apache.drill.exec.work.WorkManager.WorkerBee;
 import org.apache.drill.exec.work.fragment.IncomingFragmentHandler;
 import org.apache.drill.exec.work.fragment.RemoteFragmentHandler;
 
-import com.google.common.collect.Maps;
-import com.google.protobuf.MessageLite;
+import java.io.IOException;
+import java.util.concurrent.ConcurrentMap;
+
+import static org.apache.drill.exec.proto.ExecProtos.*;
+import static org.apache.drill.exec.rpc.RpcBus.get;
 
 public class BitComHandlerImpl implements BitComHandler {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitComHandlerImpl.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitComHandlerImpl.class);
   
-  private ConcurrentMap<FragmentHandle, IncomingFragmentHandler> handlers = Maps.newConcurrentMap();
+  private ConcurrentMap<ExecProtos.FragmentHandle, IncomingFragmentHandler> handlers = Maps.newConcurrentMap();
   private final WorkerBee bee;
   
   public BitComHandlerImpl(WorkerBee bee) {
@@ -71,28 +63,28 @@ public class BitComHandlerImpl implements BitComHandler {
    */
   @Override
   public Response handle(BitConnection connection, int rpcType, ByteBuf pBody, ByteBuf dBody) throws RpcException {
-    if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Received bit com message of type {}", rpcType);
+    //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Received bit com message of type {}", rpcType);
 
     switch (rpcType) {
     
     case RpcType.REQ_CANCEL_FRAGMENT_VALUE:
-      FragmentHandle handle = get(pBody, FragmentHandle.PARSER);
+      FragmentHandle handle = get(pBody, FragmentHandle.class);
       cancelFragment(handle);
       return BitRpcConfig.OK;
 
     case RpcType.REQ_FRAGMENT_STATUS_VALUE:
-      connection.getListenerPool().status( get(pBody, FragmentStatus.PARSER));
+      connection.getListenerPool().status( get(pBody, FragmentStatus.class));
       // TODO: Support a type of message that has no response.
       return BitRpcConfig.OK;
 
     case RpcType.REQ_INIATILIZE_FRAGMENT_VALUE:
-      PlanFragment fragment = get(pBody, PlanFragment.PARSER);
+      PlanFragment fragment = get(pBody, PlanFragment.class);
       startNewRemoteFragment(fragment);
       return BitRpcConfig.OK;
       
     case RpcType.REQ_RECORD_BATCH_VALUE:
       try {
-        FragmentRecordBatch header = get(pBody, FragmentRecordBatch.PARSER);
+        FragmentRecordBatch header = get(pBody, FragmentRecordBatch.class);
         incomingRecordBatch(connection, header, dBody);
         return BitRpcConfig.OK;
       } catch (FragmentSetupException e) {
@@ -112,7 +104,7 @@ public class BitComHandlerImpl implements BitComHandler {
    */
   @Override
   public void startNewRemoteFragment(PlanFragment fragment){
-    logger.debug("Received remote fragment start instruction", fragment);
+    //logger.debug("Received remote fragment start instruction", fragment);
     FragmentContext context = new FragmentContext(bee.getContext(), fragment.getHandle(), null, null);
     BitTunnel tunnel = bee.getContext().getBitCom().getTunnel(fragment.getForeman());
     RemotingFragmentRunnerListener listener = new RemotingFragmentRunnerListener(context, tunnel);
@@ -161,7 +153,7 @@ public class BitComHandlerImpl implements BitComHandler {
       
       PlanFragment fragment = bee.getContext().getCache().getFragment(handle);
       if(fragment == null){
-        logger.error("Received batch where fragment was not in cache.");
+        //logger.error("Received batch where fragment was not in cache.");
         return Acks.FAIL;
       }
 
@@ -179,12 +171,12 @@ public class BitComHandlerImpl implements BitComHandler {
     
     boolean canRun = handler.handle(connection.getConnectionThrottle(), new RawFragmentBatch(fragmentBatch, body));
     if(canRun){
-      logger.debug("Arriving batch means local batch can run, starting local batch.");
+      //logger.debug("Arriving batch means local batch can run, starting local batch.");
       // if we've reached the canRun threshold, we'll proceed.  This expects handler.handle() to only return a single true.
       bee.startFragmentPendingRemote(handler);
     }
     if(fragmentBatch.getIsLastBatch() && !handler.isWaiting()){
-      logger.debug("Removing handler.  Is Last Batch {}.  Is Waiting for more {}", fragmentBatch.getIsLastBatch(), handler.isWaiting());
+      //logger.debug("Removing handler.  Is Last Batch {}.  Is Waiting for more {}", fragmentBatch.getIsLastBatch(), handler.isWaiting());
       handlers.remove(handler.getHandle());
     }
     

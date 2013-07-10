@@ -37,7 +37,7 @@ import com.yammer.metrics.Timer;
  * Contextual objects required for execution of a particular fragment.  
  */
 public class FragmentContext {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FragmentContext.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FragmentContext.class);
 
   private final static String METRIC_TIMER_FRAGMENT_TIME = MetricRegistry.name(FragmentRunner.class, "completionTimes");
   private final static String METRIC_BATCHES_COMPLETED = MetricRegistry.name(FragmentRunner.class, "batchesCompleted");
@@ -67,7 +67,7 @@ public class FragmentContext {
   }
 
   public void fail(Throwable cause) {
-    logger.debug("Fragment Context received failure. {}", cause);
+    //logger.debug("Fragment Context received failure. {}", cause);
     failed = true;
     failureCause = cause;
   }

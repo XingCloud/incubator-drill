@@ -17,8 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import java.util.List;
-
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.RandomReceiver;
@@ -26,8 +24,10 @@ import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.work.batch.IncomingBuffers;
 import org.apache.drill.exec.work.batch.RawBatchBuffer;
 
+import java.util.List;
+
 public class RandomReceiverCreator implements BatchCreator<RandomReceiver>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RandomReceiverCreator.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RandomReceiverCreator.class);
 
   @Override
   public RecordBatch getBatch(FragmentContext context, RandomReceiver receiver, List<RecordBatch> children)

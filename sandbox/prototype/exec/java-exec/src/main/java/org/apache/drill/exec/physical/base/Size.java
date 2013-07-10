@@ -18,7 +18,7 @@
 package org.apache.drill.exec.physical.base;
 
 public class Size {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Size.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Size.class);
 
   private final long rowCount;
   private final int rowSize;

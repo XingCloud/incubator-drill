@@ -26,7 +26,7 @@ import com.netflix.curator.x.discovery.ServiceInstanceBuilder;
 import com.netflix.curator.x.discovery.details.InstanceSerializer;
 
 public class DrillServiceInstanceHelper {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillServiceInstanceHelper.class);
+ // static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillServiceInstanceHelper.class);
 
   
   public static final InstanceSerializer<DrillbitEndpoint> SERIALIZER = new DrillServiceInstanceSerializer();

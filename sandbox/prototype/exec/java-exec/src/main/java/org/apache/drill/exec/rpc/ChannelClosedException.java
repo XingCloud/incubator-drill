@@ -18,7 +18,7 @@
 package org.apache.drill.exec.rpc;
 
 public class ChannelClosedException extends RpcException{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ChannelClosedException.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ChannelClosedException.class);
 
   public ChannelClosedException() {
     super();

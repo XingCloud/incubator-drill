@@ -17,32 +17,22 @@
  ******************************************************************************/
 package org.apache.drill.exec.cache;
 
-import java.io.IOException;
-import java.util.List;
-
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.hazelcast.config.Config;
+import com.hazelcast.core.*;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.cache.ProtoBufImpl.HWorkQueueStatus;
 import org.apache.drill.exec.cache.ProtoBufImpl.HandlePlan;
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.ExecProtos.FragmentHandle;
 import org.apache.drill.exec.proto.ExecProtos.PlanFragment;
 import org.apache.drill.exec.proto.ExecProtos.WorkQueueStatus;
 
-import com.beust.jcommander.internal.Lists;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.ITopic;
-import com.hazelcast.core.Message;
-import com.hazelcast.core.MessageListener;
+import java.io.IOException;
 
 public class HazelCache implements DistributedCache {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HazelCache.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HazelCache.class);
 
   private final String instanceName;
   private HazelcastInstance instance;
@@ -58,7 +48,7 @@ public class HazelCache implements DistributedCache {
 
     @Override
     public void onMessage(Message<HWorkQueueStatus> wrapped) {
-      logger.debug("Received new queue length message.");
+      //logger.debug("Received new queue length message.");
       endpoints.put(wrapped.getMessageObject().get(), 0);
     }
     

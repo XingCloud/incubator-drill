@@ -17,27 +17,22 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import java.util.Collections;
-import java.util.List;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.AbstractPhysicalVisitor;
 import org.apache.drill.exec.physical.base.FragmentRoot;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.Scan;
-import org.apache.drill.exec.physical.config.MockScanBatchCreator;
-import org.apache.drill.exec.physical.config.MockScanPOP;
-import org.apache.drill.exec.physical.config.RandomReceiver;
-import org.apache.drill.exec.physical.config.Screen;
-import org.apache.drill.exec.physical.config.SingleSender;
+import org.apache.drill.exec.physical.config.*;
 import org.apache.drill.exec.record.RecordBatch;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import java.util.Collections;
+import java.util.List;
 
 public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentContext, ExecutionSetupException>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ImplCreator.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ImplCreator.class);
 
   private MockScanBatchCreator msc = new MockScanBatchCreator();
   private ScreenCreator sc = new ScreenCreator();
@@ -58,6 +53,21 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     Preconditions.checkNotNull(context);
     
     if(scan instanceof MockScanPOP){
+        /*
+        HBaseScanPOP.ScanType[] types=new HBaseScanPOP.ScanType[4];
+        types[0]=new HBaseScanPOP.ScanType("day", SchemaDefProtos.MinorType.DATE, SchemaDefProtos.DataMode.REQUIRED);
+        types[1]=new HBaseScanPOP.ScanType("event", SchemaDefProtos.MinorType.VARCHAR4, SchemaDefProtos.DataMode.REQUIRED);
+        types[2]=new HBaseScanPOP.ScanType("uid", SchemaDefProtos.MinorType.INT, SchemaDefProtos.DataMode.REQUIRED);
+        types[3]=new HBaseScanPOP.ScanType("val", SchemaDefProtos.MinorType.UINT8, SchemaDefProtos.DataMode.REQUIRED);
+        byte[] srk= Bytes.toBytes("20020101click.shutdowm.\\xFF\\x15\\x00K\\x91\\x18");
+        byte[] enk=Bytes.toBytes("20020101exit.\\xFF2\\x00\\x15\\x95\\xC6");
+        HBaseScanPOP.HBaseScanEntry entry=new HBaseScanPOP.HBaseScanEntry(100,types,srk,enk,"sof-dsk_deu");
+        HBaseRecordReader reader=new HBaseRecordReader(entry,null);
+        List<RecordReader> readerList=new ArrayList<RecordReader>();
+        readerList.add(reader);
+        Iterator<RecordReader> iter=readerList.iterator();
+        ScanBatch batch=new ScanBatch(context,iter);
+        return batch;*/
       return msc.getBatch(context, (MockScanPOP) scan, Collections.<RecordBatch> emptyList());
     }else{
       return super.visitScan(scan, context);  

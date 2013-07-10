@@ -17,14 +17,13 @@
  ******************************************************************************/
 package org.apache.drill.exec.coord;
 
+import com.google.common.collect.Maps;
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
-
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
-
-import com.google.common.collect.Maps;
 
 public class LocalClusterCoordinator extends ClusterCoordinator{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LocalClusterCoordinator.class);

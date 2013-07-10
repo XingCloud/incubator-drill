@@ -17,8 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.exec.server;
 
-import java.io.Closeable;
-
+import com.google.common.io.Closeables;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.cache.DistributedCache;
@@ -31,13 +30,13 @@ import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.service.ServiceEngine;
 import org.apache.drill.exec.work.WorkManager;
 
-import com.google.common.io.Closeables;
+import java.io.Closeable;
 
 /**
  * Starts, tracks and stops all the required services for a Drillbit daemon to work.
  */
 public class Drillbit implements Closeable{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Drillbit.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Drillbit.class);
 
   public static Drillbit start(StartupOptions options) throws DrillbitStartupException {
     return start(DrillConfig.create(options.getConfigLocation()));
@@ -46,13 +45,13 @@ public class Drillbit implements Closeable{
   public static Drillbit start(DrillConfig config) throws DrillbitStartupException {
     Drillbit bit;
     try {
-      logger.debug("Setting up Drillbit.");
+      //logger.debug("Setting up Drillbit.");
       bit = new Drillbit(config, null);
     } catch (Exception ex) {
       throw new DrillbitStartupException("Failure while initializing values in Drillbit.", ex);
     }
     try {
-      logger.debug("Starting Drillbit.");
+      //logger.debug("Starting Drillbit.");
       bit.run();
     } catch (Exception e) {
       throw new DrillbitStartupException("Failure during initial startup of Drillbit.", e);
@@ -104,14 +103,14 @@ public class Drillbit implements Closeable{
     try {
       Thread.sleep(context.getConfig().getInt(ExecConstants.ZK_REFRESH) * 2);
     } catch (InterruptedException e) {
-      logger.warn("Interrupted while sleeping during coordination deregistration.");
+      //logger.warn("Interrupted while sleeping during coordination deregistration.");
     }
 
     Closeables.closeQuietly(engine);
     Closeables.closeQuietly(coord);
     Closeables.closeQuietly(manager);
     Closeables.closeQuietly(context);
-    logger.info("Shutdown completed.");
+    //logger.info("Shutdown completed.");
   }
 
   private class ShutdownThread extends Thread {
@@ -121,7 +120,7 @@ public class Drillbit implements Closeable{
 
     @Override
     public void run() {
-      logger.info("Received shutdown request.");
+      //logger.info("Received shutdown request.");
       close();
     }
 

@@ -17,6 +17,22 @@
  ******************************************************************************/
 package org.apache.drill.exec.compile;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.io.Resources;
+import org.apache.drill.exec.exception.ClassTransformationException;
+import org.codehaus.commons.compiler.CompileException;
+import org.objectweb.asm.*;
+import org.objectweb.asm.commons.EmptyVisitor;
+import org.objectweb.asm.commons.RemappingClassAdapter;
+import org.objectweb.asm.commons.RemappingMethodAdapter;
+import org.objectweb.asm.commons.SimpleRemapper;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.util.TraceClassVisitor;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -27,29 +43,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.drill.exec.exception.ClassTransformationException;
-import org.codehaus.commons.compiler.CompileException;
-import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.commons.EmptyVisitor;
-import org.objectweb.asm.commons.RemappingClassAdapter;
-import org.objectweb.asm.commons.RemappingMethodAdapter;
-import org.objectweb.asm.commons.SimpleRemapper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.util.TraceClassVisitor;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.io.Resources;
-
 public class ClassTransformer {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ClassTransformer.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ClassTransformer.class);
 
   private AtomicLong index = new AtomicLong(0);
   private AtomicLong interfaceIndex = new AtomicLong(0);

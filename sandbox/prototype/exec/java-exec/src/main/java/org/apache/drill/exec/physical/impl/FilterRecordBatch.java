@@ -25,7 +25,7 @@ import org.apache.drill.exec.record.vector.SelectionVector;
 import org.apache.drill.exec.record.vector.ValueVector;
 
 public abstract class FilterRecordBatch implements RecordBatch {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FilterRecordBatch.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FilterRecordBatch.class);
 
   private RecordBatch incoming;
   private SelectionVector selectionVector;

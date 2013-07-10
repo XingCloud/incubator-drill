@@ -22,7 +22,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 
 public class DirectBufferAllocator extends BufferAllocator{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DirectBufferAllocator.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DirectBufferAllocator.class);
 
   private final PooledByteBufAllocator buffer = new PooledByteBufAllocator(true);
   

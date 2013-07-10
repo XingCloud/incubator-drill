@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonTypeName("filter")
 public class Filter extends AbstractSingle {
 
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Filter.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Filter.class);
 
   private final LogicalExpression expr;
   private final float selectivity;

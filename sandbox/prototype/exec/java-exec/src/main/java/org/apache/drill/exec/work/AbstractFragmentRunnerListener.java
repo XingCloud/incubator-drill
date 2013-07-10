@@ -24,7 +24,7 @@ import org.apache.drill.exec.proto.ExecProtos.FragmentStatus.FragmentState;
 import org.apache.drill.exec.work.foreman.ErrorHelper;
 
 public class AbstractFragmentRunnerListener implements FragmentRunnerListener{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractFragmentRunnerListener.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractFragmentRunnerListener.class);
   
   private FragmentContext context;
   private volatile long startNanos;

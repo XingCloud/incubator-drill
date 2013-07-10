@@ -30,7 +30,7 @@ import com.google.common.collect.Iterators;
  * @param <T> The type of Exec model supported.
  */
 public abstract class AbstractSingle extends AbstractBase{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractSingle.class);
+ // static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractSingle.class);
   
   protected final PhysicalOperator child;
 

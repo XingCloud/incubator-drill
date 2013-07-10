@@ -17,20 +17,19 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.config;
 
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.exec.physical.base.AbstractSender;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import java.util.List;
 
 @JsonTypeName("range-sender")
 public class RangeSender extends AbstractSender{
 
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RangeSender.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RangeSender.class);
 
   List<EndpointPartition> partitions;
   

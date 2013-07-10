@@ -46,7 +46,7 @@ public class EnumerableDrill<E>
     extends AbstractEnumerable<E>
     implements Enumerable<E> {
   private final LogicalPlan plan;
-  final BlockingQueue<Object> queue = new ArrayBlockingQueue<>(100);
+  final BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>(100);
   final DrillConfig config;
   private final String holder;
   private final List<String> fields;
@@ -74,7 +74,7 @@ public class EnumerableDrill<E>
       final List<String> fieldNames, Class<E> clazz) {
     DrillConfig config = DrillConfig.create();
     final LogicalPlan parse = LogicalPlan.parse(config, plan);
-    return new EnumerableDrill<>(config, parse, clazz, fieldNames);
+    return new EnumerableDrill<E>(config, parse, clazz, fieldNames);
   }
 
   /** Runs the plan as a background task. */

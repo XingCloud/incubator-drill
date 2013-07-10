@@ -19,16 +19,15 @@ package org.apache.drill.exec.memory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import org.apache.drill.common.config.DrillConfig;
 
 import java.io.Closeable;
-
-import org.apache.drill.common.config.DrillConfig;
 
 /**
  * Wrapper class to deal with byte buffer allocation. Ensures users only use designated methods.  Also allows inser 
  */
 public abstract class BufferAllocator implements Closeable{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BufferAllocator.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BufferAllocator.class);
   
   /**
    * Allocate a new or reused buffer of the provided size.  Note that the buffer may technically be larger than the requested size for rounding purposes.  However, the buffers capacity will be set to the configured size.

@@ -17,20 +17,11 @@
  ******************************************************************************/
 package org.apache.drill.exec.client;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.get;
-import static org.apache.drill.exec.proto.UserProtos.QueryResultsMode.STREAM_FULL;
-import static org.apache.drill.exec.proto.UserProtos.RunQuery.newBuilder;
+import com.google.common.util.concurrent.AbstractCheckedFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
-
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.coord.ClusterCoordinator;
 import org.apache.drill.exec.coord.ZKClusterCoordinator;
@@ -45,8 +36,15 @@ import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.rpc.user.UserClient;
 import org.apache.drill.exec.rpc.user.UserResultsListener;
 
-import com.google.common.util.concurrent.AbstractCheckedFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Vector;
+
+import static com.google.common.base.Preconditions.checkState;
+import static org.apache.drill.exec.proto.UserProtos.QueryResultsMode.STREAM_FULL;
+import static org.apache.drill.exec.proto.UserProtos.RunQuery.newBuilder;
 
 /**
  * Thin wrapper around a UserClient that handles connect/close and transforms String into ByteBuf
@@ -94,7 +92,7 @@ public class DrillClient implements Closeable{
     ByteBufAllocator bb = new PooledByteBufAllocator(true);
     this.client = new UserClient(bb, new NioEventLoopGroup(1, new NamedThreadFactory("Client-")));
     try {
-      logger.debug("Connecting to server {}:{}", endpoint.getAddress(), endpoint.getUserPort());
+      logger.info("Connecting to server {}:{}", endpoint.getAddress(), endpoint.getUserPort());
       FutureHandler f = new FutureHandler();
       this.client.connect(f, endpoint);
       f.checkedGet();
@@ -132,13 +130,13 @@ public class DrillClient implements Closeable{
     
     @Override
     public void submissionFailed(RpcException ex) {
-      logger.debug("Submission failed.", ex);
+      //logger.debug("Submission failed.", ex);
       future.setException(ex);
     }
 
     @Override
     public void resultArrived(QueryResultBatch result) {
-      logger.debug("Result arrived.  Is Last Chunk: {}.  Full Result: {}", result.getHeader().getIsLastChunk(), result);
+      //logger.debug("Result arrived.  Is Last Chunk: {}.  Full Result: {}", result.getHeader().getIsLastChunk(), result);
       results.add(result);
       if(result.getHeader().getIsLastChunk()){
         future.set(results);

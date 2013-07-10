@@ -17,19 +17,16 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.base;
 
-import java.util.Iterator;
-import java.util.List;
-
-import org.apache.drill.exec.physical.OperatorCost;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 
+import java.util.Iterator;
+import java.util.List;
+
 public abstract class AbstractReceiver extends AbstractBase implements Receiver{
 
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractReceiver.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractReceiver.class);
 
   private final int oppositeMajorFragmentId; 
   

@@ -17,18 +17,16 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.base;
 
-import java.util.Iterator;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Iterators;
 import org.apache.drill.exec.physical.OperatorCost;
 import org.apache.drill.exec.physical.ReadEntry;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.Iterators;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class AbstractScan<R extends ReadEntry> extends AbstractBase implements Scan<R>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractScan.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractScan.class);
   
   protected final List<R> readEntries;
   private final OperatorCost cost;

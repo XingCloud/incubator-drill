@@ -23,7 +23,7 @@ import org.apache.drill.exec.planner.fragment.Wrapper;
 
 public abstract class AbstractOpWrapperVisitor<RET, EXCEP extends Throwable> extends
     AbstractPhysicalVisitor<RET, Wrapper, EXCEP> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractOpWrapperVisitor.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractOpWrapperVisitor.class);
 
   @Override
   public final RET visitExchange(Exchange exchange, Wrapper wrapper) throws EXCEP {

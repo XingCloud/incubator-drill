@@ -18,19 +18,16 @@
 package org.apache.drill.exec.rpc;
 
 import io.netty.channel.ChannelFuture;
-import io.netty.util.concurrent.GenericFutureListener;
+import org.apache.drill.exec.proto.GeneralRPCProtos.RpcFailure;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-
-import org.apache.drill.exec.proto.GeneralRPCProtos.RpcFailure;
 
 /**
  * Manages the creation of rpc futures for a particular socket.
  */
 public class CoordinationQueue {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CoordinationQueue.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CoordinationQueue.class);
 
   private final PositiveAtomicInteger circularInt = new PositiveAtomicInteger();
   private final Map<Integer, RpcOutcome<?>> map;
@@ -121,7 +118,7 @@ public class CoordinationQueue {
   private RpcOutcome<?> removeFromMap(int coordinationId) {
     RpcOutcome<?> rpc = map.remove(coordinationId);
     if (rpc == null) {
-      logger.error("Rpc is null.");
+      //logger.error("Rpc is null.");
       throw new IllegalStateException(
           "Attempting to retrieve an rpc that wasn't first stored in the rpc coordination queue.  This would most likely happen if you're opposite endpoint sent multiple messages on the same coordination id.");
     }

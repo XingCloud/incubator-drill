@@ -17,16 +17,16 @@
  ******************************************************************************/
 package org.apache.drill.exec.server;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Parameters(separators = "=")
 public class StartupOptions {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(StartupOptions.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(StartupOptions.class);
 
   @Parameter(names={"-h", "--help"}, description="Provide description of usage.", help=true)
   private boolean help = false;
@@ -53,7 +53,7 @@ public class StartupOptions {
   }
 
   public static StartupOptions parse(String[] cliArgs) {
-    logger.debug("Parsing arguments.");
+    //logger.debug("Parsing arguments.");
     StartupOptions args = new StartupOptions();
     JCommander jc = new JCommander(args, cliArgs);
     if(args.help){

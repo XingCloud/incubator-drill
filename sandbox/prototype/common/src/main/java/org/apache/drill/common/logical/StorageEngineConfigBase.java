@@ -17,13 +17,11 @@
  ******************************************************************************/
 package org.apache.drill.common.logical;
 
-import java.util.List;
-
 import org.apache.drill.common.config.CommonConstants;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.util.PathScanner;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 public abstract class StorageEngineConfigBase implements StorageEngineConfig{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(StorageEngineConfigBase.class);
@@ -32,7 +30,7 @@ public abstract class StorageEngineConfigBase implements StorageEngineConfig{
   public synchronized static Class<?>[] getSubTypes(DrillConfig config){
     List<String> packages = config.getStringList(CommonConstants.STORAGE_ENGINE_CONFIG_SCAN_PACKAGES);
     Class<?>[] sec = PathScanner.scanForImplementationsArr(StorageEngineConfig.class, packages);
-    logger.debug("Adding Storage Engine Configs including {}", (Object) sec );
+    //logger.debug("Adding Storage Engine Configs including {}", (Object) sec );
     return sec;
   }
   

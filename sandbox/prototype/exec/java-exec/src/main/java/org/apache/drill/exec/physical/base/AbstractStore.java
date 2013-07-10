@@ -21,7 +21,7 @@ package org.apache.drill.exec.physical.base;
 
 
 public abstract class AbstractStore extends AbstractSingle implements Store, Root{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractStore.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractStore.class);
 
   public AbstractStore(PhysicalOperator child) {
     super(child);

@@ -17,6 +17,9 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
+import com.google.common.base.Preconditions;
+import com.google.protobuf.Internal.EnumLite;
+import com.google.protobuf.MessageLite;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.Channel;
@@ -24,20 +27,14 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.util.concurrent.GenericFutureListener;
-
-import java.io.Closeable;
-import java.util.Arrays;
-import java.util.concurrent.CancellationException;
-
 import org.apache.drill.exec.proto.GeneralRPCProtos.RpcFailure;
 import org.apache.drill.exec.proto.GeneralRPCProtos.RpcMode;
-import org.slf4j.Logger;
 
-import com.google.common.base.Preconditions;
-import com.google.protobuf.Internal.EnumLite;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
+import java.io.Closeable;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * The Rpc Bus deals with incoming and outgoing communication and is used on both the server and the client side of a
@@ -46,7 +43,7 @@ import com.google.protobuf.Parser;
  * @param <T>
  */
 public abstract class RpcBus<T extends EnumLite, C extends RemoteConnection> implements Closeable {
-  final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+  //final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
   protected final CoordinationQueue queue = new CoordinationQueue(16, 16);
 
@@ -107,8 +104,8 @@ public abstract class RpcBus<T extends EnumLite, C extends RemoteConnection> imp
   public class ChannelClosedHandler implements GenericFutureListener<ChannelFuture> {
     @Override
     public void operationComplete(ChannelFuture future) throws Exception {
-      logger.info("Channel closed between local {} and remote {}", future.channel().localAddress(), future.channel()
-          .remoteAddress());
+      //logger.info("Channel closed between local {} and remote {}", future.channel().localAddress(), future.channel()
+          //.remoteAddress());
       closeQueueDueToChannelClose();
     }
   }
@@ -133,7 +130,7 @@ public abstract class RpcBus<T extends EnumLite, C extends RemoteConnection> imp
     public void messageReceived(ChannelHandlerContext ctx, InboundRpcMessage msg) throws Exception {
       if (!ctx.channel().isOpen()) return;
 
-      if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Received message {}", msg);
+      if (RpcConstants.EXTRA_DEBUGGING) //logger.debug("Received message {}", msg);
       switch (msg.mode) {
       case REQUEST:
         // handle message and ack.
@@ -141,7 +138,7 @@ public abstract class RpcBus<T extends EnumLite, C extends RemoteConnection> imp
         assert rpcConfig.checkResponseSend(r.rpcType, r.pBody.getClass());
         OutboundRpcMessage outMessage = new OutboundRpcMessage(RpcMode.RESPONSE, r.rpcType, msg.coordinationId,
             r.pBody, r.dBodies);
-        if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Adding message to outbound buffer. {}", outMessage);
+        if (RpcConstants.EXTRA_DEBUGGING) //logger.debug("Adding message to outbound buffer. {}", outMessage);
         ctx.write(outMessage);
         break;
 
@@ -149,10 +146,13 @@ public abstract class RpcBus<T extends EnumLite, C extends RemoteConnection> imp
         MessageLite m = getResponseDefaultInstance(msg.rpcType);
         assert rpcConfig.checkReceive(msg.rpcType, m.getClass());
         RpcOutcome<?> rpcFuture = queue.getFuture(msg.rpcType, msg.coordinationId, m.getClass());
-        Parser<?> parser = m.getParserForType();
-        Object value = parser.parseFrom(new ByteBufInputStream(msg.pBody, msg.pBody.readableBytes()));
+        Method method=m.getClass().getDeclaredMethod("parseFrom",new Class[]{InputStream.class});
+        //Parser<?> parser = m.getParserForType();
+        //Object value = parser.parseFrom(new ByteBufInputStream(msg.pBody, msg.pBody.readableBytes()));
+        Object value=method.invoke(null,
+                new Object[]{new ByteBufInputStream(msg.pBody, msg.pBody.readableBytes()) });
         rpcFuture.set(value);
-        if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Updated rpc future {} with value {}", rpcFuture, value);
+        if (RpcConstants.EXTRA_DEBUGGING) //logger.debug("Updated rpc future {} with value {}", rpcFuture, value);
 
         break;
 
@@ -160,7 +160,7 @@ public abstract class RpcBus<T extends EnumLite, C extends RemoteConnection> imp
         RpcFailure failure = RpcFailure.parseFrom(new ByteBufInputStream(msg.pBody, msg.pBody.readableBytes()));
         queue.updateFailedFuture(msg.coordinationId, failure);
         if (RpcConstants.EXTRA_DEBUGGING)
-          logger.debug("Updated rpc future with coordinationId {} with failure ", msg.coordinationId, failure);
+          //logger.debug("Updated rpc future with coordinationId {} with failure ", msg.coordinationId, failure);
         break;
 
       default:
@@ -204,12 +204,28 @@ public abstract class RpcBus<T extends EnumLite, C extends RemoteConnection> imp
 //
 //  }
 
-  public static <T> T get(ByteBuf pBody, Parser<T> parser) throws RpcException{
+  public static <T> T get(ByteBuf pBody, Class<T> parser) throws RpcException{
+      T result=null;
     try {
       ByteBufInputStream is = new ByteBufInputStream(pBody);
-      return parser.parseFrom(is);
-    } catch (InvalidProtocolBufferException e) {
+        try {
+            //MessageLite instance=(MessageLite)parser.newInstance();
+            try {
+                Method method=parser.getDeclaredMethod("parseFrom",new Class[]{InputStream.class});
+                try {
+                     result=(T)method.invoke(null,new Object[]{is});
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }  catch (IllegalAccessException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    } catch (Exception e) {
       throw new RpcException(String.format("Failure while decoding message with parser of type. %s", parser.getClass().getCanonicalName()), e);
     }
+      return result;
   }
 }

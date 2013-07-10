@@ -17,8 +17,11 @@
  ******************************************************************************/
 package org.apache.drill.exec.planner;
 
-import java.io.IOException;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.coord.DrillbitEndpointSerDe;
@@ -31,14 +34,10 @@ import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.SchemaDefProtos.MajorType;
 import org.apache.drill.exec.record.MajorTypeSerDe;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.InjectableValues;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import java.io.IOException;
 
 public class PhysicalPlanReader {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalPlanReader.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalPlanReader.class);
 
   private final ObjectReader physicalPlanReader;
   private final ObjectMapper mapper;
@@ -71,12 +70,12 @@ public class PhysicalPlanReader {
   }
   
   public PhysicalPlan readPhysicalPlan(String json) throws JsonProcessingException, IOException {
-    logger.debug("Reading physical plan {}", json);
+    //logger.debug("Reading physical plan {}", json);
     return physicalPlanReader.readValue(json);
   }
 
   public FragmentRoot readFragmentOperator(String json) throws JsonProcessingException, IOException {
-    logger.debug("Attempting to read {}", json);
+    //logger.debug("Attempting to read {}", json);
     PhysicalOperator op = operatorReader.readValue(json);
     if(op instanceof FragmentLeaf){
       return (FragmentRoot) op;
@@ -86,7 +85,7 @@ public class PhysicalPlanReader {
   }
 
   public LogicalPlan readLogicalPlan(String json) throws JsonProcessingException, IOException{
-    logger.debug("Reading logical plan {}", json);
+    //logger.debug("Reading logical plan {}", json);
     return logicalPlanReader.readValue(json);
   }
 }

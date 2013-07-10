@@ -17,11 +17,11 @@
  ******************************************************************************/
 package org.apache.drill.exec.work.foreman;
 
-import java.util.UUID;
-
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.UserBitShared.DrillPBError;
 import org.slf4j.Logger;
+
+import java.util.UUID;
 
 
 public class ErrorHelper {
@@ -39,7 +39,7 @@ public class ErrorHelper {
     builder.setErrorType(0);
     
     // record the error to the log for later reference.
-    logger.error("Error {}: {}", id, message, t);
+    //logger.error("Error {}: {}", id, message, t);
     
     
     return builder.build();

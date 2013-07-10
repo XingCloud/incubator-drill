@@ -17,25 +17,21 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc.bit;
 
+import com.google.protobuf.MessageLite;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.GenericFutureListener;
-
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.ExecProtos.BitHandshake;
 import org.apache.drill.exec.proto.ExecProtos.RpcType;
 import org.apache.drill.exec.rpc.BasicServer;
 import org.apache.drill.exec.rpc.Response;
 import org.apache.drill.exec.rpc.RpcException;
-import org.apache.drill.exec.rpc.bit.BitConnectionManager.CloseHandlerCreator;
 import org.apache.drill.exec.server.BootStrapContext;
 import org.apache.drill.exec.work.batch.BitComHandler;
 
-import com.google.protobuf.MessageLite;
-
 public class BitServer extends BasicServer<RpcType, BitConnection>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitServer.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitServer.class);
   
   private final BitComHandler handler;
   private final ListenerPool listeners;
@@ -73,7 +69,7 @@ public class BitServer extends BasicServer<RpcType, BitConnection>{
   
   @Override
   protected ServerHandshakeHandler<BitHandshake> getHandshakeHandler(final BitConnection connection) {
-    return new ServerHandshakeHandler<BitHandshake>(RpcType.HANDSHAKE, BitHandshake.PARSER){
+    return new ServerHandshakeHandler<BitHandshake>(RpcType.HANDSHAKE, BitHandshake.class){
       
       @Override
       public MessageLite getHandshakeResponse(BitHandshake inbound) throws Exception {

@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 abstract class NestedConfig implements Config {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(NestedConfig.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(NestedConfig.class);
 
   private final Config c;
 

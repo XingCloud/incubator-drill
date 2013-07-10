@@ -17,10 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.coord;
 
-import java.io.IOException;
-
-import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
-
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -29,9 +25,12 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+
+import java.io.IOException;
 
 public class DrillbitEndpointSerDe {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillbitEndpointSerDe.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillbitEndpointSerDe.class);
   
   public static class De extends StdDeserializer<DrillbitEndpoint> {
 

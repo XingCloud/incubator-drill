@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OrderDef {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OrderDef.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OrderDef.class);
 
   private final Direction direction;
   private final LogicalExpression expr;

@@ -18,5 +18,5 @@
 package org.apache.drill.exec.rpc.bit;
 
 public class SendProgress {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SendProgress.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SendProgress.class);
 }

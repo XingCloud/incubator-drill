@@ -17,15 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import java.util.List;
-
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.record.RecordBatch;
 
+import java.util.List;
+
 public interface RootCreator<T extends PhysicalOperator> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RootCreator.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RootCreator.class);
   
   public RootExec getRoot(FragmentContext context, T config, List<RecordBatch> children) throws ExecutionSetupException;
 }

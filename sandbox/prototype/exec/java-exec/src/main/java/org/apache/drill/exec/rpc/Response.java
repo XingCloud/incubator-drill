@@ -17,15 +17,12 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
-import org.apache.drill.exec.proto.ExecProtos.RpcType;
-
-import io.netty.buffer.ByteBuf;
-
 import com.google.protobuf.Internal.EnumLite;
 import com.google.protobuf.MessageLite;
+import io.netty.buffer.ByteBuf;
 
 public class Response {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Response.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Response.class);
   
   public EnumLite rpcType;
   public MessageLite pBody;

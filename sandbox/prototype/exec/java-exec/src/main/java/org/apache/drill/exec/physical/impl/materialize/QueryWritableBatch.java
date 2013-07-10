@@ -17,15 +17,13 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl.materialize;
 
+import io.netty.buffer.ByteBuf;
+import org.apache.drill.exec.proto.UserProtos.QueryResult;
+
 import java.util.Arrays;
 
-import io.netty.buffer.ByteBuf;
-
-import org.apache.drill.exec.proto.UserProtos.QueryResult;
-import org.apache.drill.exec.record.WritableBatch;
-
 public class QueryWritableBatch {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(QueryWritableBatch.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(QueryWritableBatch.class);
   
   private final QueryResult header;
   private final ByteBuf[] buffers;

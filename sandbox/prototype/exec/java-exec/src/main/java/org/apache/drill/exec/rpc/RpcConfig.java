@@ -17,15 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
-import java.util.Map;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.protobuf.Internal.EnumLite;
 import com.google.protobuf.MessageLite;
 
+import java.util.Map;
+
 public class RpcConfig {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcConfig.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcConfig.class);
 
   private final String name;
   private final Map<EnumLite, RpcMessageType<?, ?, ?>> sendMap;
@@ -42,7 +42,7 @@ public class RpcConfig {
   }
 
   public boolean checkReceive(int rpcType, Class<?> receiveClass){
-    if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("Checking reception for rpcType %d and receive class %s.", rpcType, receiveClass));
+    //if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("Checking reception for rpcType %d and receive class %s.", rpcType, receiveClass));
     RpcMessageType<?,?,?> type = receiveMap.get(rpcType);
     if(type == null) throw new IllegalStateException(String.format("%s: There is no defined RpcMessage type for a Rpc receive type number of %s.", name, rpcType));
 
@@ -53,7 +53,7 @@ public class RpcConfig {
   }
   
   public boolean checkSend(EnumLite send, Class<?> sendClass, Class<?> receiveClass){
-    if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("Checking send classes for send RpcType %s.  Send Class is %s and Receive class is %s.", send, sendClass, receiveClass));
+    //if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("Checking send classes for send RpcType %s.  Send Class is %s and Receive class is %s.", send, sendClass, receiveClass));
     RpcMessageType<?,?,?> type = sendMap.get(send);
     if(type == null) throw new IllegalStateException(String.format("%s: There is no defined RpcMessage type for a Rpc send type of %s.", name, send));
 
@@ -64,7 +64,7 @@ public class RpcConfig {
   }
   
   public boolean checkResponseSend(EnumLite responseType, Class<?> responseClass){
-    if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("Checking responce send of type %s with response class of %s.",  responseType, responseClass));
+    //if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("Checking responce send of type %s with response class of %s.",  responseType, responseClass));
     RpcMessageType<?,?,?> type = receiveMap.get(responseType.getNumber());
     if(type == null) throw new IllegalStateException(String.format("%s: There is no defined RpcMessage type for a Rpc response of type %s.", name, responseType));
     if(type.getRet() != responseClass) throw new IllegalStateException(String.format("%s: The definition for the response doesn't match implementation code.  The definition is %s however the current response is trying to response with an object of type %s.", name, type, responseClass.getCanonicalName()));

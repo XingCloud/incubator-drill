@@ -17,17 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
-import java.util.Arrays;
-
-import io.netty.buffer.ByteBuf;
-
-import org.apache.drill.exec.proto.GeneralRPCProtos.RpcMode;
-
 import com.google.protobuf.Internal.EnumLite;
 import com.google.protobuf.MessageLite;
+import io.netty.buffer.ByteBuf;
+import org.apache.drill.exec.proto.GeneralRPCProtos.RpcMode;
+
+import java.util.Arrays;
 
 public class OutboundRpcMessage extends RpcMessage {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OutboundRpcMessage.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OutboundRpcMessage.class);
 
   final MessageLite pBody;
   public ByteBuf[] dBodies;
@@ -50,7 +48,7 @@ public class OutboundRpcMessage extends RpcMessage {
     int len = 0;
     
     for (int i = 0; i < dBodies.length; i++) {
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Reader Index {}, Writer Index {}", dBodies[i].readerIndex(), dBodies[i].writerIndex());
+      //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Reader Index {}, Writer Index {}", dBodies[i].readerIndex(), dBodies[i].writerIndex());
       len += dBodies[i].readableBytes();
     }
     return len;

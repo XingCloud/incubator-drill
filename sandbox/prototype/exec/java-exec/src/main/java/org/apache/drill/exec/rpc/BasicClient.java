@@ -17,24 +17,17 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
+import com.google.protobuf.Internal.EnumLite;
+import com.google.protobuf.MessageLite;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.GenericFutureListener;
-
 import org.apache.drill.exec.rpc.RpcConnectionHandler.FailureType;
-
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.Internal.EnumLite;
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
+//import com.google.protobuf.Parser;
 
 public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection, HANDSHAKE_SEND extends MessageLite, HANDSHAKE_RESPONSE extends MessageLite>
     extends RpcBus<T, R> {
@@ -45,10 +38,10 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
   protected R connection;
   private final T handshakeType;
   private final Class<HANDSHAKE_RESPONSE> responseClass;
-  private final Parser<HANDSHAKE_RESPONSE> handshakeParser;
+  private final Class<HANDSHAKE_RESPONSE> handshakeParser;
 
   public BasicClient(RpcConfig rpcMapping, ByteBufAllocator alloc, EventLoopGroup eventLoopGroup, T handshakeType,
-      Class<HANDSHAKE_RESPONSE> responseClass, Parser<HANDSHAKE_RESPONSE> handshakeParser) {
+      Class<HANDSHAKE_RESPONSE> responseClass, Class<HANDSHAKE_RESPONSE> handshakeParser) {
     super(rpcMapping);
     this.responseClass = responseClass;
     this.handshakeType = handshakeType;
@@ -64,7 +57,7 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
 
           @Override
           protected void initChannel(SocketChannel ch) throws Exception {
-            logger.debug("initializing client connection.");
+            //logger.debug("initializing client connection.");
             connection = initRemoteConnection(ch);
             ch.closeFuture().addListener(getCloseHandler(connection));
             
@@ -138,7 +131,7 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
 
       @Override
       public void operationComplete(ChannelFuture future) throws Exception {
-//        logger.debug("Connection operation finished.  Success: {}", future.isSuccess());
+        logger.debug("Connection operation finished.  Success: {}", future.isSuccess());
         try {
           future.get();
           if (future.isSuccess()) {
@@ -146,7 +139,7 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
           } else {
             l.connectionFailed(FailureType.CONNECTION, new RpcException("General connection failure."));
           }
-//          logger.debug("Handshake queued for send.");
+          logger.debug("Handshake queued for send.");
         } catch (Exception ex) {
           l.connectionFailed(FailureType.CONNECTION, ex);
         }
@@ -166,13 +159,13 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
 
       @Override
       public void success(HANDSHAKE_RESPONSE value) {
-//        logger.debug("Handshake received. {}", value);
+        logger.debug("Handshake received. {}", value);
         try {
           BasicClient.this.validateHandshake(value);
           BasicClient.this.finalizeConnection(value, connection);
           BasicClient.this.connect = true;
           l.connectionSucceeded(connection);
-//          logger.debug("Handshake completed succesfully.");
+          logger.debug("Handshake completed succesfully.");
         } catch (RpcException ex) {
           l.connectionFailed(FailureType.HANDSHAKE_VALIDATION, ex);
         }
@@ -199,7 +192,7 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
   }
 
   public void close() {
-    logger.debug("Closing client");
+    //logger.debug("Closing client");
     connection.getChannel().close();
   }
 

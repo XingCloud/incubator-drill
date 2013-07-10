@@ -17,15 +17,14 @@
  ******************************************************************************/
 package org.apache.drill.exec.work;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.yammer.metrics.Timer;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.impl.RootExec;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus.FragmentState;
 import org.apache.drill.exec.rpc.user.UserServer.UserClientConnection;
 
-import com.yammer.metrics.Timer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Responsible for running a single fragment on a single Drillbit. Listens/responds to status request and cancellation
@@ -65,7 +64,7 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
   
   @Override
   public void run() {
-    logger.debug("Starting fragment runner. {}:{}", context.getHandle().getMajorFragmentId(), context.getHandle().getMinorFragmentId());
+    logger.info("Starting fragment runner. {}:{}", context.getHandle().getMajorFragmentId(), context.getHandle().getMinorFragmentId());
     if(!updateState(FragmentState.AWAITING_ALLOCATION, FragmentState.RUNNING, false)){
       internalFail(new RuntimeException(String.format("Run was called when fragment was in %s state.  FragmentRunnables should only be started when they are currently in awaiting allocation state.", FragmentState.valueOf(state.get()))));
       return;

@@ -23,22 +23,21 @@ import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import org.apache.drill.exec.proto.GeneralRPCProtos.RpcHeader;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.drill.exec.proto.GeneralRPCProtos.RpcHeader;
 
 /**
  * Converts a previously length adjusted buffer into an RpcMessage.
  */
 class RpcDecoder extends MessageToMessageDecoder<ByteBuf> {
-  final org.slf4j.Logger logger;
+  //final org.slf4j.Logger logger;
   
   private final AtomicLong messageCounter = new AtomicLong();
   
   public RpcDecoder(String name){
-    this.logger = org.slf4j.LoggerFactory.getLogger(RpcDecoder.class.getCanonicalName() + "." + name);
+    //this.logger = org.slf4j.LoggerFactory.getLogger(RpcDecoder.class.getCanonicalName() + "." + name);
   }
 
   
@@ -48,7 +47,7 @@ class RpcDecoder extends MessageToMessageDecoder<ByteBuf> {
       return;
     }
     
-    if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Inbound rpc message received.");
+    //if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Inbound rpc message received.");
 
     // now, we know the entire message is in the buffer and the buffer is constrained to this message. Additionally,
     // this process should avoid reading beyond the end of this buffer so we inform the ByteBufInputStream to throw an
@@ -58,9 +57,9 @@ class RpcDecoder extends MessageToMessageDecoder<ByteBuf> {
     // read the rpc header, saved in delimited format.
     checkTag(is, RpcEncoder.HEADER_TAG);
     final RpcHeader header = RpcHeader.parseDelimitedFrom(is);
-    if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Read header. {}", header);
+    //if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Read header. {}", header);
 
-    if(RpcConstants.EXTRA_DEBUGGING) logger.debug(" post header read index {}", buffer.readerIndex());
+    //if(RpcConstants.EXTRA_DEBUGGING) logger.debug(" post header read index {}", buffer.readerIndex());
     
     // read the protobuf body into a buffer.
     checkTag(is, RpcEncoder.PROTOBUF_BODY_TAG);
@@ -68,9 +67,9 @@ class RpcDecoder extends MessageToMessageDecoder<ByteBuf> {
     final ByteBuf pBody = buffer.slice(buffer.readerIndex(), pBodyLength);
     buffer.skipBytes(pBodyLength);
     buffer.retain();
-    if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Read protobuf body of length {} into buffer {}.", pBodyLength, pBody);
+    //if (RpcConstants.EXTRA_DEBUGGING) logger.debug("Read protobuf body of length {} into buffer {}.", pBodyLength, pBody);
 
-    if(RpcConstants.EXTRA_DEBUGGING) logger.debug("post protobufbody read index {}", buffer.readerIndex());
+    //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("post protobufbody read index {}", buffer.readerIndex());
     
     ByteBuf dBody = null;
     int dBodyLength = 0;
@@ -78,17 +77,17 @@ class RpcDecoder extends MessageToMessageDecoder<ByteBuf> {
     // read the data body.
     if (buffer.readableBytes() > 0) {
       
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Reading raw body, buffer has {} bytes available, is available {}.", buffer.readableBytes(), is.available());
+      //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Reading raw body, buffer has {} bytes available, is available {}.", buffer.readableBytes(), is.available());
       checkTag(is, RpcEncoder.RAW_BODY_TAG);
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Reading length.");
+      //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Reading length.");
       dBodyLength = readRawVarint32(is);
       if(buffer.readableBytes() != dBodyLength) throw new CorruptedFrameException(String.format("Expected to receive a raw body of %d bytes but received a buffer with %d bytes.", dBodyLength, buffer.readableBytes()));
       dBody = buffer.slice();
       buffer.retain();
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Read raw body of {}", dBody);
+      //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("Read raw body of {}", dBody);
       
     }else{
-      if(RpcConstants.EXTRA_DEBUGGING) logger.debug("No need to read raw body, no readable bytes left.");
+      //if(RpcConstants.EXTRA_DEBUGGING) logger.debug("No need to read raw body, no readable bytes left.");
     }
 
 
@@ -99,7 +98,7 @@ class RpcDecoder extends MessageToMessageDecoder<ByteBuf> {
     // move the reader index forward so the next rpc call won't try to work with it.
     buffer.skipBytes(dBodyLength);
     messageCounter.incrementAndGet();
-    if (RpcConstants.EXTRA_DEBUGGING) logger.trace("Inbound Rpc Message Decoded {}.", m);
+    //if (RpcConstants.EXTRA_DEBUGGING) logger.trace("Inbound Rpc Message Decoded {}.", m);
     out.add(m);
 
   }

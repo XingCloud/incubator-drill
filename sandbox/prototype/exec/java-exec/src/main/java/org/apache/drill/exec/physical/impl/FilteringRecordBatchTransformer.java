@@ -22,7 +22,7 @@ import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.record.vector.SelectionVector;
 
 public abstract class FilteringRecordBatchTransformer {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FilteringRecordBatchTransformer.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FilteringRecordBatchTransformer.class);
   
   final RecordBatch incoming;
   final SelectionVector selectionVector;

@@ -28,7 +28,7 @@ import org.apache.drill.exec.work.QueryWorkUnit;
  * Generates smaller physical plans
  */
 public interface ExecPlanner {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ExecPlanner.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ExecPlanner.class);
   
   public QueryWorkUnit getWorkUnit(QueryContext context, PhysicalPlan plan, int maxWidth) throws ExecutionSetupException;
 }

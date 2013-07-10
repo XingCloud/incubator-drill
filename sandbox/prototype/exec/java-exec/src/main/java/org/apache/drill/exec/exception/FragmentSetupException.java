@@ -20,7 +20,7 @@ package org.apache.drill.exec.exception;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 
 public class FragmentSetupException extends ExecutionSetupException{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FragmentSetupException.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FragmentSetupException.class);
 
   public FragmentSetupException() {
     super();

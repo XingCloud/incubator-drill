@@ -17,17 +17,13 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import io.netty.buffer.ByteBuf;
-
-import java.util.List;
-
+import com.google.common.base.Preconditions;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.Screen;
 import org.apache.drill.exec.physical.impl.materialize.QueryWritableBatch;
 import org.apache.drill.exec.physical.impl.materialize.RecordMaterializer;
 import org.apache.drill.exec.physical.impl.materialize.VectorRecordMaterializer;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
-import org.apache.drill.exec.proto.UserBitShared.DrillPBError;
 import org.apache.drill.exec.proto.UserBitShared.RecordBatchDef;
 import org.apache.drill.exec.proto.UserProtos.QueryResult;
 import org.apache.drill.exec.record.RecordBatch;
@@ -37,10 +33,10 @@ import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.rpc.user.UserServer.UserClientConnection;
 import org.apache.drill.exec.work.foreman.ErrorHelper;
 
-import com.google.common.base.Preconditions;
+import java.util.List;
 
 public class ScreenCreator implements RootCreator<Screen>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ScreenCreator.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ScreenCreator.class);
   
   
   @Override
@@ -75,7 +71,7 @@ public class ScreenCreator implements RootCreator<Screen>{
       }
       
       IterOutcome outcome = incoming.next();
-      logger.debug("Screen Outcome {}", outcome);
+      logger.info("Screen Outcome {}", outcome);
       switch(outcome){
       case STOP: {
           QueryResult header1 = QueryResult.newBuilder() //

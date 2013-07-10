@@ -17,9 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.ref.eval;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.apache.drill.common.expression.FunctionCall;
@@ -43,11 +40,10 @@ import org.apache.drill.exec.ref.eval.fn.FunctionArguments;
 import org.apache.drill.exec.ref.eval.fn.FunctionEvaluatorRegistry;
 import org.apache.drill.exec.ref.exceptions.SetupException;
 import org.apache.drill.exec.ref.values.DataValue;
-import org.apache.drill.exec.ref.values.ScalarValues.BooleanScalar;
-import org.apache.drill.exec.ref.values.ScalarValues.DoubleScalar;
-import org.apache.drill.exec.ref.values.ScalarValues.IntegerScalar;
-import org.apache.drill.exec.ref.values.ScalarValues.LongScalar;
-import org.apache.drill.exec.ref.values.ScalarValues.StringScalar;
+import org.apache.drill.exec.ref.values.ScalarValues.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SimpleEvaluationVisitor implements ExprVisitor<BasicEvaluator>{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SimpleEvaluationVisitor.class);

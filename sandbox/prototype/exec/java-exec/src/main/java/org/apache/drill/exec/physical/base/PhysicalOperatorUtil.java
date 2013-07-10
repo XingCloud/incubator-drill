@@ -22,13 +22,13 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.util.PathScanner;
 
 public class PhysicalOperatorUtil {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalOperatorUtil.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalOperatorUtil.class);
   
   private PhysicalOperatorUtil(){}
   
   public synchronized static Class<?>[] getSubTypes(DrillConfig config){
     Class<?>[] ops = PathScanner.scanForImplementationsArr(PhysicalOperator.class, config.getStringList(CommonConstants.PHYSICAL_OPERATOR_SCAN_PACKAGES));
-    logger.debug("Adding Physical Operator sub types: {}", ((Object) ops) );
+    //logger.debug("Adding Physical Operator sub types: {}", ((Object) ops) );
     return ops;
   }
 }

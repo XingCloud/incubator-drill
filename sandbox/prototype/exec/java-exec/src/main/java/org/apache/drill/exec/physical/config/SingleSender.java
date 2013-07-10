@@ -17,27 +17,25 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.config;
 
-import java.util.Collections;
-import java.util.List;
-
-import org.apache.drill.common.graph.GraphVisitor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.exec.physical.OperatorCost;
 import org.apache.drill.exec.physical.base.AbstractSender;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.PhysicalVisitor;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Sender that pushes all data to a single destination node.
  */
 @JsonTypeName("single-sender")
 public class SingleSender extends AbstractSender {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SingleSender.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SingleSender.class);
 
   private final DrillbitEndpoint destination;
   

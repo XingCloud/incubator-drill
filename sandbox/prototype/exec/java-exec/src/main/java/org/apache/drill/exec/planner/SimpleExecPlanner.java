@@ -32,7 +32,7 @@ import org.apache.drill.exec.work.QueryWorkUnit;
  * Parallelization is based on available nodes with source or target data.  Nodes that are "overloaded" are excluded from execution.
  */
 public class SimpleExecPlanner implements ExecPlanner{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SimpleExecPlanner.class);
+ // static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SimpleExecPlanner.class);
   
   private MakeFragmentsVisitor fragmenter = new MakeFragmentsVisitor();
   private SimpleParallelizer parallelizer = new SimpleParallelizer();

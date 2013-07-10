@@ -17,17 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.base;
 
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.drill.common.exceptions.PhysicalOperatorSetupException;
 import org.apache.drill.exec.physical.OperatorCost;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 public abstract class AbstractExchange extends AbstractSingle implements Exchange {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractExchange.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractExchange.class);
 
   protected int senderMajorFragmentId;
   protected int receiverMajorFragmentId;

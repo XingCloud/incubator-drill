@@ -32,7 +32,7 @@ import org.apache.drill.exec.record.vector.ValueVector;
 import org.apache.drill.exec.store.RecordReader;
 
 public class MockRecordReader implements RecordReader {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockRecordReader.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockRecordReader.class);
 
   private OutputMutator output;
   private MockScanEntry config;
@@ -103,7 +103,7 @@ public class MockRecordReader implements RecordReader {
       try {
         output.removeField(valueVectors[i].getField().getFieldId());
       } catch (SchemaChangeException e) {
-        logger.warn("Failure while trying tremove field.", e);
+        //logger.warn("Failure while trying tremove field.", e);
       }
       valueVectors[i].close();
     }

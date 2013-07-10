@@ -17,20 +17,18 @@
  ******************************************************************************/
 package org.apache.drill.common.logical.data;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.drill.common.config.CommonConstants;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.graph.GraphVisitor;
 import org.apache.drill.common.logical.ValidationError;
 import org.apache.drill.common.util.PathScanner;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class LogicalOperatorBase implements LogicalOperator{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LogicalOperatorBase.class);
@@ -80,7 +78,7 @@ public abstract class LogicalOperatorBase implements LogicalOperator{
  
   public synchronized static Class<?>[] getSubTypes(DrillConfig config){
     Class<?>[] ops = PathScanner.scanForImplementationsArr(LogicalOperator.class, config.getStringList(CommonConstants.LOGICAL_OPERATOR_SCAN_PACKAGES));
-    logger.debug("Adding Logical Operator sub types: {}", ((Object) ops) );
+    //logger.debug("Adding Logical Operator sub types: {}", ((Object) ops) );
     return ops;
   }
   

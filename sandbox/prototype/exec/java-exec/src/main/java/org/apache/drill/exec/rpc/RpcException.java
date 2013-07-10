@@ -17,15 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.exec.rpc;
 
-import java.util.concurrent.ExecutionException;
-
 import org.apache.drill.common.exceptions.DrillIOException;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  * Parent class for all rpc exceptions.
  */
 public class RpcException extends DrillIOException{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcException.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcException.class);
 
   public RpcException() {
     super();

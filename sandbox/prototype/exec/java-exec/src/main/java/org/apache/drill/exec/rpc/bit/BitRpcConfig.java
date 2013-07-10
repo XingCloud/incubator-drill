@@ -30,7 +30,7 @@ import org.apache.drill.exec.rpc.Response;
 import org.apache.drill.exec.rpc.RpcConfig;
 
 public class BitRpcConfig {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitRpcConfig.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitRpcConfig.class);
   
   public static RpcConfig MAPPING = RpcConfig.newBuilder("BIT-RPC-MAPPING") //
       .add(RpcType.HANDSHAKE, BitHandshake.class, RpcType.HANDSHAKE, BitHandshake.class)

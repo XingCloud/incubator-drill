@@ -19,12 +19,10 @@ package org.apache.drill.exec.physical.base;
 
 import org.apache.drill.exec.physical.OperatorCost;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 
 
 public abstract class AbstractSender extends AbstractSingle implements Sender {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractSender.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractSender.class);
 
   protected final int oppositeMajorFragmentId;
   

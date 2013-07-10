@@ -30,7 +30,7 @@ import org.apache.drill.exec.rpc.RpcOutcomeListener;
 
 
 public class BitTunnel {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitTunnel.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BitTunnel.class);
 
   private final BitConnectionManager manager;
   private final DrillbitEndpoint endpoint;

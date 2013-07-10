@@ -29,14 +29,14 @@ import com.google.protobuf.CodedInputStream;
  * Modified version of ProtobufVarint32FrameDecoder that avoids bytebuf copy.
  */
 public class ZeroCopyProtobufLengthDecoder extends ByteToMessageDecoder {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ZeroCopyProtobufLengthDecoder.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ZeroCopyProtobufLengthDecoder.class);
 
   
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf in, MessageBuf<Object> out) throws Exception {
 
     if(!ctx.channel().isOpen()){
-      if(in.readableBytes() > 0) logger.info("Channel is closed, discarding remaining {} byte(s) in buffer.", in.readableBytes());
+      //if(in.readableBytes() > 0) logger.info("Channel is closed, discarding remaining {} byte(s) in buffer.", in.readableBytes());
       in.skipBytes(in.readableBytes());
       return;
     }
@@ -68,7 +68,7 @@ public class ZeroCopyProtobufLengthDecoder extends ByteToMessageDecoder {
                 ByteBuf outBuf = in.slice(in.readerIndex(), length);
                 in.retain();
                 in.skipBytes(length);
-                if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("ReaderIndex is %d after length header of %d bytes and frame body of length %d bytes.", in.readerIndex(), i+1, length));
+                //if(RpcConstants.EXTRA_DEBUGGING) logger.debug(String.format("ReaderIndex is %d after length header of %d bytes and frame body of length %d bytes.", in.readerIndex(), i+1, length));
                 out.add(outBuf);
                 return;
             }

@@ -35,7 +35,7 @@ import org.apache.drill.exec.physical.config.UnionExchange;
  * @param <EXCEP> An optional exception class that can be thrown when a portion of a modification or traversal fails.  Must extend Throwable.  In the case where the visitor does not throw any caught exception, this can be set as RuntimeException.
  */
 public interface PhysicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalVisitor.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalVisitor.class);
   
   
   public RETURN visitExchange(Exchange exchange, EXTRA value) throws EXCEP;

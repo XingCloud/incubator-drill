@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * A container class that holds both send and receive costs for an exchange node.
  */
 public class ExchangeCost {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ExchangeCost.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ExchangeCost.class);
   
   private final OperatorCost send;
   private final OperatorCost receive;

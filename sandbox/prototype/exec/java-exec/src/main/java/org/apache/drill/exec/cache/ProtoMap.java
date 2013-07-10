@@ -19,12 +19,12 @@ package org.apache.drill.exec.cache;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
+//import com.google.protobuf.Parser;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 
 public abstract class ProtoMap<K extends MessageLite, V extends MessageLite, HK extends ProtoBufWrap<K>, HV extends ProtoBufWrap<V>> {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProtoMap.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProtoMap.class);
 
   private IMap<HK, HV> hzMap;
   

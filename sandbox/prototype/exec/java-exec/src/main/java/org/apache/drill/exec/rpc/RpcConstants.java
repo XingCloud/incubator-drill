@@ -18,7 +18,7 @@
 package org.apache.drill.exec.rpc;
 
 public class RpcConstants {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcConstants.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RpcConstants.class);
   
   private RpcConstants(){}
   

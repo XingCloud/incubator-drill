@@ -17,14 +17,12 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import org.apache.drill.exec.exception.FragmentSetupException;
-
 /**
  * A FragmentRoot is a node which is the last processing node in a query plan. FragmentTerminals include Exchange
  * output nodes and storage nodes.  They are there driving force behind the completion of a query.
  */
 public interface RootExec {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RootExec.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(RootExec.class);
   
   /**
    * Do the next batch of work.  

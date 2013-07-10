@@ -17,18 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.common.config;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.apache.drill.common.exceptions.DrillConfigurationException;
-import org.apache.drill.common.expression.LogicalExpression;
-import org.apache.drill.common.logical.StorageEngineConfigBase;
-import org.apache.drill.common.logical.data.LogicalOperatorBase;
-import org.apache.drill.common.util.PathScanner;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,10 +25,21 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.drill.common.exceptions.DrillConfigurationException;
+import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.logical.StorageEngineConfigBase;
+import org.apache.drill.common.logical.data.LogicalOperatorBase;
+import org.apache.drill.common.util.PathScanner;
+
+import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class DrillConfig extends NestedConfig{
 
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillConfig.class);
+  //static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillConfig.class);
   private final ObjectMapper mapper;
   
   @SuppressWarnings("unchecked")
@@ -99,7 +98,7 @@ public final class DrillConfig extends NestedConfig{
     // first we load defaults.
     Config fallback = ConfigFactory.load(CommonConstants.CONFIG_DEFAULT);
     Collection<URL> urls = PathScanner.getConfigURLs();
-    logger.debug("Loading configs at the following URLs {}", urls);
+    //logger.debug("Loading configs at the following URLs {}", urls);
     for (URL url : urls) {
       fallback = ConfigFactory.parseURL(url).withFallback(fallback);
     }
