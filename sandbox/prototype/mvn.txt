@@ -1,0 +1,1275 @@
+Apache Maven 3.0.4
+Maven home: /usr/share/maven
+Java version: 1.7.0_17, vendor: Oracle Corporation
+Java home: /home/yangbo/workspace/jdk1.7.0_17/jre
+Default locale: en_US, platform encoding: UTF-8
+OS name: "linux", version: "3.5.0-34-generic", arch: "amd64", family: "unix"
+[INFO] Error stacktraces are turned on.
+[DEBUG] Reading global settings from /usr/share/maven/conf/settings.xml
+[DEBUG] Reading user settings from /home/yangbo/.m2/settings.xml
+[DEBUG] Using local repository at /home/yangbo/.m2/repository
+[DEBUG] Using manager EnhancedLocalRepositoryManager with priority 10 for /home/yangbo/.m2/repository
+[INFO] Scanning for projects...
+[DEBUG] Extension realms for project org.apache.drill:prototype-parent:pom:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill:common:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill.contrib:contrib-parent:pom:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill.contrib:storage-hbase:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill.exec:exec-parent:pom:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill.exec:java-exec:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill.exec:ref:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill:planner:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill:sqlparser:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.apache.drill:hbase-scanner:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] prototype-parent
+[INFO] common
+[INFO] contrib-parent
+[INFO] pom
+[INFO] hbase-scanner
+[INFO] exec
+[INFO] Logical Plan Execution Reference Implementation
+[INFO] java-exec
+[INFO] planner
+[INFO] sqlparser
+[DEBUG] === REACTOR BUILD PLAN ================================================
+[DEBUG] Project: org.apache.drill:prototype-parent:pom:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill:common:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill.contrib:contrib-parent:pom:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill.contrib:storage-hbase:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill:hbase-scanner:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill.exec:exec-parent:pom:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill.exec:ref:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill.exec:java-exec:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill:planner:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.apache.drill:sqlparser:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] =======================================================================
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building prototype-parent 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] === PROJECT BUILD PLAN ================================================
+[DEBUG] Project:       org.apache.drill:prototype-parent:1.0-SNAPSHOT
+[DEBUG] Dependencies (collect): []
+[DEBUG] Dependencies (resolve): [test]
+[DEBUG] Repositories (dependencies): [conjars (http://conjars.org/repo, releases+snapshots), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, snapshots), apache.snapshots (http://repository.apache.org/snapshots, snapshots), central (http://repo.maven.apache.org/maven2, releases)]
+[DEBUG] Repositories (plugins)     : [central (http://repo.maven.apache.org/maven2, releases)]
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:1.2:enforce (no_commons_logging)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <fail default-value="true">${enforcer.fail}</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <rules>
+    <bannedDependencies>
+      <excludes>
+        <exclude>commons-logging</exclude>
+      </excludes>
+    </bannedDependencies>
+  </rules>
+  <skip default-value="false">${enforcer.skip}</skip>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-remote-resources-plugin:1.1:process (default)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appendedResourcesDirectory>${basedir}/src/main/appended-resources</appendedResourcesDirectory>
+  <attached default-value="true"/>
+  <basedir default-value="${basedir}"/>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <excludeArtifactIds default-value="">${excludeArtifactIds}</excludeArtifactIds>
+  <excludeGroupIds default-value="">${excludeGroupIds}</excludeGroupIds>
+  <excludeScope default-value="">${excludeScope}</excludeScope>
+  <excludeTransitive default-value="false">${excludeTransitive}</excludeTransitive>
+  <includeArtifactIds default-value="">${includeArtifactIds}</includeArtifactIds>
+  <includeGroupIds default-value="">${includeGroupIds}</includeGroupIds>
+  <includeScope default-value="runtime">${includeScope}</includeScope>
+  <localRepository>${localRepository}</localRepository>
+  <mavenSession>${session}</mavenSession>
+  <outputDirectory>${project.build.directory}/maven-shared-archive-resources</outputDirectory>
+  <project>${project}</project>
+  <remoteArtifactRepositories>${project.remoteArtifactRepositories}</remoteArtifactRepositories>
+  <resourceBundles>
+    <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+  </resourceBundles>
+  <resources>${project.resources}</resources>
+  <runOnlyAtExecutionRoot default-value="false"/>
+  <skip default-value="false">${remoteresources.skip}</skip>
+  <useDefaultFilterDelimiters default-value="true"/>
+</configuration>
+[DEBUG] =======================================================================
+[DEBUG] org.apache.drill:prototype-parent:pom:1.0-SNAPSHOT
+[DEBUG]    com.google.guava:guava:jar:13.0.1:compile
+[DEBUG]    org.slf4j:slf4j-api:jar:1.7.2:compile
+[DEBUG]    org.slf4j:jul-to-slf4j:jar:1.7.2:compile
+[DEBUG]    org.slf4j:jcl-over-slf4j:jar:1.7.2:compile
+[DEBUG]    com.googlecode.jmockit:jmockit:jar:1.2:test
+[DEBUG]    junit:junit:jar:4.11:test
+[DEBUG]       org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]    ch.qos.logback:logback-classic:jar:1.0.7:test
+[DEBUG]       ch.qos.logback:logback-core:jar:1.0.7:test
+[DEBUG]    de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-classic:jar:0.9.43:test
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.data.logging.protobuf:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.data.logging:jar:0.9.43:test
+[DEBUG]             de.huxhorn.sulky:de.huxhorn.sulky.formatting:jar:0.9.16:test
+[DEBUG]             de.huxhorn.lilith:de.huxhorn.lilith.data.eventsource:jar:0.9.43:test
+[DEBUG]          com.google.protobuf:protobuf-java:jar:2.5.0:test
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-core:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.sender:jar:0.9.43:test
+[DEBUG]       de.huxhorn.sulky:de.huxhorn.sulky.codec:jar:0.9.16:test
+[DEBUG]          de.huxhorn.sulky:de.huxhorn.sulky.io:jar:0.9.16:test
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.logback.converter-classic:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.logback.classic:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.data.converter:jar:0.9.43:test
+[INFO] 
+[INFO] --- maven-enforcer-plugin:1.2:enforce (no_commons_logging) @ prototype-parent ---
+[DEBUG] Created new class realm maven.api
+[DEBUG] Importing foreign packages into class realm maven.api
+[DEBUG]   Imported: org.apache.maven.wagon.events < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.transfer < plexus.core
+[DEBUG]   Imported: org.apache.maven.exception < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.metadata < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.Xpp3Dom < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.collection < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.version < plexus.core
+[DEBUG]   Imported: org.apache.maven.monitor < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.resource < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.logging < plexus.core
+[DEBUG]   Imported: org.apache.maven.profiles < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.classrealm < plexus.core
+[DEBUG]   Imported: org.apache.maven.execution < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.artifact < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.spi < plexus.core
+[DEBUG]   Imported: org.apache.maven.reporting < plexus.core
+[DEBUG]   Imported: org.apache.maven.usability < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.container < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.component < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlSerializer < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authentication < plexus.core
+[DEBUG]   Imported: org.apache.maven.lifecycle < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.classworlds < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.graph < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.settings < plexus.core
+[DEBUG]   Imported: org.codehaus.classworlds < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.impl < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.toolchain < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.deployment < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.observers < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParserException < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParser < plexus.core
+[DEBUG]   Imported: org.apache.maven.configuration < plexus.core
+[DEBUG]   Imported: org.apache.maven.cli < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.installation < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.context < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authorization < plexus.core
+[DEBUG]   Imported: org.apache.maven.project < plexus.core
+[DEBUG]   Imported: org.apache.maven.rtinfo < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.lifecycle < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.configuration < plexus.core
+[DEBUG]   Imported: org.apache.maven.artifact < plexus.core
+[DEBUG]   Imported: org.apache.maven.model < plexus.core
+[DEBUG]   Imported: org.apache.maven.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.proxy < plexus.core
+[DEBUG]   Imported: org.sonatype.aether.resolution < plexus.core
+[DEBUG]   Imported: org.apache.maven.plugin < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.* < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.personality < plexus.core
+[DEBUG] Populating class realm maven.api
+[DEBUG] org.apache.maven.plugins:maven-enforcer-plugin:jar:1.2:
+[DEBUG]    org.apache.maven:maven-artifact:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-project:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-settings:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-model:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-registry:jar:2.0.9:compile
+[DEBUG]       org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1:compile
+[DEBUG]          junit:junit:jar:3.8.2:test (scope managed from compile) (version managed from 3.8.1)
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9:compile
+[DEBUG]       org.apache.maven.reporting:maven-reporting-api:jar:2.0.9:compile
+[DEBUG]          org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-10:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.9:compile
+[DEBUG]       commons-cli:commons-cli:jar:1.0:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.9:compile
+[DEBUG]       org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4:compile
+[DEBUG]       org.apache.maven:maven-monitor:jar:2.0.9:compile
+[DEBUG]       classworlds:classworlds:jar:1.1:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:1.5.8:compile
+[DEBUG]    commons-lang:commons-lang:jar:2.3:compile
+[DEBUG]    org.apache.maven.enforcer:enforcer-api:jar:1.2:compile
+[DEBUG]    org.apache.maven.enforcer:enforcer-rules:jar:1.2:compile
+[DEBUG]       org.apache.maven.shared:maven-common-artifact-filters:jar:1.2:compile
+[DEBUG]          org.apache.maven.shared:maven-plugin-testing-harness:jar:1.1:test (scope managed from compile)
+[DEBUG]             org.codehaus.plexus:plexus-archiver:jar:1.0-alpha-7:test
+[DEBUG]       org.beanshell:bsh:jar:2.0b4:compile
+[DEBUG]       org.apache.maven.shared:maven-dependency-tree:jar:2.0:compile
+[DEBUG]          org.codehaus.plexus:plexus-component-annotations:jar:1.5.5:compile
+[DEBUG]       org.codehaus.plexus:plexus-i18n:jar:1.0-beta-6:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.2
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.2
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.2
+[DEBUG]   Included: org.apache.maven.plugins:maven-enforcer-plugin:jar:1.2
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-api:jar:2.0.9
+[DEBUG]   Included: org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-10
+[DEBUG]   Included: commons-cli:commons-cli:jar:1.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:1.5.8
+[DEBUG]   Included: commons-lang:commons-lang:jar:2.3
+[DEBUG]   Included: org.apache.maven.enforcer:enforcer-api:jar:1.2
+[DEBUG]   Included: org.apache.maven.enforcer:enforcer-rules:jar:1.2
+[DEBUG]   Included: org.apache.maven.shared:maven-common-artifact-filters:jar:1.2
+[DEBUG]   Included: org.beanshell:bsh:jar:2.0b4
+[DEBUG]   Included: org.apache.maven.shared:maven-dependency-tree:jar:2.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-component-annotations:jar:1.5.5
+[DEBUG]   Included: org.codehaus.plexus:plexus-i18n:jar:1.0-beta-6
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.0.9
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1
+[DEBUG]   Excluded: junit:junit:jar:3.8.2
+[DEBUG]   Excluded: org.apache.maven:maven-core:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-error-diagnostics:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-descriptor:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-monitor:jar:2.0.9
+[DEBUG]   Excluded: classworlds:classworlds:jar:1.1
+[DEBUG]   Excluded: org.apache.maven.shared:maven-plugin-testing-harness:jar:1.1
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-archiver:jar:1.0-alpha-7
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-enforcer-plugin:1.2:enforce from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.2, parent: sun.misc.Launcher$AppClassLoader@19e142a5]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-enforcer-plugin:1.2:enforce' with basic configurator -->
+[DEBUG]   (s) fail = true
+[DEBUG]   (s) failFast = false
+[DEBUG]   (f) ignoreCache = false
+[DEBUG]   (s) excludes = [commons-logging]
+[DEBUG]   (s) rules = [org.apache.maven.plugins.enforcer.BannedDependencies@686901ac]
+[DEBUG]   (s) skip = false
+[DEBUG]   (s) project = MavenProject: org.apache.drill:prototype-parent:1.0-SNAPSHOT @ /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/pom.xml
+[DEBUG]   (s) session = org.apache.maven.execution.MavenSession@48bf6ac4
+[DEBUG] -- end configuration --
+[DEBUG] Executing rule: org.apache.maven.plugins.enforcer.BannedDependencies
+[INFO] 
+[INFO] --- maven-remote-resources-plugin:1.1:process (default) @ prototype-parent ---
+[DEBUG] org.apache.maven.plugins:maven-remote-resources-plugin:jar:1.1:
+[DEBUG]    org.apache.maven.shared:maven-artifact-resolver:jar:1.0:compile
+[DEBUG]    org.apache.maven.shared:maven-filtering:jar:1.0-beta-3:compile
+[DEBUG]       org.sonatype.plexus:plexus-build-api:jar:0.0.4:compile
+[DEBUG]    org.apache.maven:maven-project:jar:2.0.5:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.5:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.5:compile
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.5:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.5:compile
+[DEBUG]       org.apache.maven.reporting:maven-reporting-api:jar:2.0.5:compile
+[DEBUG]          org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.5:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.5:compile
+[DEBUG]       org.apache.maven:maven-plugin-registry:jar:2.0.5:compile
+[DEBUG]       commons-cli:commons-cli:jar:1.0:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.5:compile
+[DEBUG]       org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4:compile
+[DEBUG]       classworlds:classworlds:jar:1.1:compile
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.5:compile
+[DEBUG]    org.apache.maven:maven-artifact:jar:2.0.5:compile
+[DEBUG]    org.apache.maven:maven-model:jar:2.0.5:compile
+[DEBUG]    org.apache.maven:maven-settings:jar:2.0.5:compile
+[DEBUG]    org.apache.maven:maven-monitor:jar:2.0.5:compile
+[DEBUG]    org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9:compile
+[DEBUG]       junit:junit:jar:3.8.1:compile
+[DEBUG]    velocity:velocity-dep:jar:1.4:compile
+[DEBUG]    org.apache.maven.shared:maven-common-artifact-filters:jar:1.0:compile
+[DEBUG]       org.apache.maven.shared:maven-plugin-testing-harness:jar:1.1:compile
+[DEBUG]          org.codehaus.plexus:plexus-archiver:jar:1.0-alpha-7:compile
+[DEBUG]    org.apache.maven.shared:maven-downloader:jar:1.1:compile
+[DEBUG]    org.codehaus.plexus:plexus-interpolation:jar:1.12:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:1.5.12:compile
+[DEBUG]    org.codehaus.plexus:plexus-velocity:jar:1.1.3:compile
+[DEBUG]       commons-collections:commons-collections:jar:2.0:compile
+[DEBUG]       velocity:velocity:jar:1.4:compile
+[DEBUG]    org.codehaus.plexus:plexus-resources:jar:1.0-alpha-5:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-remote-resources-plugin:1.1
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-remote-resources-plugin:1.1
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-remote-resources-plugin:1.1
+[DEBUG]   Included: org.apache.maven.plugins:maven-remote-resources-plugin:jar:1.1
+[DEBUG]   Included: org.apache.maven.shared:maven-artifact-resolver:jar:1.0
+[DEBUG]   Included: org.apache.maven.shared:maven-filtering:jar:1.0-beta-3
+[DEBUG]   Included: org.sonatype.plexus:plexus-build-api:jar:0.0.4
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-api:jar:2.0.5
+[DEBUG]   Included: org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7
+[DEBUG]   Included: commons-cli:commons-cli:jar:1.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4
+[DEBUG]   Included: junit:junit:jar:3.8.1
+[DEBUG]   Included: velocity:velocity-dep:jar:1.4
+[DEBUG]   Included: org.apache.maven.shared:maven-common-artifact-filters:jar:1.0
+[DEBUG]   Included: org.apache.maven.shared:maven-plugin-testing-harness:jar:1.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-archiver:jar:1.0-alpha-7
+[DEBUG]   Included: org.apache.maven.shared:maven-downloader:jar:1.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-interpolation:jar:1.12
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:1.5.12
+[DEBUG]   Included: org.codehaus.plexus:plexus-velocity:jar:1.1.3
+[DEBUG]   Included: commons-collections:commons-collections:jar:2.0
+[DEBUG]   Included: velocity:velocity:jar:1.4
+[DEBUG]   Included: org.codehaus.plexus:plexus-resources:jar:1.0-alpha-5
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-core:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-error-diagnostics:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-descriptor:jar:2.0.5
+[DEBUG]   Excluded: classworlds:classworlds:jar:1.1
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.0.5
+[DEBUG]   Excluded: org.apache.maven:maven-monitor:jar:2.0.5
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-remote-resources-plugin:1.1:process from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-remote-resources-plugin:1.1, parent: sun.misc.Launcher$AppClassLoader@19e142a5]
+[INFO] Setting property: classpath.resource.loader.class => 'org.codehaus.plexus.velocity.ContextClassLoaderResourceLoader'.
+[INFO] Setting property: velocimacro.messages.on => 'false'.
+[INFO] Setting property: resource.loader => 'classpath'.
+[INFO] Setting property: resource.manager.logwhenfound => 'false'.
+[DEBUG] ************************************************************** 
+[DEBUG] Starting Jakarta Velocity v1.4
+[DEBUG] RuntimeInstance initializing.
+[DEBUG] Default Properties File: org/apache/velocity/runtime/defaults/velocity.properties
+[DEBUG] Default ResourceManager initializing. (class org.apache.velocity.runtime.resource.ResourceManagerImpl)
+[DEBUG] Resource Loader Instantiated: org.codehaus.plexus.velocity.ContextClassLoaderResourceLoader
+[DEBUG] ResourceCache : initialized. (class org.apache.velocity.runtime.resource.ResourceCacheImpl)
+[DEBUG] Default ResourceManager initialization complete.
+[DEBUG] Loaded System Directive: org.apache.velocity.runtime.directive.Literal
+[DEBUG] Loaded System Directive: org.apache.velocity.runtime.directive.Macro
+[DEBUG] Loaded System Directive: org.apache.velocity.runtime.directive.Parse
+[DEBUG] Loaded System Directive: org.apache.velocity.runtime.directive.Include
+[DEBUG] Loaded System Directive: org.apache.velocity.runtime.directive.Foreach
+[DEBUG] Created: 20 parsers.
+[DEBUG] Velocimacro : initialization starting.
+[DEBUG] Velocimacro : allowInline = true : VMs can be defined inline in templates
+[DEBUG] Velocimacro : allowInlineToOverride = false : VMs defined inline may NOT replace previous VM definitions
+[DEBUG] Velocimacro : allowInlineLocal = false : VMs defined inline will be  global in scope if allowed.
+[DEBUG] Velocimacro : initialization complete.
+[DEBUG] Velocity successfully started.
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-remote-resources-plugin:1.1:process' with basic configurator -->
+[DEBUG]   (f) appendedResourcesDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/src/main/appended-resources
+[DEBUG]   (f) attached = true
+[DEBUG]   (f) basedir = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) excludeTransitive = false
+[DEBUG]   (f) includeScope = runtime
+[DEBUG]   (f) localRepository =        id: local
+      url: file:///home/yangbo/.m2/repository/
+   layout: none
+
+[DEBUG]   (f) mavenSession = org.apache.maven.execution.MavenSession@48bf6ac4
+[DEBUG]   (f) outputDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/target/maven-shared-archive-resources
+[DEBUG]   (f) project = MavenProject: org.apache.drill:prototype-parent:1.0-SNAPSHOT @ /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/pom.xml
+[DEBUG]   (f) remoteArtifactRepositories = [       id: conjars
+      url: http://conjars.org/repo
+   layout: default
+snapshots: [enabled => true, update => daily]
+ releases: [enabled => true, update => always]
+,        id: sonatype-nexus-snapshots
+      url: https://oss.sonatype.org/content/repositories/snapshots
+   layout: default
+snapshots: [enabled => true, update => daily]
+ releases: [enabled => false, update => daily]
+,        id: apache.snapshots
+      url: http://repository.apache.org/snapshots
+   layout: default
+snapshots: [enabled => true, update => daily]
+ releases: [enabled => false, update => daily]
+,        id: central
+      url: http://repo.maven.apache.org/maven2
+   layout: default
+snapshots: [enabled => false, update => daily]
+ releases: [enabled => true, update => daily]
+]
+[DEBUG]   (f) resourceBundles = [org.apache:apache-jar-resource-bundle:1.4]
+[DEBUG]   (f) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/src/main/resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) runOnlyAtExecutionRoot = false
+[DEBUG]   (f) skip = false
+[DEBUG]   (f) useDefaultFilterDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] Supplemental data models won't be loaded.  No models specified.
+[DEBUG] inceptionYear not specified, defaulting to 2013
+[DEBUG] org.apache.drill:prototype-parent:pom:1.0-SNAPSHOT (selected for null)
+[DEBUG]   com.google.guava:guava:jar:13.0.1:compile (selected for compile)
+[DEBUG]   org.slf4j:slf4j-api:jar:1.7.2:compile (selected for compile)
+[DEBUG]   org.slf4j:jul-to-slf4j:jar:1.7.2:compile (selected for compile)
+[DEBUG]   org.slf4j:jcl-over-slf4j:jar:1.7.2:compile (selected for compile)
+[DEBUG]   com.googlecode.jmockit:jmockit:jar:1.2:test (selected for test)
+[DEBUG]   junit:junit:jar:4.11:test (selected for test)
+[DEBUG]     org.hamcrest:hamcrest-core:jar:1.3:test (selected for test)
+[DEBUG]   ch.qos.logback:logback-classic:jar:1.0.7:test (selected for test)
+[DEBUG]     ch.qos.logback:logback-core:jar:1.0.7:test (selected for test)
+[DEBUG]     org.slf4j:slf4j-api:jar:1.6.6:test (removed - nearer found: 1.7.2)
+[DEBUG]   de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-classic:jar:0.9.43:test (selected for test)
+[DEBUG]     ch.qos.logback:logback-classic:jar:1.0.12:test (removed - nearer found: 1.0.7)
+[DEBUG]     de.huxhorn.lilith:de.huxhorn.lilith.data.logging.protobuf:jar:0.9.43:test (selected for test)
+[DEBUG]       de.huxhorn.sulky:de.huxhorn.sulky.codec:jar:0.9.16:test (selected for test)
+[DEBUG]         org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]         de.huxhorn.sulky:de.huxhorn.sulky.io:jar:0.9.16:test (selected for test)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.data.logging:jar:0.9.43:test (selected for test)
+[DEBUG]         de.huxhorn.sulky:de.huxhorn.sulky.formatting:jar:0.9.16:test (selected for test)
+[DEBUG]           org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]         de.huxhorn.lilith:de.huxhorn.lilith.data.eventsource:jar:0.9.43:test (selected for test)
+[DEBUG]       com.google.protobuf:protobuf-java:jar:2.5.0:test (selected for test)
+[DEBUG]     de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-core:jar:0.9.43:test (selected for test)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.sender:jar:0.9.43:test (selected for test)
+[DEBUG]         org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]       ch.qos.logback:logback-core:jar:1.0.12:test (removed - nearer found: 1.0.7)
+[DEBUG]     de.huxhorn.sulky:de.huxhorn.sulky.codec:jar:0.9.16:test (selected for test)
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]       de.huxhorn.sulky:de.huxhorn.sulky.io:jar:0.9.16:test (selected for test)
+[DEBUG]     de.huxhorn.lilith:de.huxhorn.lilith.logback.converter-classic:jar:0.9.43:test (selected for test)
+[DEBUG]       ch.qos.logback:logback-classic:jar:1.0.12:test (removed - nearer found: 1.0.7)
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.logback.classic:jar:0.9.43:test (selected for test)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.data.converter:jar:0.9.43:test (selected for test)
+[DEBUG] Building project for org.slf4j:jcl-over-slf4j:jar:1.7.2:compile
+[DEBUG] Adding project with groupId [org.slf4j]
+[DEBUG] Building project for org.slf4j:slf4j-api:jar:1.7.2:compile
+[DEBUG] Adding project with groupId [org.slf4j]
+[DEBUG] Building project for org.slf4j:jul-to-slf4j:jar:1.7.2:compile
+[DEBUG] Adding project with groupId [org.slf4j]
+[DEBUG] Building project for com.google.guava:guava:jar:13.0.1:compile
+[DEBUG] Adding project with groupId [com.google.guava]
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building common 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] === PROJECT BUILD PLAN ================================================
+[DEBUG] Project:       org.apache.drill:common:1.0-SNAPSHOT
+[DEBUG] Dependencies (collect): []
+[DEBUG] Dependencies (resolve): [compile, test]
+[DEBUG] Repositories (dependencies): [conjars (http://conjars.org/repo, releases+snapshots), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, snapshots), apache.snapshots (http://repository.apache.org/snapshots, snapshots), central (http://repo.maven.apache.org/maven2, releases)]
+[DEBUG] Repositories (plugins)     : [central (http://repo.maven.apache.org/maven2, releases)]
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:1.2:enforce (no_commons_logging)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <fail default-value="true">${enforcer.fail}</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <rules>
+    <bannedDependencies>
+      <excludes>
+        <exclude>commons-logging</exclude>
+      </excludes>
+    </bannedDependencies>
+  </rules>
+  <skip default-value="false">${enforcer.skip}</skip>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.antlr:antlr3-maven-plugin:3.4:antlr (default)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <debug default-value="false"/>
+  <dfa default-value="false"/>
+  <libDirectory default-value="${basedir}/src/main/antlr3/imports"/>
+  <maxSwitchCaseLabels default-value="300"/>
+  <messageFormat default-value="antlr"/>
+  <nfa default-value="false"/>
+  <outputDirectory default-value="${project.build.directory}/generated-sources/antlr3"/>
+  <printGrammar default-value="false"/>
+  <profile default-value="false"/>
+  <project>${project}</project>
+  <report default-value="false"/>
+  <sourceDirectory default-value="${basedir}/src/main/antlr3"/>
+  <trace default-value="false"/>
+  <verbose default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-remote-resources-plugin:1.1:process (default)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appendedResourcesDirectory>${basedir}/src/main/appended-resources</appendedResourcesDirectory>
+  <attached default-value="true"/>
+  <basedir default-value="${basedir}"/>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <excludeArtifactIds default-value="">${excludeArtifactIds}</excludeArtifactIds>
+  <excludeGroupIds default-value="">${excludeGroupIds}</excludeGroupIds>
+  <excludeScope default-value="">${excludeScope}</excludeScope>
+  <excludeTransitive default-value="false">${excludeTransitive}</excludeTransitive>
+  <includeArtifactIds default-value="">${includeArtifactIds}</includeArtifactIds>
+  <includeGroupIds default-value="">${includeGroupIds}</includeGroupIds>
+  <includeScope default-value="runtime">${includeScope}</includeScope>
+  <localRepository>${localRepository}</localRepository>
+  <mavenSession>${session}</mavenSession>
+  <outputDirectory>${project.build.directory}/maven-shared-archive-resources</outputDirectory>
+  <project>${project}</project>
+  <remoteArtifactRepositories>${project.remoteArtifactRepositories}</remoteArtifactRepositories>
+  <resourceBundles>
+    <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+  </resourceBundles>
+  <resources>${project.resources}</resources>
+  <runOnlyAtExecutionRoot default-value="false"/>
+  <skip default-value="false">${remoteresources.skip}</skip>
+  <useDefaultFilterDelimiters default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-resources-plugin:2.6:resources (default-resources)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <buildFilters default-value="${project.build.filters}"/>
+  <encoding default-value="${project.build.sourceEncoding}">UTF-8</encoding>
+  <escapeString>${maven.resources.escapeString}</escapeString>
+  <escapeWindowsPaths default-value="true">${maven.resources.escapeWindowsPaths}</escapeWindowsPaths>
+  <includeEmptyDirs default-value="false">${maven.resources.includeEmptyDirs}</includeEmptyDirs>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <overwrite default-value="false">${maven.resources.overwrite}</overwrite>
+  <project default-value="${project}"/>
+  <resources default-value="${project.resources}"/>
+  <session default-value="${session}"/>
+  <supportMultiLineFiltering default-value="false">${maven.resources.supportMultiLineFiltering}</supportMultiLineFiltering>
+  <useBuildFilters default-value="true"/>
+  <useDefaultDelimiters default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-compiler-plugin:3.0:compile (default-compile)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <basedir default-value="${basedir}"/>
+  <buildDirectory default-value="${project.build.directory}"/>
+  <classpathElements default-value="${project.compileClasspathElements}"/>
+  <compileSourceRoots default-value="${project.compileSourceRoots}"/>
+  <compilerId default-value="javac">${maven.compiler.compilerId}</compilerId>
+  <compilerReuseStrategy default-value="${reuseCreated}">${maven.compiler.compilerReuseStrategy}</compilerReuseStrategy>
+  <compilerVersion>${maven.compiler.compilerVersion}</compilerVersion>
+  <debug default-value="true">${maven.compiler.debug}</debug>
+  <debuglevel>${maven.compiler.debuglevel}</debuglevel>
+  <encoding default-value="${project.build.sourceEncoding}">UTF-8</encoding>
+  <executable>${maven.compiler.executable}</executable>
+  <failOnError default-value="true">${maven.compiler.failOnError}</failOnError>
+  <forceJavacCompilerUse default-value="false">${maven.compiler.forceJavacCompilerUse}</forceJavacCompilerUse>
+  <fork default-value="false">${maven.compiler.fork}</fork>
+  <generatedSourcesDirectory default-value="${project.build.directory}/generated-sources/annotations"/>
+  <maxmem>${maven.compiler.maxmem}</maxmem>
+  <meminitial>${maven.compiler.meminitial}</meminitial>
+  <mojoExecution>${mojoExecution}</mojoExecution>
+  <optimize default-value="false">${maven.compiler.optimize}</optimize>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <projectArtifact default-value="${project.artifact}"/>
+  <showDeprecation default-value="false">${maven.compiler.showDeprecation}</showDeprecation>
+  <showWarnings default-value="false">${maven.compiler.showWarnings}</showWarnings>
+  <skipMultiThreadWarning default-value="false">${maven.compiler.skipMultiThreadWarning}</skipMultiThreadWarning>
+  <source default-value="1.5">1.7</source>
+  <staleMillis default-value="0">${lastModGranularityMs}</staleMillis>
+  <target default-value="1.5">1.7</target>
+  <verbose default-value="false">${maven.compiler.verbose}</verbose>
+  <mavenSession default-value="${session}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] =======================================================================
+[DEBUG] org.apache.drill:common:jar:1.0-SNAPSHOT
+[DEBUG]    com.google.protobuf:protobuf-java:jar:2.4.0a:compile
+[DEBUG]    com.typesafe:config:jar:1.0.0:compile
+[DEBUG]    org.apache.commons:commons-lang3:jar:3.1:compile
+[DEBUG]    org.msgpack:msgpack:jar:0.6.6:compile
+[DEBUG]       com.googlecode.json-simple:json-simple:jar:1.1.1:compile
+[DEBUG]       org.javassist:javassist:jar:3.16.1-GA:compile
+[DEBUG]    org.reflections:reflections:jar:0.9.8:compile
+[DEBUG]       javassist:javassist:jar:3.12.1.GA:compile
+[DEBUG]       dom4j:dom4j:jar:1.6.1:compile
+[DEBUG]          xml-apis:xml-apis:jar:1.0.b2:compile
+[DEBUG]    com.fasterxml.jackson.core:jackson-annotations:jar:2.1.1:compile
+[DEBUG]    org.hibernate:hibernate-validator:jar:4.3.1.Final:compile
+[DEBUG]       javax.validation:validation-api:jar:1.0.0.GA:compile
+[DEBUG]       org.jboss.logging:jboss-logging:jar:3.1.0.CR2:compile
+[DEBUG]    com.fasterxml.jackson.core:jackson-databind:jar:2.1.1:compile
+[DEBUG]       com.fasterxml.jackson.core:jackson-core:jar:2.1.1:compile
+[DEBUG]    org.antlr:antlr-runtime:jar:3.4:compile
+[DEBUG]       org.antlr:stringtemplate:jar:3.2.1:compile
+[DEBUG]       antlr:antlr:jar:2.7.7:compile
+[DEBUG]    com.google.guava:guava:jar:13.0.1:compile
+[DEBUG]    org.slf4j:slf4j-api:jar:1.7.2:compile
+[DEBUG]    org.slf4j:jul-to-slf4j:jar:1.7.2:compile
+[DEBUG]    org.slf4j:jcl-over-slf4j:jar:1.7.2:compile
+[DEBUG]    com.googlecode.jmockit:jmockit:jar:1.2:test
+[DEBUG]    junit:junit:jar:4.11:test
+[DEBUG]       org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]    ch.qos.logback:logback-classic:jar:1.0.7:test
+[DEBUG]       ch.qos.logback:logback-core:jar:1.0.7:test
+[DEBUG]    de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-classic:jar:0.9.43:test
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.data.logging.protobuf:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.data.logging:jar:0.9.43:test
+[DEBUG]             de.huxhorn.sulky:de.huxhorn.sulky.formatting:jar:0.9.16:test
+[DEBUG]             de.huxhorn.lilith:de.huxhorn.lilith.data.eventsource:jar:0.9.43:test
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-core:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.sender:jar:0.9.43:test
+[DEBUG]       de.huxhorn.sulky:de.huxhorn.sulky.codec:jar:0.9.16:test
+[DEBUG]          de.huxhorn.sulky:de.huxhorn.sulky.io:jar:0.9.16:test
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.logback.converter-classic:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.logback.classic:jar:0.9.43:test
+[DEBUG]          de.huxhorn.lilith:de.huxhorn.lilith.data.converter:jar:0.9.43:test
+[INFO] 
+[INFO] --- maven-enforcer-plugin:1.2:enforce (no_commons_logging) @ common ---
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-enforcer-plugin:1.2:enforce from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.2, parent: sun.misc.Launcher$AppClassLoader@19e142a5]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-enforcer-plugin:1.2:enforce' with basic configurator -->
+[DEBUG]   (s) fail = true
+[DEBUG]   (s) failFast = false
+[DEBUG]   (f) ignoreCache = false
+[DEBUG]   (s) excludes = [commons-logging]
+[DEBUG]   (s) rules = [org.apache.maven.plugins.enforcer.BannedDependencies@f0622e6]
+[DEBUG]   (s) skip = false
+[DEBUG]   (s) project = MavenProject: org.apache.drill:common:1.0-SNAPSHOT @ /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/pom.xml
+[DEBUG]   (s) session = org.apache.maven.execution.MavenSession@48bf6ac4
+[DEBUG] -- end configuration --
+[DEBUG] Executing rule: org.apache.maven.plugins.enforcer.BannedDependencies
+[INFO] 
+[INFO] --- antlr3-maven-plugin:3.4:antlr (default) @ common ---
+[DEBUG] org.antlr:antlr3-maven-plugin:jar:3.4:
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0:compile
+[DEBUG]    org.apache.maven:maven-project:jar:2.0:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0:compile
+[DEBUG]       org.apache.maven:maven-model:jar:2.0:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0:compile
+[DEBUG]          org.apache.maven:maven-repository-metadata:jar:2.0:compile
+[DEBUG]       org.codehaus.plexus:plexus-utils:jar:1.0.4:compile
+[DEBUG]       org.apache.maven:maven-artifact:jar:2.0:compile
+[DEBUG]       org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-8:compile
+[DEBUG]          junit:junit:jar:3.8.1:compile
+[DEBUG]          classworlds:classworlds:jar:1.1-alpha-2:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-api:jar:1.5.3:compile
+[DEBUG]    org.antlr:antlr:jar:3.4:compile
+[DEBUG]       org.antlr:antlr-runtime:jar:3.4:compile
+[DEBUG]          org.antlr:stringtemplate:jar:3.2.1:compile
+[DEBUG]          antlr:antlr:jar:2.7.7:compile
+[DEBUG]       org.antlr:ST4:jar:4.0.4:compile
+[DEBUG] Created new class realm plugin>org.antlr:antlr3-maven-plugin:3.4
+[DEBUG] Importing foreign packages into class realm plugin>org.antlr:antlr3-maven-plugin:3.4
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.antlr:antlr3-maven-plugin:3.4
+[DEBUG]   Included: org.antlr:antlr3-maven-plugin:jar:3.4
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:1.0.4
+[DEBUG]   Included: junit:junit:jar:3.8.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-api:jar:1.5.3
+[DEBUG]   Included: org.antlr:antlr:jar:3.4
+[DEBUG]   Included: org.antlr:antlr-runtime:jar:3.4
+[DEBUG]   Included: org.antlr:stringtemplate:jar:3.2.1
+[DEBUG]   Included: antlr:antlr:jar:2.7.7
+[DEBUG]   Included: org.antlr:ST4:jar:4.0.4
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-8
+[DEBUG]   Excluded: classworlds:classworlds:jar:1.1-alpha-2
+[DEBUG] Configuring mojo org.antlr:antlr3-maven-plugin:3.4:antlr from plugin realm ClassRealm[plugin>org.antlr:antlr3-maven-plugin:3.4, parent: sun.misc.Launcher$AppClassLoader@19e142a5]
+[DEBUG] Configuring mojo 'org.antlr:antlr3-maven-plugin:3.4:antlr' with basic configurator -->
+[DEBUG]   (f) debug = false
+[DEBUG]   (f) dfa = false
+[DEBUG]   (f) libDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3/imports
+[DEBUG]   (f) maxSwitchCaseLabels = 300
+[DEBUG]   (f) messageFormat = antlr
+[DEBUG]   (f) nfa = false
+[DEBUG]   (f) outputDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/antlr3
+[DEBUG]   (f) printGrammar = false
+[DEBUG]   (f) profile = false
+[DEBUG]   (f) project = MavenProject: org.apache.drill:common:1.0-SNAPSHOT @ /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/pom.xml
+[DEBUG]   (f) report = false
+[DEBUG]   (f) sourceDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3
+[DEBUG]   (f) trace = false
+[DEBUG]   (f) verbose = true
+[DEBUG] -- end configuration --
+[DEBUG] ANTLR: Output: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/antlr3
+[DEBUG] ANTLR: Library: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3/imports
+[DEBUG] ANTLR: report              : false
+[DEBUG] ANTLR: printGrammar        : false
+[DEBUG] ANTLR: debug               : false
+[DEBUG] ANTLR: profile             : false
+[DEBUG] ANTLR: nfa                 : false
+[DEBUG] ANTLR: dfa                 : false
+[DEBUG] ANTLR: trace               : false
+[DEBUG] ANTLR: messageFormat       : antlr
+[DEBUG] ANTLR: maxSwitchCaseLabels : 300
+[DEBUG] ANTLR: minSwitchAlts       : 0
+[DEBUG] ANTLR: verbose             : true
+[DEBUG] Output directory base will be /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/antlr3
+[INFO] ANTLR: Processing source directory /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3
+[DEBUG] Grammar file '/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3/org/apache/drill/common/expression/parser/ExprParser.g' detected.
+[DEBUG]   ... relative path is: org/apache/drill/common/expression/parser/ExprParser.g
+[DEBUG] Grammar file '/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3/org/apache/drill/common/expression/parser/ExprLexer.g' detected.
+[DEBUG]   ... relative path is: org/apache/drill/common/expression/parser/ExprLexer.g
+Grammar /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3/org/apache/drill/common/expression/parser/ExprLexer.g is up to date - build skipped
+Grammar /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/antlr3/org/apache/drill/common/expression/parser/ExprParser.g is up to date - build skipped
+[INFO] 
+[INFO] --- maven-remote-resources-plugin:1.1:process (default) @ common ---
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-remote-resources-plugin:1.1:process from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-remote-resources-plugin:1.1, parent: sun.misc.Launcher$AppClassLoader@19e142a5]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-remote-resources-plugin:1.1:process' with basic configurator -->
+[DEBUG]   (f) appendedResourcesDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/appended-resources
+[DEBUG]   (f) attached = true
+[DEBUG]   (f) basedir = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) excludeTransitive = false
+[DEBUG]   (f) includeScope = runtime
+[DEBUG]   (f) localRepository =        id: local
+      url: file:///home/yangbo/.m2/repository/
+   layout: none
+
+[DEBUG]   (f) mavenSession = org.apache.maven.execution.MavenSession@48bf6ac4
+[DEBUG]   (f) outputDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/maven-shared-archive-resources
+[DEBUG]   (f) project = MavenProject: org.apache.drill:common:1.0-SNAPSHOT @ /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/pom.xml
+[DEBUG]   (f) remoteArtifactRepositories = [       id: conjars
+      url: http://conjars.org/repo
+   layout: default
+snapshots: [enabled => true, update => daily]
+ releases: [enabled => true, update => always]
+,        id: sonatype-nexus-snapshots
+      url: https://oss.sonatype.org/content/repositories/snapshots
+   layout: default
+snapshots: [enabled => true, update => daily]
+ releases: [enabled => false, update => daily]
+,        id: apache.snapshots
+      url: http://repository.apache.org/snapshots
+   layout: default
+snapshots: [enabled => true, update => daily]
+ releases: [enabled => false, update => daily]
+,        id: central
+      url: http://repo.maven.apache.org/maven2
+   layout: default
+snapshots: [enabled => false, update => daily]
+ releases: [enabled => true, update => daily]
+]
+[DEBUG]   (f) resourceBundles = [org.apache:apache-jar-resource-bundle:1.4]
+[DEBUG]   (f) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) runOnlyAtExecutionRoot = false
+[DEBUG]   (f) skip = false
+[DEBUG]   (f) useDefaultFilterDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] Supplemental data models won't be loaded.  No models specified.
+[DEBUG] inceptionYear not specified, defaulting to 2013
+[DEBUG] org.apache.drill:common:jar:1.0-SNAPSHOT (selected for null)
+[DEBUG]   com.google.protobuf:protobuf-java:jar:2.4.0a:compile (selected for compile)
+[DEBUG]   com.typesafe:config:jar:1.0.0:compile (selected for compile)
+[DEBUG]   org.apache.commons:commons-lang3:jar:3.1:compile (selected for compile)
+[DEBUG]   org.msgpack:msgpack:jar:0.6.6:compile (selected for compile)
+[DEBUG]     com.googlecode.json-simple:json-simple:jar:1.1.1:compile (selected for compile)
+[DEBUG]       junit:junit:jar:4.10:compile (selected for compile)
+[DEBUG]         org.hamcrest:hamcrest-core:jar:1.1:compile (selected for compile)
+[DEBUG]     org.javassist:javassist:jar:3.16.1-GA:compile (selected for compile)
+[DEBUG]   org.reflections:reflections:jar:0.9.8:compile (selected for compile)
+[DEBUG]     com.google.guava:guava:jar:11.0.2:compile (selected for compile)
+[DEBUG]       com.google.code.findbugs:jsr305:jar:1.3.9:compile (selected for compile)
+[DEBUG]     javassist:javassist:jar:3.12.1.GA:compile (selected for compile)
+[DEBUG]     dom4j:dom4j:jar:1.6.1:compile (selected for compile)
+[DEBUG]       xml-apis:xml-apis:jar:1.0.b2:compile (selected for compile)
+[DEBUG]   com.fasterxml.jackson.core:jackson-annotations:jar:2.1.1:compile (selected for compile)
+[DEBUG]   org.hibernate:hibernate-validator:jar:4.3.1.Final:compile (selected for compile)
+[DEBUG]     javax.validation:validation-api:jar:1.0.0.GA:compile (selected for compile)
+[DEBUG]     org.jboss.logging:jboss-logging:jar:3.1.0.CR2:compile (selected for compile)
+[DEBUG]   com.fasterxml.jackson.core:jackson-databind:jar:2.1.1:compile (selected for compile)
+[DEBUG]     com.fasterxml.jackson.core:jackson-core:jar:2.1.1:compile (selected for compile)
+[DEBUG]   org.antlr:antlr-runtime:jar:3.4:compile (selected for compile)
+[DEBUG]     org.antlr:stringtemplate:jar:3.2.1:compile (selected for compile)
+[DEBUG]       antlr:antlr:jar:2.7.7:compile (selected for compile)
+[DEBUG]     antlr:antlr:jar:2.7.7:compile (selected for compile)
+[DEBUG]   com.google.guava:guava:jar:11.0.2:compile (removed - nearer found: 13.0.1)
+[DEBUG]   com.google.guava:guava:jar:13.0.1:compile (selected for compile)
+[DEBUG]   org.slf4j:slf4j-api:jar:1.7.2:compile (selected for compile)
+[DEBUG]   org.slf4j:jul-to-slf4j:jar:1.7.2:compile (selected for compile)
+[DEBUG]   org.slf4j:jcl-over-slf4j:jar:1.7.2:compile (selected for compile)
+[DEBUG]   com.googlecode.jmockit:jmockit:jar:1.2:test (selected for test)
+[DEBUG]   junit:junit:jar:4.11:test (not setting artifactScope to: compile; local artifactScope test wins)
+[WARNING] 
+	Artifact junit:junit:jar:4.11:test retains local artifactScope 'test' overriding broader artifactScope 'compile'
+	given by a dependency. If this is not intended, modify or remove the local artifactScope.
+
+[DEBUG]   junit:junit:jar:4.10:compile (removed - nearer found: 4.11)
+[DEBUG]   junit:junit:jar:4.11:test (selected for test)
+[DEBUG]     org.hamcrest:hamcrest-core:jar:1.3:test (selected for test)
+[DEBUG]   ch.qos.logback:logback-classic:jar:1.0.7:test (selected for test)
+[DEBUG]     ch.qos.logback:logback-core:jar:1.0.7:test (selected for test)
+[DEBUG]     org.slf4j:slf4j-api:jar:1.6.6:test (removed - nearer found: 1.7.2)
+[DEBUG]   de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-classic:jar:0.9.43:test (selected for test)
+[DEBUG]     ch.qos.logback:logback-classic:jar:1.0.12:test (removed - nearer found: 1.0.7)
+[DEBUG]     de.huxhorn.lilith:de.huxhorn.lilith.data.logging.protobuf:jar:0.9.43:test (selected for test)
+[DEBUG]       de.huxhorn.sulky:de.huxhorn.sulky.codec:jar:0.9.16:test (selected for test)
+[DEBUG]         org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]         de.huxhorn.sulky:de.huxhorn.sulky.io:jar:0.9.16:test (selected for test)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.data.logging:jar:0.9.43:test (selected for test)
+[DEBUG]         de.huxhorn.sulky:de.huxhorn.sulky.formatting:jar:0.9.16:test (selected for test)
+[DEBUG]           org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]         de.huxhorn.lilith:de.huxhorn.lilith.data.eventsource:jar:0.9.43:test (selected for test)
+[DEBUG]       com.google.protobuf:protobuf-java:jar:2.5.0:test (removed - nearer found: 2.4.0a)
+[DEBUG]     de.huxhorn.lilith:de.huxhorn.lilith.logback.appender.multiplex-core:jar:0.9.43:test (selected for test)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.sender:jar:0.9.43:test (selected for test)
+[DEBUG]         org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]       ch.qos.logback:logback-core:jar:1.0.12:test (removed - nearer found: 1.0.7)
+[DEBUG]     de.huxhorn.sulky:de.huxhorn.sulky.codec:jar:0.9.16:test (selected for test)
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]       de.huxhorn.sulky:de.huxhorn.sulky.io:jar:0.9.16:test (selected for test)
+[DEBUG]     de.huxhorn.lilith:de.huxhorn.lilith.logback.converter-classic:jar:0.9.43:test (selected for test)
+[DEBUG]       ch.qos.logback:logback-classic:jar:1.0.12:test (removed - nearer found: 1.0.7)
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.5:test (removed - nearer found: 1.7.2)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.logback.classic:jar:0.9.43:test (selected for test)
+[DEBUG]       de.huxhorn.lilith:de.huxhorn.lilith.data.converter:jar:0.9.43:test (selected for test)
+[DEBUG] Building project for com.googlecode.json-simple:json-simple:jar:1.1.1:compile
+[DEBUG] Adding project with groupId [com.googlecode.json-simple]
+[DEBUG] Building project for org.reflections:reflections:jar:0.9.8:compile
+[DEBUG] Adding project with groupId [org.reflections]
+[DEBUG] Building project for org.slf4j:jcl-over-slf4j:jar:1.7.2:compile
+[DEBUG] Adding project with groupId [org.slf4j]
+[DEBUG] Building project for org.slf4j:slf4j-api:jar:1.7.2:compile
+[DEBUG] Adding project with groupId [org.slf4j]
+[DEBUG] Building project for org.slf4j:jul-to-slf4j:jar:1.7.2:compile
+[DEBUG] Adding project with groupId [org.slf4j]
+[DEBUG] Building project for xml-apis:xml-apis:jar:1.0.b2:compile
+[DEBUG] Adding project with groupId [xml-apis]
+[DEBUG] Building project for com.fasterxml.jackson.core:jackson-annotations:jar:2.1.1:compile
+[DEBUG] Adding project with groupId [com.fasterxml.jackson.core]
+[DEBUG] Building project for com.google.guava:guava:jar:13.0.1:compile
+[DEBUG] Adding project with groupId [com.google.guava]
+[DEBUG] Building project for dom4j:dom4j:jar:1.6.1:compile
+[DEBUG] Adding project with groupId [dom4j]
+[DEBUG] Building project for org.jboss.logging:jboss-logging:jar:3.1.0.CR2:compile
+[DEBUG] Adding project with groupId [org.jboss.logging]
+[DEBUG] Building project for com.fasterxml.jackson.core:jackson-databind:jar:2.1.1:compile
+[DEBUG] Adding project with groupId [com.fasterxml.jackson.core]
+[DEBUG] Building project for com.fasterxml.jackson.core:jackson-core:jar:2.1.1:compile
+[DEBUG] Adding project with groupId [com.fasterxml.jackson.core]
+[DEBUG] Building project for antlr:antlr:jar:2.7.7:compile
+[DEBUG] Adding project with groupId [antlr]
+[DEBUG] Building project for org.hibernate:hibernate-validator:jar:4.3.1.Final:compile
+[DEBUG] Adding project with groupId [org.hibernate]
+[DEBUG] Building project for com.typesafe:config:jar:1.0.0:compile
+[DEBUG] Adding project with groupId [com.typesafe]
+[DEBUG] Building project for javassist:javassist:jar:3.12.1.GA:compile
+[DEBUG] Adding project with groupId [javassist]
+[DEBUG] Building project for org.apache.commons:commons-lang3:jar:3.1:compile
+[DEBUG] Adding project with groupId [org.apache.commons]
+[DEBUG] Building project for org.javassist:javassist:jar:3.16.1-GA:compile
+[DEBUG] Adding project with groupId [org.javassist]
+[DEBUG] Building project for com.google.protobuf:protobuf-java:jar:2.4.0a:compile
+[DEBUG] Adding project with groupId [com.google.protobuf]
+[DEBUG] Building project for javax.validation:validation-api:jar:1.0.0.GA:compile
+[DEBUG] Adding project with groupId [javax.validation]
+[DEBUG] Building project for org.msgpack:msgpack:jar:0.6.6:compile
+[DEBUG] Adding project with groupId [org.msgpack]
+[DEBUG] Building project for org.antlr:stringtemplate:jar:3.2.1:compile
+[DEBUG] Adding project with groupId [org.antlr]
+[DEBUG] Building project for org.antlr:antlr-runtime:jar:3.4:compile
+[DEBUG] Adding project with groupId [org.antlr]
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ common ---
+[DEBUG] org.apache.maven.plugins:maven-resources-plugin:jar:2.6:
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-project:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-plugin-registry:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.6:compile
+[DEBUG]       org.apache.maven.reporting:maven-reporting-api:jar:2.0.6:compile
+[DEBUG]          org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.6:compile
+[DEBUG]       commons-cli:commons-cli:jar:1.0:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.6:compile
+[DEBUG]       org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4:compile
+[DEBUG]       classworlds:classworlds:jar:1.1:compile
+[DEBUG]    org.apache.maven:maven-artifact:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-settings:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-model:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-monitor:jar:2.0.6:compile
+[DEBUG]    org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1:compile
+[DEBUG]       junit:junit:jar:3.8.1:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:2.0.5:compile
+[DEBUG]    org.apache.maven.shared:maven-filtering:jar:1.1:compile
+[DEBUG]       org.sonatype.plexus:plexus-build-api:jar:0.0.4:compile
+[DEBUG]    org.codehaus.plexus:plexus-interpolation:jar:1.13:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-resources-plugin:2.6
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-resources-plugin:2.6
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-resources-plugin:2.6
+[DEBUG]   Included: org.apache.maven.plugins:maven-resources-plugin:jar:2.6
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-api:jar:2.0.6
+[DEBUG]   Included: org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7
+[DEBUG]   Included: commons-cli:commons-cli:jar:1.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4
+[DEBUG]   Included: junit:junit:jar:3.8.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:2.0.5
+[DEBUG]   Included: org.apache.maven.shared:maven-filtering:jar:1.1
+[DEBUG]   Included: org.sonatype.plexus:plexus-build-api:jar:0.0.4
+[DEBUG]   Included: org.codehaus.plexus:plexus-interpolation:jar:1.13
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-core:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-error-diagnostics:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-descriptor:jar:2.0.6
+[DEBUG]   Excluded: classworlds:classworlds:jar:1.1
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-monitor:jar:2.0.6
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-resources-plugin:2.6:resources from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-resources-plugin:2.6, parent: sun.misc.Launcher$AppClassLoader@19e142a5]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-resources-plugin:2.6:resources' with basic configurator -->
+[DEBUG]   (f) buildFilters = []
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) escapeWindowsPaths = true
+[DEBUG]   (s) includeEmptyDirs = false
+[DEBUG]   (s) outputDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes
+[DEBUG]   (s) overwrite = false
+[DEBUG]   (f) project = MavenProject: org.apache.drill:common:1.0-SNAPSHOT @ /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/pom.xml
+[DEBUG]   (s) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/resources, PatternSet [includes: {}, excludes: {}]}}, Resource {targetPath: null, filtering: false, FileSet {directory: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/maven-shared-archive-resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@48bf6ac4
+[DEBUG]   (f) supportMultiLineFiltering = false
+[DEBUG]   (f) useBuildFilters = true
+[DEBUG]   (s) useDefaultDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] properties used {java.vendor=Oracle Corporation, env.SESSION_MANAGER=local/yangbo:@/tmp/.ICE-unix/2424,unix/yangbo:/tmp/.ICE-unix/2424, env.LESSOPEN=| /usr/bin/lesspipe %s, sun.java.launcher=SUN_STANDARD, sun.management.compiler=HotSpot 64-Bit Tiered Compilers, os.name=Linux, sun.boot.class.path=/home/yangbo/workspace/jdk1.7.0_17/jre/lib/resources.jar:/home/yangbo/workspace/jdk1.7.0_17/jre/lib/rt.jar:/home/yangbo/workspace/jdk1.7.0_17/jre/lib/sunrsasign.jar:/home/yangbo/workspace/jdk1.7.0_17/jre/lib/jsse.jar:/home/yangbo/workspace/jdk1.7.0_17/jre/lib/jce.jar:/home/yangbo/workspace/jdk1.7.0_17/jre/lib/charsets.jar:/home/yangbo/workspace/jdk1.7.0_17/jre/lib/jfr.jar:/home/yangbo/workspace/jdk1.7.0_17/jre/classes, env.PWD=/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype, env.XDG_SESSION_COOKIE=e7da3eee34fd384a51c8e79200000005-1373247311.494895-308289716, sun.desktop=gnome, env.LANG=en_US.UTF-8, java.vm.specification.vendor=Oracle Corporation, java.runtime.version=1.7.0_17-b02, env.DEFAULTS_PATH=/usr/share/gconf/ubuntu-2d.default.path, project.build.sourceEncoding=UTF-8, env.DISPLAY=:0, user.name=yangbo, env._=/usr/bin/mvn, maven.build.version=Apache Maven 3.0.4, env.USER=yangbo, env.SHELL=/bin/bash, sourceReleaseAssemblyDescriptor=source-release, env.DESKTOP_SESSION=ubuntu-2d, env.XDG_DATA_DIRS=/usr/share/ubuntu-2d:/usr/share/gnome:/usr/local/share/:/usr/share/, env.NLSPATH=/usr/dt/lib/nls/msg/%L/%N.cat, env.LC_ADDRESS=zh_CN.UTF-8, env.PATH=/home/yangbo/workspace/jdk1.7.0_17/bin:/usr/bin:/usr/sbin:/bin:/sbin, env.XDG_CURRENT_DESKTOP=Unity, env.JAVA_LIBRARY_PATH=/home/yangbo/hadoop/lib/native, user.language=en, env.LC_MONETARY=zh_CN.UTF-8, sun.boot.library.path=/home/yangbo/workspace/jdk1.7.0_17/jre/lib/amd64, classworlds.conf=/usr/share/maven/bin/m2.conf, java.version=1.7.0_17, user.timezone=, organization.logo=http://www.apache.org/images/asf_logo_wide.gif, env.DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-eJZGK8T1Sk,guid=9963de604ba7d81dcc4b4c4c00000108, dep.slf4j.version=1.7.2, sun.arch.data.model=64, env.SSH_AGENT_PID=2460, java.endorsed.dirs=/home/yangbo/workspace/jdk1.7.0_17/jre/lib/endorsed, sun.cpu.isalist=, env.LC_PAPER=zh_CN.UTF-8, sun.jnu.encoding=UTF-8, file.encoding.pkg=sun.io, env.SHLVL=1, file.separator=/, java.specification.name=Java Platform API Specification, env.GNOME_DESKTOP_SESSION_ID=this-is-deprecated, java.class.version=51.0, env.GDMSESSION=ubuntu-2d, user.country=US, env.GNOME_KEYRING_PID=2413, java.home=/home/yangbo/workspace/jdk1.7.0_17/jre, java.vm.info=mixed mode, env.LOGNAME=yangbo, os.version=3.5.0-34-generic, path.separator=:, java.vm.version=23.7-b01, env.XDG_SESSION_PATH=/org/freedesktop/DisplayManager/Session0, env.LC_TELEPHONE=zh_CN.UTF-8, env.JAVA_HOME=/home/yangbo/workspace/jdk1.7.0_17, java.awt.printerjob=sun.print.PSPrinterJob, env.TERM=xterm, sun.io.unicode.encoding=UnicodeLittle, awt.toolkit=sun.awt.X11.XToolkit, env.LC_MEASUREMENT=zh_CN.UTF-8, user.home=/home/yangbo, env.OLDPWD=/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype, dep.junit.version=4.11, java.specification.vendor=Oracle Corporation, env.CLASSPATH=:/home/yangbo/workspace/jdk1.7.0_17/lib:/home/yangbo/workspace/jdk1.7.0_17/jre/lib:/home/yangbo/hadoop, env.WINDOWID=62960286, java.library.path=/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib, java.vendor.url=http://java.oracle.com/, distMgmtSnapshotsName=Apache Development Snapshot Repository, java.vm.vendor=Oracle Corporation, maven.home=/usr/share/maven, java.runtime.name=Java(TM) SE Runtime Environment, sun.java.command=org.codehaus.plexus.classworlds.launcher.Launcher -X compile, java.class.path=/usr/share/maven/boot/plexus-classworlds-2.x.jar, maven.version=3.0.4, env.UBUNTU_MENUPROXY=libappmenu.so, env.XFILESEARCHPATH=/usr/dt/app-defaults/%L/Dt, java.vm.specification.name=Java Virtual Machine Specification, java.vm.specification.version=1.7, sun.cpu.endian=little, sun.os.patch.level=unknown, env.HOME=/home/yangbo, env.LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.axa=00;36:*.oga=00;36:*.spx=00;36:*.xspf=00;36:, env.XDG_SEAT_PATH=/org/freedesktop/DisplayManager/Seat0, java.io.tmpdir=/tmp, java.vendor.url.bug=http://bugreport.sun.com/bugreport/, distMgmtSnapshotsUrl=https://repository.apache.org/content/repositories/snapshots, env.SSH_AUTH_SOCK=/tmp/keyring-4QmESI/ssh, os.arch=amd64, java.awt.graphicsenv=sun.awt.X11GraphicsEnvironment, java.ext.dirs=/home/yangbo/workspace/jdk1.7.0_17/jre/lib/ext:/usr/java/packages/lib/ext, env.XAUTHORITY=/home/yangbo/.Xauthority, user.dir=/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype, env.MANDATORY_PATH=/usr/share/gconf/ubuntu-2d.mandatory.path, line.separator=
+, env.LC_NUMERIC=zh_CN.UTF-8, java.vm.name=Java HotSpot(TM) 64-Bit Server VM, env.COLORTERM=gnome-terminal, env.LC_TIME=zh_CN.UTF-8, file.encoding=UTF-8, env.LC_IDENTIFICATION=zh_CN.UTF-8, env.GPG_AGENT_INFO=/tmp/keyring-4QmESI/gpg:0:1, java.specification.version=1.7, env.GNOME_KEYRING_CONTROL=/tmp/keyring-4QmESI, env.XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu-2d:/etc/xdg, env.LESSCLOSE=/usr/bin/lesspipe %s %s, env.LC_NAME=zh_CN.UTF-8}
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[DEBUG] resource with targetPath null
+directory /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/resources
+excludes []
+includes []
+[DEBUG] ignoreDelta true
+[INFO] Copying 2 resources
+[DEBUG] file drill-module.conf has a filtered file extension
+[DEBUG] copy /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/resources/drill-module.conf to /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes/drill-module.conf
+[DEBUG] file drill-default.conf has a filtered file extension
+[DEBUG] copy /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/resources/drill-default.conf to /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes/drill-default.conf
+[DEBUG] resource with targetPath null
+directory /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/maven-shared-archive-resources
+excludes []
+includes []
+[DEBUG] ignoreDelta true
+[INFO] Copying 3 resources
+[DEBUG] file DEPENDENCIES has a filtered file extension
+[DEBUG] copy /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/maven-shared-archive-resources/META-INF/DEPENDENCIES to /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes/META-INF/DEPENDENCIES
+[DEBUG] file LICENSE has a filtered file extension
+[DEBUG] copy /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/maven-shared-archive-resources/META-INF/LICENSE to /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes/META-INF/LICENSE
+[DEBUG] file NOTICE has a filtered file extension
+[DEBUG] copy /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/maven-shared-archive-resources/META-INF/NOTICE to /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes/META-INF/NOTICE
+[DEBUG] no use filter components
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.0:compile (default-compile) @ common ---
+[DEBUG] org.apache.maven.plugins:maven-compiler-plugin:jar:3.0:
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-artifact:jar:2.0.9:compile
+[DEBUG]       org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-settings:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-model:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-project:jar:2.0.9:compile
+[DEBUG]          org.apache.maven:maven-plugin-registry:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-monitor:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-toolchain:jar:1.0:compile
+[DEBUG]    org.apache.maven.shared:maven-shared-utils:jar:0.1:compile
+[DEBUG]       com.google.code.findbugs:jsr305:jar:2.0.1:compile
+[DEBUG]    org.apache.maven.shared:maven-shared-incremental:jar:1.0:compile
+[DEBUG]       org.codehaus.plexus:plexus-component-annotations:jar:1.5.5:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-api:jar:2.0:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-manager:jar:2.0:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-javac:jar:2.0:runtime
+[DEBUG]    org.codehaus.plexus:plexus-container-default:jar:1.5.5:compile
+[DEBUG]       org.codehaus.plexus:plexus-classworlds:jar:2.2.2:compile
+[DEBUG]       org.apache.xbean:xbean-reflect:jar:3.4:compile
+[DEBUG]          log4j:log4j:jar:1.2.12:compile
+[DEBUG]          commons-logging:commons-logging-api:jar:1.1:compile
+[DEBUG]       com.google.collections:google-collections:jar:1.0:compile
+[DEBUG]       junit:junit:jar:3.8.2:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.0
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.0
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.0
+[DEBUG]   Included: org.apache.maven.plugins:maven-compiler-plugin:jar:3.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:1.5.1
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-utils:jar:0.1
+[DEBUG]   Included: com.google.code.findbugs:jsr305:jar:2.0.1
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-incremental:jar:1.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-component-annotations:jar:1.5.5
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-api:jar:2.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-manager:jar:2.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-javac:jar:2.0
+[DEBUG]   Included: org.apache.xbean:xbean-reflect:jar:3.4
+[DEBUG]   Included: log4j:log4j:jar:1.2.12
+[DEBUG]   Included: commons-logging:commons-logging-api:jar:1.1
+[DEBUG]   Included: com.google.collections:google-collections:jar:1.0
+[DEBUG]   Included: junit:junit:jar:3.8.2
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-core:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-error-diagnostics:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-descriptor:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-monitor:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-toolchain:jar:1.0
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.5.5
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-classworlds:jar:2.2.2
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-compiler-plugin:3.0:compile from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-compiler-plugin:3.0, parent: sun.misc.Launcher$AppClassLoader@19e142a5]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-compiler-plugin:3.0:compile' with basic configurator -->
+[DEBUG]   (f) basedir = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common
+[DEBUG]   (f) buildDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target
+[DEBUG]   (f) classpathElements = [/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes, /home/yangbo/.m2/repository/com/google/protobuf/protobuf-java/2.4.0a/protobuf-java-2.4.0a.jar, /home/yangbo/.m2/repository/com/typesafe/config/1.0.0/config-1.0.0.jar, /home/yangbo/.m2/repository/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar, /home/yangbo/.m2/repository/org/msgpack/msgpack/0.6.6/msgpack-0.6.6.jar, /home/yangbo/.m2/repository/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar, /home/yangbo/.m2/repository/org/javassist/javassist/3.16.1-GA/javassist-3.16.1-GA.jar, /home/yangbo/.m2/repository/org/reflections/reflections/0.9.8/reflections-0.9.8.jar, /home/yangbo/.m2/repository/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar, /home/yangbo/.m2/repository/dom4j/dom4j/1.6.1/dom4j-1.6.1.jar, /home/yangbo/.m2/repository/xml-apis/xml-apis/1.0.b2/xml-apis-1.0.b2.jar, /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.1.1/jackson-annotations-2.1.1.jar, /home/yangbo/.m2/repository/org/hibernate/hibernate-validator/4.3.1.Final/hibernate-validator-4.3.1.Final.jar, /home/yangbo/.m2/repository/javax/validation/validation-api/1.0.0.GA/validation-api-1.0.0.GA.jar, /home/yangbo/.m2/repository/org/jboss/logging/jboss-logging/3.1.0.CR2/jboss-logging-3.1.0.CR2.jar, /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.1.1/jackson-databind-2.1.1.jar, /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.1.1/jackson-core-2.1.1.jar, /home/yangbo/.m2/repository/org/antlr/antlr-runtime/3.4/antlr-runtime-3.4.jar, /home/yangbo/.m2/repository/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1.jar, /home/yangbo/.m2/repository/antlr/antlr/2.7.7/antlr-2.7.7.jar, /home/yangbo/.m2/repository/com/google/guava/guava/13.0.1/guava-13.0.1.jar, /home/yangbo/.m2/repository/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar, /home/yangbo/.m2/repository/org/slf4j/jul-to-slf4j/1.7.2/jul-to-slf4j-1.7.2.jar, /home/yangbo/.m2/repository/org/slf4j/jcl-over-slf4j/1.7.2/jcl-over-slf4j-1.7.2.jar]
+[DEBUG]   (f) compileSourceRoots = [/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/java, /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/antlr3]
+[DEBUG]   (f) compilerId = javac
+[DEBUG]   (f) debug = true
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) failOnError = true
+[DEBUG]   (f) forceJavacCompilerUse = false
+[DEBUG]   (f) fork = false
+[DEBUG]   (f) generatedSourcesDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/annotations
+[DEBUG]   (f) mojoExecution = org.apache.maven.plugins:maven-compiler-plugin:3.0:compile {execution: default-compile}
+[DEBUG]   (f) optimize = false
+[DEBUG]   (f) outputDirectory = /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes
+[DEBUG]   (f) projectArtifact = org.apache.drill:common:jar:1.0-SNAPSHOT
+[DEBUG]   (f) showDeprecation = false
+[DEBUG]   (f) showWarnings = false
+[DEBUG]   (f) skipMultiThreadWarning = false
+[DEBUG]   (f) source = 1.7
+[DEBUG]   (f) staleMillis = 0
+[DEBUG]   (f) target = 1.7
+[DEBUG]   (f) verbose = false
+[DEBUG]   (f) mavenSession = org.apache.maven.execution.MavenSession@48bf6ac4
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@48bf6ac4
+[DEBUG] -- end configuration --
+[DEBUG] Using compiler 'javac'.
+[DEBUG] Source directories: [/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/java
+ /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/antlr3]
+[DEBUG] Classpath: [/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes
+ /home/yangbo/.m2/repository/com/google/protobuf/protobuf-java/2.4.0a/protobuf-java-2.4.0a.jar
+ /home/yangbo/.m2/repository/com/typesafe/config/1.0.0/config-1.0.0.jar
+ /home/yangbo/.m2/repository/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar
+ /home/yangbo/.m2/repository/org/msgpack/msgpack/0.6.6/msgpack-0.6.6.jar
+ /home/yangbo/.m2/repository/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar
+ /home/yangbo/.m2/repository/org/javassist/javassist/3.16.1-GA/javassist-3.16.1-GA.jar
+ /home/yangbo/.m2/repository/org/reflections/reflections/0.9.8/reflections-0.9.8.jar
+ /home/yangbo/.m2/repository/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar
+ /home/yangbo/.m2/repository/dom4j/dom4j/1.6.1/dom4j-1.6.1.jar
+ /home/yangbo/.m2/repository/xml-apis/xml-apis/1.0.b2/xml-apis-1.0.b2.jar
+ /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.1.1/jackson-annotations-2.1.1.jar
+ /home/yangbo/.m2/repository/org/hibernate/hibernate-validator/4.3.1.Final/hibernate-validator-4.3.1.Final.jar
+ /home/yangbo/.m2/repository/javax/validation/validation-api/1.0.0.GA/validation-api-1.0.0.GA.jar
+ /home/yangbo/.m2/repository/org/jboss/logging/jboss-logging/3.1.0.CR2/jboss-logging-3.1.0.CR2.jar
+ /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.1.1/jackson-databind-2.1.1.jar
+ /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.1.1/jackson-core-2.1.1.jar
+ /home/yangbo/.m2/repository/org/antlr/antlr-runtime/3.4/antlr-runtime-3.4.jar
+ /home/yangbo/.m2/repository/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1.jar
+ /home/yangbo/.m2/repository/antlr/antlr/2.7.7/antlr-2.7.7.jar
+ /home/yangbo/.m2/repository/com/google/guava/guava/13.0.1/guava-13.0.1.jar
+ /home/yangbo/.m2/repository/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar
+ /home/yangbo/.m2/repository/org/slf4j/jul-to-slf4j/1.7.2/jul-to-slf4j-1.7.2.jar
+ /home/yangbo/.m2/repository/org/slf4j/jcl-over-slf4j/1.7.2/jcl-over-slf4j-1.7.2.jar]
+[DEBUG] Output directory: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes
+[DEBUG] CompilerReuseStrategy: reuseCreated
+[INFO] Changes detected - recompiling the module!
+[DEBUG] Classpath:
+[DEBUG]  /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes
+[DEBUG]  /home/yangbo/.m2/repository/com/google/protobuf/protobuf-java/2.4.0a/protobuf-java-2.4.0a.jar
+[DEBUG]  /home/yangbo/.m2/repository/com/typesafe/config/1.0.0/config-1.0.0.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/msgpack/msgpack/0.6.6/msgpack-0.6.6.jar
+[DEBUG]  /home/yangbo/.m2/repository/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/javassist/javassist/3.16.1-GA/javassist-3.16.1-GA.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/reflections/reflections/0.9.8/reflections-0.9.8.jar
+[DEBUG]  /home/yangbo/.m2/repository/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar
+[DEBUG]  /home/yangbo/.m2/repository/dom4j/dom4j/1.6.1/dom4j-1.6.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/xml-apis/xml-apis/1.0.b2/xml-apis-1.0.b2.jar
+[DEBUG]  /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.1.1/jackson-annotations-2.1.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/hibernate/hibernate-validator/4.3.1.Final/hibernate-validator-4.3.1.Final.jar
+[DEBUG]  /home/yangbo/.m2/repository/javax/validation/validation-api/1.0.0.GA/validation-api-1.0.0.GA.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/jboss/logging/jboss-logging/3.1.0.CR2/jboss-logging-3.1.0.CR2.jar
+[DEBUG]  /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.1.1/jackson-databind-2.1.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.1.1/jackson-core-2.1.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/antlr/antlr-runtime/3.4/antlr-runtime-3.4.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/antlr/antlr/2.7.7/antlr-2.7.7.jar
+[DEBUG]  /home/yangbo/.m2/repository/com/google/guava/guava/13.0.1/guava-13.0.1.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/slf4j/jul-to-slf4j/1.7.2/jul-to-slf4j-1.7.2.jar
+[DEBUG]  /home/yangbo/.m2/repository/org/slf4j/jcl-over-slf4j/1.7.2/jcl-over-slf4j-1.7.2.jar
+[DEBUG] Source roots:
+[DEBUG]  /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/java
+[DEBUG]  /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/antlr3
+[DEBUG] Command line options:
+[DEBUG] -d /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes -classpath /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes:/home/yangbo/.m2/repository/com/google/protobuf/protobuf-java/2.4.0a/protobuf-java-2.4.0a.jar:/home/yangbo/.m2/repository/com/typesafe/config/1.0.0/config-1.0.0.jar:/home/yangbo/.m2/repository/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar:/home/yangbo/.m2/repository/org/msgpack/msgpack/0.6.6/msgpack-0.6.6.jar:/home/yangbo/.m2/repository/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar:/home/yangbo/.m2/repository/org/javassist/javassist/3.16.1-GA/javassist-3.16.1-GA.jar:/home/yangbo/.m2/repository/org/reflections/reflections/0.9.8/reflections-0.9.8.jar:/home/yangbo/.m2/repository/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar:/home/yangbo/.m2/repository/dom4j/dom4j/1.6.1/dom4j-1.6.1.jar:/home/yangbo/.m2/repository/xml-apis/xml-apis/1.0.b2/xml-apis-1.0.b2.jar:/home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.1.1/jackson-annotations-2.1.1.jar:/home/yangbo/.m2/repository/org/hibernate/hibernate-validator/4.3.1.Final/hibernate-validator-4.3.1.Final.jar:/home/yangbo/.m2/repository/javax/validation/validation-api/1.0.0.GA/validation-api-1.0.0.GA.jar:/home/yangbo/.m2/repository/org/jboss/logging/jboss-logging/3.1.0.CR2/jboss-logging-3.1.0.CR2.jar:/home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.1.1/jackson-databind-2.1.1.jar:/home/yangbo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.1.1/jackson-core-2.1.1.jar:/home/yangbo/.m2/repository/org/antlr/antlr-runtime/3.4/antlr-runtime-3.4.jar:/home/yangbo/.m2/repository/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1.jar:/home/yangbo/.m2/repository/antlr/antlr/2.7.7/antlr-2.7.7.jar:/home/yangbo/.m2/repository/com/google/guava/guava/13.0.1/guava-13.0.1.jar:/home/yangbo/.m2/repository/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar:/home/yangbo/.m2/repository/org/slf4j/jul-to-slf4j/1.7.2/jul-to-slf4j-1.7.2.jar:/home/yangbo/.m2/repository/org/slf4j/jcl-over-slf4j/1.7.2/jcl-over-slf4j-1.7.2.jar: -sourcepath /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/java:/home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/antlr3: -s /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/generated-sources/annotations -g -nowarn -target 1.7 -source 1.7 -encoding UTF-8
+[INFO] Compiling 104 source files to /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/target/classes
+[WARNING] /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/java/org/apache/drill/common/util/Hook.java: /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/java/org/apache/drill/common/util/Hook.java uses unchecked or unsafe operations.
+[WARNING] /home/yangbo/workspace/gitdata/incubator-drill/sandbox/prototype/common/src/main/java/org/apache/drill/common/util/Hook.java: Recompile with -Xlint:unchecked for details.
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building contrib-parent 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] === PROJECT BUILD PLAN ================================================
+[DEBUG] Project:       org.apache.drill.contrib:contrib-parent:1.0-SNAPSHOT
+[DEBUG] Dependencies (collect): []
+[DEBUG] Dependencies (resolve): [test]
+[DEBUG] Repositories (dependencies): [conjars (http://conjars.org/repo, releases+snapshots), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, snapshots), apache.snapshots (http://repository.apache.org/snapshots, snapshots), central (http://repo.maven.apache.org/maven2, releases)]
+[DEBUG] Repositories (plugins)     : [central (http://repo.maven.apache.org/maven2, releases)]
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:1.2:enforce (no_commons_logging)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <fail default-value="true">${enforcer.fail}</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <rules>
+    <bannedDependencies>
+      <excludes>
+        <exclude>commons-logging</exclude>
+      </excludes>
+    </bannedDependencies>
+  </rules>
+  <skip default-value="false">${enforcer.skip}</skip>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-remote-resources-plugin:1.1:process (default)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appendedResourcesDirectory>${basedir}/src/main/appended-resources</appendedResourcesDirectory>
+  <attached default-value="true"/>
+  <basedir default-value="${basedir}"/>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <excludeArtifactIds default-value="">${excludeArtifactIds}</excludeArtifactIds>
+  <excludeGroupIds default-value="">${excludeGroupIds}</excludeGroupIds>
+  <excludeScope default-value="">${excludeScope}</excludeScope>
+  <excludeTransitive default-value="false">${excludeTransitive}</excludeTransitive>
+  <includeArtifactIds default-value="">${includeArtifactIds}</includeArtifactIds>
+  <includeGroupIds default-value="">${includeGroupIds}</includeGroupIds>
+  <includeScope default-value="runtime">${includeScope}</includeScope>
+  <localRepository>${localRepository}</localRepository>
+  <mavenSession>${session}</mavenSession>
+  <outputDirectory>${project.build.directory}/maven-shared-archive-resources</outputDirectory>
+  <project>${project}</project>
+  <remoteArtifactRepositories>${project.remoteArtifactRepositories}</remoteArtifactRepositories>
+  <resourceBundles>
+    <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+  </resourceBundles>
+  <resources>${project.resources}</resources>
+  <runOnlyAtExecutionRoot default-value="false"/>
+  <skip default-value="false">${remoteresources.skip}</skip>
+  <useDefaultFilterDelimiters default-value="true"/>
+</configuration>
+[DEBUG] =======================================================================

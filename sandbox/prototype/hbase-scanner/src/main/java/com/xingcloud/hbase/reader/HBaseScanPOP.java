@@ -36,11 +36,12 @@ import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.base.Size;
 import org.apache.drill.exec.proto.CoordinationProtos;
 import org.apache.drill.exec.proto.SchemaDefProtos;
-//import org.apache.drill.exec.ref.rops.ROP;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+//import org.apache.drill.exec.ref.rops.ROP;
 
 
 @JsonTypeName("hbase-scan")
@@ -68,36 +69,45 @@ public class HBaseScanPOP extends AbstractScan<HBaseScanPOP.HBaseScanEntry> {
     */
 
     public static class HBaseScanEntry implements ReadEntry {
-
-        private final int records;
         private final ScanType[] types;
-        private final int recordSize;
-        private byte[] srk;
-        private byte[] enk;
+        //private final int recordSize;
+        private final String eventPattern;
+        private String pID;
 
-        private String rootPath;
+        public List<String> getDayList() {
+            return dayList;
+        }
 
+        private List<String> dayList;
         @JsonCreator
-        public HBaseScanEntry(@JsonProperty("records") int records, @JsonProperty("types") ScanType[] types,
-                              @JsonProperty("srk")byte[] srk,@JsonProperty("enk")byte[] enk,@JsonProperty("table")String rootPath) {
-            this.records = records;
+        public HBaseScanEntry(@JsonProperty("types") ScanType[] types, @JsonProperty("days")List<String> dayList,
+                              @JsonProperty("event") String eventPattern,@JsonProperty("project_id")String pID){
             this.types = types;
-            int size = 0;
-            this.recordSize = size;
-            this.srk=srk;
-            this.enk=enk;
-            this.rootPath=rootPath;
+            //int size = 0;
+            //this.recordSize = size;
+            this.eventPattern=eventPattern;
+            this.pID=pID;
+            this.dayList=dayList;
+        }
+        public HBaseScanEntry(@JsonProperty("types") ScanType[] types, @JsonProperty("startDay")String startDay, @JsonProperty("endDay")String endDay,
+                              @JsonProperty("event") String eventPattern,@JsonProperty("project_id")String pID){
+            this.types = types;
+            //int size = 0;
+            //this.recordSize = size;
+            this.eventPattern=eventPattern;
+            this.pID=pID;
+            this.dayList=new ArrayList<String>();
+            try {
+                for(String day=startDay;compareDate(day,endDay)<=0;day=calDay(day,1)){
+                    dayList.add(day);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
         }
 
-        public byte[] getSrk() {
-            return srk;
-        }
-
-        public byte[] getEnk() {
-            return enk;
-        }
-        public String getRootPath() {
-            return rootPath;
+        public String getpID() {
+            return pID;
         }
 
         @Override
@@ -105,18 +115,68 @@ public class HBaseScanPOP extends AbstractScan<HBaseScanPOP.HBaseScanEntry> {
             return new OperatorCost(1, 2, 1, 1);
         }
 
-
-        public int getRecords() {
-            return records;
+        @Override
+        public Size getSize() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
         }
 
         public ScanType[] getTypes() {
             return types;
         }
 
-        @Override
-        public Size getSize() {
-            return new Size(records, recordSize);
+        public String getEventPattern() {
+            return eventPattern;
+        }
+        private int compareDate(String DATE1, String DATE2) throws ParseException {
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+                Date dt1 = df.parse(DATE1);
+                Date dt2 = df.parse(DATE2);
+                if (dt1.getTime() > dt2.getTime()) {
+                    return 1;
+                } else if (dt1.getTime() < dt2.getTime()) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            } catch (Exception e) {
+                //LOG.error("Invalid date format! Date1: " + DATE1 + "\tDate2: " + DATE2, e);
+                e.printStackTrace();
+                throw new ParseException(DATE1 + "\t" + DATE2, 0);
+            }
+
+        }
+        private String calDay(String date, int dis) throws ParseException {
+            try {
+                TimeZone TZ = TimeZone.getTimeZone("GMT+8");
+                SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+                Date temp = new Date(getTimestamp(date));
+
+                java.util.Calendar ca = Calendar.getInstance(TZ);
+                ca.setTime(temp);
+                ca.add(Calendar.DAY_OF_MONTH, dis);
+                return df.format(ca.getTime());
+            } catch (Exception e) {
+                e.printStackTrace();
+                //LOG.error("CalDay got exception! " + date + " " + dis);
+                throw new ParseException(date + " " + dis, 0);
+            }
+        }
+        private long getTimestamp(String date) {
+            String dateString = date + " 00:00:00";
+            SimpleDateFormat tdf = new SimpleDateFormat("yyyyMMdd hh:mm:ss");
+            Date nowDate = null;
+            try {
+                nowDate = tdf.parse(dateString);
+            } catch (ParseException e) {
+                //LOG.error("DateManager.daydis catch Exception with params is "
+                //+ date, e);
+            }
+            if (nowDate != null) {
+                return nowDate.getTime();
+            } else {
+                return -1;
+            }
         }
     }
 

@@ -41,8 +41,14 @@ public class VarLen4 extends VariableVector<VarLen4, Fixed4>{
           data.setBytes(0, bytes);
       } else {
           int previousOffset = lengthVector.getInt(index - 1);
+          logger.info("previous offset "+previousOffset);
           lengthVector.setInt(index, previousOffset + bytes.length);
+          logger.info("offset now "+lengthVector.getInt(index));
           data.setBytes(previousOffset, bytes);
       }
     }
+ public Fixed4 getLengthVector(){
+     return lengthVector;
+ }
+
 }

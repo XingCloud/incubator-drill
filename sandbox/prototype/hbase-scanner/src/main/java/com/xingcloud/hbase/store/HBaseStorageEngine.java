@@ -42,7 +42,8 @@ public class HBaseStorageEngine extends AbstractStorageEngine {
 
     @Override
     public Collection<ReadEntry> getReadEntries(Scan scan) throws IOException {
-        throw new UnsupportedOperationException();
+        //HbaseScanPOP scanPOP=(HbaseScanPOP)scan;
+        return null;
     }
 
     @Override
