@@ -1,5 +1,8 @@
 package org.apache.drill.common.logical.manual;
 
+import static org.apache.drill.common.enums.Aggregator.COUNT;
+import static org.apache.drill.common.enums.Aggregator.COUNT_DISTINCT;
+import static org.apache.drill.common.enums.Aggregator.SUM;
 import static org.apache.drill.common.enums.BinaryOperator.AND;
 import static org.apache.drill.common.enums.BinaryOperator.EQ;
 
@@ -16,7 +19,6 @@ import org.apache.drill.common.expression.ValueExpressions;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.StorageEngineConfig;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
-import org.apache.drill.common.logical.data.Distinct;
 import org.apache.drill.common.logical.data.Filter;
 import org.apache.drill.common.logical.data.LogicalOperator;
 import org.apache.drill.common.logical.data.NamedExpression;
@@ -123,8 +125,8 @@ public class ManualStaticLPBuilder {
     return left;
   }
 
-  public static LogicalPlan buildStaticLogicalPlanManually(String projectId, String event, String date,
-                                                           boolean isDistinct) throws IOException {
+  public static LogicalPlan buildStaticLogicalPlanManually(String projectId, String event, String date) throws
+    IOException {
     List<LogicalOperator> logicalOperators = new ArrayList<>();
     FunctionRegistry functionRegistry = new FunctionRegistry(DrillConfig.create());
 
@@ -142,31 +144,38 @@ public class ManualStaticLPBuilder {
     filter.setInput(from);
     logicalOperators.add(filter);
 
-    // Build distinction
-    Distinct distinct = null;
-    if (isDistinct) {
-      distinct = new Distinct(null, new FieldReference("uid"));
-      distinct.setInput(filter);
-      logicalOperators.add(distinct);
-    }
+//    // Build distinction
+//    Distinct distinct = null;
+//    if (isDistinct) {
+//      distinct = new Distinct(null, new FieldReference("uid"));
+//      distinct.setInput(filter);
+//      logicalOperators.add(distinct);
+//    }
 
     // Build collapsing aggregation
     CollapsingAggregate collapsingAggregate;
     FieldReference within = null, target = null;
     FieldReference[] carryovers = new FieldReference[0];
-    NamedExpression namedExpression;
+    NamedExpression[] namedExpressions = new NamedExpression[3];
 
-    String countColumn = "uid";
-    FieldReference countOn = new FieldReference(countColumn);
-    namedExpression = new NamedExpression(functionRegistry.createExpression("count", countOn),
-                                          new FieldReference("uid"));
-    collapsingAggregate = new CollapsingAggregate(within, target, carryovers, new NamedExpression[]{namedExpression});
+    String aggrColumn = "uid";
+    FieldReference aggrOn = new FieldReference(aggrColumn);
+    namedExpressions[0] = new NamedExpression(functionRegistry.createExpression(COUNT.getKeyWord(), aggrOn),
+                                              new FieldReference(aggrColumn));
+    namedExpressions[1] = new NamedExpression(functionRegistry.createExpression(COUNT_DISTINCT.getKeyWord(), aggrOn),
+                                              new FieldReference(aggrColumn));
+    aggrColumn = "value";
+    aggrOn = new FieldReference(aggrColumn);
+    namedExpressions[2] = new NamedExpression(functionRegistry.createExpression(SUM.getKeyWord(), aggrOn),
+                                              new FieldReference(aggrColumn));
+    collapsingAggregate = new CollapsingAggregate(within, target, carryovers, namedExpressions);
 
-    if (distinct == null) {
-      collapsingAggregate.setInput(filter);
-    } else {
-      collapsingAggregate.setInput(distinct);
-    }
+    collapsingAggregate.setInput(filter);
+//    if (distinct == null) {
+//      collapsingAggregate.setInput(filter);
+//    } else {
+//      collapsingAggregate.setInput(distinct);
+//    }
 
     logicalOperators.add(collapsingAggregate);
 
@@ -196,10 +205,7 @@ public class ManualStaticLPBuilder {
 
   public static void main(String[] args) throws IOException {
     DrillConfig c = DrillConfig.create();
-    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708", false);
+    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708");
     System.out.println(logicalPlan.unparse(c));
-    logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708", true);
-    System.out.println(logicalPlan.unparse(c));
-
   }
 }
