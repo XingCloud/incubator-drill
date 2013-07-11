@@ -19,7 +19,6 @@ package org.apache.drill.exec.cache;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 

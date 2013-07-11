@@ -73,7 +73,7 @@ public class BitServer extends BasicServer<RpcType, BitConnection>{
   
   @Override
   protected ServerHandshakeHandler<BitHandshake> getHandshakeHandler(final BitConnection connection) {
-    return new ServerHandshakeHandler<BitHandshake>(RpcType.HANDSHAKE, BitHandshake.PARSER){
+    return new ServerHandshakeHandler<BitHandshake>(RpcType.HANDSHAKE, BitHandshake.class){
       
       @Override
       public MessageLite getHandshakeResponse(BitHandshake inbound) throws Exception {

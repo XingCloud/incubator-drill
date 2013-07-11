@@ -5,6 +5,7 @@ public class WireFormatProxy {
   WireFormatProxy(){};
   
   public static int getFieldType(int tag){
-    return WireFormat.getTagWireType(tag);
+     return 0;
+    //return WireFormat.getTagWireType(tag);
   }
 }
