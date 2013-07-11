@@ -51,7 +51,7 @@ public class QueryResultHandler {
   }
   
   public void batchArrived(ByteBuf pBody, ByteBuf dBody) throws RpcException {
-    final QueryResult result = RpcBus.get(pBody, QueryResult.PARSER);
+    final QueryResult result = RpcBus.get(pBody, QueryResult.class);
     final QueryResultBatch batch = new QueryResultBatch(result, dBody);
     UserResultsListener l = resultsListener.get(result.getQueryId());
     // logger.debug("For QueryId [{}], retrieved result listener {}", result.getQueryId(), l);

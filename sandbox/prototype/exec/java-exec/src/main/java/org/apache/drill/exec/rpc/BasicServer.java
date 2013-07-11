@@ -36,7 +36,6 @@ import org.apache.drill.exec.proto.GeneralRPCProtos.RpcMode;
 
 import com.google.protobuf.Internal.EnumLite;
 import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
 
 /**
  * A server is bound to a port and is responsible for responding to various type of requests. In some cases, the inbound
@@ -92,7 +91,7 @@ public abstract class BasicServer<T extends EnumLite, C extends RemoteConnection
 
   protected static abstract class ServerHandshakeHandler<T extends MessageLite> extends AbstractHandshakeHandler<T> {
 
-    public ServerHandshakeHandler(EnumLite handshakeType, Parser<T> parser) {
+    public ServerHandshakeHandler(EnumLite handshakeType, Class<T> parser) {
       super(handshakeType, parser);
     }
 

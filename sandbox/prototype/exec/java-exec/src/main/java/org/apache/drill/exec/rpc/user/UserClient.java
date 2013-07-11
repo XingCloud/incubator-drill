@@ -42,7 +42,7 @@ public class UserClient extends BasicClientWithConnection<RpcType, UserToBitHand
   private final QueryResultHandler queryResultHandler = new QueryResultHandler();
 
   public UserClient(ByteBufAllocator alloc, EventLoopGroup eventLoopGroup) {
-    super(UserRpcConfig.MAPPING, alloc, eventLoopGroup, RpcType.HANDSHAKE, BitToUserHandshake.class, BitToUserHandshake.PARSER);
+    super(UserRpcConfig.MAPPING, alloc, eventLoopGroup, RpcType.HANDSHAKE, BitToUserHandshake.class, BitToUserHandshake.class);
   }
 
   public void submitQuery(UserResultsListener resultsListener, RunQuery query) throws RpcException {

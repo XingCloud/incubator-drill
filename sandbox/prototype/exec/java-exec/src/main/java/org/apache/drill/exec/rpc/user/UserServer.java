@@ -73,18 +73,18 @@ public class UserServer extends BasicServer<RpcType, UserServer.UserClientConnec
     case RpcType.RUN_QUERY_VALUE:
       // logger.debug("Received query to run.  Returning query handle.");
       try {
-        RunQuery query = RunQuery.PARSER.parseFrom(new ByteBufInputStream(pBody));
+        RunQuery query = RunQuery.parseFrom(new ByteBufInputStream(pBody));
         return new Response(RpcType.QUERY_HANDLE, worker.submitWork(connection, query));
-      } catch (InvalidProtocolBufferException e) {
+      } catch (Exception e) {
         throw new RpcException("Failure while decoding RunQuery body.", e);
       }
 
     case RpcType.REQUEST_RESULTS_VALUE:
       // logger.debug("Received results requests.  Returning empty query result.");
       try {
-        RequestResults req = RequestResults.PARSER.parseFrom(new ByteBufInputStream(pBody));
+        RequestResults req = RequestResults.parseFrom(new ByteBufInputStream(pBody));
         return new Response(RpcType.QUERY_RESULT, worker.getResult(connection, req));
-      } catch (InvalidProtocolBufferException e) {
+      } catch (Exception e) {
         throw new RpcException("Failure while decoding RequestResults body.", e);
       }
 
@@ -113,7 +113,7 @@ public class UserServer extends BasicServer<RpcType, UserServer.UserClientConnec
   
   @Override
   protected ServerHandshakeHandler<UserToBitHandshake> getHandshakeHandler(UserClientConnection connection) {
-    return new ServerHandshakeHandler<UserToBitHandshake>(RpcType.HANDSHAKE, UserToBitHandshake.PARSER){
+    return new ServerHandshakeHandler<UserToBitHandshake>(RpcType.HANDSHAKE, UserToBitHandshake.class){
 
       @Override
       public MessageLite getHandshakeResponse(UserToBitHandshake inbound) throws Exception {
