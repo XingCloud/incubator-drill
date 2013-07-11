@@ -163,6 +163,7 @@ public class HBaseRecordReader implements RecordReader {
             SchemaDefProtos.MajorType type=config.getTypes()[i].getMajorType();
             int batchRecordCount=BATCHRECORDCOUNT;
             valueVectors[i] = getVector(i,config.getTypes()[i].getName(),type,batchRecordCount);
+            output.addField(i,valueVectors[i]);
             output.setNewSchema();
             }
         } catch (Exception e) {
@@ -235,7 +236,7 @@ public class HBaseRecordReader implements RecordReader {
         boolean next=PutValuesToVectors(kv,valueVectors,recordSetSize);
         if(!next)return recordSetSize;
         recordSetSize++;
-        LOG.info("get record size "+recordSetSize);
+        //LOG.info("get record size "+recordSetSize);
         }
     }
     public boolean PutValuesToVectors(KeyValue kv,ValueVector<?>[] valueVectors,int recordSetSize){
@@ -273,17 +274,17 @@ public class HBaseRecordReader implements RecordReader {
             else if(valueVector instanceof Fixed4){
                 ((Fixed4)valueVector).setInt(recordSetSize,resultInt);
                 valueVector.setRecordCount(recordSetSize);
-                System.out.println(((Fixed4) valueVector).getInt(recordSetSize));
-                LOG.info("recordSetSize "+recordSetSize);
-                LOG.info("fixed4.capacity "+valueVector.capacity());
+                //System.out.println(((Fixed4) valueVector).getInt(recordSetSize));
+                //LOG.info("recordSetSize "+recordSetSize);
+                //LOG.info("fixed4.capacity "+valueVector.capacity());
                 if((recordSetSize+1)>valueVector.capacity())return false;
             }
             else if(valueVector instanceof Fixed8){
                 ((Fixed8)valueVector).setBigInt(recordSetSize,resultLong);
                 valueVector.setRecordCount(recordSetSize);
-                System.out.println(((Fixed8) valueVector).getBigInt(recordSetSize));
-                LOG.info("recordSetSize "+recordSetSize);
-                LOG.info("fixed8.capacity "+valueVector.capacity());
+                //System.out.println(((Fixed8) valueVector).getBigInt(recordSetSize));
+                //LOG.info("recordSetSize "+recordSetSize);
+                //LOG.info("fixed8.capacity "+valueVector.capacity());
                 if((recordSetSize+1)>valueVector.capacity())return false;
             }
         }

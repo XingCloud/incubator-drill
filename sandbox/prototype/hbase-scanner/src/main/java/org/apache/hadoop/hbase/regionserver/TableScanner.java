@@ -80,7 +80,7 @@ public class TableScanner implements XAScanner {
             scanners.add(memstoreScanner);
             LOG.info("Init memstore scanner finished. Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
         }
-
+        /*
         if (!isMemOnly) {
             LOG.info("Begin to init store file scanner...");
             List<HRegionInfo> regionInfoList = getRegionInfoList(table, seKeyList);
@@ -98,6 +98,7 @@ public class TableScanner implements XAScanner {
             }
             LOG.info("Init hfile scanner finished. Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
         }
+        */
 
 
     }

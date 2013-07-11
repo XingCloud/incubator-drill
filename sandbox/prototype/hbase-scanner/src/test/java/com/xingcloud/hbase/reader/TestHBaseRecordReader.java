@@ -5,7 +5,6 @@ import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
-import org.apache.drill.exec.record.vector.TypeHelper;
 import org.apache.drill.exec.record.vector.ValueVector;
 import org.apache.drill.exec.store.RecordReader;
 import org.junit.Test;
@@ -44,6 +43,7 @@ public class TestHBaseRecordReader {
             while(batch.next()!= RecordBatch.IterOutcome.NONE){
                 for(MaterializedField f : batch.getSchema()){
                     ValueVector v = batch.getValueVector(f.getFieldId());
+                    System.out.print(f.getName() + ":");
                     for(int i = 0 ; i < v.getRecordCount() ; i ++){
                         System.out.print(v.getObject(i) + " ");
                     }
