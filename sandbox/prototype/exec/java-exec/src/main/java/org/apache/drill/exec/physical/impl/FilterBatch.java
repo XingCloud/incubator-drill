@@ -1,20 +1,16 @@
 package org.apache.drill.exec.physical.impl;
 
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
-import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.Filter;
 import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
-import org.apache.drill.exec.proto.SchemaDefProtos;
-import org.apache.drill.exec.record.*;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BooleanEvaluator;
+import org.apache.drill.exec.record.BaseRecordBatch;
+import org.apache.drill.exec.record.BatchSchema;
+import org.apache.drill.exec.record.MaterializedField;
+import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.record.vector.Bit;
-import org.apache.drill.exec.record.vector.Fixed4;
 import org.apache.drill.exec.record.vector.TypeHelper;
 import org.apache.drill.exec.record.vector.ValueVector;
-import sun.util.logging.PlatformLogger;
-import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
-
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.

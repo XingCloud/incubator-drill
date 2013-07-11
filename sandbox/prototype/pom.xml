@@ -142,21 +142,25 @@
 			<version>${dep.junit.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.0.7</version>
-			<scope>test</scope>
-		</dependency>
+
+       <dependency>
+           <groupId>ch.qos.logback</groupId>
+           <artifactId>logback-classic</artifactId>
+           <version>1.0.7</version>
+           <scope>test</scope>
+       </dependency>
+
+
         <!--
-		<dependency>
-			<groupId>de.huxhorn.lilith</groupId>
-			<artifactId>de.huxhorn.lilith.logback.appender.multiplex-classic</artifactId>
-			<version>0.9.43</version>
-			<scope>test</scope>
-		</dependency> -->
 
+       <dependency>
+           <groupId>de.huxhorn.lilith</groupId>
+           <artifactId>de.huxhorn.lilith.logback.appender.multiplex-classic</artifactId>
+           <version>0.9.43</version>
+           <scope>test</scope>
+       </dependency>
 
+       -->
 
 	</dependencies>
 
