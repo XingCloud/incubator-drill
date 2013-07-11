@@ -2,6 +2,7 @@ package org.apache.drill.exec.physical.impl;
 
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import org.apache.drill.common.expression.PathSegment;
+import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.Project;
@@ -88,20 +89,17 @@ public class ProjectBatch extends BaseRecordBatch {
                 isFirst = true;
                 schemaBuilder = BatchSchema.newBuilder();
             case OK:
+                MaterializedField f;
                 for (int i = 0; i < evaluators.length; i++) {
                     DrillValue dv = evaluators[i].eval();
                     ValueVector vv = (ValueVector) dv;
                     recordCount = vv.getRecordCount();
-                    fields.put(vv.getField().getFieldId(), vv);
+                    f = MaterializedField.create(new SchemaPath(selections.get(i).getRef().getPath()), i, 0, vv.getField().getType());
+                    vv.setField(f);
+                    fields.put(f.getFieldId(), vv);
                     if (isFirst) {
-                        schemaBuilder.addField(vv.getField());
+                        schemaBuilder.addField(f);
                     }
-                    /*
-                    System.out.print(vv.getField().getName());
-                    for(int j = 0 ;j < recordCount ; j ++){
-                        System.out.print(" " + vv.getObject(j) + " ");
-                    }
-                    System.out.println(); */
                 }
                 if (isFirst) {
                     try {
