@@ -48,7 +48,7 @@ public class BitClient  extends BasicClient<RpcType, BitConnection, BitHandshake
   private final DrillbitEndpoint localIdentity;
   
   public BitClient(DrillbitEndpoint remoteEndpoint, DrillbitEndpoint localEndpoint, BitComHandler handler, BootStrapContext context, CloseHandlerCreator closeHandlerFactory, ListenerPool listeners) {
-    super(BitRpcConfig.MAPPING, context.getAllocator().getUnderlyingAllocator(), context.getBitLoopGroup(), RpcType.HANDSHAKE, BitHandshake.class, BitHandshake.PARSER);
+    super(BitRpcConfig.MAPPING, context.getAllocator().getUnderlyingAllocator(), context.getBitLoopGroup(), RpcType.HANDSHAKE, BitHandshake.class, BitHandshake.class);
     this.localIdentity = localEndpoint;
     this.remoteEndpoint = remoteEndpoint;
     this.handler = handler;

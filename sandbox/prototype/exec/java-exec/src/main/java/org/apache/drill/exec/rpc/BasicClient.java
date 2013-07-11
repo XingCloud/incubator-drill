@@ -34,7 +34,6 @@ import org.apache.drill.exec.rpc.RpcConnectionHandler.FailureType;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Internal.EnumLite;
 import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
 
 public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection, HANDSHAKE_SEND extends MessageLite, HANDSHAKE_RESPONSE extends MessageLite>
     extends RpcBus<T, R> {
@@ -45,10 +44,10 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
   protected R connection;
   private final T handshakeType;
   private final Class<HANDSHAKE_RESPONSE> responseClass;
-  private final Parser<HANDSHAKE_RESPONSE> handshakeParser;
+  private final Class<HANDSHAKE_RESPONSE> handshakeParser;
 
   public BasicClient(RpcConfig rpcMapping, ByteBufAllocator alloc, EventLoopGroup eventLoopGroup, T handshakeType,
-      Class<HANDSHAKE_RESPONSE> responseClass, Parser<HANDSHAKE_RESPONSE> handshakeParser) {
+      Class<HANDSHAKE_RESPONSE> responseClass, Class<HANDSHAKE_RESPONSE> handshakeParser) {
     super(rpcMapping);
     this.responseClass = responseClass;
     this.handshakeType = handshakeType;

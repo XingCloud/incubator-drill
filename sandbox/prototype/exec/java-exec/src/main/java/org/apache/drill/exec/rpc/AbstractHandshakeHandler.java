@@ -23,16 +23,18 @@ import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 
 import com.google.protobuf.Internal.EnumLite;
 import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
+
+import java.io.InputStream;
+import java.lang.reflect.Method;
 
 public abstract class AbstractHandshakeHandler<T extends MessageLite> extends ChannelInboundMessageHandlerAdapter<InboundRpcMessage> {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractHandshakeHandler.class);
 
   protected final EnumLite handshakeType;
-  protected final Parser<T> parser;
+  protected final Class<T> parser;
   protected int coordinationId;
 
-  public AbstractHandshakeHandler(EnumLite handshakeType, Parser<T> parser) {
+  public AbstractHandshakeHandler(EnumLite handshakeType, Class<T> parser) {
     super();
     this.handshakeType = handshakeType;
     this.parser = parser;
@@ -45,8 +47,9 @@ public abstract class AbstractHandshakeHandler<T extends MessageLite> extends Ch
     if (inbound.rpcType != handshakeType.getNumber())
       throw new RpcException(String.format("Handshake failure.  Expected %s[%d] but received number [%d]",
           handshakeType, handshakeType.getNumber(), inbound.rpcType));
-  
-    T msg = parser.parseFrom(inbound.getProtobufBodyAsIS());
+
+      Method parseFrom = parser.getMethod("parseFrom",new Class[]{InputStream.class});
+      T msg = (T) parseFrom.invoke(null,new Object[]{inbound.getProtobufBodyAsIS()});
     consumeHandshake(ctx.channel(), msg);
     
   }

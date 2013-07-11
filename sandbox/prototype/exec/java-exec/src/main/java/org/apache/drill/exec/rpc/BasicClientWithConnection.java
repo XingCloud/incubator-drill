@@ -27,14 +27,13 @@ import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.drill.exec.rpc.BasicClientWithConnection.ServerConnection;
 
 import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
 import com.google.protobuf.Internal.EnumLite;
 
 public abstract class BasicClientWithConnection<T extends EnumLite, HANDSHAKE_SEND extends MessageLite, HANDSHAKE_RESPONSE extends MessageLite> extends BasicClient<T, ServerConnection, HANDSHAKE_SEND, HANDSHAKE_RESPONSE>{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(BasicClientWithConnection.class);
 
   public BasicClientWithConnection(RpcConfig rpcMapping, ByteBufAllocator alloc, EventLoopGroup eventLoopGroup, T handshakeType,
-      Class<HANDSHAKE_RESPONSE> responseClass, Parser<HANDSHAKE_RESPONSE> handshakeParser) {
+      Class<HANDSHAKE_RESPONSE> responseClass, Class<HANDSHAKE_RESPONSE> handshakeParser) {
     super(rpcMapping, alloc, eventLoopGroup, handshakeType, responseClass, handshakeParser);
   }
   

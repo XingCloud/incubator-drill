@@ -76,23 +76,23 @@ public class BitComHandlerImpl implements BitComHandler {
     switch (rpcType) {
     
     case RpcType.REQ_CANCEL_FRAGMENT_VALUE:
-      FragmentHandle handle = get(pBody, FragmentHandle.PARSER);
+      FragmentHandle handle = get(pBody, FragmentHandle.class);
       cancelFragment(handle);
       return BitRpcConfig.OK;
 
     case RpcType.REQ_FRAGMENT_STATUS_VALUE:
-      connection.getListenerPool().status( get(pBody, FragmentStatus.PARSER));
+      connection.getListenerPool().status( get(pBody, FragmentStatus.class));
       // TODO: Support a type of message that has no response.
       return BitRpcConfig.OK;
 
     case RpcType.REQ_INIATILIZE_FRAGMENT_VALUE:
-      PlanFragment fragment = get(pBody, PlanFragment.PARSER);
+      PlanFragment fragment = get(pBody, PlanFragment.class);
       startNewRemoteFragment(fragment);
       return BitRpcConfig.OK;
       
     case RpcType.REQ_RECORD_BATCH_VALUE:
       try {
-        FragmentRecordBatch header = get(pBody, FragmentRecordBatch.PARSER);
+        FragmentRecordBatch header = get(pBody, FragmentRecordBatch.class);
         incomingRecordBatch(connection, header, dBody);
         return BitRpcConfig.OK;
       } catch (FragmentSetupException e) {
