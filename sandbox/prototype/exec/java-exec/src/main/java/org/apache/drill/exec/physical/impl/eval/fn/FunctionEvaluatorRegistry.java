@@ -1,7 +1,6 @@
 package org.apache.drill.exec.physical.impl.eval.fn;
 
-import org.apache.commons.configuration.ConfigurationFactory;
-import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.RecordPointer;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;

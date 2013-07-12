@@ -14,12 +14,12 @@
             entries:[
             	{records: 100, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
+            	  {name: "red", type: "VARCHAR4", mode: "REQUIRED"},
             	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]},
             	{records: 100, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
+            	  {name: "red", type: "VARCHAR4", mode: "REQUIRED"},
             	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]}
             ]
@@ -28,7 +28,7 @@
             @id: 2,
             child: 1,
             pop: "filter",
-            expr: "((blue > 1 + 2) && (green < 0))",
+            expr: "((blue > 1 + 2) && (red < '0'))",
             selectivity: 0.8
         },
         {

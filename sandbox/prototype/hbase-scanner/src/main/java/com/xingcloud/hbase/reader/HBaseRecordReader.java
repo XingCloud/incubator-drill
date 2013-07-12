@@ -1,6 +1,7 @@
 package com.xingcloud.hbase.reader;
 
-import io.netty.buffer.ByteBuf;
+import com.xingcloud.hbase.filter.XARowKeyFilter;
+import com.xingcloud.mongodb.MongoDBOperation;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.memory.BufferAllocator;
@@ -31,65 +32,124 @@ import java.util.*;
 public class HBaseRecordReader implements RecordReader {
     static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(HBaseRecordReader.class);
 
-    private byte[] StartKey;
-    private byte[] EndKey;
+    private String eventPattern;
+    private List<String> dayList;
+    private String pID;
+    private HBaseScanPOP.HBaseScanEntry config;
+    private FragmentContext context;
+    private Filter filter;
+
     private List<TableScanner> scanners = new ArrayList<TableScanner>();
     private int currentScannerIndex = 0;
     private List<KeyValue> curRes = new ArrayList<KeyValue>();
     private int valIndex = -1;
     private boolean hasMore;
-    private SchemaPath rootPath;
+    private int BATCHRECORDCOUNT=1024;
     private OutputMutator output;
-    private HBaseScanPOP.HBaseScanEntry config;
-    private FragmentContext context;
     private ValueVector<?>[] valueVectors;
     private long recordsRead;
-    private int BATCHRECORDCOUNT=1024;
-    private Filter filter;
+
 
     public HBaseRecordReader(FragmentContext context,HBaseScanPOP.HBaseScanEntry config){
         this.context=context;
         this.config = config;
-        this.StartKey=config.getSrk();
-        this.EndKey=config.getEnk();
-        String tableName=getTableNameTest(config.getRootPath());
-        try {
-                LOG.info("Begin to init scanner for Start row key: " + StartKey + " End row key: " + EndKey + " Table name: " + tableName);
-                System.out.println("Begin to init scanner for Start row key: " + StartKey + " End row key: " + EndKey + " Table name: " + tableName);
-                TableScanner scanner = new TableScanner(StartKey, EndKey, tableName, false, false);
+        this.pID=config.getpID();
+        this.eventPattern=config.getEventPattern();
+        String tableName=getTableNameFromProject(pID);
+        try{
+            Set<String> eventSet= MongoDBOperation.getEventSet(pID,eventPattern);
+            List<String> eventList=new ArrayList<String>(eventSet);
+            List<String> days=config.getDayList();
+            Collections.sort(eventList);
+            Collections.sort(days);
+            for(int i=0;i<days.size();i++){
+                String day=days.get(i);
+                List<String> oneDayList=new ArrayList<String>();
+                oneDayList.add(day);
+                byte[] srk=Bytes.toBytes(day+eventList.get(0));
+                byte[] enk=Bytes.toBytes(day+getNextEvent(eventList.get(eventList.size() - 1)));
+                XARowKeyFilter filter1=new XARowKeyFilter(0,Long.MAX_VALUE,eventList,oneDayList);
+                TableScanner scanner=new TableScanner(srk,enk,tableName,filter1,false,false);
                 scanners.add(scanner);
-            } catch (Exception e) {
+            }
+        }catch (Exception e){
             e.printStackTrace();
-            //LOG.error("Init HBaseRecordReader error! MSG: " + e.getMessage());
         }
     }
     public HBaseRecordReader(FragmentContext context,HBaseScanPOP.HBaseScanEntry config, Filter filter){
         this.context=context;
         this.config = config;
-        this.StartKey=config.getSrk();
-        this.EndKey=config.getEnk();
-        String tableName=getTableNameTest(config.getRootPath());
-        try {
-            LOG.info("Begin to init scanner for Start row key: " + StartKey + " End row key: " + EndKey + " Table name: " + tableName);
-            System.out.println("Begin to init scanner for Start row key: " + StartKey + " End row key: " + EndKey + " Table name: " + tableName);
-            TableScanner scanner = new TableScanner(StartKey, EndKey, tableName, false, false);
-            scanners.add(scanner);
-        } catch (Exception e) {
+        this.pID=config.getpID();
+        this.eventPattern=config.getEventPattern();
+        String tableName=getTableNameFromProject(pID);
+        try{
+            Set<String> eventSet= MongoDBOperation.getEventSet(pID,eventPattern);
+            List<String> eventList=new ArrayList<String>(eventSet);
+            List<String> days=config.getDayList();
+            Collections.sort(eventList);
+            Collections.sort(days);
+            for(int i=0;i<days.size();i++){
+                String day=days.get(i);
+                List<String> oneDayList=new ArrayList<String>();
+                oneDayList.add(day);
+                byte[] srk=Bytes.toBytes(day+eventList.get(0));
+                byte[] enk=Bytes.toBytes(day+getNextEvent(eventList.get(eventList.size() - 1)));
+                XARowKeyFilter filter1=new XARowKeyFilter(0,Long.MAX_VALUE,eventList,oneDayList);
+                TableScanner scanner=new TableScanner(srk,enk,tableName,filter1,false,false);
+                scanners.add(scanner);
+            }
+        }catch (Exception e){
             e.printStackTrace();
-            //LOG.error("Init HBaseRecordReader error! MSG: " + e.getMessage());
         }
         this.filter=filter;
     }
-    public HBaseRecordReader(FragmentContext context,String l0,String l1,String l2,String l3,String l4
-                            ,String StartDay,String EndDay,Filter filter){
+    public HBaseRecordReader(FragmentContext context,String pID,List<String> days,
+                             String eventPattern,Filter filter){
         this.context=context;
+        this.filter=filter;
+        String tableName=pID+"_deu";
+        try{
+             Set<String> eventSet= MongoDBOperation.getEventSet(pID,eventPattern);
+             List<String> eventList=new ArrayList<String>(eventSet);
+             Collections.sort(eventList);
+             Collections.sort(days);
+             for(int i=0;i<days.size();i++){
+                 String day=days.get(i);
+                 List<String> oneDayList=new ArrayList<String>();
+                 oneDayList.add(day);
+                 byte[] srk=Bytes.toBytes(day+eventList.get(0));
+                 byte[] enk=Bytes.toBytes(day+getNextEvent(eventList.get(eventList.size() - 1)));
+                 XARowKeyFilter filter1=new XARowKeyFilter(0,Long.MAX_VALUE,eventList,oneDayList);
+                 TableScanner scanner=new TableScanner(srk,enk,tableName,filter1,false,false);
+                 scanners.add(scanner);
+             }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
 
+    }
+
+    private String getEventStr(String l0, String l1, String l2, String l3, String l4) {
+        String event="";
+        if(l0!=null)event+=l0+".";
+        if(l1!=null)event+=l1+".";
+        if(l2!=null)event+=l2+".";
+        if(l3!=null)event+=l3+".";
+        if(l4!=null)event+=l4+".";
+        return event;
+    }
+    private String getNextEventStr(String l0,String l1,String l2, String l3,String l4){
+        return null;
     }
 
 
     private String getTableNameTest(String rootPath) {
         return rootPath.replace("xadrill","-");
     }
+    private String getTableNameFromProject(String pID){
+        return pID+"_deu";
+    }
+
 
     public String getTableName(SchemaPath rootPath) {
         return rootPath.getPath().toString().replace("xadrill", "-");
@@ -165,12 +225,17 @@ public class HBaseRecordReader implements RecordReader {
                     break;
                 }
             }
-            if(valIndex>curRes.size()-1)continue;
+            if(valIndex>curRes.size()-1){
+                if(!hasMore)valIndex=-1;
+                continue;
+            }
+
         }
         KeyValue kv = curRes.get(valIndex++);
         boolean next=PutValuesToVectors(kv,valueVectors,recordSetSize);
         if(!next)return recordSetSize;
         recordSetSize++;
+        LOG.info("get record size "+recordSetSize);
         }
     }
     public boolean PutValuesToVectors(KeyValue kv,ValueVector<?>[] valueVectors,int recordSetSize){
@@ -196,26 +261,30 @@ public class HBaseRecordReader implements RecordReader {
                 resultBytes=Bytes.toBytes(resultString);
             }
             if(valueVector instanceof VarLen4){
-                ByteBuf lengthbuf=valueVector.getBuffers()[0];
-                int previousOffset=lengthbuf.getInt(recordSetSize);
-                if(recordSetSize==0)previousOffset=0;
-                int offset=previousOffset+resultBytes.length;
-                if(offset>lengthbuf.capacity()*4)return false;
+                Fixed4 lengthVector=((VarLen4)valueVector).getLengthVector();
+                int preOffset=0;
+                if(recordSetSize!=0)preOffset=lengthVector.getInt(recordSetSize - 1);
+                int offset=preOffset+resultBytes.length;
+                if(offset>lengthVector.capacity()*4)return false;
                 ((VarLen4)valueVector).setBytes(recordSetSize,resultBytes);
                 valueVector.setRecordCount(recordSetSize);
-                if((recordSetSize+1)*4>lengthbuf.capacity())return false;
+                if(recordSetSize+1>valueVector.capacity())return false;
             }
             else if(valueVector instanceof Fixed4){
                 ((Fixed4)valueVector).setInt(recordSetSize,resultInt);
                 valueVector.setRecordCount(recordSetSize);
                 System.out.println(((Fixed4) valueVector).getInt(recordSetSize));
-                if((recordSetSize+1)*4>valueVector.capacity())return false;
+                LOG.info("recordSetSize "+recordSetSize);
+                LOG.info("fixed4.capacity "+valueVector.capacity());
+                if((recordSetSize+1)>valueVector.capacity())return false;
             }
             else if(valueVector instanceof Fixed8){
                 ((Fixed8)valueVector).setBigInt(recordSetSize,resultLong);
                 valueVector.setRecordCount(recordSetSize);
                 System.out.println(((Fixed8) valueVector).getBigInt(recordSetSize));
-                if((recordSetSize+1)*8>valueVector.capacity())return false;
+                LOG.info("recordSetSize "+recordSetSize);
+                LOG.info("fixed8.capacity "+valueVector.capacity());
+                if((recordSetSize+1)>valueVector.capacity())return false;
             }
         }
         return true;

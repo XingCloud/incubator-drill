@@ -51,4 +51,9 @@ public class VarLen4 extends VariableVector<VarLen4, Fixed4>{
 
     }
 
+
+    public Fixed4 getLengthVector(){
+        return lengthVector;
+    }
+
 }

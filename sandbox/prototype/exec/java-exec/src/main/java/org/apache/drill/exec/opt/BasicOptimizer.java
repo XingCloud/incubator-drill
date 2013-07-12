@@ -132,6 +132,8 @@ public class BasicOptimizer extends Optimizer {
       return project.getInput().accept(this, obj);
     }
 
+
+
     @Override
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws
       OptimizerException {

@@ -44,6 +44,35 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry>{
         return null;
     }
     static class HbaseScanEntry implements ReadEntry{
+
+        private String project;
+        private String startDate ;
+        private String endDate ;
+        private String eventPattern ;
+
+        HbaseScanEntry(String project, String startDate, String endDate, String eventPattern) {
+            this.project = project;
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.eventPattern = eventPattern;
+        }
+
+        String getProject() {
+            return project;
+        }
+
+        String getStartDate() {
+            return startDate;
+        }
+
+        String getEndDate() {
+            return endDate;
+        }
+
+        String getEventPattern() {
+            return eventPattern;
+        }
+
         @Override
         public OperatorCost getCost() {
             return null;
