@@ -5,13 +5,18 @@ import static org.apache.drill.common.enums.Aggregator.COUNT_DISTINCT;
 import static org.apache.drill.common.enums.Aggregator.SUM;
 import static org.apache.drill.common.enums.BinaryOperator.AND;
 import static org.apache.drill.common.enums.BinaryOperator.EQ;
+import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_EVENT;
+import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_USER;
+import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.enums.BinaryOperator;
+import org.apache.drill.common.enums.TableType;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.FunctionRegistry;
 import org.apache.drill.common.expression.LogicalExpression;
@@ -20,11 +25,12 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.StorageEngineConfig;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
+import org.apache.drill.common.logical.data.Join;
+import org.apache.drill.common.logical.data.JoinCondition;
 import org.apache.drill.common.logical.data.LogicalOperator;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.common.logical.data.Store;
-import org.apache.drill.common.util.DrillConstants;
 import org.apache.drill.common.util.Selections;
 
 import java.io.IOException;
@@ -74,16 +80,16 @@ public class ManualStaticLPBuilder {
     return list;
   }
 
-  private static LogicalExpression buildEventExpression(String event) {
+  private static LogicalExpression buildEventExpression(String tableName, String event) {
     List<EventSlice> eventArr = event2Array(event);
     EventSlice es;
     LogicalExpression left, right;
     Iterator<EventSlice> it = eventArr.iterator();
     es = it.next();
-    left = buildSingleLogicalExpression("l" + es.location, es.event, EQ);
+    left = buildSingleLogicalExpression(tableName, "l" + es.location, es.event, EQ);
     while (it.hasNext()) {
       es = it.next();
-      right = buildSingleLogicalExpression("l" + es.location, es.event, EQ);
+      right = buildSingleLogicalExpression(tableName, "l" + es.location, es.event, EQ);
       left = buildBinaryLogicalExpression(left, right);
     }
 
@@ -92,11 +98,17 @@ public class ManualStaticLPBuilder {
 
   private static FunctionRegistry functionRegistry = new FunctionRegistry(DrillConfig.create());
 
-  private static LogicalExpression buildSingleLogicalExpression(String column, String columnValue,
+  private static LogicalExpression buildSingleLogicalExpression(String tableName, String column, Object columnValue,
                                                                 BinaryOperator operator) {
     List<LogicalExpression> lrLogicalExprList = new ArrayList<>(2);
-    lrLogicalExprList.add(new FieldReference(column));
-    lrLogicalExprList.add(new ValueExpressions.QuotedString(columnValue));
+    String wholeColumnName = tableName + "." + column;
+    FieldReference fr = new FieldReference(wholeColumnName);
+    lrLogicalExprList.add(fr);
+    if (columnValue instanceof Number) {
+      lrLogicalExprList.add(ValueExpressions.getNumericExpression(columnValue.toString()));
+    } else {
+      lrLogicalExprList.add(new ValueExpressions.QuotedString(columnValue.toString()));
+    }
     return functionRegistry.createExpression(operator.getSqlName(), lrLogicalExprList);
   }
 
@@ -125,32 +137,59 @@ public class ManualStaticLPBuilder {
     return left;
   }
 
-  public static LogicalPlan buildStaticLogicalPlanManually(String projectId, String event, String date) throws
-    IOException {
+  public static LogicalPlan buildStaticLogicalPlanManually(String projectId, String event, String date,
+                                                           Map<String, Object> segmentMap) throws IOException {
     List<LogicalOperator> logicalOperators = new ArrayList<>();
     FunctionRegistry functionRegistry = new FunctionRegistry(DrillConfig.create());
 
     // Build from item
-    FieldReference fr = new FieldReference(projectId + "_deu");
-    Scan from = new Scan(DrillConstants.SE_HBASE, Selections.getNoneSelection(), fr);
-    from.setMemo("Scan(Table=" + projectId + "_deu)");
-    logicalOperators.add(from);
+    String eventTable = projectId + HBASE_TABLE_PREFIX_EVENT;
+    String userTable = projectId + HBASE_TABLE_PREFIX_USER;
+
+    FieldReference fr = new FieldReference(eventTable);
+    Scan fromEventTable = new Scan(SE_HBASE, Selections.getCorrespondingSelection(projectId, TableType.EVENT), fr);
+    fromEventTable.setMemo("Scan(Table=" + eventTable + ")");
+    logicalOperators.add(fromEventTable);
+
+    boolean needJoin = false;
+    Scan fromUserTable = null;
+    if (MapUtils.isNotEmpty(segmentMap)) {
+      fr = new FieldReference(userTable);
+      fromUserTable = new Scan(SE_HBASE, Selections.getCorrespondingSelection(projectId, TableType.USER), fr);
+      fromUserTable.setMemo("Scan(Table=" + userTable + ")");
+      logicalOperators.add(fromUserTable);
+      needJoin = true;
+    }
 
     // Build fixed selections
-    LogicalExpression condition1 = buildEventExpression(event);
-    LogicalExpression condition2 = buildSingleLogicalExpression("date", date, EQ);
+    LogicalExpression condition1 = buildEventExpression(eventTable, event);
+    LogicalExpression condition2 = buildSingleLogicalExpression(eventTable, "date", date, EQ);
     LogicalExpression combine = buildBinaryLogicalExpression(condition1, condition2);
-    Filter filter = new Filter(combine);
-    filter.setInput(from);
-    logicalOperators.add(filter);
+    Filter eventfilter = new Filter(combine);
+    eventfilter.setInput(fromEventTable);
+    logicalOperators.add(eventfilter);
 
-//    // Build distinction
-//    Distinct distinct = null;
-//    if (isDistinct) {
-//      distinct = new Distinct(null, new FieldReference("uid"));
-//      distinct.setInput(filter);
-//      logicalOperators.add(distinct);
-//    }
+    Filter userFilter = null;
+    if (needJoin) {
+      LogicalExpression[] userConditions = new LogicalExpression[segmentMap.size()];
+      int counter = 0;
+      for (Map.Entry<String, Object> entry : segmentMap.entrySet()) {
+        userConditions[counter] = buildSingleLogicalExpression(userTable, entry.getKey(), entry.getValue(), EQ);
+      }
+      combine = buildBinaryLogicalExpression(userConditions);
+      userFilter = new Filter(combine);
+      userFilter.setInput(fromUserTable);
+      logicalOperators.add(userFilter);
+    }
+
+    Join join = null;
+    JoinCondition[] joinConditions;
+    if (needJoin) {
+      joinConditions = new JoinCondition[1];
+      joinConditions[0] = new JoinCondition("==", new FieldReference(eventTable + ".uid"),
+                                            new FieldReference(userTable + ".uid"));
+      join = new Join(eventfilter, userFilter, joinConditions, Join.JoinType.INNER);
+    }
 
     // Build collapsing aggregation
     CollapsingAggregate collapsingAggregate;
@@ -170,13 +209,11 @@ public class ManualStaticLPBuilder {
                                               new FieldReference(aggrColumn));
     collapsingAggregate = new CollapsingAggregate(within, target, carryovers, namedExpressions);
 
-    collapsingAggregate.setInput(filter);
-//    if (distinct == null) {
-//      collapsingAggregate.setInput(filter);
-//    } else {
-//      collapsingAggregate.setInput(distinct);
-//    }
-
+    if (needJoin) {
+      collapsingAggregate.setInput(join);
+    } else {
+      collapsingAggregate.setInput(eventfilter);
+    }
     logicalOperators.add(collapsingAggregate);
 
     // Output
@@ -205,7 +242,14 @@ public class ManualStaticLPBuilder {
 
   public static void main(String[] args) throws IOException {
     DrillConfig c = DrillConfig.create();
-    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708");
+    LogicalPlan logicalPlan;
+//    logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708", null);
+//    System.out.println(logicalPlan.unparse(c));
+
+    Map<String, Object> segmentMap = new HashMap<>(1);
+    segmentMap.put("register_time", "2013-07-12");
+    System.out.println("---------------------------------");
+    logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708", segmentMap);
     System.out.println(logicalPlan.unparse(c));
   }
 }

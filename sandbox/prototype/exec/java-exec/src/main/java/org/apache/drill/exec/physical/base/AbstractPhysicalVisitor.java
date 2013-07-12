@@ -20,6 +20,7 @@ package org.apache.drill.exec.physical.base;
 import org.apache.drill.exec.physical.config.Filter;
 import org.apache.drill.exec.physical.config.HashPartitionSender;
 import org.apache.drill.exec.physical.config.HashToRandomExchange;
+import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
 import org.apache.drill.exec.physical.config.Project;
 import org.apache.drill.exec.physical.config.RandomReceiver;
 import org.apache.drill.exec.physical.config.RangeSender;
@@ -121,4 +122,7 @@ public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> impleme
             .getClass().getCanonicalName(), op.getClass().getCanonicalName()));
   }
 
+  @Override public T visitCollapsingAggregate(PhysicalCollapsingAggregate op, X value) throws E {
+    return visitOp(op,value);
+  }
 }
