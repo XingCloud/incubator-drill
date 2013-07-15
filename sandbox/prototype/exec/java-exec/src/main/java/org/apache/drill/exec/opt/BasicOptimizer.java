@@ -1,12 +1,15 @@
 package org.apache.drill.exec.opt;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+
+import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
-import org.apache.drill.common.logical.data.Project;
+import org.apache.drill.common.logical.data.LogicalOperator;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.common.logical.data.SinkOperator;
 import org.apache.drill.common.logical.data.Store;
@@ -16,10 +19,10 @@ import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.config.MockScanPOP;
+import org.apache.drill.exec.physical.config.MockScanPOP.MockColumn;
 import org.apache.drill.exec.physical.config.Screen;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -47,12 +50,12 @@ public class BasicOptimizer extends Optimizer {
   public PhysicalPlan optimize(OptimizationContext context, LogicalPlan plan) {
     Object obj = new Object();
     Collection<SinkOperator> roots = plan.getGraph().getRoots();
+    System.out.println("----------------" + roots);
     List<PhysicalOperator> physOps = new ArrayList<PhysicalOperator>(roots.size());
     LogicalConverter converter = new LogicalConverter();
     for (SinkOperator op : roots) {
       try {
         PhysicalOperator pop = op.accept(converter, obj);
-        System.out.println(pop);
         physOps.add(pop);
       } catch (OptimizerException e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -85,38 +88,21 @@ public class BasicOptimizer extends Optimizer {
 
     @Override
     public MockScanPOP visitScan(Scan scan, Object obj) throws OptimizerException {
-      List<MockScanPOP.MockScanEntry> myObjects;
+      List<MockScanPOP.MockScanEntry> modkObjects = null;
 
-      try {
-        if (scan.getStorageEngine().equals("local-logs")) {
-          myObjects = scan.getSelection()
-                          .getListWith(config, new TypeReference<ArrayList<MockScanPOP.MockScanEntry>>() {
-                          });
-        } else {
-          myObjects = new ArrayList<>();
-          MockScanPOP.MockColumn[] cols = {
-            new MockScanPOP.MockColumn("uid", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("date", SchemaDefProtos.MinorType.DATE, SchemaDefProtos.DataMode.REQUIRED, 4, 4,
-                                       4),
-            new MockScanPOP.MockColumn("l0", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("l1", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("l2", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("l3", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4)
-          };
-          myObjects.add(new MockScanPOP.MockScanEntry(50, cols));
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-        throw new OptimizerException(
-          "Error reading selection attribute of Scan node in Logical to Physical plan conversion.");
+      String storageEngine = scan.getStorageEngine();
+      JSONOptions selection = scan.getSelection();
+
+      if (SE_HBASE.equals(storageEngine)) {
+        modkObjects = new ArrayList<>();
+        MockColumn[] cols = {
+          new MockColumn("uid", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4, 4, 4),
+          new MockColumn("date", SchemaDefProtos.MinorType.DATE, SchemaDefProtos.DataMode.REQUIRED, 4, 4, 4),
+          new MockColumn("l0", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4, 4, 4),
+        };
+        modkObjects.add(new MockScanPOP.MockScanEntry(100, cols));
       }
-
-      return new MockScanPOP("http://a.xingcloud.com", myObjects);
+      return new MockScanPOP("http://a.xingcloud.com", modkObjects);
     }
 
     @Override
@@ -140,8 +126,13 @@ public class BasicOptimizer extends Optimizer {
       return collapsingAggregate.getInput().accept(this, value);
     }
 
-    @Override public PhysicalOperator visitFilter(Filter filter, Object value) throws OptimizerException {
-      return filter.getInput().accept(this, value);
+    @Override
+    public PhysicalOperator visitFilter(Filter filter, Object value) throws OptimizerException {
+      LogicalOperator lo = filter.iterator().next();
+      LogicalExpression le = filter.getExpr();
+      org.apache.drill.exec.physical.config.Filter f = new org.apache.drill.exec.physical.config.Filter(
+        lo.accept(this, value), le, 0.5f);
+      return f;
     }
   }
 }

@@ -1,7 +1,11 @@
 package org.apache.drill.common.util;
 
+import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_EVENT;
+import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_USER;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.drill.common.JSONOptions;
+import org.apache.drill.common.enums.TableType;
 
 import java.io.IOException;
 
@@ -24,5 +28,21 @@ public class Selections {
 
   public static JSONOptions getNoneSelection() {
     return NONE_HBASE_SELECTION;
+  }
+
+  public static JSONOptions getCorrespondingSelection(String projectId, TableType tableType) throws IOException {
+    String s;
+    switch (tableType) {
+      case EVENT:
+        s = String
+          .format(new String("{\"type\":\"hbase\",\"table\":\"" + projectId + HBASE_TABLE_PREFIX_EVENT + "\"}"));
+        break;
+      case USER:
+        s = String.format(new String("{\"type\":\"hbase\",\"table\":\"" + projectId + HBASE_TABLE_PREFIX_USER + "\"}"));
+        break;
+      default:
+        throw new IllegalArgumentException("Not supported table type - " + tableType);
+    }
+    return MAPPER.readValue(s.getBytes(), JSONOptions.class);
   }
 }
