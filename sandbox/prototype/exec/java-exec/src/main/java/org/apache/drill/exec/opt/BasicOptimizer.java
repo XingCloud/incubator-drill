@@ -5,11 +5,13 @@ import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
 import org.apache.drill.common.logical.data.LogicalOperator;
+import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.common.logical.data.SinkOperator;
 import org.apache.drill.common.logical.data.Store;
@@ -20,6 +22,7 @@ import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.config.MockScanPOP;
 import org.apache.drill.exec.physical.config.MockScanPOP.MockColumn;
+import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
 import org.apache.drill.exec.physical.config.Screen;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 
@@ -116,7 +119,14 @@ public class BasicOptimizer extends Optimizer {
     @Override
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws
       OptimizerException {
-      return collapsingAggregate.getInput().accept(this, value);
+      LogicalOperator next = collapsingAggregate.iterator().next();
+      FieldReference target = collapsingAggregate.getTarget();
+      FieldReference within = collapsingAggregate.getWithin();
+      FieldReference[] carryovers = collapsingAggregate.getCarryovers();
+      NamedExpression[] aggregations = collapsingAggregate.getAggregations();
+      PhysicalCollapsingAggregate pca = new PhysicalCollapsingAggregate(next.accept(this, value), within, target,
+                                                                        carryovers, aggregations);
+      return pca;
     }
 
     @Override
