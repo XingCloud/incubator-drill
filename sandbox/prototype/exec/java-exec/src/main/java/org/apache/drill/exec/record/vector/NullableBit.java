@@ -17,4 +17,9 @@ public class NullableBit extends NullableValueVector<NullableBit, Bit>{
         setNotNull(index);
         value.set(index);
     }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
 }

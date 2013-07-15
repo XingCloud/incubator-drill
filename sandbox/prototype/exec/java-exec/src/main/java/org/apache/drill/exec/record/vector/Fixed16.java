@@ -31,7 +31,10 @@ public class Fixed16 extends AbstractFixedValueVector<Fixed16>{
   public Object getObject(int index) {
     return null;
   }
-  
-  
-  
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
+
 }

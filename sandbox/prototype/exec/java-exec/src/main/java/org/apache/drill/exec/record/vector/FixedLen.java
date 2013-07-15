@@ -42,4 +42,10 @@ public class FixedLen extends AbstractFixedValueVector<FixedLen>{
   public Object getObject(int index) {
     return null;
   }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
+
 }

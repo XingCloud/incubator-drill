@@ -41,4 +41,9 @@ public final class NullableFixed4 extends NullableValueVector<NullableFixed4, Fi
       setNotNull(index);
       value.setFloat4(index, val);
   }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
 }

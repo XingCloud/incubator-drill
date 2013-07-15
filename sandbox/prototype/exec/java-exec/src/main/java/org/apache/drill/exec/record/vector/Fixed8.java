@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,41 +18,53 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
+import org.apache.drill.exec.record.values.NumericValue;
 
-public class Fixed8 extends AbstractFixedValueVector<Fixed8>{
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Fixed8.class);
+public class Fixed8 extends AbstractFixedValueVector<Fixed8> {
+    static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Fixed8.class);
 
-  public Fixed8(MaterializedField field, BufferAllocator allocator) {
-    super(field, allocator, 8*8);
-  }
+    public Fixed8(MaterializedField field, BufferAllocator allocator) {
+        super(field, allocator, 8 * 8);
+    }
 
-  public final void setBigInt(int index, long value){
-    index*=8;
-    data.setLong(index, value);
-  }
-  
-  public final long getBigInt(int index){
-    index*=8;
-    return data.getLong(index);
-  }
-  
-  public final void setFloat8(int index, double value){
-    index*=8;
-    data.setDouble(index, value);
-  }
-  
-  public final double getFloat8(int index){
-    index*=8;
-    return data.getDouble(index);
-  }
+    public final void setBigInt(int index, long value) {
+        index *= 8;
+        data.setLong(index, value);
+    }
 
-  @Override
-  public Object getObject(int index) {
-    return getBigInt(index);
-  }
-  
-  
-  
-  
+    public final long getBigInt(int index) {
+        index *= 8;
+        return data.getLong(index);
+    }
+
+    public final void setFloat8(int index, double value) {
+        index *= 8;
+        data.setDouble(index, value);
+    }
+
+    public final double getFloat8(int index) {
+        index *= 8;
+        return data.getDouble(index);
+    }
+
+    @Override
+    public Object getObject(int index) {
+        return getBigInt(index);
+    }
+
+    @Override
+    public void setObject(int index, Object obj) {
+        switch (field.getDef().getMajorType().getMinorType()) {
+            case BIGINT:
+            case UINT8:
+                setBigInt(index, (Long) obj);
+                break;
+            case FLOAT8:
+            case DECIMAL8:
+                setFloat8(index, (Double) obj);
+                break;
+        }
+    }
 }

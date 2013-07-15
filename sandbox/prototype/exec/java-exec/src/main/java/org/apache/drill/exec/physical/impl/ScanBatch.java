@@ -27,11 +27,7 @@ import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.proto.UserBitShared.FieldMetadata;
 import org.apache.drill.exec.proto.UserBitShared.RecordBatchDef;
-import org.apache.drill.exec.record.BatchSchema;
-import org.apache.drill.exec.record.InvalidValueAccessor;
-import org.apache.drill.exec.record.RecordBatch;
-import org.apache.drill.exec.record.SchemaBuilder;
-import org.apache.drill.exec.record.WritableBatch;
+import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.vector.ValueVector;
 import org.apache.drill.exec.store.RecordReader;
 
@@ -42,17 +38,16 @@ import com.google.common.collect.Lists;
 /**
  * Record batch used for a particular scan. Operators against one or more
  */
-public class ScanBatch implements RecordBatch {
+public class ScanBatch extends BaseRecordBatch {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ScanBatch.class);
 
-  private IntObjectOpenHashMap<ValueVector<?>> fields = new IntObjectOpenHashMap<ValueVector<?>>();
   private BatchSchema schema;
-  private int recordCount;
   private boolean schemaChanged = true;
   private final FragmentContext context;
   private Iterator<RecordReader> readers;
   private RecordReader currentReader;
   private final Mutator mutator = new Mutator();
+
 
   public ScanBatch(FragmentContext context, Iterator<RecordReader> readers)
       throws ExecutionSetupException {
@@ -79,11 +74,6 @@ public class ScanBatch implements RecordBatch {
   }
 
   @Override
-  public int getRecordCount() {
-    return recordCount;
-  }
-
-  @Override
   public void kill() {
     releaseAssets();
   }
@@ -95,20 +85,6 @@ public class ScanBatch implements RecordBatch {
         value.close();
       }
     });
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <T extends ValueVector<T>> T getValueVector(int fieldId, Class<T> clazz) throws InvalidValueAccessor {
-    if (fields.containsKey(fieldId)) throw new InvalidValueAccessor(String.format("Unknown value accesor for field id %d."));
-    ValueVector<?> vector = this.fields.lget();
-    if (vector.getClass().isAssignableFrom(clazz)) {
-      return (T) vector;
-    } else {
-      throw new InvalidValueAccessor(String.format(
-          "You requested a field accessor of type %s for field id %d but the actual type was %s.",
-          clazz.getCanonicalName(), fieldId, vector.getClass().getCanonicalName()));
-    }
   }
 
   @Override
@@ -163,10 +139,16 @@ public class ScanBatch implements RecordBatch {
     }
 
   }
+    @Override
+    public RecordPointer getRecordPointer() {
+        record.set(schema.getFields(),fields);
+        return record;
+    }
 
-  @Override
-  public WritableBatch getWritableBatch() {
-    return WritableBatch.get(this.getRecordCount(), fields);
-  }
-  
+
+    @Override
+    public void setupEvals() {
+
+    }
 }
+

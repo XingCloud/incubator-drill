@@ -32,5 +32,8 @@ public class VarLen2 extends VariableVector<VarLen2, Fixed2>{
     return new Fixed2(null, allocator);
   }
 
+    @Override
+    public void setObject(int index, Object obj) {
 
+    }
 }

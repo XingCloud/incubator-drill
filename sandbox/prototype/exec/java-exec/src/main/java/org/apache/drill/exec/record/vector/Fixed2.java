@@ -49,5 +49,10 @@ public class Fixed2 extends AbstractFixedValueVector<Fixed2>{
   public Object getObject(int index) {
     return getSmallInt(index);
   }
-  
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
+
 }

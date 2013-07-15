@@ -18,4 +18,9 @@ public class NullableVarLen4 extends NullableValueVector<NullableVarLen4, VarLen
         setNotNull(index);
         value.setBytes(index, bytes);
     }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
 }

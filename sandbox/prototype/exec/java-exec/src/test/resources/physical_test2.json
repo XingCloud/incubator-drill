@@ -7,6 +7,7 @@
         }
     },
     graph:[
+        /*
         {
             @id:1,
             pop:"mock-scan",
@@ -14,19 +15,46 @@
             entries:[
             	{records: 100, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "INT", mode: "REQUIRED"}
+            	  {name: "red", type: "VARCHAR4", mode: "REQUIRED"},
+            	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]},
             	{records: 100, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "INT", mode: "REQUIRED"}
+            	  {name: "red", type: "VARCHAR4", mode: "REQUIRED"},
+            	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]}
             ]
-        },
+        },*/
         {
+          @id:1,
+          pop:"hbase-scan",
+          entries:[
+            {
+                pid:"sof-dsk",
+                startDate:"20121201",
+                endDate:"20121201",
+                event:"visit"
+            } ]
+        },
+       {
             @id: 2,
             child: 1,
+            pop: "filter",
+            expr: "((val == 0) && (event == 'visit.auto.'))",
+            selectivity: 0.8
+        },
+        {
+            @id: 3,
+            child: 2,
+            pop: "project",
+            exprs: [
+                {ref: "val",expr: "val"} ,
+                {ref: "uid",expr: "uid"}
+                ]
+        },
+        {
+            @id: 4,
+            child: 3,
             pop: "screen"
         }
     ]    

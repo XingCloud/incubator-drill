@@ -48,7 +48,7 @@ public class BatchSchema implements Iterable<MaterializedField> {
     return "BatchSchema [fields=" + fields + ", hasSelectionVector=" + hasSelectionVector + "]";
   }
 
-  
-  
-  
+    public List<MaterializedField> getFields() {
+        return fields;
+    }
 }

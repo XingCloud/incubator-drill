@@ -116,7 +116,6 @@ public class BasicOptimizer extends Optimizer {
       return new Screen(store.iterator().next().accept(this, obj), context.getCurrentEndpoint());
     }
 
-    @Override
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws
       OptimizerException {
       LogicalOperator next = collapsingAggregate.iterator().next();

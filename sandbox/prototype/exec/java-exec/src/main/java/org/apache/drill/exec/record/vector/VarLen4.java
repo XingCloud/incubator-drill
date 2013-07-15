@@ -45,4 +45,15 @@ public class VarLen4 extends VariableVector<VarLen4, Fixed4>{
           data.setBytes(previousOffset, bytes);
       }
     }
+
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
+
+
+    public Fixed4 getLengthVector(){
+        return lengthVector;
+    }
+
 }

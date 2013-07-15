@@ -52,6 +52,8 @@ public class RepeatMap extends BaseValueVector<RepeatMap>{
     return null;
   }
 
-  
-  
+    @Override
+    public void setObject(int index, Object obj) {
+
+    }
 }
