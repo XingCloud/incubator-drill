@@ -50,7 +50,7 @@ public class HBaseRecordReader implements RecordReader {
     private boolean init = false ;
 
     ScanType[] types = new ScanType[]{
-            new ScanType("day", SchemaDefProtos.MinorType.INT, SchemaDefProtos.DataMode.REQUIRED),
+            new ScanType("ts", SchemaDefProtos.MinorType.UINT8, SchemaDefProtos.DataMode.REQUIRED),
             new ScanType("event", SchemaDefProtos.MinorType.VARCHAR4, SchemaDefProtos.DataMode.REQUIRED),
             new ScanType("uid", SchemaDefProtos.MinorType.INT, SchemaDefProtos.DataMode.REQUIRED),
             new ScanType("val", SchemaDefProtos.MinorType.UINT8, SchemaDefProtos.DataMode.REQUIRED)
@@ -262,10 +262,10 @@ public class HBaseRecordReader implements RecordReader {
             long resultLong = 0;
             int resultInt = 0;
             byte[] resultBytes = null;
-            if (name.equals("val")) {
+            if (name.equals("val")||name.equals("ts")) {
                 resultLong = (long) result;
                 resultBytes = Bytes.toBytes(resultLong);
-            } else if (name.equals("uid") || name.equals("day")) {
+            } else if (name.equals("uid")) {
                 resultInt = (int) result;
                 resultBytes = Bytes.toBytes(resultInt);
             } else {
@@ -304,8 +304,9 @@ public class HBaseRecordReader implements RecordReader {
                 return getInnerUidFromSamplingUid(uid);
             } else if (option.equals("event")) {
                 return getEventFromDEURowKey(rk);
-            } else if (option.equals("day")) {
-                return Integer.parseInt(getDayFromDEURowKey(rk));
+            } else if (option.equals("ts")) {
+                long ts=keyvalue.getTimestamp();
+                return ts;
             }
         }
         return null;
