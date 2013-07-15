@@ -16,7 +16,6 @@ import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.enums.BinaryOperator;
-import org.apache.drill.common.enums.TableType;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.FunctionRegistry;
 import org.apache.drill.common.expression.LogicalExpression;
@@ -147,7 +146,7 @@ public class ManualStaticLPBuilder {
     String userTable = projectId + HBASE_TABLE_PREFIX_USER;
 
     FieldReference fr = new FieldReference(eventTable);
-    Scan fromEventTable = new Scan(SE_HBASE, Selections.getCorrespondingSelection(projectId, TableType.EVENT), fr);
+    Scan fromEventTable = new Scan(SE_HBASE, Selections.buildEventSelection(projectId, date, date, event), fr);
     fromEventTable.setMemo("Scan(Table=" + eventTable + ")");
     logicalOperators.add(fromEventTable);
 
@@ -155,32 +154,33 @@ public class ManualStaticLPBuilder {
     Scan fromUserTable = null;
     if (MapUtils.isNotEmpty(segmentMap)) {
       fr = new FieldReference(userTable);
-      fromUserTable = new Scan(SE_HBASE, Selections.getCorrespondingSelection(projectId, TableType.USER), fr);
+      fromUserTable = new Scan(SE_HBASE, Selections.buildUserSelection(projectId), fr);
       fromUserTable.setMemo("Scan(Table=" + userTable + ")");
       logicalOperators.add(fromUserTable);
       needJoin = true;
     }
 
-    // Build fixed selections
-    LogicalExpression condition1 = buildEventExpression(eventTable, event);
-    LogicalExpression condition2 = buildSingleLogicalExpression(eventTable, "date", date, EQ);
-    LogicalExpression combine = buildBinaryLogicalExpression(condition1, condition2);
-    Filter eventfilter = new Filter(combine);
-    eventfilter.setInput(fromEventTable);
-    logicalOperators.add(eventfilter);
 
-    Filter userFilter = null;
-    if (needJoin) {
-      LogicalExpression[] userConditions = new LogicalExpression[segmentMap.size()];
-      int counter = 0;
-      for (Map.Entry<String, Object> entry : segmentMap.entrySet()) {
-        userConditions[counter] = buildSingleLogicalExpression(userTable, entry.getKey(), entry.getValue(), EQ);
-      }
-      combine = buildBinaryLogicalExpression(userConditions);
-      userFilter = new Filter(combine);
-      userFilter.setInput(fromUserTable);
-      logicalOperators.add(userFilter);
-    }
+    // Build fixed selections
+//    LogicalExpression condition1 = buildEventExpression(eventTable, event);
+//    LogicalExpression condition2 = buildSingleLogicalExpression(eventTable, "date", date, EQ);
+//    LogicalExpression combine = buildBinaryLogicalExpression(condition1, condition2);
+//    Filter eventfilter = new Filter(combine);
+//    eventfilter.setInput(fromEventTable);
+//    logicalOperators.add(eventfilter);
+//
+//    Filter userFilter = null;
+//    if (needJoin) {
+//      LogicalExpression[] userConditions = new LogicalExpression[segmentMap.size()];
+//      int counter = 0;
+//      for (Map.Entry<String, Object> entry : segmentMap.entrySet()) {
+//        userConditions[counter] = buildSingleLogicalExpression(userTable, entry.getKey(), entry.getValue(), EQ);
+//      }
+//      combine = buildBinaryLogicalExpression(userConditions);
+//      userFilter = new Filter(combine);
+//      userFilter.setInput(fromUserTable);
+//      logicalOperators.add(userFilter);
+//    }
 
     Join join = null;
     JoinCondition[] joinConditions;
@@ -188,7 +188,7 @@ public class ManualStaticLPBuilder {
       joinConditions = new JoinCondition[1];
       joinConditions[0] = new JoinCondition("==", new FieldReference(eventTable + ".uid"),
                                             new FieldReference(userTable + ".uid"));
-      join = new Join(eventfilter, userFilter, joinConditions, Join.JoinType.INNER);
+      join = new Join(fromEventTable, fromUserTable, joinConditions, Join.JoinType.INNER);
     }
 
     // Build collapsing aggregation
@@ -212,7 +212,7 @@ public class ManualStaticLPBuilder {
     if (needJoin) {
       collapsingAggregate.setInput(join);
     } else {
-      collapsingAggregate.setInput(eventfilter);
+      collapsingAggregate.setInput(fromEventTable);
     }
     logicalOperators.add(collapsingAggregate);
 

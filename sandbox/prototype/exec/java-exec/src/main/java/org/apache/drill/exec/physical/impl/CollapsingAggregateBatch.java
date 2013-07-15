@@ -1,13 +1,12 @@
 package org.apache.drill.exec.physical.impl;
 
 import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
 import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes;
-import org.apache.drill.exec.record.BaseRecordBatch;
-import org.apache.drill.exec.record.BatchSchema;
-import org.apache.drill.exec.record.RecordBatch;
+import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
 
 /**
@@ -31,6 +30,8 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
         this.context = context;
         this.config = config;
         this.incoming = incoming;
+        setupEvals();
+
     }
 
     @Override
@@ -47,6 +48,10 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
                     getAggregateEvaluator(record, config.getAggregations()[i].getExpr());
             aggNames[i] = config.getAggregations()[i].getRef();
         }
+    }
+
+    private void buildSchema(){
+
     }
 
     private void consumeCurrent(){

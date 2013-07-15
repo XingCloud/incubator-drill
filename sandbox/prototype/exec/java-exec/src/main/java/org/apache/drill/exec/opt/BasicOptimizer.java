@@ -1,22 +1,29 @@
 package org.apache.drill.exec.opt;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_B_DATE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_EVENT;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_E_DATE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
+
 import org.apache.drill.common.logical.data.*;
+
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.config.MockScanPOP;
-import org.apache.drill.exec.physical.config.MockScanPOP.MockColumn;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
+import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
 import org.apache.drill.exec.physical.config.Screen;
-import org.apache.drill.exec.proto.SchemaDefProtos;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +52,6 @@ public class BasicOptimizer extends Optimizer {
   public PhysicalPlan optimize(OptimizationContext context, LogicalPlan plan) {
     Object obj = new Object();
     Collection<SinkOperator> roots = plan.getGraph().getRoots();
-    System.out.println("----------------" + roots);
     List<PhysicalOperator> physOps = new ArrayList<PhysicalOperator>(roots.size());
     LogicalConverter converter = new LogicalConverter();
     for (SinkOperator op : roots) {
@@ -82,22 +88,25 @@ public class BasicOptimizer extends Optimizer {
   private class LogicalConverter extends AbstractLogicalVisitor<PhysicalOperator, Object, OptimizerException> {
 
     @Override
-    public MockScanPOP visitScan(Scan scan, Object obj) throws OptimizerException {
-      List<MockScanPOP.MockScanEntry> modkObjects = null;
-
+    public HbaseScanPOP visitScan(Scan scan, Object obj) throws OptimizerException {
       String storageEngine = scan.getStorageEngine();
       JSONOptions selection = scan.getSelection();
 
+      JsonNode root = selection.getRoot();
+      String projectId, realBeginDate, realEndDate, event;
+      projectId = root.get(SELECTION_KEY_WORD_TABLE).textValue();
+      realBeginDate = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
+      realEndDate = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
+      event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
+
+      List<HbaseScanPOP.HbaseScanEntry> entries = new ArrayList<>(1);
+      HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(projectId, realBeginDate, realEndDate, event);
+      entries.add(entry);
       if (SE_HBASE.equals(storageEngine)) {
-        modkObjects = new ArrayList<>();
-        MockColumn[] cols = {
-          new MockColumn("uid", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4, 4, 4),
-          new MockColumn("date", SchemaDefProtos.MinorType.DATE, SchemaDefProtos.DataMode.REQUIRED, 4, 4, 4),
-          new MockColumn("l0", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4, 4, 4),
-        };
-        modkObjects.add(new MockScanPOP.MockScanEntry(100, cols));
+        return new HbaseScanPOP(entries);
+      } else {
+        throw new OptimizerException("Unsupported storage engine - " + storageEngine);
       }
-      return new MockScanPOP("http://a.xingcloud.com", modkObjects);
     }
 
     @Override
@@ -118,7 +127,14 @@ public class BasicOptimizer extends Optimizer {
     @Override
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws
       OptimizerException {
-      return collapsingAggregate.getInput().accept(this, value);
+      LogicalOperator next = collapsingAggregate.iterator().next();
+      FieldReference target = collapsingAggregate.getTarget();
+      FieldReference within = collapsingAggregate.getWithin();
+      FieldReference[] carryovers = collapsingAggregate.getCarryovers();
+      NamedExpression[] aggregations = collapsingAggregate.getAggregations();
+      PhysicalCollapsingAggregate pca = new PhysicalCollapsingAggregate(next.accept(this, value), within, target,
+                                                                        carryovers, aggregations);
+      return pca;
     }
 
     @Override
