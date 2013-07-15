@@ -7,6 +7,7 @@
         }
     },
     graph:[
+        /*
         {
             @id:1,
             pop:"mock-scan",
@@ -23,12 +24,23 @@
             	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]}
             ]
+        },*/
+        {
+          @id:1,
+          pop:"hbase-scan",
+          entries:[
+            {
+                pid:"sof-dsk",
+                startDate:"20121201",
+                endDate:"20121201",
+                event:"visit"
+            } ]
         },
        {
             @id: 2,
             child: 1,
             pop: "filter",
-            expr: "((blue > 1 + 2) && (red < '0'))",
+            expr: "((val == 0) && (event == 'visit.auto.'))",
             selectivity: 0.8
         },
         {
@@ -36,8 +48,8 @@
             child: 2,
             pop: "project",
             exprs: [
-                {ref: "hyx",expr: "blue"} ,
-                {ref: "red",expr: "red"}
+                {ref: "val",expr: "val"} ,
+                {ref: "uid",expr: "uid"}
                 ]
         },
         {

@@ -1,5 +1,7 @@
 package org.apache.drill.exec.physical.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.exec.exception.SetupException;
 import org.apache.drill.exec.physical.EndpointAffinity;
 import org.apache.drill.exec.physical.OperatorCost;
@@ -12,6 +14,7 @@ import org.apache.drill.exec.proto.CoordinationProtos;
 import org.apache.drill.exec.store.StorageEngine;
 import org.apache.drill.exec.store.StorageEngineRegistry;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,12 +23,13 @@ import java.util.List;
  * Date: 7/10/13
  * Time: 2:22 PM
  */
-public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry>{
+
+@JsonTypeName("hbase-scan")
+public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
 
 
-    public HbaseScanPOP(List<HbaseScanEntry> entries) {
+    public HbaseScanPOP(@JsonProperty("entries") List<HbaseScanEntry> entries) {
         super(entries);
-
     }
 
 
@@ -36,27 +40,30 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry>{
 
     @Override
     public Scan<?> getSpecificScan(int minorFragmentId) {
-        return null;
+        return this;
     }
 
     @Override
     public List<EndpointAffinity> getOperatorAffinity() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
-        return null;
+        return this;
     }
 
-    public static class HbaseScanEntry implements ReadEntry{
+    public static class HbaseScanEntry implements ReadEntry {
 
         private String project;
-        private String startDate ;
-        private String endDate ;
-        private String eventPattern ;
+        private String startDate;
+        private String endDate;
+        private String eventPattern;
 
-        public HbaseScanEntry(String project, String startDate, String endDate, String eventPattern) {
+        public HbaseScanEntry(@JsonProperty("pid") String project,
+                              @JsonProperty("startDate") String startDate,
+                              @JsonProperty("endDate") String endDate,
+                              @JsonProperty("event") String eventPattern) {
             this.project = project;
             this.startDate = startDate;
             this.endDate = endDate;
@@ -81,12 +88,12 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry>{
 
         @Override
         public OperatorCost getCost() {
-            return null;
+            return new OperatorCost(1, 2, 1, 1);
         }
 
         @Override
         public Size getSize() {
-            return null;
+            return new Size(0,1);
         }
 
 

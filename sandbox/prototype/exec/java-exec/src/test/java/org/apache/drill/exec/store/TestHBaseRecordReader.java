@@ -6,6 +6,7 @@ import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.record.vector.ValueVector;
+import org.apache.drill.exec.record.vector.VarLen4;
 import org.apache.drill.exec.store.HBaseRecordReader;
 import org.apache.drill.exec.store.RecordReader;
 import org.junit.Test;
@@ -38,8 +39,14 @@ public class TestHBaseRecordReader {
                 for (MaterializedField f : batch.getSchema()) {
                     ValueVector v = batch.getValueVector(f.getFieldId());
                     System.out.print(f.getName() + ":");
-                    for (int i = 0; i < v.getRecordCount(); i++) {
-                        System.out.print(v.getObject(i) + " ");
+                    if (v instanceof VarLen4) {
+                        for (int i = 0; i < v.getRecordCount(); i++) {
+                            System.out.print(new String((byte[]) v.getObject(i)) + " ");
+                        }
+                    } else {
+                        for (int i = 0; i < v.getRecordCount(); i++) {
+                            System.out.print(v.getObject(i) + " ");
+                        }
                     }
                     System.out.println();
                 }
