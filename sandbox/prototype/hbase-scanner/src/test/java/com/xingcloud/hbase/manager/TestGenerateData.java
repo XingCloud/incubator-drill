@@ -90,9 +90,10 @@ public class TestGenerateData {
             table.setAutoFlush(false);
             int cache=1000*10;
             long t1=System.currentTimeMillis();
+
             for(int i=0;i< days.length;i++){
                 for(int j=0;j<events.length;j++){
-                    Random uidR=new Random((long)(batch*ratios[j]));
+                    Random uidR=new Random(batch/(10*days.length));
                     Random val=new Random(10000l);
                     for(int k=0;k<forUnit*ratios[j];k++){
                         int uid=uidR.nextInt();
