@@ -1,11 +1,11 @@
-package com.xingcloud.hbase.store;
+package org.apache.drill.exec.store;
 
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
-import com.xingcloud.hbase.reader.HBaseRecordReader;
-import com.xingcloud.hbase.reader.HBaseScanPOP;
+import org.apache.drill.exec.store.HBaseRecordReader;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.proto.CoordinationProtos;
 import org.apache.drill.exec.store.AbstractStorageEngine;
 import org.apache.drill.exec.store.QueryOptimizerRule;
@@ -42,7 +42,6 @@ public class HBaseStorageEngine extends AbstractStorageEngine {
 
     @Override
     public Collection<ReadEntry> getReadEntries(Scan scan) throws IOException {
-        //HbaseScanPOP scanPOP=(HbaseScanPOP)scan;
         return null;
     }
 
@@ -53,7 +52,7 @@ public class HBaseStorageEngine extends AbstractStorageEngine {
 
     @Override
     public RecordReader getReader(FragmentContext context, ReadEntry readEntry) throws IOException {
-        return new HBaseRecordReader(context,(HBaseScanPOP.HBaseScanEntry)readEntry);
+        return new HBaseRecordReader(context,(HbaseScanPOP.HbaseScanEntry)readEntry);
     }
 
     @Override

@@ -17,6 +17,11 @@
 	</properties>
 
 	<dependencies>
+        <dependency>
+            <groupId>org.apache.drill</groupId>
+            <artifactId>hbase-scanner</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
 		<dependency>
 			<groupId>asm</groupId>
 			<artifactId>asm-util</artifactId>

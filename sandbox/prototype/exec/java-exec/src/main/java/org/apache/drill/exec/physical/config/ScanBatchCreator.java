@@ -1,0 +1,50 @@
+package org.apache.drill.exec.physical.config;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import org.apache.drill.common.exceptions.ExecutionSetupException;
+import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.physical.base.Scan;
+import org.apache.drill.exec.physical.impl.BatchCreator;
+import org.apache.drill.exec.physical.impl.ScanBatch;
+import org.apache.drill.exec.record.RecordBatch;
+import org.apache.drill.exec.store.RecordReader;
+import org.apache.drill.exec.store.StorageEngine;
+import org.apache.drill.exec.store.StorageEngineRegistry;
+import org.apache.drill.storage.MockStorageEngineConfig;
+
+import java.util.List;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: witwolf
+ * Date: 7/12/13
+ * Time: 3:30 PM
+ */
+public class ScanBatchCreator implements BatchCreator<Scan> {
+
+    @Override
+    public RecordBatch getBatch(FragmentContext context, Scan config, List<RecordBatch> children) throws ExecutionSetupException {
+
+        Preconditions.checkArgument(children.isEmpty());
+        List<RecordReader> readers = Lists.newArrayList();
+        if (config instanceof MockScanPOP) {
+            List<MockScanPOP.MockScanEntry> entries = config.getReadEntries();
+            for (MockScanPOP.MockScanEntry e : entries) {
+                readers.add(new MockRecordReader(context, e));
+            }
+        } else if (config instanceof HbaseScanPOP) {
+            config.getReadEntries();
+            try {
+                StorageEngine se = new StorageEngineRegistry(null).getEngine(new MockStorageEngineConfig("xx"));
+                RecordReader reader = se.getReader(context,null);
+                readers.add(reader);
+            } catch (Exception e) {
+
+            }
+        }
+        return new ScanBatch(context, readers.iterator());
+    }
+
+
+}
