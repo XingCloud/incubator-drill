@@ -1,5 +1,6 @@
 package org.apache.drill.exec.manual;
 
+import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.manual.ManualStaticLPBuilder;
@@ -9,11 +10,16 @@ import org.apache.drill.exec.opt.BasicOptimizer;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.pop.PopUnitTestBase;
 import org.apache.drill.exec.proto.UserBitShared;
+import org.apache.drill.exec.proto.UserProtos;
+import org.apache.drill.exec.record.RecordBatchLoader;
+import org.apache.drill.exec.record.vector.ValueVector;
+import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.server.RemoteServiceSet;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -32,11 +38,11 @@ public class TestManualStaticLogicalPlan extends PopUnitTestBase {
     DrillbitContext dbc;
     QueryContext qc;
     String projectId = "ddt";
-    String date = "20130709";
-    String event = "a.b.c.*";
-    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, false);
-    System.out.println(logicalPlan.toJsonString(c));
-    System.out.println("---------------------------------");
+    String date = "20121201";
+    String event = "visit.*";
+    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null);
+//    System.out.println(logicalPlan.toJsonString(c));
+//    System.out.println("---------------------------------");
     try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
          Drillbit bit = new Drillbit(CONFIG, serviceSet);
          DrillClient client = new DrillClient(CONFIG, serviceSet.getCoordinator());) {
@@ -48,6 +54,53 @@ public class TestManualStaticLogicalPlan extends PopUnitTestBase {
       BasicOptimizer bo = new BasicOptimizer(c, qc);
       PhysicalPlan physicalPlan = bo.optimize(new BasicOptimizer.BasicOptimizationContext(), logicalPlan);
       System.out.println(physicalPlan.unparse(c.getMapper().writer()));
+      System.out.println("---------------------------------");
+
+      RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());
+      List<QueryResultBatch> results = client
+        .runQuery(UserProtos.QueryType.PHYSICAL, physicalPlan.unparse(c.getMapper().writer()));
+      int recordCount = 0;
+      for (QueryResultBatch batch : results) {
+        if (batch.hasData()) {
+          continue;
+        }
+
+        boolean schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
+        boolean firstColumn = true;
+
+        // print headers.
+//        if (schemaChanged) {
+//          System.out.println("\n\n========NEW SCHEMA=========\n\n");
+//          for (IntObjectCursor<ValueVector<?>> v : batchLoader) {
+//            if (firstColumn) {
+//              firstColumn = false;
+//            } else {
+//              System.out.print("\t");
+//            }
+//            System.out.print(v.value.getField().getName());
+//            System.out.print("[");
+//            System.out.print(v.value.getField().getType().getMinorType());
+//            System.out.print("]");
+//          }
+//          System.out.println();
+//        }
+
+        for (int i = 0; i < batchLoader.getRecordCount(); i++) {
+          boolean first = true;
+          recordCount++;
+          for (IntObjectCursor<ValueVector<?>> v : batchLoader) {
+            if (first) {
+              first = false;
+            } else {
+              System.out.print("\t");
+            }
+            System.out.print(v.value.getObject(i));
+          }
+          if (!first) {
+            System.out.println();
+          }
+        }
+      }
     }
   }
 }

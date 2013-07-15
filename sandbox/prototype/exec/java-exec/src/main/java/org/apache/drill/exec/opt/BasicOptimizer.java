@@ -1,25 +1,30 @@
 package org.apache.drill.exec.opt;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_B_DATE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_EVENT;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_E_DATE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.expression.FieldReference;
+import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.apache.drill.common.logical.data.CollapsingAggregate;
-import org.apache.drill.common.logical.data.Filter;
-import org.apache.drill.common.logical.data.Project;
-import org.apache.drill.common.logical.data.Scan;
-import org.apache.drill.common.logical.data.SinkOperator;
-import org.apache.drill.common.logical.data.Store;
+
+import org.apache.drill.common.logical.data.*;
+
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.config.MockScanPOP;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
+import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
 import org.apache.drill.exec.physical.config.Screen;
-import org.apache.drill.exec.proto.SchemaDefProtos;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -52,7 +57,6 @@ public class BasicOptimizer extends Optimizer {
     for (SinkOperator op : roots) {
       try {
         PhysicalOperator pop = op.accept(converter, obj);
-        System.out.println(pop);
         physOps.add(pop);
       } catch (OptimizerException e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -84,39 +88,25 @@ public class BasicOptimizer extends Optimizer {
   private class LogicalConverter extends AbstractLogicalVisitor<PhysicalOperator, Object, OptimizerException> {
 
     @Override
-    public MockScanPOP visitScan(Scan scan, Object obj) throws OptimizerException {
-      List<MockScanPOP.MockScanEntry> myObjects;
+    public HbaseScanPOP visitScan(Scan scan, Object obj) throws OptimizerException {
+      String storageEngine = scan.getStorageEngine();
+      JSONOptions selection = scan.getSelection();
 
-      try {
-        if (scan.getStorageEngine().equals("local-logs")) {
-          myObjects = scan.getSelection()
-                          .getListWith(config, new TypeReference<ArrayList<MockScanPOP.MockScanEntry>>() {
-                          });
-        } else {
-          myObjects = new ArrayList<>();
-          MockScanPOP.MockColumn[] cols = {
-            new MockScanPOP.MockColumn("uid", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("date", SchemaDefProtos.MinorType.DATE, SchemaDefProtos.DataMode.REQUIRED, 4, 4,
-                                       4),
-            new MockScanPOP.MockColumn("l0", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("l1", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("l2", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4),
-            new MockScanPOP.MockColumn("l3", SchemaDefProtos.MinorType.VARCHAR1, SchemaDefProtos.DataMode.REQUIRED, 4,
-                                       4, 4)
-          };
-          myObjects.add(new MockScanPOP.MockScanEntry(50, cols));
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-        throw new OptimizerException(
-          "Error reading selection attribute of Scan node in Logical to Physical plan conversion.");
+      JsonNode root = selection.getRoot();
+      String projectId, realBeginDate, realEndDate, event;
+      projectId = root.get(SELECTION_KEY_WORD_TABLE).textValue();
+      realBeginDate = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
+      realEndDate = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
+      event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
+
+      List<HbaseScanPOP.HbaseScanEntry> entries = new ArrayList<>(1);
+      HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(projectId, realBeginDate, realEndDate, event);
+      entries.add(entry);
+      if (SE_HBASE.equals(storageEngine)) {
+        return new HbaseScanPOP(entries);
+      } else {
+        throw new OptimizerException("Unsupported storage engine - " + storageEngine);
       }
-
-      return new MockScanPOP("http://a.xingcloud.com", myObjects);
     }
 
     @Override
@@ -137,11 +127,23 @@ public class BasicOptimizer extends Optimizer {
     @Override
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws
       OptimizerException {
-      return collapsingAggregate.getInput().accept(this, value);
+      LogicalOperator next = collapsingAggregate.iterator().next();
+      FieldReference target = collapsingAggregate.getTarget();
+      FieldReference within = collapsingAggregate.getWithin();
+      FieldReference[] carryovers = collapsingAggregate.getCarryovers();
+      NamedExpression[] aggregations = collapsingAggregate.getAggregations();
+      PhysicalCollapsingAggregate pca = new PhysicalCollapsingAggregate(next.accept(this, value), within, target,
+                                                                        carryovers, aggregations);
+      return pca;
     }
 
-    @Override public PhysicalOperator visitFilter(Filter filter, Object value) throws OptimizerException {
-      return filter.getInput().accept(this, value);
+    @Override
+    public PhysicalOperator visitFilter(Filter filter, Object value) throws OptimizerException {
+      LogicalOperator lo = filter.iterator().next();
+      LogicalExpression le = filter.getExpr();
+      org.apache.drill.exec.physical.config.Filter f = new org.apache.drill.exec.physical.config.Filter(
+        lo.accept(this, value), le, 0.5f);
+      return f;
     }
   }
 }

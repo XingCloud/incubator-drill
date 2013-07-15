@@ -45,7 +45,7 @@ public class Join extends LogicalOperatorBase {
       throw new ExpressionParsingException(String.format("Unable to determine join type for value '%s'.", val));
     }
   }
-  
+
   @JsonCreator
   public Join(@JsonProperty("left") LogicalOperator left, @JsonProperty("right") LogicalOperator right, @JsonProperty("conditions") JoinCondition[] conditions, @JsonProperty("type") String type) {
     super();
@@ -55,6 +55,17 @@ public class Join extends LogicalOperatorBase {
     left.registerAsSubscriber(this);
     right.registerAsSubscriber(this);
     this.type = JoinType.resolve(type);
+
+  }
+  @JsonCreator
+  public Join(@JsonProperty("left") LogicalOperator left, @JsonProperty("right") LogicalOperator right, @JsonProperty("conditions") JoinCondition[] conditions, @JsonProperty("type") JoinType type) {
+    super();
+    this.conditions = conditions;
+    this.left = left;
+    this.right = right;
+    left.registerAsSubscriber(this);
+    right.registerAsSubscriber(this);
+    this.type = type;
 
   }
 

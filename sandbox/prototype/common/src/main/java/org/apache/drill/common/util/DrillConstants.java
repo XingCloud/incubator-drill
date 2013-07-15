@@ -5,4 +5,7 @@ package org.apache.drill.common.util;
  */
 public class DrillConstants {
   public static final String SE_HBASE = "hbase";
+
+  public static final String HBASE_TABLE_PREFIX_EVENT = "_deu";
+  public static final String HBASE_TABLE_PREFIX_USER = "_user";
 }

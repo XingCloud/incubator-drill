@@ -43,7 +43,6 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     private FilterBatchCreator fc = new FilterBatchCreator();
     private ProjectBatchCreator pc = new ProjectBatchCreator();
     private ScanBatchCreator sbc = new ScanBatchCreator();
-
     private RootExec root = null;
 
     private ImplCreator() {
@@ -103,5 +102,12 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
         if (i.root == null)
             throw new ExecutionSetupException("The provided fragment did not have a root node that correctly created a RootExec value.");
         return i.getRoot();
+    }
+
+    @Override
+    public RecordBatch visitCollapsingAggregate(PhysicalCollapsingAggregate op, FragmentContext value) throws ExecutionSetupException {
+        //return ac.getBatch(value,op,Arrays.asList(op.accept(this,value)));
+
+        return new CollapsingAggregateBatch(value,op, op.getChild().accept(this,value));
     }
 }

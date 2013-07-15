@@ -1,12 +1,16 @@
 package org.apache.drill.exec.physical.impl.eval.fn.agg;
 
+import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionArguments;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionEvaluator;
+import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.DrillValue;
+import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordPointer;
 import org.apache.drill.exec.record.vector.Fixed8;
+import org.apache.drill.exec.record.vector.TypeHelper;
 import org.apache.drill.exec.record.vector.ValueVector;
 
 /**
@@ -21,19 +25,18 @@ public class CountAggregator implements AggregatingEvaluator{
 
     private long l = 0l;
     private BasicEvaluator child ;
+    private RecordPointer record ;
+
 
     public CountAggregator(RecordPointer record , FunctionArguments args) {
+        this.record = record;
          child = args.getOnlyEvaluator();
     }
 
     @Override
     public void addBatch() {
-        DrillValue dv = child.eval();
-        if(dv.isVector()){
-            l += ((ValueVector)dv ).getRecordCount();
-        }else{
-            l++;
-        }
+
+        l += record.getFields().get(record.getFieldsInfo().get(0).getFieldId()).getRecordCount() ;
     }
 
     @Override
@@ -43,6 +46,8 @@ public class CountAggregator implements AggregatingEvaluator{
         value.setRecordCount(1);
         value.setBigInt(0,l);
         l = 0;
+        MaterializedField f = MaterializedField.create(new SchemaPath("count"),0,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.BIGINT));
+         value.setField(f);
         return value;
     }
 
