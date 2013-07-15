@@ -23,9 +23,9 @@ import java.util.List;
 public class TestHBaseRecordReader {
     @Test
     public void testRecordReader() {
-        String eventPattern = "visit.*";
-        String startday = "20121001";
-        String endDay="20121230";
+        String eventPattern = "*.*";
+        String startday = "20121201";
+        String endDay="20121201";
         String pID = "sof-dsk";
         HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, startday, endDay, eventPattern);
         HBaseRecordReader reader = new HBaseRecordReader(null, entry);

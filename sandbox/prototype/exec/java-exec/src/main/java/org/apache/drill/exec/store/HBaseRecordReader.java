@@ -102,21 +102,41 @@ public class HBaseRecordReader implements RecordReader {
         this.pID = config.getProject();
         this.eventPattern = config.getEventPattern();
         String tableName = getTableNameFromProject(pID);
+        boolean allEvents=true;
+        String[] events=eventPattern.split("\\.");
+        for(int i=0;i<events.length;i++){
+            if(!events[i].equals("*"))
+                allEvents=false;
+        }
         try {
-            Set<String> eventSet = MongoDBOperation.getEventSet(pID, eventPattern);
-            List<String> eventList = new ArrayList<String>(eventSet);
             List<String> days = getDayList(config.getStartDate(), config.getEndDate());
-            Collections.sort(eventList);
             Collections.sort(days);
-            for (int i = 0; i < days.size(); i++) {
-                String day = days.get(i);
-                List<String> oneDayList = new ArrayList<String>();
-                oneDayList.add(day);
-                byte[] srk = Bytes.toBytes(day + eventList.get(0));
-                byte[] enk = Bytes.toBytes(day + getNextEvent(eventList.get(eventList.size() - 1)));
-                XARowKeyFilter filter1 = new XARowKeyFilter(0, Long.MAX_VALUE, eventList, oneDayList);
-                TableScanner scanner = new TableScanner(srk, enk, tableName, filter1, false, false);
-                scanners.add(scanner);
+            if(!allEvents){
+                Set<String> eventSet = MongoDBOperation.getEventSet(pID, eventPattern);
+                List<String> eventList = new ArrayList<String>(eventSet);
+                Collections.sort(eventList);
+                for (int i = 0; i < days.size(); i++) {
+                    String day = days.get(i);
+                    List<String> oneDayList = new ArrayList<String>();
+                    oneDayList.add(day);
+                    byte[] srk = Bytes.toBytes(day + eventList.get(0));
+                    byte[] enk = Bytes.toBytes(day + getNextEvent(eventList.get(eventList.size() - 1)));
+                    XARowKeyFilter filter1 = new XARowKeyFilter(0, Long.MAX_VALUE, eventList, oneDayList);
+                    TableScanner scanner = new TableScanner(srk, enk, tableName, filter1, false, false);
+                    scanners.add(scanner);
+                }
+            }
+            else{
+                for (int i = 0; i < days.size(); i++) {
+                    String day = days.get(i);
+                    List<String> oneDayList = new ArrayList<String>();
+                    oneDayList.add(day);
+                    byte[] srk = Bytes.toBytes(day);
+                    byte[] enk = Bytes.toBytes(calDay(day,1));
+                    //XARowKeyFilter filter1 = new XARowKeyFilter(0, Long.MAX_VALUE, eventList, oneDayList);
+                    TableScanner scanner = new TableScanner(srk, enk, tableName, null, false, false);
+                    scanners.add(scanner);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
