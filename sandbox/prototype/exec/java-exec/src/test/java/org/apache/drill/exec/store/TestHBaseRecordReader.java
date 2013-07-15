@@ -53,6 +53,7 @@ public class TestHBaseRecordReader {
         } catch (ExecutionSetupException e) {
             e.printStackTrace();
         }
+        System.out.println("down");
 
 
     }

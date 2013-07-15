@@ -38,7 +38,7 @@ import java.util.List;
 public class TestSimpleFragmentRun extends PopUnitTestBase {
     static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestSimpleFragmentRun.class);
 
-    @Test
+    @Test(timeout=100000)
     public void runNoExchangeFragment() throws Exception {
         try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
              Drillbit bit = new Drillbit(CONFIG, serviceSet);
