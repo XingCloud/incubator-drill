@@ -240,12 +240,18 @@ public class HBaseRecordReader implements RecordReader {
                 }
                 try {
                     hasMore = scanner.next(curRes);
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 valIndex = 0;
             }
             if (valIndex > curRes.size() - 1) {
+                if(!hasMore){
+                    currentScannerIndex++;
+                    valIndex=-1;
+                    continue;
+                }
                 while (hasMore) {
                         /* Get result list from the same scanner and skip curRes with no element */
                     curRes.clear();
