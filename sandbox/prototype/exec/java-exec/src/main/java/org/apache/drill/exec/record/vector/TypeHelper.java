@@ -18,6 +18,7 @@
 package org.apache.drill.exec.record.vector;
 
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.proto.SchemaDefProtos.DataMode;
 import org.apache.drill.exec.proto.SchemaDefProtos.MajorType;
 import org.apache.drill.exec.proto.SchemaDefProtos.MinorType;
@@ -255,5 +256,12 @@ public class TypeHelper {
     }
     throw new UnsupportedOperationException(type.getMinorType() + " type is not supported. Mode: " + type.getMode());
   }
+
+    public static SchemaDefProtos.MajorType getMajorType(DataMode mode , MinorType minorType) {
+        SchemaDefProtos.MajorType.Builder b = SchemaDefProtos.MajorType.newBuilder();
+        b.setMode(mode);
+        b.setMinorType(minorType);
+        return b.build();
+    }
 
 }

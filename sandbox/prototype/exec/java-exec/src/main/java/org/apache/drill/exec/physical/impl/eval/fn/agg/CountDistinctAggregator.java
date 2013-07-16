@@ -1,12 +1,21 @@
 package org.apache.drill.exec.physical.impl.eval.fn.agg;
 
+import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionArguments;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
+import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.DrillValue;
+import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordPointer;
+import org.apache.drill.exec.record.values.ScalarValues;
 import org.apache.drill.exec.record.vector.Fixed8;
+import org.apache.drill.exec.record.vector.TypeHelper;
+import org.apache.drill.exec.record.vector.ValueVector;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,20 +24,31 @@ import org.apache.drill.exec.record.vector.Fixed8;
  * Time: 9:53 AM
  */
 
-@FunctionEvaluator("countDistinct")
-public class CountDistinctAggregator implements AggregatingEvaluator{
+@FunctionEvaluator("count_distinct")
+public class CountDistinctAggregator implements AggregatingEvaluator {
 
 
-    private  long l = 0 ;
-    private  BasicEvaluator child ;
+    private long l = 0;
+    private BasicEvaluator child;
+    private RecordPointer record;
+    private Set<Object> duplicate = new HashSet<>();
 
-    public CountDistinctAggregator(RecordPointer record , FunctionArguments args) {
+    public CountDistinctAggregator(RecordPointer record, FunctionArguments args) {
         this.child = args.getOnlyEvaluator();
+        this.record = record;
     }
 
     @Override
     public void addBatch() {
-
+        ValueVector v = getDistinctColumn();
+        Object o;
+        for (int i = 0; i < v.getRecordCount(); i++) {
+            o = v.getObject(i);
+            if (!duplicate.contains(o)) {
+                l++;
+                duplicate.add(o);
+            }
+        }
     }
 
     @Override
@@ -36,7 +56,9 @@ public class CountDistinctAggregator implements AggregatingEvaluator{
         Fixed8 value = new Fixed8(null, BufferAllocator.getAllocator(null));
         value.allocateNew(1);
         value.setRecordCount(1);
-        value.setBigInt(0,l);
+        value.setBigInt(0, l);
+        MaterializedField f = MaterializedField.create(new SchemaPath("count_distinct"),0,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.UINT8));
+        value.setField(f);
         l = 0;
         return value;
     }
@@ -44,5 +66,16 @@ public class CountDistinctAggregator implements AggregatingEvaluator{
     @Override
     public boolean isConstant() {
         return false;
+    }
+
+    private ValueVector getDistinctColumn() {
+        String columnName = ((ScalarValues.StringScalar) child.eval()).getString().toString();
+        SchemaPath schemaPath = new SchemaPath(columnName);
+        for (MaterializedField f : record.getFieldsInfo()) {
+            if (f.matches(schemaPath)) {
+                return record.getFields().get(f.getFieldId());
+            }
+        }
+        return null;
     }
 }

@@ -202,8 +202,10 @@ public class ManualStaticLPBuilder {
     namedExpressions[0] = new NamedExpression(functionRegistry.createExpression(COUNT.getKeyWord(), aggrOn),
                                               new FieldReference(aggrColumn));
     namedExpressions[1] = new NamedExpression(functionRegistry.createExpression(COUNT_DISTINCT.getKeyWord(), aggrOn),
-                                              new FieldReference(aggrColumn));
-    aggrColumn = "value";
+
+                                             new FieldReference(aggrColumn));
+
+    aggrColumn = "val";
     aggrOn = new FieldReference(aggrColumn);
     namedExpressions[2] = new NamedExpression(functionRegistry.createExpression(SUM.getKeyWord(), aggrOn),
                                               new FieldReference(aggrColumn));

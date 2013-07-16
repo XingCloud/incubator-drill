@@ -38,7 +38,7 @@ public class TestManualStaticLogicalPlan extends PopUnitTestBase {
     DrillbitContext dbc;
     QueryContext qc;
     String projectId = "ddt";
-    String date = "20130709";
+    String date = "20121201";
     String event = "visit.*";
     LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null);
 //    System.out.println(logicalPlan.toJsonString(c));
