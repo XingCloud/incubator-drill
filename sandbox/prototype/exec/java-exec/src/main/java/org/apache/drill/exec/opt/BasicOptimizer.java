@@ -104,15 +104,23 @@ public class BasicOptimizer extends Optimizer {
       JSONOptions selection = scan.getSelection();
 
       JsonNode root = selection.getRoot();
-      String projectId, realBeginDate, realEndDate, event;
-      projectId = root.get(SELECTION_KEY_WORD_TABLE).textValue();
+      List<HbaseScanPOP.HbaseAbstractScanEntry> entries = new ArrayList<>(1);
+      HbaseScanPOP.HbaseAbstractScanEntry entry;
 
-      realBeginDate = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
-      realEndDate = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
-      event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
+      String table;
+      table = root.get(SELECTION_KEY_WORD_TABLE).textValue();
 
-      List<HbaseScanPOP.HbaseScanEntry> entries = new ArrayList<>(1);
-      HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(projectId, realBeginDate, realEndDate, event);
+      if (table.contains("deu")) {
+        String realBeginDate = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
+        String realEndDate = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
+        String event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
+        entry = new HbaseScanPOP.HbaseScanEntry(table, realBeginDate, realEndDate, event);
+      } else {
+        String prop = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
+        String propValue = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
+        entry=null;
+      }
+
       entries.add(entry);
       if (SE_HBASE.equals(storageEngine)) {
         return new HbaseScanPOP(entries);
