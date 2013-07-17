@@ -268,24 +268,16 @@ public class ManualStaticLPBuilder {
         functionalGrouping = true;
         String func = grouping.getFunc();
         singleGroupByLE = functionRegistry.createExpression(func, new FieldReference(groupBy));
-        ne = new NamedExpression(singleGroupByLE, new FieldReference("segmentvalue"));
-        transform = new Transform(new NamedExpression[]{ne});
-        if (needJoin) {
-          transform.setInput(join);
-        } else {
-          transform.setInput(fromEventTable);
-        }
-        segment = new Segment(new LogicalExpression[]{new FieldReference("segmentvalue")},
-                              new FieldReference("segment"));
-        segment.setInput(transform);
+      } else if (GroupByType.EVENT.equals(groupByType)) {
+        singleGroupByLE = new FieldReference(eventTable + "." + groupBy);
       } else {
-        segment = new Segment(new LogicalExpression[]{new FieldReference("segmentvalue")},
-                              new FieldReference("segment"));
-        if (needJoin) {
-          segment.setInput(join);
-        } else {
-          segment.setInput(fromEventTable);
-        }
+        singleGroupByLE = new FieldReference(userTable + "." + groupBy);
+      }
+      segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupBy));
+      if (needJoin) {
+        segment.setInput(join);
+      } else {
+        segment.setInput(fromEventTable);
       }
       logicalOperators.add(segment);
     }
@@ -362,7 +354,7 @@ public class ManualStaticLPBuilder {
     Map<String, Object> segmentMap = new HashMap<>(1);
     segmentMap.put("register_time", "2013-07-12");
     System.out.println("---------------------------------");
-    logicalPlan = buildStaticLogicalPlanManually("ddt", "visit.*", "20130701", null, Grouping.buildUserGroup("ref"));
+    logicalPlan = buildStaticLogicalPlanManually("ddt", "visit.*", "20130701", null, Grouping.buildEventGroup(2));
     System.out.println(logicalPlan.toJsonString(c));
   }
 }

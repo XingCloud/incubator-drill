@@ -7,6 +7,7 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_E_DATE;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
@@ -104,8 +105,8 @@ public class BasicOptimizer extends Optimizer {
       JSONOptions selection = scan.getSelection();
 
       JsonNode root = selection.getRoot();
-      List<HbaseScanPOP.HbaseAbstractScanEntry> entries = new ArrayList<>(1);
-      HbaseScanPOP.HbaseAbstractScanEntry entry;
+      List<HbaseScanPOP.HbaseScanEntry> entries = new ArrayList<>(1);
+      HbaseScanPOP.HbaseScanEntry entry;
 
       String table;
       table = root.get(SELECTION_KEY_WORD_TABLE).textValue();
@@ -114,11 +115,15 @@ public class BasicOptimizer extends Optimizer {
         String realBeginDate = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
         String realEndDate = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
         String event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
-        entry = new HbaseScanPOP.HbaseScanEntry(table, realBeginDate, realEndDate, event);
+        entry = new HbaseScanPOP.HbaseEventScanEntry(table, realBeginDate, realEndDate, event);
       } else {
         String prop = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
         String propValue = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
-        entry = null;
+        if (StringUtils.isBlank(propValue)) {
+          entry = new HbaseScanPOP.HbaseUserScanEntry(table, prop);
+        } else {
+          entry = new HbaseScanPOP.HbaseUserScanEntry(table, prop, propValue);
+        }
       }
       entries.add(entry);
       if (SE_HBASE.equals(storageEngine)) {

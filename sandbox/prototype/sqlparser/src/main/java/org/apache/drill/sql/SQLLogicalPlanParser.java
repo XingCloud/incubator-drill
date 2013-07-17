@@ -2,6 +2,7 @@ package org.apache.drill.sql;
 
 import static org.apache.drill.sql.utils.SqlParseUtils.isNotSelectStatement;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserManager;
 import net.sf.jsqlparser.statement.Statement;
@@ -12,15 +13,14 @@ import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.StorageEngineConfig;
 import org.apache.drill.common.logical.data.LogicalOperator;
-import org.apache.drill.sql.utils.SqlParseUtils;
 import org.apache.drill.sql.visitors.SqlQueryVisitor;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,9 +52,10 @@ public class SqlLogicalPlanParser {
 
     ObjectMapper mapper = new ObjectMapper();
     PlanProperties head = mapper.readValue(new String(
-      "{\"type\":\"apache_drill_logical_plan\",\"version\":\"1\",\"generator\":{\"type\":\"manual\",\"info\":\"na\"}}")
+      "{\"type\":\"APACHE_DRILL_LOGICAL\",\"version\":\"1\",\"generator\":{\"type\":\"manual\",\"info\":\"na\"}}")
                                              .getBytes(), PlanProperties.class);
-    Map<String, StorageEngineConfig> storageEngines = SqlParseUtils.getStorageEngineMap();
+
+    Map<String, StorageEngineConfig> storageEngines = new HashMap<>(0);
     LogicalPlan lp = new LogicalPlan(head, storageEngines, operators);
     return lp;
   }
@@ -65,8 +66,8 @@ public class SqlLogicalPlanParser {
     simpleSelect = "SELECT * from sof_dsk_deu";
     lp = parse(simpleSelect);
 
-//    simpleSelect = "SELECT count( distinct sof_dsk_deu.uid) AS cnt from sof_dsk_deu";
-//    lp = parse(simpleSelect);
+    simpleSelect = "SELECT count( distinct sof_dsk_deu.uid) from sof_dsk_deu";
+    lp = parse(simpleSelect);
 //
 //    simpleSelect = "SELECT count( distinct sof_dsk_deu.uid) AS cnt from sof_dsk_deu WHERE sof_dsk_deu.l0 = 'visit'";
 //    lp = parse(simpleSelect);
