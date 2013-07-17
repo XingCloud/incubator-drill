@@ -1,5 +1,8 @@
 package org.apache.drill.exec.physical.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.exec.physical.OperatorCost;
 import org.apache.drill.exec.physical.base.AbstractSingle;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
@@ -8,13 +11,18 @@ import org.apache.drill.exec.physical.base.PhysicalVisitor;
 /**
  * Created with IntelliJ IDEA.
  * User: witwolf
- * Date: 7/12/13
- * Time: 12:23 PM
+ * Date: 7/16/13
+ * Time: 10:25 AM
  */
-public class CollapsingAggregate extends AbstractSingle {
 
-    public CollapsingAggregate(PhysicalOperator child) {
+@JsonTypeName("Segment")
+public class Segment extends AbstractSingle {
+
+    private LogicalExpression[] exprs ;
+
+    public Segment(@JsonProperty("child")PhysicalOperator child ,@JsonProperty("exprs") LogicalExpression[] exprs) {
         super(child);
+        this.exprs = exprs;
     }
 
     @Override
@@ -30,5 +38,10 @@ public class CollapsingAggregate extends AbstractSingle {
     @Override
     public <T, X, E extends Throwable> T accept(PhysicalVisitor<T, X, E> physicalVisitor, X value) throws E {
         return null;
+    }
+
+
+    public LogicalExpression[] getExprs() {
+        return exprs;
     }
 }

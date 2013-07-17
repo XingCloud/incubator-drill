@@ -33,14 +33,14 @@
                 pid:"sof-dsk",
                 startDate:"20121201",
                 endDate:"20121201",
-                event:"visit"
+                event:"*.*"
             } ]
         },
        {
             @id: 2,
             child: 1,
             pop: "filter",
-            expr: "((val == 0) && (event == 'visit.auto.'))",
+            expr: "((val == 0) && (event > 'visit'))",
             selectivity: 0.8
         },
         {

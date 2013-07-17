@@ -13,13 +13,9 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.apache.drill.common.logical.data.CollapsingAggregate;
-import org.apache.drill.common.logical.data.Filter;
-import org.apache.drill.common.logical.data.LogicalOperator;
-import org.apache.drill.common.logical.data.NamedExpression;
-import org.apache.drill.common.logical.data.Scan;
-import org.apache.drill.common.logical.data.SinkOperator;
-import org.apache.drill.common.logical.data.Store;
+
+import org.apache.drill.common.logical.data.*;
+
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
@@ -123,6 +119,14 @@ public class BasicOptimizer extends Optimizer {
       return screen;
     }
 
+    @Override
+    public PhysicalOperator visitProject(Project project, Object obj) throws OptimizerException {
+      return project.getInput().accept(this, obj);
+    }
+
+
+
+    @Override
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws
       OptimizerException {
       LogicalOperator next = collapsingAggregate.iterator().next();

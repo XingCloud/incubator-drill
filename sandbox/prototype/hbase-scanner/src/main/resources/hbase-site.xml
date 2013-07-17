@@ -35,11 +35,11 @@
 	</property>
     <property>
         <name>hbase.client.pause</name>
-        <value>20</value>
+        <value>1000</value>
     </property>
     <property>
         <name>hbase.client.retries.number</name>
-        <value>1</value>
+        <value>2</value>
     </property>
     <property>
         <name>hbase.ipc.client.tcpnodelay</name>

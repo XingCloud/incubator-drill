@@ -7,8 +7,6 @@ import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.record.vector.ValueVector;
 import org.apache.drill.exec.record.vector.VarLen4;
-import org.apache.drill.exec.store.HBaseRecordReader;
-import org.apache.drill.exec.store.RecordReader;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -25,10 +23,11 @@ import java.util.List;
 public class TestHBaseRecordReader {
     @Test
     public void testRecordReader() {
-        String eventPattern = "visit.*";
-        String day = "20121201";
+        String eventPattern = "*.*";
+        String startday = "20121201";
+        String endDay="20121201";
         String pID = "sof-dsk";
-        HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, day, day, eventPattern);
+        HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, startday, endDay, eventPattern);
         HBaseRecordReader reader = new HBaseRecordReader(null, entry);
         List<RecordReader> readerList = new ArrayList<RecordReader>();
         readerList.add(reader);
@@ -54,6 +53,7 @@ public class TestHBaseRecordReader {
         } catch (ExecutionSetupException e) {
             e.printStackTrace();
         }
+        System.out.println("down");
 
 
     }

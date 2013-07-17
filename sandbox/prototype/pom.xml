@@ -179,5 +179,6 @@
 		<module>exec</module>
 		<module>planner</module>
 		<module>sqlparser</module>
+        <module>hbase-scanner</module>
 	</modules>
 </project>
