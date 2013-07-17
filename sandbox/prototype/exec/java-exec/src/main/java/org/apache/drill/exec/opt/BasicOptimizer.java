@@ -118,7 +118,9 @@ public class BasicOptimizer extends Optimizer {
       if (!store.iterator().hasNext()) {
         throw new OptimizerException("Store node in logical plan does not have a child.");
       }
-      return new Screen(store.iterator().next().accept(this, obj), context.getCurrentEndpoint());
+      LogicalOperator next = store.iterator().next();
+      Screen screen = new Screen(next.accept(this, obj), context.getCurrentEndpoint());
+      return screen;
     }
 
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws

@@ -43,7 +43,7 @@ public class PhysicalCollapsingAggregate extends AbstractSingle {
   @Override
 
   public <T, X, E extends Throwable> T accept(PhysicalVisitor<T, X, E> physicalVisitor, X value) throws E {
-    return null;
+    return physicalVisitor.visitCollapsingAggregate(this, value);
   }
 
   public FieldReference getWithin() {
