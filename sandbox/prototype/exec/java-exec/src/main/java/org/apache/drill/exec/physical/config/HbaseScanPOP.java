@@ -86,6 +86,12 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
              this.property=property;
              this.value=value;
         }
+        public HbaseUserScanEntry(@JsonProperty("pid") String project,
+                                  @JsonProperty("propertry") String property){
+            super(project,"user");
+            this.property=property;
+            this.value=null;
+        }
         public String getProperty(){
             return property;
         }
