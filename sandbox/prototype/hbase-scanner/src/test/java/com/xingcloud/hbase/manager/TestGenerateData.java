@@ -15,6 +15,8 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 
@@ -32,21 +34,23 @@ import java.util.Random;
  */
 public class TestGenerateData {
     public static Logger logger = org.slf4j.LoggerFactory.getLogger(TestGenerateData.class);
-    @Test
-    public void createTable10W(){
+    @BeforeClass
+    public static void createTable10W(){
         generateData(1000*100);
     }
-    @Test
-    public void generateData100W(){
+    @BeforeClass
+    public static void generateData100W(){
         generateData(1000*1000);
     }
-    @Test
-    public void generateData10000W(){
+    @AfterClass
+    public static void generateData10000W(){
         generateData(1000*1000*100);
     }
-
-
-    private void generateData(int batch){
+    @Test
+    public void test(){
+        System.out.println("hh");
+    }
+    private static void generateData(int batch){
         Configuration conf= HBaseConfiguration.create();
         HBaseAdmin admin = null;
         int num=batch/10000;
@@ -131,5 +135,9 @@ public class TestGenerateData {
         }
 
     }
+
+
+
+
 
 }

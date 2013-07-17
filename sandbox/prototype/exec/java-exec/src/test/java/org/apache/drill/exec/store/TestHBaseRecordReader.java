@@ -54,7 +54,37 @@ public class TestHBaseRecordReader {
             e.printStackTrace();
         }
         System.out.println("down");
-
-
+    }
+    @Test
+    public void testUserTable(){
+        String property="language";
+        String val="en";
+        String project_id="sof-dsk";
+        HBaseUserRecordReader reader=new HBaseUserRecordReader(null,property,val,project_id);
+        List<RecordReader> readerList = new ArrayList<RecordReader>();
+        readerList.add(reader);
+        Iterator<RecordReader> iter = readerList.iterator();
+        try {
+            ScanBatch batch = new ScanBatch(null, iter);
+            while (batch.next() != RecordBatch.IterOutcome.NONE) {
+                for (MaterializedField f : batch.getSchema()) {
+                    ValueVector v = batch.getValueVector(f.getFieldId());
+                    System.out.print(f.getName() + ":");
+                    if (v instanceof VarLen4) {
+                        for (int i = 0; i < v.getRecordCount(); i++) {
+                            System.out.print(new String((byte[]) v.getObject(i)) + " ");
+                        }
+                    } else {
+                        for (int i = 0; i < v.getRecordCount(); i++) {
+                            System.out.print(v.getObject(i) + " ");
+                        }
+                    }
+                    System.out.println();
+                }
+            }
+        } catch (ExecutionSetupException e) {
+            e.printStackTrace();
+        }
+        System.out.println("down");
     }
 }
