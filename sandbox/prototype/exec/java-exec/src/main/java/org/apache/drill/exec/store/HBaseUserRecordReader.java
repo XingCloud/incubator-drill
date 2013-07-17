@@ -6,6 +6,7 @@ import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.MaterializedField;
@@ -52,11 +53,14 @@ public class HBaseUserRecordReader implements RecordReader {
     private boolean hasMore;
     private boolean init=false;
 
-    public HBaseUserRecordReader(FragmentContext context,String property,String val,String project_id){
-        this.property=property;
-        this.val=val;
+    HbaseScanPOP.HbaseUserScanEntry config;
+
+    public HBaseUserRecordReader(FragmentContext context,HbaseScanPOP.HbaseUserScanEntry config){
+        this.config=config;
+        this.property=config.getProperty();
+        this.val=config.getvalue();
         this.context=context;
-        this.project_id=project_id;
+        this.project_id=config.getProject();
         typeMap=new HashMap<>();
         initPropertyTypes();
 
@@ -70,7 +74,7 @@ public class HBaseUserRecordReader implements RecordReader {
         byte[] srk=CombineBytes(Bytes.toBytes((short)property_id),Bytes.toBytes(day),Bytes.toBytes(val));
         System.out.println(Bytes.toString(srk));
         String nextVal=getNextRkString(val);
-        byte[] enk=CombineBytes(Bytes.toBytes((short)property_id),Bytes.toBytes(day),Bytes.toBytes(nextVal));
+        byte[] enk=CombineBytes(Bytes.toBytes((short) property_id), Bytes.toBytes(day), Bytes.toBytes(nextVal));
         System.out.println(Bytes.toString(enk));
         String tableName="property_"+project_id+"_index";
         TableScanner scanner=new TableScanner(srk,enk,tableName,null,false,false);
