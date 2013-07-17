@@ -60,7 +60,8 @@ public class TestHBaseRecordReader {
         String property="language";
         String val="en";
         String project_id="sof-dsk";
-        HBaseUserRecordReader reader=new HBaseUserRecordReader(null,property,val,project_id);
+        HbaseScanPOP.HbaseUserScanEntry entry=new HbaseScanPOP.HbaseUserScanEntry(project_id,property,val);
+        HBaseUserRecordReader reader=new HBaseUserRecordReader(null,entry);
         List<RecordReader> readerList = new ArrayList<RecordReader>();
         readerList.add(reader);
         Iterator<RecordReader> iter = readerList.iterator();
