@@ -40,7 +40,8 @@ public class TestManualStaticLogicalPlan extends PopUnitTestBase {
     String projectId = "ddt";
     String date = "20130709";
     String event = "visit.*";
-    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null);
+    ManualStaticLPBuilder.Grouping g = ManualStaticLPBuilder.Grouping.buildEventGroup(0);
+    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null, g);
 //    System.out.println(logicalPlan.toJsonString(c));
 //    System.out.println("---------------------------------");
     try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
