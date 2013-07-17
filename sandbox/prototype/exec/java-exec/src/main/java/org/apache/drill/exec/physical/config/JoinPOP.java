@@ -20,16 +20,15 @@ import java.util.List;
  */
 
 @JsonTypeName("join")
-public class Join extends AbstractBase {
+public class JoinPOP extends AbstractBase {
 
     private PhysicalOperator left ;
     private PhysicalOperator right ;
     private LogicalExpression expr ;
 
 
-    public Join(@JsonProperty("leftChild") PhysicalOperator left,
-                @JsonProperty("rightChild") PhysicalOperator right,
-                @JsonProperty("expr") LogicalExpression expr) {
+    public JoinPOP(@JsonProperty("leftChild") PhysicalOperator left, @JsonProperty("rightChild") PhysicalOperator right,
+                   @JsonProperty("expr") LogicalExpression expr) {
         this.left = left;
         this.right = right;
         this.expr = expr ;

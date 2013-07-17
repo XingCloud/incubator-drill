@@ -1,7 +1,7 @@
 package org.apache.drill.exec.physical.impl;
 
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.Segment;
+import org.apache.drill.exec.physical.config.SegmentPOP;
 import org.apache.drill.exec.record.BaseRecordBatch;
 import org.apache.drill.exec.record.BatchSchema;
 import org.apache.drill.exec.record.RecordBatch;
@@ -15,11 +15,11 @@ import org.apache.drill.exec.record.RecordBatch;
 public class SegmentBatch extends BaseRecordBatch {
 
     private FragmentContext context ;
-    private Segment config ;
+    private SegmentPOP config ;
     private RecordBatch incoming ;
     private BatchSchema batchSchema;
 
-    public SegmentBatch(FragmentContext context, Segment config, RecordBatch incoming) {
+    public SegmentBatch(FragmentContext context, SegmentPOP config, RecordBatch incoming) {
         this.context = context;
         this.config = config;
         this.incoming = incoming;

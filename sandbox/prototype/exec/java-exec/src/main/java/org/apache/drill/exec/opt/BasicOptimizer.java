@@ -11,19 +11,30 @@ import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.FieldReference;
+import org.apache.drill.common.expression.FunctionRegistry;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
-
-import org.apache.drill.common.logical.data.*;
-
+import org.apache.drill.common.logical.data.CollapsingAggregate;
+import org.apache.drill.common.logical.data.Filter;
+import org.apache.drill.common.logical.data.Join;
+import org.apache.drill.common.logical.data.JoinCondition;
+import org.apache.drill.common.logical.data.LogicalOperator;
+import org.apache.drill.common.logical.data.NamedExpression;
+import org.apache.drill.common.logical.data.Project;
+import org.apache.drill.common.logical.data.Scan;
+import org.apache.drill.common.logical.data.Segment;
+import org.apache.drill.common.logical.data.SinkOperator;
+import org.apache.drill.common.logical.data.Store;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
+import org.apache.drill.exec.physical.config.JoinPOP;
 import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
 import org.apache.drill.exec.physical.config.Screen;
+import org.apache.drill.exec.physical.config.SegmentPOP;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,13 +99,14 @@ public class BasicOptimizer extends Optimizer {
   private class LogicalConverter extends AbstractLogicalVisitor<PhysicalOperator, Object, OptimizerException> {
 
     @Override
-    public HbaseScanPOP visitScan(Scan scan, Object obj) throws OptimizerException {
+    public PhysicalOperator visitScan(Scan scan, Object obj) throws OptimizerException {
       String storageEngine = scan.getStorageEngine();
       JSONOptions selection = scan.getSelection();
 
       JsonNode root = selection.getRoot();
       String projectId, realBeginDate, realEndDate, event;
       projectId = root.get(SELECTION_KEY_WORD_TABLE).textValue();
+
       realBeginDate = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
       realEndDate = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
       event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
@@ -115,16 +127,13 @@ public class BasicOptimizer extends Optimizer {
         throw new OptimizerException("Store node in logical plan does not have a child.");
       }
       LogicalOperator next = store.iterator().next();
-      Screen screen = new Screen(next.accept(this, obj), context.getCurrentEndpoint());
-      return screen;
+      return new Screen(next.accept(this, obj), context.getCurrentEndpoint());
     }
 
     @Override
     public PhysicalOperator visitProject(Project project, Object obj) throws OptimizerException {
       return project.getInput().accept(this, obj);
     }
-
-
 
     @Override
     public PhysicalOperator visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, Object value) throws
@@ -147,5 +156,32 @@ public class BasicOptimizer extends Optimizer {
         lo.accept(this, value), le, 0.5f);
       return f;
     }
+
+    @Override
+    public PhysicalOperator visitJoin(Join join, Object value) throws OptimizerException {
+      LogicalOperator leftLO = join.getLeft();
+      LogicalOperator rightLO = join.getRight();
+      JoinCondition singleJoinCondition = join.getConditions()[0];
+      String relationship = singleJoinCondition.getRelationship();
+      LogicalExpression leftRelationship = singleJoinCondition.getLeft();
+      LogicalExpression rightRelationship = singleJoinCondition.getRight();
+
+      FunctionRegistry functionRegistry = new FunctionRegistry(DrillConfig.create());
+      PhysicalOperator leftPOP = leftLO.accept(this, value);
+      PhysicalOperator rightPOP = rightLO.accept(this, value);
+
+      LogicalExpression singleCondition = functionRegistry
+        .createExpression(relationship, leftRelationship, rightRelationship);
+      JoinPOP joinPOP = new JoinPOP(leftPOP, rightPOP, singleCondition);
+      return joinPOP;
+    }
+
+    @Override
+    public PhysicalOperator visitSegment(Segment segment, Object value) throws OptimizerException {
+      LogicalOperator next = segment.iterator().next();
+      SegmentPOP segmentPOP = new SegmentPOP(next.accept(this, value), segment.getExprs());
+      return segmentPOP;
+    }
+
   }
 }

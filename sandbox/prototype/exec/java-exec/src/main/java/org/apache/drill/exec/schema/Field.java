@@ -18,86 +18,75 @@
 
 package org.apache.drill.exec.schema;
 
+import static org.apache.drill.exec.proto.SchemaDefProtos.MajorType;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
-import org.apache.drill.common.expression.SchemaPath;
-import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.proto.SchemaDefProtos;
-import org.apache.drill.exec.record.MaterializedField;
-import org.apache.drill.exec.record.vector.*;
-import org.apache.drill.exec.store.BatchExceededException;
-import org.apache.drill.exec.store.VectorHolder;
-
-import java.nio.charset.Charset;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static org.apache.drill.exec.proto.SchemaDefProtos.*;
 
 public abstract class Field {
-    final MajorType fieldType;
-    final int parentFieldId;
-    final int fieldId;
-    final String prefixFieldName;
-    RecordSchema schema;
-    RecordSchema parentSchema;
-    boolean read;
+  final MajorType fieldType;
+  final int parentFieldId;
+  final int fieldId;
+  final String prefixFieldName;
+  RecordSchema schema;
+  RecordSchema parentSchema;
+  boolean read;
 
-    public Field(RecordSchema parentSchema, int parentFieldId, IdGenerator<Integer> generator, MajorType type, String prefixFieldName) {
-        this.fieldId = generator.getNextId();
-        fieldType = type;
-        this.prefixFieldName = prefixFieldName;
-        this.parentSchema = parentSchema;
-        this.parentFieldId = parentFieldId;
+  public Field(RecordSchema parentSchema, int parentFieldId, IdGenerator<Integer> generator, MajorType type,
+               String prefixFieldName) {
+    this.fieldId = generator.getNextId();
+    fieldType = type;
+    this.prefixFieldName = prefixFieldName;
+    this.parentSchema = parentSchema;
+    this.parentFieldId = parentFieldId;
+  }
+
+  public abstract String getFieldName();
+
+  public String getFullFieldName() {
+    return Strings.isNullOrEmpty(prefixFieldName) ? getFieldName() : prefixFieldName + "." + getFieldName();
+  }
+
+  public int getFieldId() {
+    return fieldId;
+  }
+
+  public void setRead(boolean read) {
+    this.read = read;
+  }
+
+  protected abstract Objects.ToStringHelper addAttributesToHelper(Objects.ToStringHelper helper);
+
+  Objects.ToStringHelper getAttributesStringHelper() {
+    return Objects.toStringHelper(this).add("type", fieldType).add("id", fieldId)
+                  .add("fullFieldName", getFullFieldName())
+                  .add("schema", schema == null ? null : schema.toSchemaString()).omitNullValues();
+  }
+
+  @Override
+  public String toString() {
+    return addAttributesToHelper(getAttributesStringHelper()).toString();
+  }
+
+  public RecordSchema getAssignedSchema() {
+    return schema;
+  }
+
+  public void assignSchemaIfNull(RecordSchema newSchema) {
+    if (!hasSchema()) {
+      schema = newSchema;
     }
+  }
 
-    public abstract String getFieldName();
+  public boolean isRead() {
+    return read;
+  }
 
-    public String getFullFieldName() {
-        return Strings.isNullOrEmpty(prefixFieldName) ? getFieldName() : prefixFieldName + "." + getFieldName();
-    }
+  public boolean hasSchema() {
+    return schema != null;
+  }
 
-    public int getFieldId() {
-        return fieldId;
-    }
-
-    public void setRead(boolean read) {
-        this.read = read;
-    }
-
-    protected abstract Objects.ToStringHelper addAttributesToHelper(Objects.ToStringHelper helper);
-
-    Objects.ToStringHelper getAttributesStringHelper() {
-        return Objects.toStringHelper(this).add("type", fieldType)
-                .add("id", fieldId)
-                .add("fullFieldName", getFullFieldName())
-                .add("schema", schema == null ? null : schema.toSchemaString()).omitNullValues();
-    }
-
-    @Override
-    public String toString() {
-        return addAttributesToHelper(getAttributesStringHelper()).toString();
-    }
-
-    public RecordSchema getAssignedSchema() {
-        return schema;
-    }
-
-    public void assignSchemaIfNull(RecordSchema newSchema) {
-        if (!hasSchema()) {
-            schema = newSchema;
-        }
-    }
-
-    public boolean isRead() {
-        return read;
-    }
-
-    public boolean hasSchema() {
-        return schema != null;
-    }
-
-    public MajorType getFieldType() {
-        return fieldType;
-    }
+  public MajorType getFieldType() {
+    return fieldType;
+  }
 }

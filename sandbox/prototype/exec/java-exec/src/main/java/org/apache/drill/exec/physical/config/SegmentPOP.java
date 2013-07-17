@@ -15,12 +15,12 @@ import org.apache.drill.exec.physical.base.PhysicalVisitor;
  * Time: 10:25 AM
  */
 
-@JsonTypeName("Segment")
-public class Segment extends AbstractSingle {
+@JsonTypeName("SegmentPOP")
+public class SegmentPOP extends AbstractSingle {
 
     private LogicalExpression[] exprs ;
 
-    public Segment(@JsonProperty("child")PhysicalOperator child ,@JsonProperty("exprs") LogicalExpression[] exprs) {
+    public SegmentPOP(@JsonProperty("child") PhysicalOperator child, @JsonProperty("exprs") LogicalExpression[] exprs) {
         super(child);
         this.exprs = exprs;
     }
