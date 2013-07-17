@@ -71,10 +71,20 @@ public class HBaseUserRecordReader implements RecordReader {
 
         //String startKey=property_id+"20130619"+val;
         String day="20130619";
-        byte[] srk=CombineBytes(Bytes.toBytes((short)property_id),Bytes.toBytes(day),Bytes.toBytes(val));
+        byte[] srk;
+        byte[] enk;
+        if(val!=null)
+        {
+            srk=CombineBytes(Bytes.toBytes((short)property_id),Bytes.toBytes(day),Bytes.toBytes(val));
+            String nextVal=getNextRkString(val);
+            enk=CombineBytes(Bytes.toBytes((short) property_id), Bytes.toBytes(day), Bytes.toBytes(nextVal));
+        }
+        else{
+            srk=CombineBytes(Bytes.toBytes((short)property_id),Bytes.toBytes(day));
+            String nextDay=getNextRkString(day);
+            enk=CombineBytes(Bytes.toBytes((short) property_id), Bytes.toBytes(nextDay));
+        }
         System.out.println(Bytes.toString(srk));
-        String nextVal=getNextRkString(val);
-        byte[] enk=CombineBytes(Bytes.toBytes((short) property_id), Bytes.toBytes(day), Bytes.toBytes(nextVal));
         System.out.println(Bytes.toString(enk));
         String tableName="property_"+project_id+"_index";
         TableScanner scanner=new TableScanner(srk,enk,tableName,null,false,false);
@@ -240,7 +250,13 @@ public class HBaseUserRecordReader implements RecordReader {
         if(recordSetSize>uidVector.capacity()-1)return false;
         uidVector.setInt(recordSetSize,uid);
         uidVector.setRecordCount(recordSetSize);
-        byte[] value=Bytes.toBytes(val);
+        byte[] value;
+        if(val==null){
+            byte[] rk=kv.getRow();
+            value=getValueFromRowKey(rk);
+        }
+        else
+            value=Bytes.toBytes(val);
         if(property_type.equals("sql_string")){
             VarLen4 valueVector=(VarLen4)valueVectors[1];
             Fixed4 lengthVector=valueVector.getLengthVector();
@@ -262,6 +278,16 @@ public class HBaseUserRecordReader implements RecordReader {
             return false;
         }
         return true;
+    }
+
+    private byte[] getValueFromRowKey(byte[] rk) {
+        int length=rk.length;
+        byte[] value=new byte[length-10];
+        int j=0;
+        for(int i=10;i<length;i++){
+            value[j++]=rk[i];
+        }
+        return value;
     }
 
     private long getUidOfLong(byte[] rawUid){
