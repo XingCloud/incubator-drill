@@ -1,11 +1,5 @@
 package org.apache.drill.exec.opt;
 
-import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_B_DATE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_EVENT;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_E_DATE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
@@ -13,9 +7,7 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
-
 import org.apache.drill.common.logical.data.*;
-
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
@@ -28,6 +20,9 @@ import org.apache.drill.exec.physical.config.Screen;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+import static org.apache.drill.common.util.Selections.*;
 
 /**
  * Created with IntelliJ IDEA. User: jaltekruse Date: 6/11/13 Time: 5:32 PM To change this template use File | Settings
@@ -100,7 +95,7 @@ public class BasicOptimizer extends Optimizer {
       event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
 
       List<HbaseScanPOP.HbaseScanEntry> entries = new ArrayList<>(1);
-      HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(projectId, realBeginDate, realEndDate, event);
+      HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseEventScanEntry(projectId, realBeginDate, realEndDate, event);
       entries.add(entry);
       if (SE_HBASE.equals(storageEngine)) {
         return new HbaseScanPOP(entries);

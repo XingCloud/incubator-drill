@@ -50,12 +50,12 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         return this;
     }
 
-    public static class HbaseScanEntry extends HbaseAbstractScanEntry{
+    public static class HbaseEventScanEntry extends HbaseScanEntry{
 
         private String startDate;
         private String endDate;
         private String eventPattern;
-        public HbaseScanEntry(@JsonProperty("pid") String project,
+        public HbaseEventScanEntry(@JsonProperty("pid") String project,
                                    @JsonProperty("startDate") String startDate,
                                    @JsonProperty("endDate") String endDate,
                                    @JsonProperty("event") String eventPattern) {
@@ -76,7 +76,7 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             return eventPattern;
         }
     }
-    public static class HbaseUserScanEntry extends HbaseAbstractScanEntry{
+    public static class HbaseUserScanEntry extends HbaseScanEntry{
         private String property;
         private String value;
         public HbaseUserScanEntry(@JsonProperty("pid") String project,
@@ -94,12 +94,12 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         }
     }
 
-    public static abstract class HbaseAbstractScanEntry implements ReadEntry {
+    public static abstract class HbaseScanEntry implements ReadEntry {
 
         private String project;
         private String type;
 
-        public HbaseAbstractScanEntry(String project,String type ) {
+        public HbaseScanEntry(String project,String type ) {
             this.project = project;
             this.type=type;
         }
