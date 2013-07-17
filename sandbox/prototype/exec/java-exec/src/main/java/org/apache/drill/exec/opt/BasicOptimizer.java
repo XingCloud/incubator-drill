@@ -118,12 +118,11 @@ public class BasicOptimizer extends Optimizer {
       } else {
         String prop = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
         String propValue = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
-        entry=null;
+        entry = null;
       }
-
       entries.add(entry);
       if (SE_HBASE.equals(storageEngine)) {
-        return new HbaseScanPOP(entries);
+        return null;
       } else {
         throw new OptimizerException("Unsupported storage engine - " + storageEngine);
       }

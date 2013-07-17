@@ -36,7 +36,7 @@ public class HBaseRecordReader implements RecordReader {
 
     private String eventPattern;
     private String pID;
-    private HbaseScanPOP.HbaseScanEntry config;
+    private HbaseScanPOP.HbaseEventScanEntry config;
     private FragmentContext context;
 
     private List<TableScanner> scanners = new ArrayList<TableScanner>();
@@ -91,7 +91,7 @@ public class HBaseRecordReader implements RecordReader {
 
     }
 
-    public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
+    public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseEventScanEntry config) {
         this.context = context;
         this.config = config;
 

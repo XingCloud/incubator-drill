@@ -17,10 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.AbstractPhysicalVisitor;
@@ -30,8 +28,9 @@ import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.config.*;
 import org.apache.drill.exec.record.RecordBatch;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentContext, ExecutionSetupException> {
     static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ImplCreator.class);
