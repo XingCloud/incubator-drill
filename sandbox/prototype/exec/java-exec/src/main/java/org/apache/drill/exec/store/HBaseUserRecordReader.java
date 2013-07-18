@@ -73,7 +73,7 @@ public class HBaseUserRecordReader implements RecordReader {
         String day="20130619";
         byte[] srk;
         byte[] enk;
-        if(val!=null)
+        if(!val.equals("null"))
         {
             srk=CombineBytes(Bytes.toBytes((short)property_id),Bytes.toBytes(day),Bytes.toBytes(val));
             String nextVal=getNextRkString(val);

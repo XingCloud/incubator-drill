@@ -17,8 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import static org.junit.Assert.assertEquals;
-
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;

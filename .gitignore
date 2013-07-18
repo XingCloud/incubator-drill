@@ -4,6 +4,8 @@
 .settings/
 .idea/
 *.iml
+.gitignore
 target/
+sandbox/prototype/exec/java-exec/src/test/resources
 *.DS_Store
 *~
