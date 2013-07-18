@@ -73,7 +73,7 @@ public class TableScanner implements XAScanner {
             Scan memScan = new Scan(startRowKey, endRowKey);
             memScan.setMaxVersions();
             //memScan.setMemOnly(true);
-            memScan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
+            //memScan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
             if (filter != null)
                 memScan.setFilter(filter);
             MemstoreScanner memstoreScanner = new MemstoreScanner(table, memScan);

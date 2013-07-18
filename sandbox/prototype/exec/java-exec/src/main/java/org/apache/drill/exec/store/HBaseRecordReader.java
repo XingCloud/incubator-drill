@@ -10,15 +10,14 @@ import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.regionserver.TableScanner;
-
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -37,7 +36,7 @@ public class HBaseRecordReader implements RecordReader {
 
     private String eventPattern;
     private String pID;
-    private HbaseScanEntry config;
+    private HbaseScanPOP.HbaseEventScanEntry config;
     private FragmentContext context;
 
     private List<TableScanner> scanners = new ArrayList<TableScanner>();
@@ -92,7 +91,7 @@ public class HBaseRecordReader implements RecordReader {
 
     }
 
-    public HBaseRecordReader(FragmentContext context, HbaseScanEntry config) {
+    public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseEventScanEntry config) {
         this.context = context;
         this.config = config;
 
@@ -151,6 +150,7 @@ public class HBaseRecordReader implements RecordReader {
 
     private void init() {
         //this.pID = config.getProject();
+
         this.pID = "sof-dsk";
         this.eventPattern = config.getEventPattern();
         String tableName = getTableNameFromProject(pID);

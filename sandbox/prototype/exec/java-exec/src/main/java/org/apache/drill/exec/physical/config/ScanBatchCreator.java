@@ -9,10 +9,8 @@ import org.apache.drill.exec.physical.impl.BatchCreator;
 import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.store.HBaseRecordReader;
+import org.apache.drill.exec.store.HBaseUserRecordReader;
 import org.apache.drill.exec.store.RecordReader;
-import org.apache.drill.exec.store.StorageEngine;
-import org.apache.drill.exec.store.StorageEngineRegistry;
-import org.apache.drill.storage.MockStorageEngineConfig;
 
 import java.util.List;
 
@@ -39,7 +37,10 @@ public class ScanBatchCreator implements BatchCreator<Scan> {
             try {
                 List<HbaseScanPOP.HbaseScanEntry> readEntries = config.getReadEntries();
                 for (HbaseScanPOP.HbaseScanEntry entry : readEntries) {
-                    readers.add(new HBaseRecordReader(context, entry));
+                    if(entry instanceof HbaseScanPOP.HbaseEventScanEntry)
+                        readers.add(new HBaseRecordReader(context, (HbaseScanPOP.HbaseEventScanEntry)entry));
+                    else if(entry instanceof HbaseScanPOP.HbaseUserScanEntry)
+                        readers.add(new HBaseUserRecordReader(context,(HbaseScanPOP.HbaseUserScanEntry)entry));
                 }
             } catch (Exception e) {
 
