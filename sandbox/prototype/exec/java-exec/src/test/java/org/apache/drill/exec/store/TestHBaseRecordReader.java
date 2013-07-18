@@ -2,6 +2,7 @@ package org.apache.drill.exec.store;
 
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
+import org.apache.drill.exec.physical.config.HbaseUserScanPOP;
 import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
@@ -27,7 +28,7 @@ public class TestHBaseRecordReader {
         String startday = "20121201";
         String endDay="20121201";
         String pID = "sof-dsk";
-        HbaseScanPOP.HbaseEventScanEntry entry = new HbaseScanPOP.HbaseEventScanEntry(pID, startday, endDay, eventPattern);
+        HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, startday, endDay, eventPattern);
         HBaseRecordReader reader = new HBaseRecordReader(null, entry);
         List<RecordReader> readerList = new ArrayList<RecordReader>();
         readerList.add(reader);
@@ -60,7 +61,7 @@ public class TestHBaseRecordReader {
         String property="language";
         String val="en";
         String project_id="sof-dsk";
-        HbaseScanPOP.HbaseUserScanEntry entry=new HbaseScanPOP.HbaseUserScanEntry(project_id,property,null);
+        HbaseUserScanPOP.HbaseUserScanEntry entry=new HbaseUserScanPOP.HbaseUserScanEntry(project_id,property,val);
         HBaseUserRecordReader reader=new HBaseUserRecordReader(null,entry);
         List<RecordReader> readerList = new ArrayList<RecordReader>();
         readerList.add(reader);

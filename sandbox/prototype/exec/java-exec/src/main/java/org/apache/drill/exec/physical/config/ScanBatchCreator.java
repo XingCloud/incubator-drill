@@ -37,13 +37,18 @@ public class ScanBatchCreator implements BatchCreator<Scan> {
             try {
                 List<HbaseScanPOP.HbaseScanEntry> readEntries = config.getReadEntries();
                 for (HbaseScanPOP.HbaseScanEntry entry : readEntries) {
-                    if(entry instanceof HbaseScanPOP.HbaseEventScanEntry)
-                        readers.add(new HBaseRecordReader(context, (HbaseScanPOP.HbaseEventScanEntry)entry));
-                    else if(entry instanceof HbaseScanPOP.HbaseUserScanEntry)
-                        readers.add(new HBaseUserRecordReader(context,(HbaseScanPOP.HbaseUserScanEntry)entry));
+                        readers.add(new HBaseRecordReader(context, entry));
                 }
             } catch (Exception e) {
-
+            }
+        } else if(config instanceof  HbaseUserScanPOP){
+            config.getReadEntries();
+            try {
+                List<HbaseUserScanPOP.HbaseUserScanEntry> readEntries=config.getReadEntries();
+                for (HbaseUserScanPOP.HbaseUserScanEntry entry : readEntries) {
+                    readers.add(new HBaseUserRecordReader(context, entry));
+                }
+            }catch (Exception e) {
             }
         }
         return new ScanBatch(context, readers.iterator());

@@ -2,7 +2,6 @@ package org.apache.drill.exec.physical.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.exec.physical.EndpointAffinity;
 import org.apache.drill.exec.physical.OperatorCost;
 import org.apache.drill.exec.physical.ReadEntry;
@@ -12,28 +11,25 @@ import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.base.Size;
 import org.apache.drill.exec.proto.CoordinationProtos;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
- * User: witwolf
- * Date: 7/10/13
- * Time: 2:22 PM
+ * User: yangbo
+ * Date: 7/17/13
+ * Time: 7:55 PM
+ * To change this template use File | Settings | File Templates.
  */
+public class HbaseUserScanPOP extends AbstractScan<HbaseUserScanPOP.HbaseUserScanEntry> {
 
-@JsonTypeName("hbase-scan")
-public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
-
-
-    public HbaseScanPOP(@JsonProperty("entries") List<HbaseScanEntry> entries) {
+    @JsonCreator
+    public HbaseUserScanPOP(@JsonProperty("entries") List<HbaseUserScanEntry> entries) {
         super(entries);
     }
 
-
     @Override
     public void applyAssignments(List<CoordinationProtos.DrillbitEndpoint> endpoints) {
-
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -43,45 +39,43 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
 
     @Override
     public List<EndpointAffinity> getOperatorAffinity() {
-        return Collections.emptyList();
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
-        return this;
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public static class HbaseScanEntry implements ReadEntry {
-
-        private String startDate;
-        private String endDate;
-        private String eventPattern;
+    public static class HbaseUserScanEntry implements ReadEntry {
+        private String property;
+        private String value;
         private String project;
         @JsonCreator
-        public HbaseScanEntry(@JsonProperty("pid") String project,
-                                   @JsonProperty("startDate") String startDate,
-                                   @JsonProperty("endDate") String endDate,
-                                   @JsonProperty("event") String eventPattern) {
+        public HbaseUserScanEntry(@JsonProperty("pid") String project,
+                                  @JsonProperty("propertry") String property,
+                                  @JsonProperty("val")String value){
+            //super(project,"user");
             this.project=project;
-            this.startDate = startDate;
-            this.endDate = endDate;
-            this.eventPattern = eventPattern;
+            this.property=property;
+            this.value=value;
         }
-        public String getStartDate() {
-            return startDate;
+        @JsonCreator
+        public HbaseUserScanEntry(@JsonProperty("pid") String project,
+                                  @JsonProperty("propertry") String property){
+            this.project=project;
+            this.property=property;
+            this.value=null;
         }
-
-        public String getEndDate() {
-            return endDate;
+        public String getProperty(){
+            return property;
         }
-
-        public String getEventPattern() {
-            return eventPattern;
+        public String getvalue(){
+            return value;
         }
         public String getProject(){
             return project;
         }
-
         @Override
         public OperatorCost getCost() {
             return new OperatorCost(1, 2, 1, 1);
@@ -91,6 +85,4 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             return new Size(0,1);
         }
     }
-
-
 }

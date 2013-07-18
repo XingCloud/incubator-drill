@@ -6,7 +6,7 @@ import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.HbaseScanPOP;
+import org.apache.drill.exec.physical.config.HbaseUserScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.MaterializedField;
@@ -53,9 +53,9 @@ public class HBaseUserRecordReader implements RecordReader {
     private boolean hasMore;
     private boolean init=false;
 
-    HbaseScanPOP.HbaseUserScanEntry config;
+    HbaseUserScanPOP.HbaseUserScanEntry config;
 
-    public HBaseUserRecordReader(FragmentContext context,HbaseScanPOP.HbaseUserScanEntry config){
+    public HBaseUserRecordReader(FragmentContext context,HbaseUserScanPOP.HbaseUserScanEntry config){
         this.config=config;
         this.property=config.getProperty();
         this.val=config.getvalue();
@@ -270,7 +270,7 @@ public class HBaseUserRecordReader implements RecordReader {
         else if(property_type.equals("sql_bigint")){
             Fixed8 valueVector=(Fixed8)valueVectors[1];
             if(recordSetSize>valueVector.capacity()-1)return false;
-            valueVector.setBigInt(recordSetSize,(long)Long.parseLong(val));
+            valueVector.setBigInt(recordSetSize, (long) Long.parseLong(val));
             valueVector.setRecordCount(recordSetSize);
         }
         else {

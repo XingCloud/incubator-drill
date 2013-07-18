@@ -95,7 +95,7 @@ public class BasicOptimizer extends Optimizer {
       event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
 
       List<HbaseScanPOP.HbaseScanEntry> entries = new ArrayList<>(1);
-      HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseEventScanEntry(projectId, realBeginDate, realEndDate, event);
+      HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(projectId, realBeginDate, realEndDate, event);
       entries.add(entry);
       if (SE_HBASE.equals(storageEngine)) {
         return new HbaseScanPOP(entries);
