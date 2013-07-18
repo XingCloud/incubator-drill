@@ -32,7 +32,6 @@ import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.common.logical.data.Segment;
 import org.apache.drill.common.logical.data.Store;
-import org.apache.drill.common.logical.data.Transform;
 import org.apache.drill.common.util.Selections;
 
 import java.io.IOException;
@@ -255,25 +254,27 @@ public class ManualStaticLPBuilder {
 
     // Build segment(Group By)
     boolean needGrouping = false;
-    boolean functionalGrouping = false;
     Segment segment = null;
-    Transform transform;
+    String groupByRef;
     LogicalExpression singleGroupByLE;
-    NamedExpression ne;
     if (grouping != null) {
       GroupByType groupByType = grouping.getGroupByType();
       String groupBy = grouping.getGroupby();
       needGrouping = true;
       if (GroupByType.INTERNAL_FUNC.equals(groupByType)) {
-        functionalGrouping = true;
         String func = grouping.getFunc();
         singleGroupByLE = functionRegistry.createExpression(func, new FieldReference(groupBy));
+        groupByRef = eventTable + "." + grouping.getFunc() + "." + groupBy;
+        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef));
       } else if (GroupByType.EVENT.equals(groupByType)) {
-        singleGroupByLE = new FieldReference(eventTable + "." + groupBy);
+        groupByRef = eventTable + "." + groupBy;
+        singleGroupByLE = new FieldReference(groupByRef);
+        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef));
       } else {
-        singleGroupByLE = new FieldReference(userTable + "." + groupBy);
+        groupByRef = userTable + "." + groupBy;
+        singleGroupByLE = new FieldReference(groupByRef);
+        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef));
       }
-      segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupBy));
       if (needJoin) {
         segment.setInput(join);
       } else {
@@ -284,29 +285,28 @@ public class ManualStaticLPBuilder {
 
     // Build collapsing aggregation
     CollapsingAggregate collapsingAggregate;
-    FieldReference within = segment == null ? null : segment.getName(), target = null;
-    FieldReference[] carryovers = functionalGrouping ? new FieldReference[1] : new FieldReference[2];
+    FieldReference within = (segment == null ? null : segment.getName()), target = null;
+    FieldReference[] carryovers = new FieldReference[1];
     NamedExpression[] namedExpressions = new NamedExpression[3];
 
-    carryovers[0] = new FieldReference("segmentvalue");
-    if (!functionalGrouping) {
-      if (grouping.getGroupByType().equals(GroupByType.EVENT)) {
-        carryovers[1] = new FieldReference(eventTable + "." + grouping.getGroupby());
-      } else {
-        carryovers[1] = new FieldReference(userTable + "." + grouping.getGroupby());
-      }
+    if (grouping.getGroupByType().equals(GroupByType.EVENT)) {
+      carryovers[0] = new FieldReference(grouping.getFunc() + "(" + eventTable + "." + grouping.getGroupby() + ")");
+    } else if (grouping.getGroupByType().equals(GroupByType.INTERNAL_FUNC)) {
+      carryovers[0] = new FieldReference(eventTable + "." + grouping.getGroupby());
+    } else {
+      carryovers[0] = new FieldReference(userTable + "." + grouping.getGroupby());
     }
 
     String aggrColumn = eventTable + ".uid";
     FieldReference aggrOn = new FieldReference(aggrColumn);
     namedExpressions[0] = new NamedExpression(functionRegistry.createExpression(COUNT.getKeyWord(), aggrOn),
-                                              new FieldReference(COUNT.getKeyWord()));
+                                              new FieldReference("event_count"));
     namedExpressions[1] = new NamedExpression(functionRegistry.createExpression(COUNT_DISTINCT.getKeyWord(), aggrOn),
-                                              new FieldReference(COUNT_DISTINCT.getKeyWord()));
+                                              new FieldReference("user_number"));
     aggrColumn = eventTable + ".value";
     aggrOn = new FieldReference(aggrColumn);
     namedExpressions[2] = new NamedExpression(functionRegistry.createExpression(SUM.getKeyWord(), aggrOn),
-                                              new FieldReference(SUM.getKeyWord()));
+                                              new FieldReference("event_sum"));
     collapsingAggregate = new CollapsingAggregate(within, target, carryovers, namedExpressions);
 
     if (needGrouping) {
@@ -354,7 +354,8 @@ public class ManualStaticLPBuilder {
     Map<String, Object> segmentMap = new HashMap<>(1);
     segmentMap.put("register_time", "2013-07-12");
     System.out.println("---------------------------------");
-    logicalPlan = buildStaticLogicalPlanManually("ddt", "visit.*", "20130701", null, Grouping.buildEventGroup(2));
+    logicalPlan = buildStaticLogicalPlanManually("ddt", "visit.*", "20130701", null,
+                                                 Grouping.buildFuncGroup("hour", "timestamp"));
     System.out.println(logicalPlan.toJsonString(c));
   }
 }

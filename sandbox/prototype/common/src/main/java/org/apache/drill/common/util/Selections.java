@@ -15,6 +15,8 @@ public class Selections {
   public static final String SELECTION_KEY_WORD_B_DATE = "start_date";
   public static final String SELECTION_KEY_WORD_E_DATE = "end_date";
   public static final String SELECTION_KEY_WORD_EVENT = "event";
+  public static final String SELECTION_KEY_WORD_PROPERTY = "prop";
+  public static final String SELECTION_KEY_WORD_PROPERTY_VALUE = "propv";
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static JSONOptions NONE_HBASE_SELECTION;
@@ -57,7 +59,15 @@ public class Selections {
   }
 
   public static JSONOptions buildUserSelection(String projectId, String property) throws IOException {
-    String s = "{\"table\":\"" + projectId + HBASE_TABLE_PREFIX_USER + "\",\"prop\":\"" + property + "\"}";
+    String s = "{\"table\":\"" + projectId + HBASE_TABLE_PREFIX_USER + "\",\"" + SELECTION_KEY_WORD_PROPERTY + "\":\"" + property + "\"}";
+    return MAPPER.readValue(s.getBytes(), JSONOptions.class);
+  }
+
+  public static JSONOptions buildUserSelection(String projectId, String property, String propertyValue) throws
+    IOException {
+    String s = "{\"table\":\"" + projectId +
+      HBASE_TABLE_PREFIX_USER + "\",\"" + SELECTION_KEY_WORD_PROPERTY +
+      "\":\"" + property + "\",\"" + SELECTION_KEY_WORD_PROPERTY_VALUE + "\":\"" + propertyValue + "\"}";
     return MAPPER.readValue(s.getBytes(), JSONOptions.class);
   }
 

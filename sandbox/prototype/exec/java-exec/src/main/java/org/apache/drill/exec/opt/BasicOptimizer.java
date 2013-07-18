@@ -4,6 +4,8 @@ import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_B_DATE;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_EVENT;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_E_DATE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROPERTY;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROPERTY_VALUE;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,7 +14,6 @@ import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.FieldReference;
-import org.apache.drill.common.expression.FunctionRegistry;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
@@ -31,11 +32,11 @@ import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
+import org.apache.drill.exec.physical.config.Groupby;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
-import org.apache.drill.exec.physical.config.JoinPOP;
 import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
+import org.apache.drill.exec.physical.config.PhysicalJoin;
 import org.apache.drill.exec.physical.config.Screen;
-import org.apache.drill.exec.physical.config.SegmentPOP;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -117,8 +118,11 @@ public class BasicOptimizer extends Optimizer {
         String event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
         entry = new HbaseScanPOP.HbaseEventScanEntry(table, realBeginDate, realEndDate, event);
       } else {
-        String prop = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
-        String propValue = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
+        String prop = root.get(SELECTION_KEY_WORD_PROPERTY).textValue();
+        String propValue = null;
+        if (root.has(SELECTION_KEY_WORD_PROPERTY_VALUE)) {
+          propValue = root.get(SELECTION_KEY_WORD_PROPERTY_VALUE).textValue();
+        }
         if (StringUtils.isBlank(propValue)) {
           entry = new HbaseScanPOP.HbaseUserScanEntry(table, prop);
         } else {
@@ -127,7 +131,7 @@ public class BasicOptimizer extends Optimizer {
       }
       entries.add(entry);
       if (SE_HBASE.equals(storageEngine)) {
-        return null;
+        return new HbaseScanPOP(entries);
       } else {
         throw new OptimizerException("Unsupported storage engine - " + storageEngine);
       }
@@ -174,24 +178,17 @@ public class BasicOptimizer extends Optimizer {
       LogicalOperator leftLO = join.getLeft();
       LogicalOperator rightLO = join.getRight();
       JoinCondition singleJoinCondition = join.getConditions()[0];
-      String relationship = singleJoinCondition.getRelationship();
-      LogicalExpression leftRelationship = singleJoinCondition.getLeft();
-      LogicalExpression rightRelationship = singleJoinCondition.getRight();
-
-      FunctionRegistry functionRegistry = new FunctionRegistry(DrillConfig.create());
       PhysicalOperator leftPOP = leftLO.accept(this, value);
       PhysicalOperator rightPOP = rightLO.accept(this, value);
 
-      LogicalExpression singleCondition = functionRegistry
-        .createExpression(relationship, leftRelationship, rightRelationship);
-      JoinPOP joinPOP = new JoinPOP(leftPOP, rightPOP, singleCondition);
+      PhysicalJoin joinPOP = new PhysicalJoin(leftPOP, rightPOP, singleJoinCondition);
       return joinPOP;
     }
 
     @Override
     public PhysicalOperator visitSegment(Segment segment, Object value) throws OptimizerException {
       LogicalOperator next = segment.iterator().next();
-      SegmentPOP segmentPOP = new SegmentPOP(next.accept(this, value), segment.getExprs());
+      Groupby segmentPOP = new Groupby(next.accept(this, value), segment.getExprs());
       return segmentPOP;
     }
 

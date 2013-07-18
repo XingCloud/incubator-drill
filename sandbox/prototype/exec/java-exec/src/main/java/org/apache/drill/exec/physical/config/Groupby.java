@@ -15,12 +15,12 @@ import org.apache.drill.exec.physical.base.PhysicalVisitor;
  * Time: 10:25 AM
  */
 
-@JsonTypeName("SegmentPOP")
-public class SegmentPOP extends AbstractSingle {
+@JsonTypeName("Groupby")
+public class Groupby extends AbstractSingle {
 
     private LogicalExpression[] exprs ;
 
-    public SegmentPOP(@JsonProperty("child") PhysicalOperator child, @JsonProperty("exprs") LogicalExpression[] exprs) {
+    public Groupby(@JsonProperty("child") PhysicalOperator child, @JsonProperty("exprs") LogicalExpression[] exprs) {
         super(child);
         this.exprs = exprs;
     }
