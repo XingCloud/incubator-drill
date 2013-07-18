@@ -1,0 +1,49 @@
+{
+  head : {
+    type : "APACHE_DRILL_PHYSICAL",
+    version : 1,
+    generator : {
+      type : "manual",
+      info : "na"
+    }
+  },
+  graph : [ {
+    pop : "hbase-scan",
+    @id : 1,
+    entries : [ {
+      startDate : "20121201",
+      endDate : "20121201",
+      project : "ddt",
+      eventPattern : "visit.*"
+    } ]
+  },
+   {
+      pop: "segment",
+      @id : 2,
+      child : 1,
+      ref: "segment",
+      exprs:["val"]
+   },
+
+  {
+    pop : "PhysicalCollapsingAggregate",
+    @id : 3,
+    child : 2,
+    within : "segment",
+    carryovers : ["val" ],
+    aggregations : [ {
+      ref : "uid",
+      expr : "count('uid') "
+    }, {
+      ref : "uid",
+      expr : "count_distinct('uid') "
+    }, {
+      ref : "val",
+      expr : "sum('val') "
+    } ]
+  }, {
+    pop : "screen",
+    @id : 4,
+    child : 3
+  } ]
+}

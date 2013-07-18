@@ -59,4 +59,16 @@ public class Join extends AbstractBase {
     public Iterator<PhysicalOperator> iterator() {
         return null;
     }
+
+    public PhysicalOperator getLeft() {
+        return left;
+    }
+
+    public PhysicalOperator getRight() {
+        return right;
+    }
+
+    public LogicalExpression getExpr() {
+        return expr;
+    }
 }

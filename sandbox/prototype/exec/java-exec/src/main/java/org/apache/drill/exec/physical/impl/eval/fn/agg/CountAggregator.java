@@ -40,14 +40,14 @@ public class CountAggregator implements AggregatingEvaluator{
     }
 
     @Override
-    public DrillValue eval() {
+    public Fixed8 eval() {
         Fixed8 value = new Fixed8(null, BufferAllocator.getAllocator(null));
         value.allocateNew(1);
         value.setRecordCount(1);
         value.setBigInt(0,l);
         l = 0;
         MaterializedField f = MaterializedField.create(new SchemaPath("count"),0,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.BIGINT));
-         value.setField(f);
+        value.setField(f);
         return value;
     }
 

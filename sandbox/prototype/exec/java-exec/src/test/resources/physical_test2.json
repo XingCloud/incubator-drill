@@ -7,7 +7,6 @@
         }
     },
     graph:[
-        /*
         {
             @id:1,
             pop:"mock-scan",
@@ -24,17 +23,6 @@
             	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
             	]}
             ]
-        },*/
-        {
-          @id:1,
-          pop:"hbase-scan",
-          entries:[
-            {
-                pid:"sof-dsk",
-                startDate:"20121201",
-                endDate:"20121201",
-                event:"*.*"
-            } ]
         },
        {
             @id: 2,

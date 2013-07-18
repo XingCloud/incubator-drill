@@ -39,7 +39,7 @@ public class TestManualStaticLogicalPlan extends PopUnitTestBase {
     QueryContext qc;
     String projectId = "ddt";
     String date = "20121201";
-    String event = "visit.*";
+    String event = "*.*";
     LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null);
 //    System.out.println(logicalPlan.toJsonString(c));
 //    System.out.println("---------------------------------");
