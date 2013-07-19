@@ -264,14 +264,12 @@ public class ManualStaticLPBuilder {
     }
 
     // Build segment(Group By)
-    boolean needGrouping = false;
     Segment segment = null;
     String groupByRef;
     LogicalExpression singleGroupByLE;
     if (grouping != null) {
       GroupByType groupByType = grouping.getGroupByType();
       String groupBy = grouping.getGroupby();
-      needGrouping = true;
       if (GroupByType.INTERNAL_FUNC.equals(groupByType)) {
         String func = grouping.getFunc();
         singleGroupByLE = functionRegistry.createExpression(func, new FieldReference(groupBy));
@@ -297,15 +295,18 @@ public class ManualStaticLPBuilder {
     // Build collapsing aggregation
     CollapsingAggregate collapsingAggregate;
     FieldReference within = (segment == null ? null : segment.getName()), target = null;
-    FieldReference[] carryovers = new FieldReference[1];
+    FieldReference[] carryovers = null;
     NamedExpression[] namedExpressions = new NamedExpression[3];
 
-    if (grouping.getGroupByType().equals(GroupByType.EVENT)) {
-      carryovers[0] = new FieldReference(grouping.getFunc() + "(" + eventTable + "." + grouping.getGroupby() + ")");
-    } else if (grouping.getGroupByType().equals(GroupByType.INTERNAL_FUNC)) {
-      carryovers[0] = new FieldReference(eventTable + "." + grouping.getGroupby());
-    } else {
-      carryovers[0] = new FieldReference(userTable + "." + grouping.getGroupby());
+    if (groupingQuery) {
+      carryovers = new FieldReference[1];
+      if (grouping.getGroupByType().equals(GroupByType.EVENT)) {
+        carryovers[0] = new FieldReference(grouping.getFunc() + "(" + eventTable + "." + grouping.getGroupby() + ")");
+      } else if (grouping.getGroupByType().equals(GroupByType.INTERNAL_FUNC)) {
+        carryovers[0] = new FieldReference(eventTable + "." + grouping.getGroupby());
+      } else {
+        carryovers[0] = new FieldReference(userTable + "." + grouping.getGroupby());
+      }
     }
 
     String aggrColumn = eventTable + ".uid";
@@ -323,7 +324,7 @@ public class ManualStaticLPBuilder {
     namedExpressions[2] = new NamedExpression(fc, buildColumn("event_sum"));
     collapsingAggregate = new CollapsingAggregate(within, target, carryovers, namedExpressions);
 
-    if (needGrouping) {
+    if (groupingQuery) {
       collapsingAggregate.setInput(segment);
     } else {
       if (needJoin) {
