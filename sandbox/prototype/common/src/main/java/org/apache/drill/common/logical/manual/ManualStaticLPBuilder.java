@@ -9,6 +9,8 @@ import static org.apache.drill.common.enums.GroupByType.USER_PROPERTY;
 import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_EVENT;
 import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_USER;
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+import static org.apache.drill.common.util.FieldReferenceBuilder.buildColumn;
+import static org.apache.drill.common.util.FieldReferenceBuilder.buildTable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.MapUtils;
@@ -19,6 +21,7 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.enums.BinaryOperator;
 import org.apache.drill.common.enums.GroupByType;
 import org.apache.drill.common.expression.FieldReference;
+import org.apache.drill.common.expression.FunctionCall;
 import org.apache.drill.common.expression.FunctionRegistry;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.expression.ValueExpressions;
@@ -204,21 +207,30 @@ public class ManualStaticLPBuilder {
     // Build from item
     String eventTable = projectId + HBASE_TABLE_PREFIX_EVENT;
     String userTable = projectId + HBASE_TABLE_PREFIX_USER;
-    boolean needJoin = MapUtils.isNotEmpty(segmentMap) || (grouping != null && USER_PROPERTY
-      .equals(grouping.getGroupByType())
+
+    boolean hasSegment = MapUtils.isNotEmpty(segmentMap);
+    boolean groupingQuery = grouping != null;
+
+    boolean needJoin = hasSegment || (groupingQuery && USER_PROPERTY.equals(grouping.getGroupByType())
     );
 
-    FieldReference fr = new FieldReference(eventTable);
-    Scan fromEventTable = new Scan(SE_HBASE, Selections.buildEventSelection(projectId, date, date, event), fr);
-    fromEventTable.setMemo("Scan(Table=" + eventTable + ")");
-    logicalOperators.add(fromEventTable);
+    FieldReference fr = buildTable(eventTable);
+    Scan eventTableScan = new Scan(SE_HBASE, Selections.buildEventSelection(projectId, date, date, event), fr);
+    eventTableScan.setMemo("Scan(Table=" + eventTable + ")");
+    logicalOperators.add(eventTableScan);
 
-    Scan fromUserTable = null;
+    Scan userTableScan = null;
     if (needJoin) {
-      fr = new FieldReference(userTable);
-      fromUserTable = new Scan(SE_HBASE, Selections.buildUserSelection(projectId, grouping.getGroupby()), fr);
-      fromUserTable.setMemo("Scan(Table=" + userTable + ")");
-      logicalOperators.add(fromUserTable);
+      fr = buildTable(userTable);
+      userTableScan = new Scan(SE_HBASE, Selections.buildUserSelection(projectId, grouping.getGroupby()), fr);
+      userTableScan.setMemo("Scan(Table=" + userTable + ")");
+      logicalOperators.add(userTableScan);
+    }
+
+    if (hasSegment) {
+      for (Map.Entry<String, Object> entry : segmentMap.entrySet()) {
+
+      }
     }
 
     // Build fixed selections
@@ -246,9 +258,8 @@ public class ManualStaticLPBuilder {
     JoinCondition[] joinConditions;
     if (needJoin) {
       joinConditions = new JoinCondition[1];
-      joinConditions[0] = new JoinCondition("==", new FieldReference(eventTable + ".uid"),
-                                            new FieldReference(userTable + ".uid"));
-      join = new Join(fromEventTable, fromUserTable, joinConditions, Join.JoinType.INNER);
+      joinConditions[0] = new JoinCondition("==", buildColumn(eventTable, "uid"), buildColumn(userTable, "uid"));
+      join = new Join(eventTableScan, userTableScan, joinConditions, Join.JoinType.INNER);
       logicalOperators.add(join);
     }
 
@@ -278,7 +289,7 @@ public class ManualStaticLPBuilder {
       if (needJoin) {
         segment.setInput(join);
       } else {
-        segment.setInput(fromEventTable);
+        segment.setInput(eventTableScan);
       }
       logicalOperators.add(segment);
     }
@@ -298,15 +309,18 @@ public class ManualStaticLPBuilder {
     }
 
     String aggrColumn = eventTable + ".uid";
+    FunctionCall fc;
     FieldReference aggrOn = new FieldReference(aggrColumn);
-    namedExpressions[0] = new NamedExpression(functionRegistry.createExpression(COUNT.getKeyWord(), aggrOn),
-                                              new FieldReference("event_count"));
-    namedExpressions[1] = new NamedExpression(functionRegistry.createExpression(COUNT_DISTINCT.getKeyWord(), aggrOn),
-                                              new FieldReference("user_number"));
+    fc = (FunctionCall) functionRegistry.createExpression(COUNT.getKeyWord(), aggrOn);
+    namedExpressions[0] = new NamedExpression(fc, buildColumn("event_count"));
+
+    fc = (FunctionCall) functionRegistry.createExpression(COUNT_DISTINCT.getKeyWord(), aggrOn);
+    namedExpressions[1] = new NamedExpression(fc, buildColumn("user_number"));
+
     aggrColumn = eventTable + ".value";
     aggrOn = new FieldReference(aggrColumn);
-    namedExpressions[2] = new NamedExpression(functionRegistry.createExpression(SUM.getKeyWord(), aggrOn),
-                                              new FieldReference("event_sum"));
+    fc = (FunctionCall) functionRegistry.createExpression(SUM.getKeyWord(), aggrOn);
+    namedExpressions[2] = new NamedExpression(fc, buildColumn("event_sum"));
     collapsingAggregate = new CollapsingAggregate(within, target, carryovers, namedExpressions);
 
     if (needGrouping) {
@@ -315,7 +329,7 @@ public class ManualStaticLPBuilder {
       if (needJoin) {
         collapsingAggregate.setInput(join);
       } else {
-        collapsingAggregate.setInput(fromEventTable);
+        collapsingAggregate.setInput(eventTableScan);
       }
     }
 
@@ -355,7 +369,7 @@ public class ManualStaticLPBuilder {
     segmentMap.put("register_time", "2013-07-12");
     System.out.println("---------------------------------");
     logicalPlan = buildStaticLogicalPlanManually("ddt", "visit.*", "20130701", null,
-                                                 Grouping.buildFuncGroup("hour", "timestamp"));
+                                                 Grouping.buildUserGroup("language"));
     System.out.println(logicalPlan.toJsonString(c));
   }
 }
