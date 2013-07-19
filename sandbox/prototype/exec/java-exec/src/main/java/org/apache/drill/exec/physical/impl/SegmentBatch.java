@@ -7,7 +7,7 @@ import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.Group;
 import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
-import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.vector.Fixed4;
@@ -15,10 +15,6 @@ import org.apache.drill.exec.record.vector.TypeHelper;
 import org.apache.drill.exec.record.vector.ValueVector;
 
 import java.util.*;
-import org.apache.drill.exec.physical.config.Groupby;
-import org.apache.drill.exec.record.BaseRecordBatch;
-import org.apache.drill.exec.record.BatchSchema;
-import org.apache.drill.exec.record.RecordBatch;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,8 +25,8 @@ import org.apache.drill.exec.record.RecordBatch;
 public class SegmentBatch extends BaseRecordBatch {
 
     private Group config;
-    private FragmentContext context ;
-    private RecordBatch incoming ;
+    private FragmentContext context;
+    private RecordBatch incoming;
     private BatchSchema batchSchema;
     private BasicEvaluator[] evaluators;
     private SchemaPath ref;
@@ -133,8 +129,13 @@ public class SegmentBatch extends BaseRecordBatch {
         for (MaterializedField f : incomingSchema) {
             try {
                 ValueVector in = incoming.getValueVector(f.getFieldId());
-                out = TypeHelper.getNewVector(f, context.getAllocator());
-                out.allocateNew(recordCount);
+                out = fields.get(f.getFieldId());
+                if (out == null) {
+                    out = TypeHelper.getNewVector(f, context.getAllocator());
+                    out.allocateNew(recordCount);
+                } else if (out.capacity() < recordCount) {
+                    out.allocateNew(recordCount);
+                }
                 out.setRecordCount(recordCount);
 
                 for (int i = 0; i < recordCount; i++) {
@@ -147,10 +148,14 @@ public class SegmentBatch extends BaseRecordBatch {
             }
         }
 
-        Fixed4 group = (Fixed4) TypeHelper.getNewVector(refField, context.getAllocator());
-        group.allocateNew(1);
-        group.setRecordCount(1);
-        group.setInt(0, groupId);
+        ValueVector group = fields.get(fieldId);
+        if (group == null) {
+            group = (Fixed4) TypeHelper.getNewVector(refField, context.getAllocator());
+            group.allocateNew(1);
+            group.setRecordCount(1);
+
+        }
+        ((Fixed4) group).setInt(0, groupId);
         fields.put(fieldId, group);
         record.set(batchSchema.getFields(), fields);
 
@@ -194,9 +199,9 @@ public class SegmentBatch extends BaseRecordBatch {
 
         GroupByExprsValue(Object[] exprValues) {
             this.exprValues = exprValues;
-            for(int i = 0 ; i < exprValues.length ;i ++){
-                if(exprValues[i] instanceof  byte[]){
-                    exprValues[i] = new String((byte[]) exprValues[i]) ;
+            for (int i = 0; i < exprValues.length; i++) {
+                if (exprValues[i] instanceof byte[]) {
+                    exprValues[i] = new String((byte[]) exprValues[i]);
                 }
             }
         }

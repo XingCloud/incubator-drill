@@ -44,7 +44,7 @@ public class HBaseRecordReader implements RecordReader {
     private List<KeyValue> curRes = new ArrayList<KeyValue>();
     private int valIndex = -1;
     private boolean hasMore;
-    private int BATCHRECORDCOUNT = 1024;
+    private int BATCHRECORDCOUNT = 1024 * 16;
     private ValueVector<?>[] valueVectors;
     private boolean init = false ;
 
@@ -289,7 +289,7 @@ public class HBaseRecordReader implements RecordReader {
                 ((Fixed8) valueVector).setBigInt(recordSetSize, resultLong);
                 valueVector.setRecordCount(recordSetSize);
                 if(recordSetSize>1000)
-                    System.out.println("recordSetSize "+recordSetSize+" capacity "+valueVector.capacity());
+                   // System.out.println("recordSetSize "+recordSetSize+" capacity "+valueVector.capacity());
                 if ((recordSetSize + 2) > valueVector.capacity()) return false;
             }
         }
