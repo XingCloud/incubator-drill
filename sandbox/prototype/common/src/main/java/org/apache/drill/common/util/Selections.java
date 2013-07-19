@@ -12,9 +12,11 @@ import java.io.IOException;
  */
 public class Selections {
   public static final String SELECTION_KEY_WORD_TABLE = "table";
-  public static final String SELECTION_KEY_WORD_B_DATE = "b-date";
-  public static final String SELECTION_KEY_WORD_E_DATE = "e-date";
-  public static final String SELECTION_KEY_WORD_EVENT = "ev";
+  public static final String SELECTION_KEY_WORD_B_DATE = "start_date";
+  public static final String SELECTION_KEY_WORD_E_DATE = "end_date";
+  public static final String SELECTION_KEY_WORD_EVENT = "event";
+  public static final String SELECTION_KEY_WORD_PROPERTY = "prop";
+  public static final String SELECTION_KEY_WORD_PROPERTY_VALUE = "propv";
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static JSONOptions NONE_HBASE_SELECTION;
@@ -40,7 +42,7 @@ public class Selections {
     sb.append(SELECTION_KEY_WORD_TABLE);
     sb.append("\":\"");
     sb.append(projectId);
-    sb.append("\",\"");
+    sb.append("_deu\",\"");
     sb.append(SELECTION_KEY_WORD_B_DATE);
     sb.append("\":\"");
     sb.append(realBeginDate);
@@ -56,8 +58,16 @@ public class Selections {
     return MAPPER.readValue(sb.toString().getBytes(), JSONOptions.class);
   }
 
-  public static JSONOptions buildUserSelection(String projectId) throws IOException {
-    String s = "{\"type\":\"hbase\",\"table\":\"" + projectId + HBASE_TABLE_PREFIX_USER + "\"}";
+  public static JSONOptions buildUserSelection(String projectId, String property) throws IOException {
+    String s = "{\"table\":\"" + projectId + HBASE_TABLE_PREFIX_USER + "\",\"" + SELECTION_KEY_WORD_PROPERTY + "\":\"" + property + "\"}";
+    return MAPPER.readValue(s.getBytes(), JSONOptions.class);
+  }
+
+  public static JSONOptions buildUserSelection(String projectId, String property, String propertyValue) throws
+    IOException {
+    String s = "{\"table\":\"" + projectId +
+      HBASE_TABLE_PREFIX_USER + "\",\"" + SELECTION_KEY_WORD_PROPERTY +
+      "\":\"" + property + "\",\"" + SELECTION_KEY_WORD_PROPERTY_VALUE + "\":\"" + propertyValue + "\"}";
     return MAPPER.readValue(s.getBytes(), JSONOptions.class);
   }
 

@@ -115,4 +115,9 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     public RecordBatch visitSegment(Group op, FragmentContext value) throws ExecutionSetupException {
         return sgc.getBatch(value, op, Arrays.asList(op.getChild().accept(this, value)));
     }
+
+    @Override
+    public RecordBatch visitJoin(PhysicalJoin op, FragmentContext value) throws ExecutionSetupException {
+        return new JoinBatchCreator().getBatch(value,op,getChildren(op,value));
+    }
 }

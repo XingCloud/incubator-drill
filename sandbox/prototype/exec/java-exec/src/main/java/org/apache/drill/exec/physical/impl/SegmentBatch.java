@@ -15,6 +15,10 @@ import org.apache.drill.exec.record.vector.TypeHelper;
 import org.apache.drill.exec.record.vector.ValueVector;
 
 import java.util.*;
+import org.apache.drill.exec.physical.config.Groupby;
+import org.apache.drill.exec.record.BaseRecordBatch;
+import org.apache.drill.exec.record.BatchSchema;
+import org.apache.drill.exec.record.RecordBatch;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,9 +28,9 @@ import java.util.*;
  */
 public class SegmentBatch extends BaseRecordBatch {
 
-    private FragmentContext context;
     private Group config;
-    private RecordBatch incoming;
+    private FragmentContext context ;
+    private RecordBatch incoming ;
     private BatchSchema batchSchema;
     private BasicEvaluator[] evaluators;
     private SchemaPath ref;
@@ -190,6 +194,11 @@ public class SegmentBatch extends BaseRecordBatch {
 
         GroupByExprsValue(Object[] exprValues) {
             this.exprValues = exprValues;
+            for(int i = 0 ; i < exprValues.length ;i ++){
+                if(exprValues[i] instanceof  byte[]){
+                    exprValues[i] = new String((byte[]) exprValues[i]) ;
+                }
+            }
         }
 
         @Override

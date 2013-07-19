@@ -30,10 +30,14 @@ public class SumAggregator implements AggregatingEvaluator {
     private double d = 0;
     private boolean integer = true;
     private RecordPointer record;
+    private Fixed8  value ;
 
     public SumAggregator(RecordPointer record, FunctionArguments args) {
         this.record = record;
         child = args.getOnlyEvaluator();
+        value = new Fixed8(null, BufferAllocator.getAllocator(null));
+        value.allocateNew(1);
+        value.setRecordCount(1);
     }
 
     @Override
@@ -70,9 +74,7 @@ public class SumAggregator implements AggregatingEvaluator {
 
     @Override
     public DrillValue eval() {
-        Fixed8 value = new Fixed8(null, BufferAllocator.getAllocator(null));
-        value.allocateNew(1);
-        value.setRecordCount(1);
+
         if (integer) {
             value.setBigInt(0, l);
         } else {

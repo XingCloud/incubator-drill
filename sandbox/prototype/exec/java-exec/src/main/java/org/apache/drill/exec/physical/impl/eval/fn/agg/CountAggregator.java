@@ -26,11 +26,15 @@ public class CountAggregator implements AggregatingEvaluator{
     private long l = 0l;
     private BasicEvaluator child ;
     private RecordPointer record ;
+    private Fixed8 value ;
 
 
     public CountAggregator(RecordPointer record , FunctionArguments args) {
         this.record = record;
          child = args.getOnlyEvaluator();
+        value = new Fixed8(null, BufferAllocator.getAllocator(null));
+        value.allocateNew(1);
+        value.setRecordCount(1);
     }
 
     @Override
@@ -41,9 +45,7 @@ public class CountAggregator implements AggregatingEvaluator{
 
     @Override
     public Fixed8 eval() {
-        Fixed8 value = new Fixed8(null, BufferAllocator.getAllocator(null));
-        value.allocateNew(1);
-        value.setRecordCount(1);
+
         value.setBigInt(0,l);
         l = 0;
         MaterializedField f = MaterializedField.create(new SchemaPath("count"),0,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.BIGINT));

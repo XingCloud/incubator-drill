@@ -120,4 +120,9 @@ public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> impleme
     public T visitSegment(Group op, X value) throws E {
         return visitOp(op, value);
     }
+
+    @Override
+    public T visitJoin(PhysicalJoin op, X value) throws E {
+        return visitOp(op,value);
+    }
 }

@@ -84,6 +84,8 @@ public abstract class BaseValueVector<T extends BaseValueVector<T>> implements V
         childResetAllocation(maxValueCount, vector.data);
     }
 
+
+
     @Override
     public final void transferTo(T vector) {
         vector.data = this.data;

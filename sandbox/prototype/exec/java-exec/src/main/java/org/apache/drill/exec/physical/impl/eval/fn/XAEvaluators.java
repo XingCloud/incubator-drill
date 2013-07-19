@@ -1,10 +1,15 @@
 package org.apache.drill.exec.physical.impl.eval.fn;
 
+import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.physical.impl.eval.BaseBasicEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes;
+import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.DrillValue;
+import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordPointer;
 import org.apache.drill.exec.record.vector.Fixed8;
+import org.apache.drill.exec.record.vector.TypeHelper;
 import org.apache.drill.exec.record.vector.VarLen4;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
 
@@ -33,7 +38,8 @@ public class XAEvaluators {
 
         @Override
         public VarLen4 eval() {
-            return null;
+            VarLen4 varLen4 = new VarLen4(MaterializedField.create(new SchemaPath("min5"),1,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.VARBINARY4)), BufferAllocator.getAllocator(null));
+            return varLen4;
         }
     }
 
@@ -51,8 +57,8 @@ public class XAEvaluators {
 
         @Override
         public VarLen4 eval() {
-
-            return null;
+            VarLen4 varLen4 = new VarLen4(MaterializedField.create(new SchemaPath("hour"),1,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.VARBINARY4)), BufferAllocator.getAllocator(null));
+            return varLen4;
         }
     }
 

@@ -26,7 +26,7 @@ public class VarLen4 extends VariableVector<VarLen4, Fixed4>{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(VarLen4.class);
 
   public VarLen4(MaterializedField field, BufferAllocator allocator) {
-    super(field, allocator, 4);
+    super(field, allocator, 16);
   }
 
   @Override
@@ -48,12 +48,19 @@ public class VarLen4 extends VariableVector<VarLen4, Fixed4>{
 
     @Override
     public void setObject(int index, Object obj) {
-
+        setBytes(index,(byte[])obj);
     }
+
+
 
 
     public Fixed4 getLengthVector(){
         return lengthVector;
     }
 
+    /*
+    @Override
+    public Object getObject(int index){
+        return  new String((byte[]) super.getObject(index));
+    }*/
 }

@@ -67,9 +67,15 @@ public class TestHBaseRecordReader {
         readerList.add(reader);
         Iterator<RecordReader> iter = readerList.iterator();
         try {
+            int recordCount = 0 ;
+
             ScanBatch batch = new ScanBatch(null, iter);
+
             while (batch.next() != RecordBatch.IterOutcome.NONE) {
+                recordCount += batch.getRecordCount() ;
+                System.out.println(recordCount);
                 for (MaterializedField f : batch.getSchema()) {
+                    /*
                     ValueVector v = batch.getValueVector(f.getFieldId());
                     System.out.print(f.getName() + ":");
                     if (v instanceof VarLen4) {
@@ -81,7 +87,7 @@ public class TestHBaseRecordReader {
                             System.out.print(v.getObject(i) + " ");
                         }
                     }
-                    System.out.println();
+                    System.out.println(); */
                 }
             }
         } catch (ExecutionSetupException e) {

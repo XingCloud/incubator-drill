@@ -251,7 +251,7 @@ public class HBaseUserRecordReader implements RecordReader {
         uidVector.setInt(recordSetSize,uid);
         uidVector.setRecordCount(recordSetSize);
         byte[] value;
-        if(val==null){
+        if("null".equals(val)){
             byte[] rk=kv.getRow();
             value=getValueFromRowKey(rk);
         }
