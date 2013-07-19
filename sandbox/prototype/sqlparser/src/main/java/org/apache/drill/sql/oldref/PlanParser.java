@@ -74,7 +74,7 @@ public class PlanParser {
     sql = "select ddt_user.ref, count(ddt_deu.uid), sum(ddt_deu.value) " +
       "from (ddt_deu inner join ddt_user on ddt_deu.uid = ddt_user.uid) " +
       "where ddt_deu.date = '20130716' and ddt_deu.event = 'visit.*' group by ddt_user.ref";
-//    sql = "select hour(ddt_deu.timestamp), count(ddt_deu.uid), sum(ddt_deu.value) from ddt_deu where ddt_deu.date = '20130716' and ddt_deu.event = 'visit.*' group by hour(ddt_deu.timestamp)";
+    sql = "select hour(ddt_deu.timestamp), count(ddt_deu.uid), sum(ddt_deu.value) from ddt_deu where ddt_deu.date = '20130716' and ddt_deu.event = 'visit.*' group by hour(ddt_deu.timestamp)";
     LogicalPlan lp = new PlanParser().parse(sql);
     System.out.println(lp.toJsonString(DrillConfig.create()));
   }
