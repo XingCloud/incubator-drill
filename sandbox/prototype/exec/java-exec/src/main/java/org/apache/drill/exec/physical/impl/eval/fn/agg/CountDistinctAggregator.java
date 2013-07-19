@@ -44,7 +44,7 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
 
     @Override
     public void addBatch() {
-        ValueVector v = getDistinctColumn();
+        ValueVector v = (ValueVector) child.eval();
         Object o;
         for (int i = 0; i < v.getRecordCount(); i++) {
             o = v.getObject(i);
@@ -68,16 +68,5 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
     @Override
     public boolean isConstant() {
         return false;
-    }
-
-    private ValueVector getDistinctColumn() {
-        String columnName = ((ScalarValues.StringScalar) child.eval()).getString().toString();
-        SchemaPath schemaPath = new SchemaPath(columnName);
-        for (MaterializedField f : record.getFieldsInfo()) {
-            if (f.matches(schemaPath)) {
-                return record.getFields().get(f.getFieldId());
-            }
-        }
-        return null;
     }
 }

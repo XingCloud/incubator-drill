@@ -43,9 +43,8 @@ public class SumAggregator implements AggregatingEvaluator {
     @Override
     public void addBatch() {
 
-       // ValueVector vv = record.getFields().values().iterator().next().value;
 
-        ValueVector vv = getSumColumn();
+        ValueVector vv = (ValueVector) child.eval() ;
         int recordCount = vv.getRecordCount();
         int i;
         long sum = 0;
@@ -92,14 +91,4 @@ public class SumAggregator implements AggregatingEvaluator {
         return false;
     }
 
-    private ValueVector getSumColumn(){
-        String columnName =  ((ScalarValues.StringScalar) child.eval() ).getString().toString() ;
-        SchemaPath schemaPath = new SchemaPath(columnName);
-        for(MaterializedField f : record.getFieldsInfo()){
-            if(f.matches(schemaPath)){
-                return record.getFields().get(f.getFieldId());
-            }
-        }
-        return null;
-    }
 }

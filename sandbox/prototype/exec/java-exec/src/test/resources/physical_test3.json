@@ -12,9 +12,9 @@
     @id : 1,
     entries : [ {
       startDate : "20130101",
-      endDate : "20130110",
+      endDate : "20130101",
       project : "ddt",
-      eventPattern : "*.*"
+      eventPattern : "visit.*"
     } ]
   },
   {
@@ -24,13 +24,13 @@
     carryovers : [],
     aggregations : [ {
       ref : "uid",
-      expr : "count('uid') "
+      expr : "count(uid) "
     }, {
       ref : "uid",
-      expr : "count_distinct('uid') "
+      expr : "count_distinct(uid) "
     }, {
       ref : "val",
-      expr : "sum('val') "
+      expr : "sum(val) "
     } ]
   }, {
     pop : "screen",
