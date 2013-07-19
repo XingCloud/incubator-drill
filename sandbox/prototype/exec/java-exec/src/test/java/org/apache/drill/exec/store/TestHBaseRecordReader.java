@@ -22,9 +22,11 @@ import java.util.List;
 public class TestHBaseRecordReader {
     @Test
     public void testRecordReader() {
+        long startTime = System.currentTimeMillis();
+        long recordCount = 0 ;
         String eventPattern = "*.*";
-        String startday = "20121001";
-        String endDay="20130501";
+        String startday = "20130101";
+        String endDay="20130101";
         String pID = "sof-dsk";
         HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, startday, endDay, eventPattern);
         HBaseRecordReader reader = new HBaseRecordReader(null, entry);
@@ -32,7 +34,6 @@ public class TestHBaseRecordReader {
         readerList.add(reader);
         Iterator<RecordReader> iter = readerList.iterator();
         try {
-            int recordCount = 0 ;
             ScanBatch batch = new ScanBatch(null, iter);
             long ts1,ts2;
             ts1=System.currentTimeMillis();
@@ -60,12 +61,14 @@ public class TestHBaseRecordReader {
         } catch (ExecutionSetupException e) {
             e.printStackTrace();
         }
-        System.out.println("down");
+        System.out.println("Done , recordCount :" +  recordCount + ", cost time " + (System.currentTimeMillis() - startTime)/1000 + " seconds");
     }
     @Test
     public void testUserTable(){
+        long startTime = System.currentTimeMillis();
+        int recordCount = 0;
         String property="language";
-        String val="en";
+        String val="null";
         String project_id="sof-dsk";
         HbaseUserScanPOP.HbaseUserScanEntry entry=new HbaseUserScanPOP.HbaseUserScanEntry(project_id,property,val);
         HBaseUserRecordReader reader=new HBaseUserRecordReader(null,entry);
@@ -73,13 +76,9 @@ public class TestHBaseRecordReader {
         readerList.add(reader);
         Iterator<RecordReader> iter = readerList.iterator();
         try {
-            int recordCount = 0 ;
-
             ScanBatch batch = new ScanBatch(null, iter);
-
             while (batch.next() != RecordBatch.IterOutcome.NONE) {
                 recordCount += batch.getRecordCount() ;
-                System.out.println(recordCount);
                 for (MaterializedField f : batch.getSchema()) {
                     /*
                     ValueVector v = batch.getValueVector(f.getFieldId());
@@ -99,6 +98,7 @@ public class TestHBaseRecordReader {
         } catch (ExecutionSetupException e) {
             e.printStackTrace();
         }
-        System.out.println("down");
+        System.out.println("Done , recordCount :" +  recordCount + ", cost time " + (System.currentTimeMillis() - startTime)/1000 + " seconds");
+
     }
 }

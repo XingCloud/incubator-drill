@@ -197,6 +197,7 @@ public class JoinBatch extends BaseRecordBatch {
             fields.put(v.getField().getFieldId(), v);
         }
 
+        outRecords.clear();
         record.set(batchSchema.getFields(), fields);
     }
 
@@ -238,12 +239,12 @@ public class JoinBatch extends BaseRecordBatch {
     }
 
     private ValueVector cloneVector(ValueVector v) {
-        ValueVector newVector = TypeHelper.getNewVector(v.getField(), context.getAllocator());
-        newVector.allocateNew(v.capacity());
-        newVector.setRecordCount(v.getRecordCount());
-        for (int i = 0; i < newVector.getRecordCount(); i++) {
-            newVector.setObject(i, v.getObject(i));
+        ValueVector vector = TypeHelper.getNewVector(v.getField(), context.getAllocator());
+        vector.allocateNew(v.capacity());
+        vector.setRecordCount(v.getRecordCount());
+        for (int i = 0; i < vector.getRecordCount(); i++) {
+            vector.setObject(i, v.getObject(i));
         }
-        return newVector;
+        return vector;
     }
 }
