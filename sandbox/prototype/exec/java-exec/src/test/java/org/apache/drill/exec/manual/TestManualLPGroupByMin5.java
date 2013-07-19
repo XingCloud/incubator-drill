@@ -19,9 +19,9 @@ import java.util.UUID;
 /**
  * User: Z J Wu Date: 13-7-9 Time: 上午10:24 Package: org.apache.drill.exec.manual
  */
-public class TestManualStaticLogicalPlan extends PopUnitTestBase {
+public class TestManualLPGroupByMin5 extends PopUnitTestBase {
 
-  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestManualStaticLogicalPlan.class);
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestManualLPGroupByMin5.class);
 
   @Test
   public void testManualStaticLogicalPlan() throws Exception {
@@ -34,7 +34,7 @@ public class TestManualStaticLogicalPlan extends PopUnitTestBase {
     String projectId = "ddt";
     String date = "20121201";
     String event = "visit.*";
-    ManualStaticLPBuilder.Grouping g = ManualStaticLPBuilder.Grouping.buildUserGroup("language");
+    ManualStaticLPBuilder.Grouping g = ManualStaticLPBuilder.Grouping.buildFuncGroup("min5", "timestamp");
     LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null, g);
     try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
          Drillbit bit = new Drillbit(CONFIG, serviceSet);
