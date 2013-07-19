@@ -277,10 +277,10 @@ public class HBaseRecordReader implements RecordReader {
                 int preOffset = 0;
                 if (recordSetSize != 0) preOffset = lengthVector.getInt(recordSetSize - 1);
                 int offset = preOffset + resultBytes.length;
-                if (offset > lengthVector.capacity() * 4) return false;
+                if (offset > (lengthVector.capacity()+1) * 4) return false;
                 ((VarLen4) valueVector).setBytes(recordSetSize, resultBytes);
                 valueVector.setRecordCount(recordSetSize);
-                if (recordSetSize + 1 > valueVector.capacity()) return false;
+                if (recordSetSize + 2 > valueVector.capacity()) return false;
             } else if (valueVector instanceof Fixed4) {
                 ((Fixed4) valueVector).setInt(recordSetSize, resultInt);
                 valueVector.setRecordCount(recordSetSize);
@@ -288,7 +288,9 @@ public class HBaseRecordReader implements RecordReader {
             } else if (valueVector instanceof Fixed8) {
                 ((Fixed8) valueVector).setBigInt(recordSetSize, resultLong);
                 valueVector.setRecordCount(recordSetSize);
-                if ((recordSetSize + 1) > valueVector.capacity()) return false;
+                if(recordSetSize>1000)
+                    System.out.println("recordSetSize "+recordSetSize+" capacity "+valueVector.capacity());
+                if ((recordSetSize + 2) > valueVector.capacity()) return false;
             }
         }
         return true;

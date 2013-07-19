@@ -263,15 +263,15 @@ public class HBaseUserRecordReader implements RecordReader {
             int preOffset=0;
             if (recordSetSize != 0) preOffset = lengthVector.getInt(recordSetSize - 1);
             int offset = preOffset + value.length;
-            if (offset > lengthVector.capacity() * 4) return false;
+            if (offset > (lengthVector.capacity()+1) * 4) return false;
             valueVector.setBytes(recordSetSize,value);
             valueVector.setRecordCount(recordSetSize);
         }
         else if(property_type.equals("sql_bigint")){
             Fixed8 valueVector=(Fixed8)valueVectors[1];
-            if(recordSetSize>valueVector.capacity()-1)return false;
             valueVector.setBigInt(recordSetSize, (long) Long.parseLong(val));
             valueVector.setRecordCount(recordSetSize);
+            if(recordSetSize+2>valueVector.capacity())return false;
         }
         else {
             System.out.println("error property_type "+property_type);
