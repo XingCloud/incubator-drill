@@ -30,18 +30,21 @@ public class SumAggregator implements AggregatingEvaluator {
     private double d = 0;
     private boolean integer = true;
     private RecordPointer record;
+    private Fixed8  value ;
 
     public SumAggregator(RecordPointer record, FunctionArguments args) {
         this.record = record;
         child = args.getOnlyEvaluator();
+        value = new Fixed8(null, BufferAllocator.getAllocator(null));
+        value.allocateNew(1);
+        value.setRecordCount(1);
     }
 
     @Override
     public void addBatch() {
 
-       // ValueVector vv = record.getFields().values().iterator().next().value;
 
-        ValueVector vv = getSumColumn();
+        ValueVector vv = (ValueVector) child.eval() ;
         int recordCount = vv.getRecordCount();
         int i;
         long sum = 0;
@@ -70,9 +73,7 @@ public class SumAggregator implements AggregatingEvaluator {
 
     @Override
     public DrillValue eval() {
-        Fixed8 value = new Fixed8(null, BufferAllocator.getAllocator(null));
-        value.allocateNew(1);
-        value.setRecordCount(1);
+
         if (integer) {
             value.setBigInt(0, l);
         } else {
@@ -90,14 +91,4 @@ public class SumAggregator implements AggregatingEvaluator {
         return false;
     }
 
-    private ValueVector getSumColumn(){
-        String columnName =  ((ScalarValues.StringScalar) child.eval() ).getString().toString() ;
-        SchemaPath schemaPath = new SchemaPath(columnName);
-        for(MaterializedField f : record.getFieldsInfo()){
-            if(f.matches(schemaPath)){
-                return record.getFields().get(f.getFieldId());
-            }
-        }
-        return null;
-    }
 }

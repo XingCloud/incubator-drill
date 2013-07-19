@@ -32,15 +32,19 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
     private BasicEvaluator child;
     private RecordPointer record;
     private Set<Object> duplicate = new HashSet<>();
+    private Fixed8 value   ;
 
     public CountDistinctAggregator(RecordPointer record, FunctionArguments args) {
         this.child = args.getOnlyEvaluator();
         this.record = record;
+        value = new Fixed8(null, BufferAllocator.getAllocator(null));
+        value.allocateNew(1);
+        value.setRecordCount(1);
     }
 
     @Override
     public void addBatch() {
-        ValueVector v = getDistinctColumn();
+        ValueVector v = (ValueVector) child.eval();
         Object o;
         for (int i = 0; i < v.getRecordCount(); i++) {
             o = v.getObject(i);
@@ -53,11 +57,9 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
 
     @Override
     public DrillValue eval() {
-        Fixed8 value = new Fixed8(null, BufferAllocator.getAllocator(null));
-        value.allocateNew(1);
-        value.setRecordCount(1);
+
         value.setBigInt(0, l);
-        MaterializedField f = MaterializedField.create(new SchemaPath("count_distinct"),0,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.UINT8));
+        MaterializedField f = MaterializedField.create(new SchemaPath("count_distinct"), 0, 0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.UINT8));
         value.setField(f);
         l = 0;
         return value;
@@ -66,16 +68,5 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
     @Override
     public boolean isConstant() {
         return false;
-    }
-
-    private ValueVector getDistinctColumn() {
-        String columnName = ((ScalarValues.StringScalar) child.eval()).getString().toString();
-        SchemaPath schemaPath = new SchemaPath(columnName);
-        for (MaterializedField f : record.getFieldsInfo()) {
-            if (f.matches(schemaPath)) {
-                return record.getFields().get(f.getFieldId());
-            }
-        }
-        return null;
     }
 }

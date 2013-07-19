@@ -27,7 +27,6 @@ public class MemstoreScanner implements DataScanner {
     private ResultScanner rs;
     private AtomicLong numKV = new AtomicLong();
 
-
     public MemstoreScanner(HTable table, Scan scan) {
         this.table = table;
         this.scan = scan;

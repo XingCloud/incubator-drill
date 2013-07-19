@@ -2,11 +2,11 @@ package org.apache.drill.exec.physical.impl.eval.fn.agg;
 
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.*;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.AggregatingEvaluator;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionArguments;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionEvaluator;
 import org.apache.drill.exec.proto.SchemaDefProtos;
-import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordPointer;
 import org.apache.drill.exec.record.vector.Fixed8;
@@ -21,33 +21,35 @@ import org.apache.drill.exec.record.vector.ValueVector;
  */
 
 @FunctionEvaluator("count")
-public class CountAggregator implements AggregatingEvaluator{
+public class CountAggregator implements AggregatingEvaluator {
 
     private long l = 0l;
-    private BasicEvaluator child ;
-    private RecordPointer record ;
+    private BasicEvaluator child;
+    private RecordPointer record;
+    private Fixed8 value;
 
 
-    public CountAggregator(RecordPointer record , FunctionArguments args) {
+    public CountAggregator(RecordPointer record, FunctionArguments args) {
         this.record = record;
-         child = args.getOnlyEvaluator();
+        child = args.getOnlyEvaluator();
+        value = new Fixed8(null, BufferAllocator.getAllocator(null));
+        value.allocateNew(1);
+        value.setRecordCount(1);
     }
 
     @Override
     public void addBatch() {
 
-        l += record.getFields().get(record.getFieldsInfo().get(0).getFieldId()).getRecordCount() ;
+        l += ((ValueVector) child.eval()).getRecordCount();
     }
 
     @Override
-    public DrillValue eval() {
-        Fixed8 value = new Fixed8(null, BufferAllocator.getAllocator(null));
-        value.allocateNew(1);
-        value.setRecordCount(1);
-        value.setBigInt(0,l);
+    public Fixed8 eval() {
+
+        value.setBigInt(0, l);
         l = 0;
-        MaterializedField f = MaterializedField.create(new SchemaPath("count"),0,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.BIGINT));
-         value.setField(f);
+        MaterializedField f = MaterializedField.create(new SchemaPath("count"), 0, 0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.BIGINT));
+        value.setField(f);
         return value;
     }
 

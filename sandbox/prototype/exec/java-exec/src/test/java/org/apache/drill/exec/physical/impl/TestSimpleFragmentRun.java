@@ -17,8 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import static org.junit.Assert.assertEquals;
-
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -38,7 +36,7 @@ import java.util.List;
 public class TestSimpleFragmentRun extends PopUnitTestBase {
     static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestSimpleFragmentRun.class);
 
-    @Test(timeout=100000)
+    @Test(timeout=1000000000)
     public void runNoExchangeFragment() throws Exception {
         try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
              Drillbit bit = new Drillbit(CONFIG, serviceSet);
@@ -48,7 +46,7 @@ public class TestSimpleFragmentRun extends PopUnitTestBase {
             bit.run();
             client.connect();
             List<QueryResultBatch> results = client.runQuery(QueryType.PHYSICAL, Files
-                    .toString(FileUtils.getResourceAsFile("/physical_test2.json"), Charsets.UTF_8));
+                    .toString(FileUtils.getResourceAsFile("/physical_test3.json"), Charsets.UTF_8));
 
             // look at records
             RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());

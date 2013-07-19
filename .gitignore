@@ -4,6 +4,7 @@
 .settings/
 .idea/
 *.iml
+.gitignore
 target/
 *.DS_Store
 *~

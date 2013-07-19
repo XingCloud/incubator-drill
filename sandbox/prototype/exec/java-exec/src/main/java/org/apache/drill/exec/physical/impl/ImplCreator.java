@@ -42,6 +42,7 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     private FilterBatchCreator fc = new FilterBatchCreator();
     private ProjectBatchCreator pc = new ProjectBatchCreator();
     private ScanBatchCreator sbc = new ScanBatchCreator();
+    private SegmentBatchCreator sgc = new SegmentBatchCreator();
     private RootExec root = null;
 
     private ImplCreator() {
@@ -107,6 +108,16 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     public RecordBatch visitCollapsingAggregate(PhysicalCollapsingAggregate op, FragmentContext value) throws ExecutionSetupException {
         //return ac.getBatch(value,op,Arrays.asList(op.accept(this,value)));
 
-        return new CollapsingAggregateBatch(value,op, op.getChild().accept(this,value));
+        return new CollapsingAggregateBatch(value, op, op.getChild().accept(this, value));
+    }
+
+    @Override
+    public RecordBatch visitSegment(Group op, FragmentContext value) throws ExecutionSetupException {
+        return sgc.getBatch(value, op, Arrays.asList(op.getChild().accept(this, value)));
+    }
+
+    @Override
+    public RecordBatch visitJoin(PhysicalJoin op, FragmentContext value) throws ExecutionSetupException {
+        return new JoinBatchCreator().getBatch(value,op,getChildren(op,value));
     }
 }

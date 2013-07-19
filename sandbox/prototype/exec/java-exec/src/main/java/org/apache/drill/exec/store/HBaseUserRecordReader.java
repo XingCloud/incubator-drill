@@ -6,7 +6,7 @@ import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.HbaseScanPOP;
+import org.apache.drill.exec.physical.config.HbaseUserScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.MaterializedField;
@@ -53,9 +53,9 @@ public class HBaseUserRecordReader implements RecordReader {
     private boolean hasMore;
     private boolean init=false;
 
-    HbaseScanPOP.HbaseUserScanEntry config;
+    HbaseUserScanPOP.HbaseUserScanEntry config;
 
-    public HBaseUserRecordReader(FragmentContext context,HbaseScanPOP.HbaseUserScanEntry config){
+    public HBaseUserRecordReader(FragmentContext context,HbaseUserScanPOP.HbaseUserScanEntry config){
         this.config=config;
         this.property=config.getProperty();
         this.val=config.getvalue();
@@ -73,7 +73,7 @@ public class HBaseUserRecordReader implements RecordReader {
         String day="20130619";
         byte[] srk;
         byte[] enk;
-        if(val!=null)
+        if(!val.equals("null"))
         {
             srk=CombineBytes(Bytes.toBytes((short)property_id),Bytes.toBytes(day),Bytes.toBytes(val));
             String nextVal=getNextRkString(val);
@@ -251,7 +251,7 @@ public class HBaseUserRecordReader implements RecordReader {
         uidVector.setInt(recordSetSize,uid);
         uidVector.setRecordCount(recordSetSize);
         byte[] value;
-        if(val==null){
+        if("null".equals(val)){
             byte[] rk=kv.getRow();
             value=getValueFromRowKey(rk);
         }
@@ -263,15 +263,15 @@ public class HBaseUserRecordReader implements RecordReader {
             int preOffset=0;
             if (recordSetSize != 0) preOffset = lengthVector.getInt(recordSetSize - 1);
             int offset = preOffset + value.length;
-            if (offset > lengthVector.capacity() * 4) return false;
+            if (offset > (lengthVector.capacity()+1) * 4) return false;
             valueVector.setBytes(recordSetSize,value);
             valueVector.setRecordCount(recordSetSize);
         }
         else if(property_type.equals("sql_bigint")){
             Fixed8 valueVector=(Fixed8)valueVectors[1];
-            if(recordSetSize>valueVector.capacity()-1)return false;
-            valueVector.setBigInt(recordSetSize,(long)Long.parseLong(val));
+            valueVector.setBigInt(recordSetSize, (long) Long.parseLong(val));
             valueVector.setRecordCount(recordSetSize);
+            if(recordSetSize+2>valueVector.capacity())return false;
         }
         else {
             System.out.println("error property_type "+property_type);

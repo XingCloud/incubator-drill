@@ -24,9 +24,9 @@ public class PhysicalJoin extends AbstractBase {
   private PhysicalOperator right;
   private JoinCondition conditoin;
 
-  public PhysicalJoin(@JsonProperty("leftChild") PhysicalOperator left,
-                      @JsonProperty("rightChild") PhysicalOperator right,
-                      @JsonProperty("conditoin") JoinCondition conditoin) {
+  public PhysicalJoin(@JsonProperty("left") PhysicalOperator left,
+                      @JsonProperty("right") PhysicalOperator right,
+                      @JsonProperty("condition") JoinCondition conditoin) {
     this.left = left;
     this.right = right;
     this.conditoin = conditoin;
@@ -34,26 +34,30 @@ public class PhysicalJoin extends AbstractBase {
 
   @Override
   public OperatorCost getCost() {
-    return null;
+    return left.getCost().add(right.getCost());
   }
 
   @Override
   public Size getSize() {
-    return null;
+    return left.getSize().add(right.getSize());
   }
 
   @Override
   public <T, X, E extends Throwable> T accept(PhysicalVisitor<T, X, E> physicalVisitor, X value) throws E {
-    return null;
+    return physicalVisitor.visitJoin(this,value);
   }
 
   @Override
   public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
-    return null;
+    return new PhysicalJoin(children.get(0),children.get(1),this.conditoin);
   }
 
   @Override
   public Iterator<PhysicalOperator> iterator() {
     return Iterators.forArray(left, right);
   }
+
+    public JoinCondition getConditoin() {
+        return conditoin;
+    }
 }
