@@ -34,9 +34,13 @@ public class TestHBaseRecordReader {
         try {
             int recordCount = 0 ;
             ScanBatch batch = new ScanBatch(null, iter);
+            long ts1,ts2;
+            ts1=System.currentTimeMillis();
             while (batch.next() != RecordBatch.IterOutcome.NONE) {
                 recordCount += batch.getRecordCount();
-                System.out.println(recordCount);
+                ts2=System.currentTimeMillis();
+                System.out.println(recordCount+": "+batch.getRecordCount()+" costs "+(ts2-ts1)+"ms");
+                ts1=ts2;
                 /*
                 for (MaterializedField f : batch.getSchema()) {
                     ValueVector v = batch.getValueVector(f.getFieldId());

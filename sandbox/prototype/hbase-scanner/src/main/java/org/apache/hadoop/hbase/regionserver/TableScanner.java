@@ -37,6 +37,9 @@ public class TableScanner implements XAScanner {
     boolean isFileOnly = false;
     private int currentIndex = 0;
 
+    private int scanCache=1024;
+    private int scanBatch=8;
+
     public TableScanner(byte[] startRowKey, byte[] endRowKey, String tableName, boolean isFileOnly, boolean isMemOnly) {
         this(startRowKey, endRowKey, tableName, null, isFileOnly, isMemOnly);
     }
@@ -72,6 +75,8 @@ public class TableScanner implements XAScanner {
             st = System.nanoTime();
             Scan memScan = new Scan(startRowKey, endRowKey);
             memScan.setMaxVersions();
+            memScan.setCaching(scanCache);
+            memScan.setBatch(scanBatch);
             //memScan.setMemOnly(true);
             //memScan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
             if (filter != null)
