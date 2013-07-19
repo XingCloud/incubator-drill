@@ -3,9 +3,7 @@ package org.apache.drill.exec.physical.impl.eval.fn;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.physical.impl.eval.BaseBasicEvaluator;
-import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes;
 import org.apache.drill.exec.proto.SchemaDefProtos;
-import org.apache.drill.exec.record.DrillValue;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordPointer;
 import org.apache.drill.exec.record.vector.Fixed8;
@@ -25,40 +23,73 @@ import java.util.TimeZone;
 public class XAEvaluators {
 
 
+    public  static abstract class  XAEvaluator extends BaseBasicEvaluator {
+        protected BasicEvaluator child;
+        private VarLen4 timeStr;
 
-    @FunctionEvaluator("min5")
-    public static class Min5Evaluator extends BaseBasicEvaluator {
-        private final static int MIN5 = 5;
-        private BasicEvaluator evaluator;
-
-        public Min5Evaluator(RecordPointer record, FunctionArguments args) {
+        public XAEvaluator(RecordPointer record, FunctionArguments args) {
             super(args.isOnlyConstants(), record);
-            evaluator = args.getOnlyEvaluator();
+            child = args.getOnlyEvaluator();
         }
 
         @Override
         public VarLen4 eval() {
-            VarLen4 varLen4 = new VarLen4(MaterializedField.create(new SchemaPath("min5"),1,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.VARBINARY4)), BufferAllocator.getAllocator(null));
-            return varLen4;
+            int period = getPeriod();
+            Fixed8 v = (Fixed8) child.eval();
+            if (timeStr == null) {
+                timeStr = new VarLen4(MaterializedField.create(new SchemaPath(getFieldName()), 1, 0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.VARBINARY4)), BufferAllocator.getAllocator(null));
+                timeStr.allocateNew(v.getRecordCount());
+            }
+            if (timeStr.getRecordCount() < v.getRecordCount()) {
+                timeStr.allocateNew(v.getRecordCount());
+            }
+            timeStr.setRecordCount(v.getRecordCount());
+            for (int i = 0; i < timeStr.getRecordCount(); i++) {
+                timeStr.setBytes(i, getKeyBySpecificPeriod(v.getBigInt(i), period).getBytes());
+            }
+            return timeStr;
+
+        }
+
+        public abstract String getFieldName();
+
+        public abstract int getPeriod();
+    }
+
+
+    @FunctionEvaluator("min5")
+    public static class Min5Evaluator extends XAEvaluator {
+
+        public Min5Evaluator(RecordPointer record, FunctionArguments args) {
+            super(record, args);
+        }
+
+        @Override
+        public String getFieldName() {
+            return "min5";
+        }
+
+        @Override
+        public int getPeriod() {
+            return 5;
         }
     }
 
 
     @FunctionEvaluator("hour")
-    public static class HourEvaluator extends BaseBasicEvaluator {
-        private final static int HOUR = 60;
-
-        private BasicEvaluator evaluator;
-
+    public static class HourEvaluator extends XAEvaluator {
         public HourEvaluator(RecordPointer record, FunctionArguments args) {
-            super(args.isOnlyConstants(), record);
-            evaluator = args.getOnlyEvaluator();
+            super(record, args);
         }
 
         @Override
-        public VarLen4 eval() {
-            VarLen4 varLen4 = new VarLen4(MaterializedField.create(new SchemaPath("hour"),1,0, TypeHelper.getMajorType(SchemaDefProtos.DataMode.REQUIRED, SchemaDefProtos.MinorType.VARBINARY4)), BufferAllocator.getAllocator(null));
-            return varLen4;
+        public String getFieldName() {
+            return "hour";
+        }
+
+        @Override
+        public int getPeriod() {
+            return 60;
         }
     }
 
