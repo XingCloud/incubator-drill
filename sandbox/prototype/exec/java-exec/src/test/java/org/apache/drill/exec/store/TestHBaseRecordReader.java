@@ -6,6 +6,8 @@ import org.apache.drill.exec.physical.config.HbaseUserScanPOP;
 import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
+import org.apache.drill.exec.record.vector.ValueVector;
+import org.apache.drill.exec.record.vector.VarLen4;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -24,9 +26,9 @@ public class TestHBaseRecordReader {
     public void testRecordReader() {
         long startTime = System.currentTimeMillis();
         long recordCount = 0 ;
-        String eventPattern = "*.*";
+        String eventPattern = "visit.*";
         String startday = "20130101";
-        String endDay="20130110";
+        String endDay="20130101";
         String pID = "sof-dsk";
         HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, startday, endDay, eventPattern);
         HBaseRecordReader reader = new HBaseRecordReader(null, entry);
@@ -42,7 +44,7 @@ public class TestHBaseRecordReader {
                 ts2=System.currentTimeMillis();
                 System.out.println(recordCount+": "+batch.getRecordCount()+" costs "+(ts2-ts1)+"ms");
                 ts1=ts2;
-                /*
+
                 for (MaterializedField f : batch.getSchema()) {
                     ValueVector v = batch.getValueVector(f.getFieldId());
                     System.out.print(f.getName() + ":");
@@ -56,7 +58,7 @@ public class TestHBaseRecordReader {
                         }
                     }
                     System.out.println();
-                }*/
+                }
             }
         } catch (ExecutionSetupException e) {
             e.printStackTrace();

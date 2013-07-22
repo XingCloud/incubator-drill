@@ -180,5 +180,6 @@
 		<module>planner</module>
 		<module>sqlparser</module>
         <module>hbase-scanner</module>
-	</modules>
+        <module>metadata_repo</module>
+    </modules>
 </project>
