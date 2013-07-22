@@ -12,7 +12,7 @@
     @id : 1,
     entries : [ {
       startDate : "20130101",
-      endDate : "20130101",
+      endDate : "20130110",
       project : "ddt",
       eventPattern : "visit.*"
     } ]

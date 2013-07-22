@@ -22,9 +22,11 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.apache.drill.common.util.FileUtils;
 import org.apache.drill.exec.client.DrillClient;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.pop.PopUnitTestBase;
 import org.apache.drill.exec.proto.UserProtos.QueryType;
 import org.apache.drill.exec.record.RecordBatchLoader;
+import org.apache.drill.exec.record.vector.Fixed1;
 import org.apache.drill.exec.record.vector.ValueVector;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.server.Drillbit;
@@ -38,6 +40,7 @@ public class TestSimpleFragmentRun extends PopUnitTestBase {
 
     @Test(timeout=1000000000)
     public void runNoExchangeFragment() throws Exception {
+
         try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
              Drillbit bit = new Drillbit(CONFIG, serviceSet);
              DrillClient client = new DrillClient(CONFIG, serviceSet.getCoordinator());) {
@@ -46,7 +49,7 @@ public class TestSimpleFragmentRun extends PopUnitTestBase {
             bit.run();
             client.connect();
             List<QueryResultBatch> results = client.runQuery(QueryType.PHYSICAL, Files
-                    .toString(FileUtils.getResourceAsFile("/physical_test3.json"), Charsets.UTF_8));
+                    .toString(FileUtils.getResourceAsFile("/physical_test4.json"), Charsets.UTF_8));
 
             // look at records
             RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());
