@@ -47,7 +47,7 @@ public class TestSimpleFilter {
     FragmentContext context = new FragmentContext(bitContext, FragmentHandle.getDefaultInstance(), connection, null, registry);
     SimpleRootExec exec = new SimpleRootExec(ImplCreator.getExec(context, (FragmentRoot) plan.getSortedOperators(false).iterator().next()));
     while(exec.next()){
-      assertEquals(50, exec.getSelectionVector2().getCount());
+      assertEquals(50, exec.getRecordCount());
     }
   }
   

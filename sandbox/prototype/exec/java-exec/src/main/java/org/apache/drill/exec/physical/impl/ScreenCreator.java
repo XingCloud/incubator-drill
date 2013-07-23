@@ -91,7 +91,7 @@ public class ScreenCreator implements RootCreator<Screen>{
           return false;
       }
       case NONE: {
-        if(materializer == null){
+//        if(materializer == null){
           // receive no results.
           context.batchesCompleted.inc(1);
           context.recordsCompleted.inc(incoming.getRecordCount());
@@ -103,9 +103,9 @@ public class ScreenCreator implements RootCreator<Screen>{
               .build();
           QueryWritableBatch batch2 = new QueryWritableBatch(header2);
           connection.sendResult(listener, batch2);
-        }else{
-          connection.sendResult(listener, materializer.convertNext(true));
-        }
+//        }else{
+//          connection.sendResult(listener, materializer.convertNext(true));
+//        }
         return false;
       }
       case OK_NEW_SCHEMA:
