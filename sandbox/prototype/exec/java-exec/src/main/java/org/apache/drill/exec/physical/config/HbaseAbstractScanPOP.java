@@ -31,7 +31,6 @@ public class HbaseAbstractScanPOP extends AbstractScan<HbaseAbstractScanPOP.Hbas
         super(entries);
     }
 
-
     @Override
     public void applyAssignments(List<CoordinationProtos.DrillbitEndpoint> endpoints) {
 
@@ -52,7 +51,7 @@ public class HbaseAbstractScanPOP extends AbstractScan<HbaseAbstractScanPOP.Hbas
         return this;
     }
 
-    public class HbaseAbstractScanEntry implements ReadEntry {
+    public static class HbaseAbstractScanEntry implements ReadEntry {
         private String tableName;
         private byte[] startRowKey;
         private byte[] endRowKey;

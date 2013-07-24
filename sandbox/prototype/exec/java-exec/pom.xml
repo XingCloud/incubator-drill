@@ -22,6 +22,11 @@
             <artifactId>hbase-scanner</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.xingcloud</groupId>
+            <artifactId>hive-client</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
 		<dependency>
 			<groupId>asm</groupId>
 			<artifactId>asm-util</artifactId>

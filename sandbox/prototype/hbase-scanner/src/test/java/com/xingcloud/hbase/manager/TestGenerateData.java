@@ -38,8 +38,8 @@ public class TestGenerateData {
     public static void createTable10W(){
         generateData(1000*100);
     }
-    @BeforeClass
-    public static void generateData100W(){
+    @Test
+    public void generateData100W(){
         generateData(1000*1000);
     }
     @AfterClass
@@ -87,7 +87,7 @@ public class TestGenerateData {
         int recordNum=0;
         try {
             HTable table=new HTable(conf,tableName);
-            String[] events={"ad","visit","login","pay","consume"};
+            String[] events={"ad.","visit.audit.","login.","pay.complete.","consume."};
             double[] ratios={0.2,0.3,0.1,0.25,0.15};
             String[] days={"20121201","20121202","20121203","20121204","20121205"};
             int forUnit=(batch/days.length);
@@ -97,11 +97,13 @@ public class TestGenerateData {
 
             for(int i=0;i< days.length;i++){
                 for(int j=0;j<events.length;j++){
-                    Random uidR=new Random(batch/(10*days.length));
+                    int uidSeed=batch/(10*days.length);
+                    Random uidR=new Random(uidSeed);
                     Random val=new Random(10000l);
                     for(int k=0;k<forUnit*ratios[j];k++){
-                        int uid=uidR.nextInt();
-                        int value=val.nextInt();
+                        int uid=uidR.nextInt(uidSeed);
+                        long value=(long)val.nextInt(10000);
+                        if(k%1000==0)System.out.println(uid+" "+value);
                         byte[] uidBytes=Bytes.toBytes(uid);
                         byte[] valBytes=Bytes.toBytes(value);
                         byte[] dayBytes=Bytes.toBytes(days[i]);

@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ public class TableScanner implements XAScanner {
     private byte[] endRowKey;
     private String tableName;
     private Filter filter;
+    private List<Filter> filterList;
 
     private List<DataScanner> scanners;
 
@@ -37,29 +39,42 @@ public class TableScanner implements XAScanner {
     boolean isFileOnly = false;
     private int currentIndex = 0;
 
+    private long startTimeStamp=Long.MIN_VALUE;
+    private long stopTimeStamp=Long.MAX_VALUE;
+
     private int scanCache=1024;
-    private int scanBatch=8;
+    private int scanBatch=1;
+
+
 
     public TableScanner(byte[] startRowKey, byte[] endRowKey, String tableName, boolean isFileOnly, boolean isMemOnly) {
         this(startRowKey, endRowKey, tableName, null, isFileOnly, isMemOnly);
     }
 
-    public TableScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
-                        boolean isFileOnly, boolean isMemOnly) {
+    public TableScanner(byte[] startRowKey,byte[] endRowKey,String tableName,List<Filter> filterList,
+                        boolean isFileOnly,boolean isMemOnly){
+        this(startRowKey, endRowKey, tableName, filterList, isFileOnly, isMemOnly,Long.MIN_VALUE,Long.MAX_VALUE);
+    }
+    public TableScanner(byte[] startRowKey,byte[] endRowKey,String tableName,List<Filter> filterList,
+                        boolean isFileOnly,boolean isMemOnly,long startVersion,long stopVersion){
         this.isFileOnly = isFileOnly;
         this.isMemOnly = isMemOnly;
         this.startRowKey = startRowKey;
         this.endRowKey = endRowKey;
         this.tableName = tableName;
-        this.filter = filter;
+        if(filterList!=null&&filterList.size()!=0)
+            this.filterList = filterList;
+        else this.filterList=null;
+        if(startVersion!=Long.MIN_VALUE)this.startTimeStamp=startVersion;
+        if(stopVersion!=Long.MAX_VALUE)this.stopTimeStamp=stopVersion;
         try {
             initScanner();
         } catch (IOException e) {
             e.printStackTrace();
             LOG.error("Table scanner init failure! MSG: " + e.getMessage());
         }
-
     }
+
 
     private void initScanner() throws IOException {
         List<Pair<byte[], byte[]>> seKeyList = new ArrayList<Pair<byte[], byte[]>>();
@@ -77,10 +92,17 @@ public class TableScanner implements XAScanner {
             memScan.setMaxVersions();
             memScan.setCaching(scanCache);
             memScan.setBatch(scanBatch);
+            if(!(startTimeStamp==Long.MIN_VALUE&&stopTimeStamp==Long.MAX_VALUE))
+                memScan.setTimeRange(startTimeStamp,stopTimeStamp);
             //memScan.setMemOnly(true);
             //memScan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
-            if (filter != null)
-                memScan.setFilter(filter);
+            //if (filter != null)
+            //    memScan.setFilter(filter);
+            if(filterList!=null)
+            {
+                FilterList filterList1=new FilterList(filterList);
+                memScan.setFilter(filterList1);
+            }
             MemstoreScanner memstoreScanner = new MemstoreScanner(table, memScan);
             scanners.add(memstoreScanner);
             LOG.info("Init memstore scanner finished. Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");

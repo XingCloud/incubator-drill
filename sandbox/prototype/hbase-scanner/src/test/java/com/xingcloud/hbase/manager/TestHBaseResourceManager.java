@@ -8,14 +8,13 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 //import javax.xml.crypto.dsig.keyinfo.KeyValue;
 
@@ -31,7 +30,8 @@ public class TestHBaseResourceManager {
     @Test
     public void testHTable() throws IOException {
         Configuration conf= HBaseConfiguration.create();
-        HTable table=HBaseResourceManager.getInstance().getTable("sof-dsk_deu");
+        //HTable table=HBaseResourceManager.getInstance().getTable("sof-dsk_deu");
+        HTable table=HBaseResourceManager.getInstance().getTable("testtable100W_deu");
         FileSystem fs=FileSystem.get(conf);
         System.out.println(fs.getHomeDirectory());
         System.out.println(fs.getStatus());
@@ -40,21 +40,40 @@ public class TestHBaseResourceManager {
 
         //HTable table=new HTable(conf,"sof-dsk_deu");
         Scan scan=new Scan();
+        /*
         byte[] srk= Bytes.toBytes("20121106heartbeat.xFFxC7x00'x07xA2");
-        byte[] enk= Bytes.toBytes("20121201visit");
+        byte[] enk= Bytes.toBytes("20121201visit");  */
+        byte[] srk= Bytes.toBytes("20121201");
+        byte[] enk= Bytes.toBytes("20121202");
         scan.setStartRow(srk);
         scan.setStopRow(enk);
-        Filter filter=new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL,
-                new BinaryComparator(Bytes.toBytes("20121127visit")));
-        scan.setFilter(filter);
+        //Filter filter=new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL,
+        //        new BinaryComparator(Bytes.toBytes("20121127visit")));
+        Filter filter=new SingleColumnValueFilter(
+                Bytes.toBytes("val"),
+                Bytes.toBytes("val"),
+                CompareFilter.CompareOp.LESS,
+                new BinaryComparator(Bytes.toBytes(1000l)));
+        //scan.setFilter(filter);
+        List<Filter> filters=new ArrayList<>();
+        filters.add(filter);
+        FilterList filterList=new FilterList(filters);
+        scan.setFilter(filterList);
+        scan.setCaching(1000);
+        scan.setBatch(8);
+        long ts1=System.currentTimeMillis();
         ResultScanner result=table.getScanner(scan);
+        int recordCount=0;
         for(Result res: result){
-            System.out.println(res);
+            //System.out.println(res);
+            KeyValue[] kvs=res.raw();
+            //System.out.println(kvs.length);
             for( KeyValue kv: res.raw()){
-                System.out.println("Row: "+Bytes.toString(kv.getRow())
-                        +    "Key" + Bytes.toLong(kv.getKey()) + "," +
-                "Value: "+Bytes.toLong(kv.getValue()));
+                System.out.print(Bytes.toLong(kv.getValue())+" ");
+                recordCount++;
             }
         }
+        long ts2=System.currentTimeMillis();
+        System.out.println(ts2-ts1+" ms used. recordCount "+recordCount);
     }
 }

@@ -26,10 +26,10 @@ public class TestHBaseRecordReader {
     public void testRecordReader() {
         long startTime = System.currentTimeMillis();
         long recordCount = 0 ;
-        String eventPattern = "visit.*";
-        String startday = "20130101";
-        String endDay="20130101";
-        String pID = "sof-dsk";
+        String eventPattern = "*.*";
+        String startday = "20121201";
+        String endDay="20121201";
+        String pID = "testtable100W";
         HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, startday, endDay, eventPattern);
         HBaseRecordReader reader = new HBaseRecordReader(null, entry);
         List<RecordReader> readerList = new ArrayList<RecordReader>();
@@ -46,6 +46,7 @@ public class TestHBaseRecordReader {
                 ts1=ts2;
 
                 for (MaterializedField f : batch.getSchema()) {
+                    if(!f.getName().equals("uid")&&!f.getName().equals("event"))continue;
                     ValueVector v = batch.getValueVector(f.getFieldId());
                     System.out.print(f.getName() + ":");
                     if (v instanceof VarLen4) {

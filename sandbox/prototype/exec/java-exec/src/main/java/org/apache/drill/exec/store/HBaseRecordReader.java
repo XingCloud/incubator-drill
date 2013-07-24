@@ -16,6 +16,7 @@ import org.apache.drill.exec.proto.SchemaDefProtos;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.regionserver.TableScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -149,9 +150,9 @@ public class HBaseRecordReader implements RecordReader {
     }
 
     private void init() {
-        //this.pID = config.getProject();
+        this.pID = config.getProject();
 
-        this.pID = "sof-dsk";
+        //this.pID = "sof-dsk";
         this.eventPattern = config.getEventPattern();
         String tableName = getTableNameFromProject(pID);
         boolean allEvents = true;
@@ -174,7 +175,9 @@ public class HBaseRecordReader implements RecordReader {
                     byte[] srk = Bytes.toBytes(day + eventList.get(0));
                     byte[] enk = Bytes.toBytes(day + getNextEvent(eventList.get(eventList.size() - 1)));
                     XARowKeyFilter filter1 = new XARowKeyFilter(0, Long.MAX_VALUE, eventList, oneDayList);
-                    TableScanner scanner = new TableScanner(srk, enk, tableName, filter1, false, false);
+                    List<Filter> filters=new ArrayList<>();
+                    filters.add(filter1);
+                    TableScanner scanner = new TableScanner(srk, enk, tableName, filters, false, false);
                     scanners.add(scanner);
                 }
             } else {
@@ -298,7 +301,8 @@ public class HBaseRecordReader implements RecordReader {
 
     public Object getValFromKeyValue(KeyValue keyvalue, String option) {
         if (option.equals("val")) {
-            return Bytes.toLong(keyvalue.getValue());
+            byte[] value=keyvalue.getValue();
+            return Bytes.toLong(value);
         } else {
             byte[] rk = keyvalue.getRow();
             if (option.equals("uid")) {
