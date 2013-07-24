@@ -71,10 +71,12 @@ public class TestHBaseAbstractRecordReader {
                    if (v instanceof VarLen4) {
                        for (int i = 0; i < v.getRecordCount(); i++) {
                            System.out.print(new String((byte[]) v.getObject(i)) + " ");
+                           count++;
                        }
                    } else {
                        for (int i = 0; i < v.getRecordCount(); i++) {
                            System.out.print(v.getObject(i) + " ");
+
                        }
                    }
                    System.out.println();
@@ -83,6 +85,7 @@ public class TestHBaseAbstractRecordReader {
        } catch (ExecutionSetupException e) {
            e.printStackTrace();
        }
+       System.out.println("count "+count);
        System.out.println("Done , recordCount :" +  recordCount + ", cost time " + (System.currentTimeMillis() - startTime)/1000 + " seconds");
    }
 

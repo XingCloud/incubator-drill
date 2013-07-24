@@ -343,8 +343,6 @@ public class HBaseAbstractRecordReader implements RecordReader {
             } else if (valueVector instanceof Fixed8) {
                 ((Fixed8) valueVector).setBigInt(recordSetSize, (long)result);
                 valueVector.setRecordCount(recordSetSize);
-                if(recordSetSize>1000)
-             // System.out.println("recordSetSize "+recordSetSize+" capacity "+valueVector.capacity());
                 if ((recordSetSize + 2) > valueVector.capacity()) return false;
             }else if(valueVector instanceof Fixed1){
                 ((Fixed1) valueVector).setByte(recordSetSize, (byte) result);
