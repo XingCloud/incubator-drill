@@ -151,11 +151,13 @@ public final class Nullable${minor.class}Vector extends BaseValueVector implemen
     return new TransferImpl();
   }
   
-  public void transferTo(Nullable${minor.class}Vector target){
-    bits.transferTo(target.bits);
-    values.transferTo(target.values);
+  public void transferTo(Nullable${minor.class}Vector target, boolean needClear){
+    bits.transferTo(target.bits, needClear);
+    values.transferTo(target.values, needClear);
     target.valueCount = valueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
   
   private class TransferImpl implements TransferPair{
@@ -170,8 +172,13 @@ public final class Nullable${minor.class}Vector extends BaseValueVector implemen
     }
     
     public void transfer(){
-      transferTo(to);
+      transferTo(to, true);
     }
+    
+    public void mirror(){
+      transferTo(to, false);
+    }
+
   }
   
   public Accessor getAccessor(){

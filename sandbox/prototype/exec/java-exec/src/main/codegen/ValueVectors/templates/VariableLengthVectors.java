@@ -109,12 +109,14 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
     return new TransferImpl();
   }
   
-  public void transferTo(${minor.class}Vector target){
-    this.offsetVector.transferTo(target.offsetVector);
+  public void transferTo(${minor.class}Vector target, boolean needClear){
+    this.offsetVector.transferTo(target.offsetVector, needClear);
     target.data = data;
     target.data.retain();
     target.valueCount = valueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
   
   public void copyValue(int inIndex, int outIndex, ${minor.class}Vector v){
@@ -139,8 +141,13 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
     }
     
     public void transfer(){
-      transferTo(to);
+      transferTo(to, true);
     }
+    
+    public void mirror(){
+      transferTo(to, false);
+    }
+    
   }
   
   public void allocateNew(int totalBytes, int valueCount) {

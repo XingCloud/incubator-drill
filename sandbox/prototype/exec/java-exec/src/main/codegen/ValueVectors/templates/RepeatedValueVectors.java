@@ -65,13 +65,15 @@ import org.apache.drill.exec.record.TransferPair;
     return new TransferImpl();
   }
   
-  public void transferTo(Repeated${minor.class}Vector target){
-    counts.transferTo(target.counts);
-    offsets.transferTo(target.offsets);
-    values.transferTo(target.values);
+  public void transferTo(Repeated${minor.class}Vector target, boolean needClear){
+    counts.transferTo(target.counts, needClear);
+    offsets.transferTo(target.offsets, needClear);
+    values.transferTo(target.values, needClear);
     target.parentValueCount = parentValueCount;
     target.childValueCount = childValueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
   
   private class TransferImpl implements TransferPair{
@@ -86,8 +88,13 @@ import org.apache.drill.exec.record.TransferPair;
     }
     
     public void transfer(){
-      transferTo(to);
+      transferTo(to, true);
     }
+    
+    public void mirror(){
+      transferTo(to, false);
+    }
+    
   }
   
   public void copyValue(int inIndex, int outIndex, Repeated${minor.class}Vector v){

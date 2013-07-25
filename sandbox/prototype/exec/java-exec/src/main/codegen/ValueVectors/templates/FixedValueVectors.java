@@ -94,11 +94,13 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements F
     return new TransferImpl();
   }
   
-  public void transferTo(${minor.class}Vector target){
+  public void transferTo(${minor.class}Vector target, boolean needClear){
     target.data = data;
     target.data.retain();
     target.valueCount = valueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
   
   private class TransferImpl implements TransferPair{
@@ -113,10 +115,14 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements F
     }
     
     public void transfer(){
-      transferTo(to);
+      transferTo(to, true);
+    }
+    
+    public void mirror(){
+      transferTo(to, false);
     }
   }
-  
+
   public void copyValue(int inIndex, int outIndex, ${minor.class}Vector v){
     <#if (type.width > 8)>
     data.getBytes(inIndex * ${type.width}, v.data, outIndex * ${type.width}, ${type.width});
