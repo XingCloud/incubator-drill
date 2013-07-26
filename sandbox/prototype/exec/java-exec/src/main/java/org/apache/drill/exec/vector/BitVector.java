@@ -192,5 +192,9 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
       }
     }
 
+    @Override
+    public void transferTo(ValueVector target, boolean needClear) {
+      BitVector.this.transferTo((BitVector)target, needClear);
+    }
   }
 }

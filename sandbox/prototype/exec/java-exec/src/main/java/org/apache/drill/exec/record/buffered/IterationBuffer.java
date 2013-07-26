@@ -1,11 +1,15 @@
 package org.apache.drill.exec.record.buffered;
 
+import com.google.common.collect.Lists;
 import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.physical.impl.VectorHolder;
 import org.apache.drill.exec.record.BatchSchema;
 import org.apache.drill.exec.record.RecordBatch;
+import org.apache.drill.exec.record.SchemaBuilder;
 import org.apache.drill.exec.record.TransferPair;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
+import org.apache.drill.exec.vector.NonRepeatedMutator;
 import org.apache.drill.exec.vector.ValueVector;
 
 import java.util.ArrayList;
@@ -21,9 +25,7 @@ public class IterationBuffer {
   private int totalIterations = 0;
   
   private RecordBatch head = null;
-  
-  private Boolean supportSV2 = null;
-  private Boolean supportSV4 = null;
+  private BatchSchema headSchema = null;
   
   private RecordBatch.IterOutcome iterationEndState = null;
 
@@ -54,7 +56,6 @@ public class IterationBuffer {
     current.currentPos++;
     BufferedStackFrameImpl newStack = buffer.get(current.currentPos);
     newStack.enter(recordBatch);
-    current.setDelegate(newStack);
     return true;
   }
 
@@ -62,64 +63,56 @@ public class IterationBuffer {
     RecordBatch.IterOutcome outcome = head.next();
     switch(outcome){
       case OK_NEW_SCHEMA:
+        setupSchema();
       case OK:
-        BufferedStackFrameImpl frame = new BufferedStackFrameImpl(head.getSchema(),
-          head.getRecordCount(), pickSV2(head), pickSV4(head), fetchVectors(head),
-          outcome, head.getContext());
-        buffer.add(frame);
+        doTransfer(outcome);
         break;
       default:
-        frame = new BufferedStackFrameImpl(head.getSchema(),
+        BufferedStackFrameImpl frame = new BufferedStackFrameImpl(head.getSchema(),
           0, null, null, null,
           outcome, head.getContext()); 
         buffer.add(frame);
-        iterationEndState = outcome;
+        if(outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NONE){
+          iterationEndState = outcome;          
+        }
         break;
     }
   }
+  
+  private void setupSchema() {
+    SchemaBuilder bldr = BatchSchema.newBuilder().setSelectionVectorMode(head.getSchema().getSelectionVector());
+    for (ValueVector v : head) {
+      bldr.addField(v.getField());
+    }
+    this.headSchema = bldr.build();
+  }
 
-  private List<ValueVector> fetchVectors(RecordBatch head) {
+  
+  private void doTransfer(RecordBatch.IterOutcome outcome) {
+    int outRecordCount = head.getRecordCount();
+    SelectionVector2 sv2 = null;
+    SelectionVector4 sv4 = null;
+    if (headSchema.getSelectionVector() == BatchSchema.SelectionVectorMode.TWO_BYTE) {
+      sv2 = head.getSelectionVector2();
+    }
     ArrayList<ValueVector> vectors = new ArrayList<>();
     for(ValueVector v:head){
       TransferPair tp = v.getTransferPair();
       vectors.add(tp.getTo());
       tp.transfer();
     }
-    return vectors;
-  }
-
-  private SelectionVector2 pickSV2(RecordBatch head) {
-    if(supportSV2 == null){
-      try{
-        SelectionVector2 sv2 = head.getSelectionVector2();
-        supportSV2 = true;
-        return sv2;
-      }catch(UnsupportedOperationException e){
-        supportSV2 = false;
-        return null;
+    for (ValueVector v : vectors) {
+      ValueVector.Mutator m = v.getMutator();
+      if (m instanceof NonRepeatedMutator) {
+        ((NonRepeatedMutator) m).setValueCount(outRecordCount);
+      } else {
+        throw new UnsupportedOperationException();
       }
-    }else if(supportSV2){
-      return head.getSelectionVector2();
-    }else{
-      return null;
     }
-  }
-
-  private SelectionVector4 pickSV4(RecordBatch head) {
-    if(supportSV4 == null){
-      try{
-        SelectionVector4 sv4 = head.getSelectionVector4();
-        supportSV4 = true;
-        return sv4;
-      }catch(UnsupportedOperationException e){
-        supportSV4 = false;
-        return null;
-      }
-    }else if(supportSV4){
-      return head.getSelectionVector4();
-    }else{
-      return null;
-    }
+    BufferedStackFrameImpl frame = new BufferedStackFrameImpl(headSchema,
+              outRecordCount, sv2, sv4, vectors,
+              outcome, head.getContext());
+    buffer.add(frame);
   }
 
   public void abort(BufferedRecordBatch recordBatch) {
@@ -183,6 +176,7 @@ public class IterationBuffer {
       if(currentIterations >= totalIterations){
         throw new IllegalArgumentException("expectedIteration:"+totalIterations+",now:"+currentIterations);
       }
+      ((StackFrameDelegate)recordBatch.current).setDelegate(this);      
     }
     
     public void leave(BufferedRecordBatch recordBatch){
@@ -252,16 +246,36 @@ public class IterationBuffer {
     public StackFrameDelegate(BufferedStackFrameImpl delegate) {
       if(delegate != null) setDelegate(delegate);
     }
-
+    
     public void setDelegate(BufferedStackFrameImpl delegate) {
       this.delegate = delegate;
-      this.mirroredVectors = new ArrayList<>();
-      if(delegate.getVectors()!=null){
-        for(ValueVector v:delegate.getVectors()){
-          TransferPair tp = v.getTransferPair();
-          tp.mirror();
-          mirroredVectors.add(tp.getTo());
-        }
+      switch(delegate.getOutcome()){
+        case OK_NEW_SCHEMA:
+          //set up new vectors
+          if(this.mirroredVectors != null){
+            for(ValueVector v:mirroredVectors){
+              v.close();
+            }
+          }
+          this.mirroredVectors = new ArrayList<>();
+          if(delegate.getVectors()!=null){
+            for(ValueVector v:delegate.getVectors()){
+              TransferPair tp = v.getTransferPair();
+              tp.mirror();
+              mirroredVectors.add(tp.getTo());
+            }
+          }
+          break;
+        case OK:
+          List<ValueVector> bufferedVectors = delegate.getVectors();
+          for (int i = 0; i < mirroredVectors.size(); i++) {
+            ValueVector mirrored = mirroredVectors.get(i);
+            ValueVector buffered = bufferedVectors.get(i);
+            buffered.getMutator().transferTo(mirrored, false);
+          }
+          break;
+        default:
+          break;
       }
     }
 

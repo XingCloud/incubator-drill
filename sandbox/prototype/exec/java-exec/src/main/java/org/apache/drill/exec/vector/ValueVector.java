@@ -128,6 +128,7 @@ public interface ValueVector extends Closeable {
   public interface Mutator{
     public void reset();
     public void randomizeData();
+    public void transferTo(ValueVector target, boolean needClear);
   }
 }
 

@@ -237,6 +237,10 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
 
     @Override
     public void randomizeData(){}
+
+    public void transferTo(ValueVector target, boolean needClear) {
+      ${minor.class}Vector.this.transferTo((${minor.class}Vector)target, needClear);
+    }
   }
   
 }

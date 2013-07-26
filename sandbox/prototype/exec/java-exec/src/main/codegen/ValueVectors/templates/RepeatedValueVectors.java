@@ -315,6 +315,10 @@ import org.apache.drill.exec.record.TransferPair;
       
     }
     
+    public void transferTo(ValueVector target, boolean needClear) {
+      Repeated${minor.class}Vector.this.transferTo((Repeated${minor.class}Vector)target, needClear);
+    }
+
   }
 }
 </#list>

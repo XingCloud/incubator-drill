@@ -275,6 +275,10 @@ public final class Nullable${minor.class}Vector extends BaseValueVector implemen
     public void reset(){
       setCount = 0;
     }
+
+    public void transferTo(ValueVector target, boolean needClear) {
+      Nullable${minor.class}Vector.this.transferTo((Nullable${minor.class}Vector)target, needClear);
+    }
     
   }
 }
