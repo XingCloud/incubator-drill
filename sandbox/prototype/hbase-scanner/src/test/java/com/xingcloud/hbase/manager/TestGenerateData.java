@@ -103,7 +103,7 @@ public class TestGenerateData {
                     for(int k=0;k<forUnit*ratios[j];k++){
                         int uid=uidR.nextInt(uidSeed);
                         long value=(long)val.nextInt(10000);
-                        if(k%1000==0)System.out.println(uid+" "+value);
+                        //if(k%1000==0)System.out.println(uid+" "+value);
                         byte[] uidBytes=Bytes.toBytes(uid);
                         byte[] valBytes=Bytes.toBytes(value);
                         byte[] dayBytes=Bytes.toBytes(days[i]);

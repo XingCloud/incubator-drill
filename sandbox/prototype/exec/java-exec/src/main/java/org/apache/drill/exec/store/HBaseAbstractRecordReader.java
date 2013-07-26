@@ -45,6 +45,7 @@ public class HBaseAbstractRecordReader implements RecordReader {
     private String tableName;
 
     private List<HBaseFieldInfo> projections;
+    private Map<String,String> sourceRefMap;
     private List<LogicalExpression> filters;
     private List<HBaseFieldInfo> primaryRowKey;
     private List<KeyPart> primaryRowKeyParts;
@@ -77,6 +78,7 @@ public class HBaseAbstractRecordReader implements RecordReader {
         tableName=config.getTableName();
         projections=new ArrayList<>();
         fieldInfoMap=new HashMap<>();
+        sourceRefMap=new HashMap<>();
         try {
             List<HBaseFieldInfo> cols= TableInfo.getCols(tableName);
             for(HBaseFieldInfo col: cols){
@@ -84,7 +86,9 @@ public class HBaseAbstractRecordReader implements RecordReader {
             }
             List<NamedExpression> logProjection=config.getProjections();
             for(NamedExpression e: logProjection){
-                String name=(String)e.getRef().getPath();
+                String ref=(String)e.getRef().getPath();
+                String name=(String)((SchemaPath)e.getExpr()).getPath();
+                sourceRefMap.put(name,ref);
                 if(!fieldInfoMap.containsKey(name)){
                     LOG.debug("wrong field "+name+" hbase table has no this field");
                 }else{
@@ -201,7 +205,7 @@ public class HBaseAbstractRecordReader implements RecordReader {
                 SchemaDefProtos.MajorType type=getMajorType(projections.get(i));
                 int batchRecordCount = BATCHRECORDCOUNT;
                 valueVectors[i] =
-                        getVector(i, projections.get(i).fieldSchema.getName(), type, batchRecordCount);
+                        getVector(i, sourceRefMap.get(projections.get(i).fieldSchema.getName()), type, batchRecordCount);
                 output.addField(i, valueVectors[i]);
                 output.setNewSchema();
             }

@@ -5,7 +5,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,7 @@ public class MemstoreScanner implements DataScanner {
         //System.out.println("kvs length is "+kvs.length);
         for (KeyValue kv : kvs) {
             results.add(kv);
-            System.out.print(Bytes.toLong(kv.getValue())+" ");
+            //System.out.print(Bytes.toLong(kv.getValue())+" ");
             numKV.incrementAndGet();
         }
         return true;

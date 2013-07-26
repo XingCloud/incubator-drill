@@ -75,5 +75,8 @@ public class TestHBaseResourceManager {
         }
         long ts2=System.currentTimeMillis();
         System.out.println(ts2-ts1+" ms used. recordCount "+recordCount);
+        byte[][] srks=table.getStartKeys();
+        for(int i=0;i<srks.length;i++)
+            System.out.println(srks[i]);
     }
 }

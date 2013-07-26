@@ -43,7 +43,7 @@ public class TableScanner implements XAScanner {
     private long stopTimeStamp=Long.MAX_VALUE;
 
     private int scanCache=1024;
-    private int scanBatch=1;
+    private int scanBatch=8;
 
 
 
@@ -89,7 +89,7 @@ public class TableScanner implements XAScanner {
             LOG.info("Begin to init memstore scanner...");
             st = System.nanoTime();
             Scan memScan = new Scan(startRowKey, endRowKey);
-            memScan.setMaxVersions();
+            //memScan.setMaxVersions();
             memScan.setCaching(scanCache);
             memScan.setBatch(scanBatch);
             if(!(startTimeStamp==Long.MIN_VALUE&&stopTimeStamp==Long.MAX_VALUE))

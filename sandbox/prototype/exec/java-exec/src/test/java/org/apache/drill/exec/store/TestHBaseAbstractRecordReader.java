@@ -87,6 +87,7 @@ public class TestHBaseAbstractRecordReader {
        }
        System.out.println("count "+count);
        System.out.println("Done , recordCount :" +  recordCount + ", cost time " + (System.currentTimeMillis() - startTime)/1000 + " seconds");
+
    }
 
 }
