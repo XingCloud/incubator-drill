@@ -76,7 +76,6 @@ public class TestHBaseAbstractRecordReader {
                    } else {
                        for (int i = 0; i < v.getRecordCount(); i++) {
                            System.out.print(v.getObject(i) + " ");
-
                        }
                    }
                    System.out.println();
