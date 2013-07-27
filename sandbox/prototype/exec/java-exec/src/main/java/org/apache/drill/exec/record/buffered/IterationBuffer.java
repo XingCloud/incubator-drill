@@ -40,6 +40,9 @@ public class IterationBuffer {
 
   public boolean forward(BufferedRecordBatch recordBatch) {
     StackFrameDelegate current = (StackFrameDelegate) recordBatch.current;
+    if(current.currentPos >= 0){
+      buffer.get(current.currentPos).leave(recordBatch);
+    }
     if(current.currentPos == buffer.size()-1){//came to buffer end
       if(iterationEndState != null){
         return false;//really end
@@ -50,12 +53,18 @@ public class IterationBuffer {
         }
       }
     }
-    if(current.currentPos >= 0){
-      buffer.get(current.currentPos).leave(recordBatch);
-    }
     current.currentPos++;
-    BufferedStackFrameImpl newStack = buffer.get(current.currentPos);
-    newStack.enter(recordBatch);
+    BufferedStackFrameImpl newFrame = buffer.get(current.currentPos);
+    newFrame.enter(recordBatch);
+    //if IterOutcome.NONE frame reached, there would be no forward() invoked
+    //so leave this frame early
+    if(newFrame.getOutcome() == RecordBatch.IterOutcome.NONE 
+      || newFrame.getOutcome() == RecordBatch.IterOutcome.STOP){
+      if(current.currentPos!=buffer.size()-1){
+        throw new IllegalStateException(newFrame.getOutcome()+" frame not the last frame!");
+      }
+      newFrame.leave(recordBatch);
+    }
     return true;
   }
 
@@ -191,13 +200,15 @@ public class IterationBuffer {
 
     private void close() {
         //clear self
-        this.selectionVector2 = null;
-        this.selectionVector4 = null;
+      this.selectionVector2 = null;
+      this.selectionVector4 = null;
+      if(vectors!=null){
         for(ValueVector v:vectors){
           v.close();
         }
         this.vectors.clear();
         this.vectors = null;
+      }
     }
 
     @Override

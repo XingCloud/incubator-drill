@@ -27,6 +27,7 @@ import org.apache.drill.exec.physical.base.FragmentRoot;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.config.*;
+import org.apache.drill.exec.physical.impl.filter.BufferedBatchCreator;
 import org.apache.drill.exec.physical.impl.filter.FilterBatchCreator;
 import org.apache.drill.exec.physical.impl.project.ProjectBatchCreator;
 import org.apache.drill.exec.physical.impl.svremover.SVRemoverCreator;
@@ -39,12 +40,12 @@ import com.google.common.collect.Lists;
 public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentContext, ExecutionSetupException>{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ImplCreator.class);
 
-  private MockScanBatchCreator msc = new MockScanBatchCreator();
+  private BatchCreator<MockScanPOP> msc = new BufferedBatchCreator<MockScanPOP>(new MockScanBatchCreator());
   private ScreenCreator sc = new ScreenCreator();
   private RandomReceiverCreator rrc = new RandomReceiverCreator();
   private SingleSenderCreator ssc = new SingleSenderCreator();
   private ProjectBatchCreator pbc = new ProjectBatchCreator();
-  private FilterBatchCreator fbc = new FilterBatchCreator();
+  private BatchCreator<Filter> fbc = new BufferedBatchCreator<Filter>(new FilterBatchCreator());
   private UnionBatchCreator unionbc = new UnionBatchCreator();
   private SVRemoverCreator svc = new SVRemoverCreator();
   private RootExec root = null;
@@ -66,7 +67,11 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     Preconditions.checkNotNull(context);
     
     if(scan instanceof MockScanPOP){
-      return msc.getBatch(context, (MockScanPOP) scan, Collections.<RecordBatch> emptyList());
+      if(((MockScanPOP) scan).getIterationBuffer()==null){
+        return msc.getBatch(context, (MockScanPOP) scan, Collections.<RecordBatch> emptyList());
+      }else{
+        return msc.getBatch(context, (MockScanPOP) scan, null);
+      }
     }else{
       return super.visitScan(scan, context);  
     }
@@ -92,7 +97,12 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   
   @Override
   public RecordBatch visitFilter(Filter filter, FragmentContext context) throws ExecutionSetupException {
-    return fbc.getBatch(context, filter, getChildren(filter, context));
+    if(filter.getIterationBuffer()==null){
+      //first invocation, need children
+      return fbc.getBatch(context, filter, getChildren(filter, context));
+    }else{
+      return fbc.getBatch(context, filter, null);
+    }
   }
 
   @Override

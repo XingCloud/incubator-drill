@@ -47,8 +47,8 @@ public class TestSimpleFragmentRun extends PopUnitTestBase {
     // run query.
     bit.run();
     client.connect();
-      String path = "/physical_test2.json";
-//      String path = "/filter/test1.json";
+//      String path = "/physical_test2.json";
+      String path = "/filter/test1.json";
     List<QueryResultBatch> results = client.runQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(path), Charsets.UTF_8));
 
     // look at records

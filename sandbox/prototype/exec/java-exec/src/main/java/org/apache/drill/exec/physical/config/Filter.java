@@ -29,10 +29,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.exec.physical.base.reentrant.ReentrantDelegate;
 import org.apache.drill.exec.physical.base.reentrant.ReentrantOperator;
+import org.apache.drill.exec.physical.base.reentrant.ReentrantPhysicalOperator;
 import org.apache.drill.exec.record.buffered.IterationBuffer;
 
 @JsonTypeName("filter")
-public class Filter extends AbstractSingle implements ReentrantOperator{
+public class Filter extends AbstractSingle implements ReentrantPhysicalOperator{
 
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Filter.class);
 
@@ -71,14 +72,4 @@ public class Filter extends AbstractSingle implements ReentrantOperator{
     return new Size( (long) (child.getSize().getRecordCount()*selectivity), child.getSize().getRecordSize());
   }
 
-
-  @Override
-  public IterationBuffer getIterationBuffer() {
-    return reentrantDelegate.getIterationBuffer();
-  }
-
-  @Override
-  public void initIterationBuffer(IterationBuffer buffer) {
-    reentrantDelegate.initIterationBuffer(buffer);
-  }
 }

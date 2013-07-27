@@ -17,12 +17,6 @@ public class FilterBatchCreator implements BatchCreator<Filter>{
   @Override
   public RecordBatch getBatch(FragmentContext context, Filter config, List<RecordBatch> children) throws ExecutionSetupException {
     Preconditions.checkArgument(children.size() == 1);
-    if (config.getIterationBuffer() == null){
-      config.initIterationBuffer(new IterationBuffer(new FilterRecordBatch(config, children.iterator().next(), context)));
-    }
-    return config.getIterationBuffer().newIteration();
-    
+    return new FilterRecordBatch(config, children.iterator().next(), context);
   }
-  
-  
 }

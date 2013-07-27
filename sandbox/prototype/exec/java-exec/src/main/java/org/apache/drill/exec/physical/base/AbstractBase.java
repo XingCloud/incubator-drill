@@ -19,11 +19,15 @@ package org.apache.drill.exec.physical.base;
 
 import org.apache.drill.common.graph.GraphVisitor;
 import org.apache.drill.exec.physical.OperatorCost;
+import org.apache.drill.exec.physical.base.reentrant.ReentrantDelegate;
+import org.apache.drill.exec.physical.base.reentrant.ReentrantOperator;
+import org.apache.drill.exec.physical.base.reentrant.ReentrantPhysicalOperator;
+import org.apache.drill.exec.record.buffered.IterationBuffer;
 
-public abstract class AbstractBase implements PhysicalOperator{
+public abstract class AbstractBase implements PhysicalOperator, ReentrantPhysicalOperator{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AbstractBase.class);
 
-
+  private final ReentrantOperator reentrantDelegate = new ReentrantDelegate();
 
   @Override
   public void accept(GraphVisitor<PhysicalOperator> visitor) {
@@ -39,5 +43,15 @@ public abstract class AbstractBase implements PhysicalOperator{
   public boolean isExecutable() {
     return true;
   }
+  
+  @Override
+  public IterationBuffer getIterationBuffer() {
+    return reentrantDelegate.getIterationBuffer();
+  }
+
+  @Override
+  public void initIterationBuffer(IterationBuffer buffer) {
+    reentrantDelegate.initIterationBuffer(buffer);
+  }  
   
 }
