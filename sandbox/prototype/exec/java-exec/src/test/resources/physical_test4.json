@@ -13,7 +13,7 @@
     entries : [ {
       startDate : "20130101",
       endDate : "20130101",
-      project : "ddt",
+      project : "sof-dsk",
       eventPattern : "visit.*"
     } ]
   },

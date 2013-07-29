@@ -25,9 +25,9 @@ public class TestHBaseRecordReader {
         long startTime = System.currentTimeMillis();
         long recordCount = 0 ;
         String eventPattern = "*.*";
-        String startday = "20130101";
-        String endDay="20130110";
-        String pID = "sof-dsk";
+        String startday = "20121201";
+        String endDay="20121201";
+        String pID = "testtable100W";
         HbaseScanPOP.HbaseScanEntry entry = new HbaseScanPOP.HbaseScanEntry(pID, startday, endDay, eventPattern);
         HBaseRecordReader reader = new HBaseRecordReader(null, entry);
         List<RecordReader> readerList = new ArrayList<RecordReader>();
@@ -42,8 +42,10 @@ public class TestHBaseRecordReader {
                 ts2=System.currentTimeMillis();
                 System.out.println(recordCount+": "+batch.getRecordCount()+" costs "+(ts2-ts1)+"ms");
                 ts1=ts2;
-                /*
+
+              /*
                 for (MaterializedField f : batch.getSchema()) {
+                    if(!f.getName().equals("uid")&&!f.getName().equals("event"))continue;
                     ValueVector v = batch.getValueVector(f.getFieldId());
                     System.out.print(f.getName() + ":");
                     if (v instanceof VarLen4) {
@@ -56,9 +58,9 @@ public class TestHBaseRecordReader {
                         }
                     }
                     System.out.println();
-                }*/
+                }  */
             }
-        } catch (ExecutionSetupException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         System.out.println("Done , recordCount :" +  recordCount + ", cost time " + (System.currentTimeMillis() - startTime)/1000 + " seconds");

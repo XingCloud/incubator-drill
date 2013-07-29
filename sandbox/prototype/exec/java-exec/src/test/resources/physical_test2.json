@@ -24,16 +24,17 @@
             	]}
             ]
         },
+        /*
        {
             @id: 2,
             child: 1,
             pop: "filter",
             expr: "((val == 0) && (event > 'visit'))",
             selectivity: 0.8
-        },
+        },*/
         {
-            @id: 3,
-            child: 2,
+            @id: 2,
+            child: 1,
             pop: "project",
             exprs: [
                 {ref: "val",expr: "val"} ,
@@ -41,8 +42,8 @@
                 ]
         },
         {
-            @id: 4,
-            child: 3,
+            @id: 3,
+            child: 2,
             pop: "screen"
         }
     ]    
