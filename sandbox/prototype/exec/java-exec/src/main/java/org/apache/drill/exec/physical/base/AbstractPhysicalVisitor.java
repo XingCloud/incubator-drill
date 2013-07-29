@@ -28,6 +28,11 @@ public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> impleme
   }
 
   @Override
+  public T visitUnion(Union union, X value) throws E {
+    return visitOp(union, value);
+  }
+
+  @Override
   public T visitFilter(Filter filter, X value) throws E{
     return visitOp(filter, value);
   }

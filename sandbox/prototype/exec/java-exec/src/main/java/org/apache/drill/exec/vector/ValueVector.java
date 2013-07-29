@@ -133,6 +133,7 @@ public interface ValueVector extends Closeable {
     public void setObject(int index,Object obj);
     public void reset();
     public void randomizeData();
+    public void transferTo(ValueVector target, boolean needClear);
   }
 }
 

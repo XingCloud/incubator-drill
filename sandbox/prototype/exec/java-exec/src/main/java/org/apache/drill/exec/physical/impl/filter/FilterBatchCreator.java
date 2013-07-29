@@ -9,6 +9,7 @@ import org.apache.drill.exec.physical.impl.BatchCreator;
 import org.apache.drill.exec.record.RecordBatch;
 
 import com.google.common.base.Preconditions;
+import org.apache.drill.exec.record.buffered.IterationBuffer;
 
 public class FilterBatchCreator implements BatchCreator<Filter>{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FilterBatchCreator.class);
@@ -18,6 +19,4 @@ public class FilterBatchCreator implements BatchCreator<Filter>{
     Preconditions.checkArgument(children.size() == 1);
     return new FilterRecordBatch(config, children.iterator().next(), context);
   }
-  
-  
 }

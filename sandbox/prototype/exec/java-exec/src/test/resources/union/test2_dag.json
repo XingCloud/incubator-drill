@@ -21,26 +21,42 @@
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
             	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
             	  {name: "green", type: "INT", mode: "REQUIRED"}
-            	]},
-            	{records: 50, types: [
-            	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "INT", mode: "REQUIRED"}
             	]}
             ]
         },
+          
         {
             @id:2,
             child: 1,
-            pop:"project",
-            exprs: [
-              { ref: "col1", expr:"red + 1" },
-              { ref: "col2", expr:"red + 2" }
-            ]
+            pop:"filter",
+            expr: "alternate()"
         },
         {
-            @id: 3,
+            @id:3,
             child: 2,
+            pop:"filter",
+            expr: "alternate()"
+        },
+        {
+            @id:4,
+            child: 2,
+            pop:"filter",
+            expr: "alternate()"
+        },
+        {
+            @id:5,
+            children: [2,3,4],
+            pop:"union"
+        },
+        {
+          @id:6,
+          child:5,
+          pop: "selection-vector-remover"
+          
+        },
+        {
+            @id: 7,
+            child: 6,
             pop: "screen"
         }
     ]

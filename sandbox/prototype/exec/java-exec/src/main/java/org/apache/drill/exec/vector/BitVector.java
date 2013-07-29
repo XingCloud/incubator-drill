@@ -87,11 +87,14 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
     return new TransferImpl();
   }
 
-  public void transferTo(BitVector target) {
+  
+  public void transferTo(BitVector target, boolean needClear){
     target.data = data;
     target.data.retain();
     target.valueCount = valueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
 
   private class TransferImpl implements TransferPair {
@@ -105,8 +108,14 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
       return to;
     }
 
-    public void transfer() {
-      transferTo(to);
+    
+    public void transfer(){
+      transferTo(to, true);
+    }
+
+    @Override
+    public void mirror() {
+      transferTo(to, false);
     }
   }
 
@@ -189,6 +198,10 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
     @Override
     public void setObject(int index, Object obj) {
       set(index, (Integer) obj);
+    }
+      
+    public void transferTo(ValueVector target, boolean needClear) {
+      BitVector.this.transferTo((BitVector)target, needClear);
     }
   }
 }

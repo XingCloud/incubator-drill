@@ -26,14 +26,39 @@
             expr: "alternate()"
         },
         {
-          @id:4,
-          child:2,
+            @id:3,
+            child: 2,
+            pop:"filter",
+            expr: "alternate()"
+        },
+        {
+            @id:4,
+            child: 3,
+            pop:"filter",
+            expr: "alternate()"
+        },
+        {
+            @id:5,
+            child: 4,
+            pop:"filter",
+            expr: "alternate()"
+        },
+        {
+            @id:6,
+            child: 5,
+            pop:"filter",
+            expr: "alternate()"
+        },
+
+        {
+          @id:8,
+          child:6,
           pop: "selection-vector-remover"
           
         },
         {
-            @id: 3,
-            child: 4,
+            @id: 9,
+            child: 8,
             pop: "screen"
         }
     ]
