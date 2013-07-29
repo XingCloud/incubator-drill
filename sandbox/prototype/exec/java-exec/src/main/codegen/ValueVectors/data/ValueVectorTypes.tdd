@@ -5,8 +5,8 @@
       width: 1,
       javaType: "byte",
       minor: [
-        { class: "TinyInt" },
-        { class: "UInt1" }
+        { class: "TinyInt",classType: "Byte" },
+        { class: "UInt1" ,classType: "Byte" }
       ]
     },
     {
@@ -14,14 +14,14 @@
       width: 2,
       javaType: "char",
       minor: [
-        { class: "UInt2" }
+        { class: "UInt2" ,classType: "Character" }
       ]
     },    {
       major: "Fixed",
       width: 2,
       javaType: "short",
       minor: [
-        { class: "SmallInt" },
+        { class: "SmallInt" ,classType: "Short" },
       ]
     },
     {
@@ -29,11 +29,11 @@
       width: 4,
       javaType: "int",
       minor: [
-        { class: "Int" },
-        { class: "UInt4" },
-        { class: "Decimal4", maxPrecisionDigits: 8, scale: 1, javaType: "float"},
-        { class: "Float4", javaType: "float" },
-        { class: "Date" }
+        { class: "Int" ,classType: "Integer" },
+        { class: "UInt4" ,classType: "Integer" },
+        { class: "Decimal4", maxPrecisionDigits: 8, scale: 1, javaType: "float",classType: "Float" },
+        { class: "Float4", javaType: "float" ,classType: "Float" },
+        { class: "Date" ,classType: "Integer" }
       ]
     },
     {
@@ -41,14 +41,14 @@
       width: 8,
       javaType: "long",
       minor: [
-        { class: "BigInt" },
-        { class: "UInt8" },
-        { class: "Decimal8", maxPrecisionDigits: 18, scale: 1, javaType: "double"},
-        { class: "Float8", javaType: "double" },
-        { class: "Money", maxPrecisionDigits: 2, scale: 1, javaType: "double" }
-        { class: "Time" },
-        { class: "TimeStamp" },
-        { class: "DateTime" }
+        { class: "BigInt" ,classType: "Long" },
+        { class: "UInt8" ,classType: "Long" },
+        { class: "Decimal8", maxPrecisionDigits: 18, scale: 1, javaType: "double",classType: "Double" },
+        { class: "Float8", javaType: "double" ,classType: "Double" },
+        { class: "Money", maxPrecisionDigits: 2, scale: 1, javaType: "double" ,classType: "Double" }
+        { class: "Time" ,classType: "Long" },
+        { class: "TimeStamp" ,classType: "Long" },
+        { class: "DateTime" ,classType: "Long"}
       ]
     },
     {
@@ -56,9 +56,9 @@
       width: 12,
       javaType: "ByteBuf",
       minor: [
-        { class: "Decimal12", maxPrecisionDigits: 28, scale: 1},
-        { class: "TimeTZ" },
-        { class: "Interval" }
+        { class: "Decimal12", maxPrecisionDigits: 28, scale: 1,classType: "ByteBuf"},
+        { class: "TimeTZ" ,classType: "ByteBuf"},
+        { class: "Interval" ,classType: "ByteBuf"}
       ]
     },
     {
@@ -66,7 +66,7 @@
       width: 16,
       javaType: "ByteBuf",
       minor: [
-        { class: "Decimal16", maxPrecisionDigits: 37, scale: 1}
+        { class: "Decimal16", maxPrecisionDigits: 37, scale: 1,classType: "ByteBuf"}
       ]
     },
     {

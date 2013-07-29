@@ -82,6 +82,8 @@ public interface ValueVector extends Closeable {
    * @return
    */
   public MaterializedField getField();
+
+  public void setField(MaterializedField field);
   
   /**
    * Get the metadata for this field.  Used in serialization
@@ -126,6 +128,9 @@ public interface ValueVector extends Closeable {
   
   
   public interface Mutator{
+
+    public void setValueCount(int valueCount);
+    public void setObject(int index,Object obj);
     public void reset();
     public void randomizeData();
   }

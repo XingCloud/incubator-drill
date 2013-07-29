@@ -48,6 +48,7 @@ public abstract class BufferAllocator implements Closeable{
   public abstract void close(); 
   
   public static BufferAllocator getAllocator(DrillConfig config){
+
     // TODO: support alternative allocators (including a debugging allocator that records all allocation locations for each buffer).
     return new DirectBufferAllocator();
   }

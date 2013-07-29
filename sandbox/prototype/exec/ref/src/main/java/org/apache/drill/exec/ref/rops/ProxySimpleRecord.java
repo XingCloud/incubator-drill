@@ -22,6 +22,7 @@ import java.io.IOException;
 import org.apache.drill.common.expression.PathSegment;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.ref.RecordPointer;
+import org.apache.drill.exec.ref.UnbackedRecord;
 import org.apache.drill.exec.ref.values.DataValue;
 
 public class ProxySimpleRecord implements RecordPointer{
@@ -57,12 +58,16 @@ public class ProxySimpleRecord implements RecordPointer{
 
   @Override
   public void copyFrom(RecordPointer r) {
-    record.copyFrom(r);
+    if(record == null){
+      record = r.copy();
+    }else{
+      record.copyFrom(r);
+    }
   }
 
   @Override
   public RecordPointer copy() {
-    return record.copy();
+    return record == null? new UnbackedRecord():record.copy();
   }
 
   public RecordPointer getRecord() {

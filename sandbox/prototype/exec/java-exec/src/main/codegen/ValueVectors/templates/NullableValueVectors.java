@@ -268,6 +268,11 @@ public final class Nullable${minor.class}Vector extends BaseValueVector implemen
     public void reset(){
       setCount = 0;
     }
+
+    public void setObject(int index,Object obj)
+    {
+
+    }
     
   }
 }

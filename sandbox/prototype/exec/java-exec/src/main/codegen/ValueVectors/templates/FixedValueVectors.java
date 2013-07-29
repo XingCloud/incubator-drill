@@ -222,7 +222,10 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements F
      data.writerIndex(${type.width} * valueCount);
    }
 
-
+   public void setObject(int index,Object obj)
+   {
+      set(index, (${minor.classType}) obj) ;
+   }
 
 
   

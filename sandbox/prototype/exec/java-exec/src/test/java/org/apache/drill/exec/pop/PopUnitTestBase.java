@@ -38,7 +38,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
 public abstract class PopUnitTestBase {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PopUnitTestBase.class);
+     static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PopUnitTestBase.class);
   
   // Determine if we are in Eclipse Debug mode.
   static final boolean IS_DEBUG = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;

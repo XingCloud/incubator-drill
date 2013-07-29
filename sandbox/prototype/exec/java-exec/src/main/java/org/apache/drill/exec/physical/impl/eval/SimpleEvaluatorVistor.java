@@ -1,0 +1,101 @@
+package org.apache.drill.exec.physical.impl.eval;
+
+import org.apache.drill.common.expression.*;
+import org.apache.drill.common.expression.visitors.AggregateChecker;
+import org.apache.drill.common.expression.visitors.ConstantChecker;
+import org.apache.drill.common.expression.visitors.SimpleExprVisitor;
+import org.apache.drill.exec.physical.impl.eval.ConstantValues.BooleanScalar;
+import org.apache.drill.exec.physical.impl.eval.ConstantValues.DoubleScalar;
+import org.apache.drill.exec.physical.impl.eval.ConstantValues.LongScalar;
+import org.apache.drill.exec.physical.impl.eval.ConstantValues.StringScalar;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.AggregatingEvaluator;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
+import org.apache.drill.exec.physical.impl.eval.fn.FunctionArguments;
+import org.apache.drill.exec.physical.impl.eval.fn.FunctionEvaluatorRegistry;
+import org.apache.drill.exec.record.RecordBatch;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: witwolf
+ * Date: 7/7/13
+ * Time: 3:46 PM
+ */
+public class SimpleEvaluatorVistor extends SimpleExprVisitor<BasicEvaluator> {
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SimpleEvaluatorVistor.class);
+
+  private RecordBatch recordBatch;
+
+  private List<AggregatingEvaluator> aggregators = new ArrayList<>();
+
+  public SimpleEvaluatorVistor(RecordBatch recordBatch) {
+    super();
+    this.recordBatch = recordBatch;
+  }
+
+  public List<AggregatingEvaluator> getAggregators() {
+    return aggregators;
+  }
+
+  @Override
+  public BasicEvaluator visitFunctionCall(FunctionCall call) {
+    List<BasicEvaluator> evals = new ArrayList<BasicEvaluator>();
+    boolean includesAggregates = false;
+    boolean onlyConstants = true;
+    for (LogicalExpression e : call) {
+      if (AggregateChecker.isAggregating(e)) includesAggregates = true;
+      if (!ConstantChecker.onlyIncludesConstants(e)) onlyConstants = false;
+      evals.add(e.accept(this, null));
+    }
+
+    FunctionArguments args = new FunctionArguments(onlyConstants, includesAggregates, evals, call);
+    if (call.getDefinition().isAggregating()) {
+      BasicEvaluator e = FunctionEvaluatorRegistry.getEvaluator(call.getDefinition().getName(), args, recordBatch);
+      aggregators.add((AggregatingEvaluator) e);
+      return e;
+    } else {
+      BasicEvaluator eval = FunctionEvaluatorRegistry.getEvaluator(call.getDefinition().getName(), args, recordBatch);
+      return eval;
+
+    }
+  }
+
+
+  @Override
+  public BasicEvaluator visitIfExpression(IfExpression ifExpr) {
+    return null;
+  }
+
+  @Override
+  public BasicEvaluator visitSchemaPath(SchemaPath path) {
+    return new FieldEvaluator(path, recordBatch);
+  }
+
+
+  @Override
+  public BasicEvaluator visitLongConstant(ValueExpressions.LongExpression intExpr) {
+    return new LongScalar(intExpr.getLong(), recordBatch.getContext());
+  }
+
+  @Override
+  public BasicEvaluator visitDoubleConstant(ValueExpressions.DoubleExpression dExpr) {
+    return new DoubleScalar(dExpr.getDouble(), recordBatch.getContext());
+  }
+
+  @Override
+  public BasicEvaluator visitBooleanConstant(ValueExpressions.BooleanExpression e) {
+    return new BooleanScalar(e.getBoolean(), recordBatch.getContext());
+  }
+
+  @Override
+  public BasicEvaluator visitQuotedStringConstant(ValueExpressions.QuotedString e) {
+    return new StringScalar(e.value, recordBatch.getContext());
+  }
+
+  @Override
+  public BasicEvaluator visitUnknown(LogicalExpression e, Void value) throws RuntimeException {
+    return null;
+  }
+}

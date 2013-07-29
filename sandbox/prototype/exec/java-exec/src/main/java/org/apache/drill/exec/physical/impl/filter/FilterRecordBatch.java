@@ -195,6 +195,6 @@ public class FilterRecordBatch implements RecordBatch{
   public WritableBatch getWritableBatch() {
     return WritableBatch.get(this);
   }
-  
-  
+
+
 }

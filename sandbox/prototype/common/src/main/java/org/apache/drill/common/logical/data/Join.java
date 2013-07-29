@@ -30,8 +30,8 @@ import java.util.Iterator;
 
 @JsonTypeName("join")
 public class Join extends LogicalOperatorBase {
-  private final LogicalOperator left;
-  private final LogicalOperator right;
+  private LogicalOperator left;
+  private LogicalOperator right;
   private final JoinType type;
   private final JoinCondition[] conditions;
 
@@ -45,7 +45,7 @@ public class Join extends LogicalOperatorBase {
       throw new ExpressionParsingException(String.format("Unable to determine join type for value '%s'.", val));
     }
   }
-  
+
   @JsonCreator
   public Join(@JsonProperty("left") LogicalOperator left, @JsonProperty("right") LogicalOperator right, @JsonProperty("conditions") JoinCondition[] conditions, @JsonProperty("type") String type) {
     super();
@@ -57,6 +57,17 @@ public class Join extends LogicalOperatorBase {
     this.type = JoinType.resolve(type);
 
   }
+  @JsonCreator
+  public Join(@JsonProperty("left") LogicalOperator left, @JsonProperty("right") LogicalOperator right, @JsonProperty("conditions") JoinCondition[] conditions, @JsonProperty("type") JoinType type) {
+    super();
+    this.conditions = conditions;
+    this.left = left;
+    this.right = right;
+    left.registerAsSubscriber(this);
+    right.registerAsSubscriber(this);
+    this.type = type;
+
+  }
 
   public LogicalOperator getLeft() {
     return left;
@@ -64,6 +75,22 @@ public class Join extends LogicalOperatorBase {
 
   public LogicalOperator getRight() {
     return right;
+  }
+
+  public void setLeft(LogicalOperator left) {
+    if(this.left != null){
+      this.left.unregisterSubscriber(this);      
+    }
+    this.left = left;
+    this.left.registerAsSubscriber(this);
+  }
+
+  public void setRight(LogicalOperator right) {
+    if(this.right != null){
+      this.right.unregisterSubscriber(this);
+    }
+    this.right = right;
+    this.right.registerAsSubscriber(this);
   }
 
   public JoinCondition[] getConditions() {

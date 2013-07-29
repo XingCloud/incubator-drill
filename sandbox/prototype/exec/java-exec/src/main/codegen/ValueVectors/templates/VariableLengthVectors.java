@@ -230,6 +230,11 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
 
     @Override
     public void randomizeData(){}
+
+    public void setObject(int index,Object obj)
+    {
+         set(index,(byte[]) obj) ;
+    }
   }
   
 }

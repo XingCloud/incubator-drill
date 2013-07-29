@@ -30,7 +30,7 @@ public abstract class AbstractBase implements PhysicalOperator{
     visitor.enter(this);
     if(this.iterator() == null) throw new IllegalArgumentException("Null iterator for pop." + this);
     for(PhysicalOperator o : this){
-      o.accept(visitor);  
+      o.accept(visitor);
     }
     visitor.leave(this);
   }

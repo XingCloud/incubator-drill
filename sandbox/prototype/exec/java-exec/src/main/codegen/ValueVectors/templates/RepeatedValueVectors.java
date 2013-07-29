@@ -307,6 +307,16 @@ import org.apache.drill.exec.record.TransferPair;
     public void reset(){
       
     }
+
+    public void setValueCount(int valueCount)
+    {
+
+    }
+
+    public void setObject(int index,Object obj)
+    {
+
+    }
     
   }
 }
