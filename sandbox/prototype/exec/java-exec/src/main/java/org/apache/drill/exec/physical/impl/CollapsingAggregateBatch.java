@@ -132,6 +132,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   public IterOutcome next() {
     if (!hasMore) {
       recordCount = 0;
+      outputVectors.clear();
       return IterOutcome.NONE;
     }
 

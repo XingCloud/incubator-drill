@@ -7,59 +7,27 @@
       info : "na"
     }
   },
-  graph : [ {
-    pop : "hbase-scan",
-    @id : 1,
-    entries : [ {
-      startDate : "20121201",
-      endDate : "20121201",
-      project : "sof-dsk",
-      eventPattern : "visit.*"
-    } ]
-  },
-  /*
+  graph : [
   {
-     @id: 2,
-     child: 1,
-     pop: "project",
-     exprs: [
-         {ref: "val",expr: "val"} ,
-         {ref: "uid",expr: "uid"}
-        ]
-  },
-  {
-    @id: 2,
-    child: 1,
-    pop: "filter",
-    expr: "val > 10"
-  },*/
-   {
-     pop: "segment",
-     @id : 2,
-     child : 1,
-     ref: "segment",
-     exprs:["val"]
-  },
-  {
-        pop : "PhysicalCollapsingAggregate",
-        @id : 3,
-        child : 2,
-        within : "segment",
-        carryovers : ["val" ],
-        aggregations : [ {
-          ref : "uid",
-          expr : "count(uid) "
-        }, {
-          ref : "uid",
-          expr : "count_distinct(uid) "
-        }, {
-          ref : "val",
-          expr : "sum(val) "
-        } ]
-   },
+                        @id:1,
+                        pop:"mock-scan",
+                        url: "http://apache.org",
+                        entries:[
+                        	{records: 100, types: [
+                        	  {name: "blue", type: "INT", mode: "REQUIRED"},
+                        	  {name: "red", type: "VARCHAR4", mode: "REQUIRED"},
+                        	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
+                        	]},
+                        	{records: 100, types: [
+                        	  {name: "blue", type: "INT", mode: "REQUIRED"},
+                        	  {name: "red", type: "VARCHAR4", mode: "REQUIRED"},
+                        	  {name: "green", type: "FLOAT4", mode: "REQUIRED"}
+                        	]}
+                        ]
+                    },
   {
     pop : "screen",
-    @id : 4,
-    child : 3
+    @id : 2,
+    child : 1
   } ]
 }

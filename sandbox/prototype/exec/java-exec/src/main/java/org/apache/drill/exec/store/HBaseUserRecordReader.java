@@ -83,8 +83,6 @@ public class HBaseUserRecordReader implements RecordReader {
             String nextDay = getNextRkString(day);
             enk = CombineBytes(Bytes.toBytes((short) property_id), Bytes.toBytes(nextDay));
         }
-        System.out.println(Bytes.toString(srk));
-        System.out.println(Bytes.toString(enk));
         String tableName = "property_" + project_id + "_index";
         TableScanner scanner = new TableScanner(srk, enk, tableName, null, false, false);
         scanners.add(scanner);
