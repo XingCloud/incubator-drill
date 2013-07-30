@@ -27,7 +27,7 @@ public class UnionRecordBatch implements RecordBatch {
   private BatchSchema outSchema;
   private List<ValueVector> outputVectors;
   private VectorHolder vh;
-  private Iterator<RecordBatch> iterator = null;
+  private Iterator<RecordBatch> incomingIterator = null;
   private RecordBatch current = null;
   private ArrayList<TransferPair> transfers;
   private int outRecordCount;
@@ -36,10 +36,8 @@ public class UnionRecordBatch implements RecordBatch {
     this.unionConfig = config;
     this.incoming = children;
     this.context = context;
-    this.iterator = incoming.iterator();
-    if (iterator.hasNext()) {
-      current = iterator.next();
-    }
+    this.incomingIterator = incoming.iterator();
+    current = incomingIterator.next();
     sv = null;
   }
 
@@ -62,8 +60,12 @@ public class UnionRecordBatch implements RecordBatch {
 
   @Override
   public void kill() {
-    for (RecordBatch batch : incoming) {
-      batch.kill();
+    if(current != null){
+      current.kill();
+      current = null;
+    }
+    for(;incomingIterator.hasNext();){
+      incomingIterator.next().kill();
     }
   }
 
@@ -101,11 +103,11 @@ public class UnionRecordBatch implements RecordBatch {
     IterOutcome upstream = current.next();
     logger.debug("Upstream... {}", upstream);
     while (upstream == IterOutcome.NONE) {
-      if (!iterator.hasNext()) {
+      if (!incomingIterator.hasNext()) {
         current = null;
         return IterOutcome.NONE;
       }
-      current = iterator.next();
+      current = incomingIterator.next();
       upstream = current.next();
     }
     switch (upstream) {
