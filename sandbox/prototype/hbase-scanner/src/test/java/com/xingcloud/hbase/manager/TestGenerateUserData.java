@@ -79,6 +79,7 @@ public class TestGenerateUserData {
           int recordNum=0;
           try {
               HTable table=new HTable(conf,tableName);
+              table.setWriteBufferSize(1024*1024*10);
               List<Properties> propertiesList=getProperties();
               String[] days={"20121201","20121202","20121203","20121204","20121205"};
               int forUnit=(batch/days.length)/propertiesList.size();
@@ -87,6 +88,8 @@ public class TestGenerateUserData {
               long t1=System.currentTimeMillis();
               long pret=System.currentTimeMillis();
               long post=pret;
+              List<Put> puts=new ArrayList<>();
+              Put put=null;
               for(int i=0;i< days.length;i++){
                   for(int l=0;l<propertiesList.size();l++){
                       Properties prop=propertiesList.get(l);
@@ -115,23 +118,39 @@ public class TestGenerateUserData {
                           System.out.println("get propVal "+ (propTypeT2-propTypeT1)+" ms");
 
                           for(int k=0;k<forUnit/valueSize;k++){
+                              long byTimet1=System.currentTimeMillis();
                               int uid=uidR.nextInt(uidSeed);
                               byte[] uidBytes=Bytes.toBytes(uid);
                               byte[] dayBytes=Bytes.toBytes(days[i]);
                               byte[] propIdBytes=Bytes.toBytes(propId);
                               byte[] hbaseValue=Bytes.toBytes(false);
                               byte[] rk= HBaseUserUtils.getRowKey(propIdBytes, dayBytes, valBytes);
-                              Put put=new Put(rk);
-                              put.add(Bytes.toBytes("val"),uidBytes,hbaseValue);
-                              table.put(put);
+                              long byTimet2=System.currentTimeMillis();
+                              System.out.println("get bytes "+(byTimet2-byTimet1)+" ms");
+                              if(k%50==0)
+                              {
+                                  put=new Put(rk);
+                                  put.setWriteToWAL(false);
+                              }
+                              put.add(Bytes.toBytes("val"), uidBytes, hbaseValue);
+                              if(k%1000==0)
+                                puts.add(put);
+                              if(puts.size()==10)
+                              {
+                                  table.put(puts);
+                                  puts=new ArrayList<>();
+                              }
+                              long t3=System.currentTimeMillis();
+                              System.out.println("put to table "+(t3-byTimet2)+" ms");
+                              if(t3-byTimet2>10)System.out.println("too long time");
                               recordNum++;
                               if(recordNum%cache==0){
                                   System.out.println(recordNum);
                                   pret=System.currentTimeMillis();
-                                  System.out.println(pret-post+" ms");
+                                  System.out.println("plus commit"+ (pret-post)+" ms");
                                   table.flushCommits();
                                   post=System.currentTimeMillis();
-                                  System.out.println(post-pret+" ms");
+                                  System.out.println("commit"+(post-pret)+" ms");
                               }
                           }
                           //System.out.println("create record num "+forUnit/valueSize+ "for day "+
