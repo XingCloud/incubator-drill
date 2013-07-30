@@ -52,7 +52,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   private MajorType[] carryOverTypes;
 
   private int outColumnsLength;
-  private List<MaterializedField> materializedFields;
+  private List<MaterializedField> materializedFieldList = Lists.newArrayList();
 
 
   public CollapsingAggregateBatch(FragmentContext context, PhysicalCollapsingAggregate config, RecordBatch incoming) {
@@ -72,7 +72,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       boundaryPath = new SchemaPath[]{config.getWithin()};
       boundaryKey = evaluatorFactory.getBasicEvaluator(incoming, config.getWithin());
     }
-    materializedFields = Lists.newArrayList();
     aggregatingEvaluators = new AggregatingEvaluator[config.getAggregations().length];
     aggNames = new SchemaPath[aggregatingEvaluators.length];
     carryovers = new BasicEvaluator[config.getCarryovers().length];
@@ -83,25 +82,23 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       aggregatingEvaluators[i] = evaluatorFactory.
         getAggregateEvaluator(incoming, config.getAggregations()[i].getExpr());
       if (aggregatingEvaluators[i] instanceof CountDistinctAggregator) {
-        BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0,context);
+        BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, context);
         ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within);
-      }else if(aggregatingEvaluators[i] instanceof AggregatingWrapperEvaluator){
+      } else if (aggregatingEvaluators[i] instanceof AggregatingWrapperEvaluator) {
         CountDistinctAggregator countDistinctAggregator =
-        ( (AggregatingWrapperEvaluator ) aggregatingEvaluators[i] ).getCountDistinctAggregator() ;
-        if(countDistinctAggregator != null){
-          BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0,context);
+          ((AggregatingWrapperEvaluator) aggregatingEvaluators[i]).getCountDistinctAggregator();
+        if (countDistinctAggregator != null) {
+          BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, context);
           countDistinctAggregator.setWithin(within);
         }
       }
       aggNames[i] = config.getAggregations()[i].getRef();
-      materializedFields.add(MaterializedField.create(aggNames[i], Types.required(MinorType.BIGINT)));
     }
 
 
     for (int i = 0; i < carryovers.length; i++) {
       carryovers[i] = evaluatorFactory.getBasicEvaluator(incoming, config.getCarryovers()[i]);
       carryoverNames[i] = config.getCarryovers()[i];
-      materializedFields.add(MaterializedField.create(carryoverNames[i], Types.required(MinorType.VARCHAR4)));
     }
 
     outColumnsLength = aggNames.length + carryoverNames.length;
@@ -170,22 +167,38 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   }
 
 
+  private void buildSchema() {
+    SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
+    for (int i = 0; i < aggNames.length; i++) {
+
+      MaterializedField f = MaterializedField.create(aggNames[i], Types.required(MinorType.BIGINT));
+      schemaBuilder.addField(f);
+      materializedFieldList.add(f);
+    }
+    for (int i = 0; i < carryoverNames.length; i++) {
+      MaterializedField f = MaterializedField.create(carryoverNames[i], carryOverTypes[i]);
+      schemaBuilder.addField(f);
+      materializedFieldList.add(f);
+    }
+
+    batchSchema = schemaBuilder.build();
+  }
+
   private void writeOutPut() {
 
-    SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
     ValueVector v;
     recordCount = aggValues.size();
     outputVectors.clear();
 
-    for (MaterializedField f : materializedFields) {
-      schemaBuilder.addField(f);
+    buildSchema();
+
+    for (MaterializedField f : materializedFieldList) {
       v = TypeHelper.getNewVector(f, context.getAllocator());
       AllocationHelper.allocate(v, recordCount, 50);
       v.getMutator().setValueCount(recordCount);
       outputVectors.add(v);
     }
 
-    batchSchema = schemaBuilder.build();
 
     int i = 0;
     for (AggValue aggValue : aggValues.values()) {
