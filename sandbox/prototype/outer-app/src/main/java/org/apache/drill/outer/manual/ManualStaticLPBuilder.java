@@ -1,4 +1,4 @@
-package org.apache.drill.common.logical.manual;
+package org.apache.drill.outer.manual;
 
 import static org.apache.drill.common.enums.Aggregator.COUNT;
 import static org.apache.drill.common.enums.Aggregator.COUNT_DISTINCT;
@@ -11,15 +11,17 @@ import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_USE
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.FieldReferenceBuilder.buildColumn;
 import static org.apache.drill.common.util.FieldReferenceBuilder.buildTable;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.enums.BinaryOperator;
-import org.apache.drill.common.enums.GroupByType;
-import org.apache.drill.common.expression.*;
+import org.apache.drill.common.expression.FieldReference;
+import org.apache.drill.common.expression.FunctionCall;
+import org.apache.drill.common.expression.FunctionRegistry;
+import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.expression.ValueExpressions;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.StorageEngineConfig;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
@@ -31,6 +33,8 @@ import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.common.logical.data.Segment;
 import org.apache.drill.common.logical.data.Store;
 import org.apache.drill.common.util.Selections;
+import org.apache.drill.outer.enums.GroupByType;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,7 +51,7 @@ public class ManualStaticLPBuilder {
   public static class Grouping {
     private String groupby;
 
-    private GroupByType groupByType;
+    private org.apache.drill.outer.enums.GroupByType groupByType;
 
     private String func;
 
@@ -109,7 +113,7 @@ public class ManualStaticLPBuilder {
     try {
       DEFAULT_LOGICAL_PLAN_PROPERTIES = mapper.readValue(new String(
         "{\"type\":\"APACHE_DRILL_LOGICAL\",\"version\":\"1\",\"generator\":{\"type\":\"manual\",\"info\":\"na\"}}")
-                                                           .getBytes(), PlanProperties.class);
+        .getBytes(), PlanProperties.class);
     } catch (IOException e) {
       DEFAULT_LOGICAL_PLAN_PROPERTIES = null;
     }
@@ -159,14 +163,14 @@ public class ManualStaticLPBuilder {
                                                                 BinaryOperator operator) {
     List<LogicalExpression> lrLogicalExprList = new ArrayList<>(2);
     String wholeColumnName = tableName + "." + column;
-    FieldReference fr = new FieldReference(wholeColumnName, ExpressionPosition.UNKNOWN);
+    FieldReference fr = new FieldReference(wholeColumnName, null);
     lrLogicalExprList.add(fr);
     if (columnValue instanceof Number) {
-      lrLogicalExprList.add(ValueExpressions.getNumericExpression(columnValue.toString(),ExpressionPosition.UNKNOWN));
+      lrLogicalExprList.add(ValueExpressions.getNumericExpression(columnValue.toString(), null));
     } else {
-      lrLogicalExprList.add(new ValueExpressions.QuotedString(columnValue.toString(),ExpressionPosition.UNKNOWN));
+      lrLogicalExprList.add(new ValueExpressions.QuotedString(columnValue.toString(), null));
     }
-    return functionRegistry.createExpression(operator.getSqlName(),ExpressionPosition.UNKNOWN, lrLogicalExprList);
+    return functionRegistry.createExpression(operator.getSqlName(), null, lrLogicalExprList);
   }
 
 //  private static LogicalExpression buildBinaryLogicalExpression(LogicalExpression left, LogicalExpression right) {
@@ -187,7 +191,7 @@ public class ManualStaticLPBuilder {
 
     while (counter < size) {
       right = expressions[counter];
-      left = functionRegistry.createExpression(AND.getSqlName(),ExpressionPosition.UNKNOWN, left, right);
+      left = functionRegistry.createExpression(AND.getSqlName(), null, left, right);
       ++counter;
     }
 
@@ -203,7 +207,7 @@ public class ManualStaticLPBuilder {
     String eventTable = projectId + HBASE_TABLE_PREFIX_EVENT;
     String userTable = projectId + HBASE_TABLE_PREFIX_USER;
 
-    boolean hasSegment = segmentMap == null || segmentMap.isEmpty();
+    boolean hasSegment = MapUtils.isNotEmpty(segmentMap);
     boolean groupingQuery = grouping != null;
 
     boolean needJoin = hasSegment || (groupingQuery && USER_PROPERTY.equals(grouping.getGroupByType())
@@ -267,17 +271,17 @@ public class ManualStaticLPBuilder {
       String groupBy = grouping.getGroupby();
       if (GroupByType.INTERNAL_FUNC.equals(groupByType)) {
         String func = grouping.getFunc();
-        singleGroupByLE = functionRegistry.createExpression(func, ExpressionPosition.UNKNOWN,new FieldReference(groupBy,ExpressionPosition.UNKNOWN));
+        singleGroupByLE = functionRegistry.createExpression(func, null, new FieldReference(groupBy, null));
         groupByRef = eventTable + "." + grouping.getFunc() + "." + groupBy;
-        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef,ExpressionPosition.UNKNOWN));
+        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef, null));
       } else if (GroupByType.EVENT.equals(groupByType)) {
         groupByRef = eventTable + "." + groupBy;
-        singleGroupByLE = new FieldReference(groupByRef,ExpressionPosition.UNKNOWN);
-        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef,ExpressionPosition.UNKNOWN));
+        singleGroupByLE = new FieldReference(groupByRef, null);
+        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef, null));
       } else {
         groupByRef = userTable + "." + groupBy;
-        singleGroupByLE = new FieldReference(groupByRef,ExpressionPosition.UNKNOWN);
-        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef,ExpressionPosition.UNKNOWN));
+        singleGroupByLE = new FieldReference(groupByRef, null);
+        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef, null));
       }
       if (needJoin) {
         segment.setInput(join);
@@ -296,26 +300,26 @@ public class ManualStaticLPBuilder {
     if (groupingQuery) {
       carryovers = new FieldReference[1];
       if (grouping.getGroupByType().equals(GroupByType.EVENT)) {
-        carryovers[0] = new FieldReference(grouping.getFunc() + "(" + eventTable + "." + grouping.getGroupby() + ")",ExpressionPosition.UNKNOWN);
+        carryovers[0] = new FieldReference(grouping.getFunc() + "(" + eventTable + "." + grouping.getGroupby() + ")", null);
       } else if (grouping.getGroupByType().equals(GroupByType.INTERNAL_FUNC)) {
-        carryovers[0] = new FieldReference(eventTable + "." + grouping.getGroupby(),ExpressionPosition.UNKNOWN);
+        carryovers[0] = new FieldReference(eventTable + "." + grouping.getGroupby(), null);
       } else {
-        carryovers[0] = new FieldReference(userTable + "." + grouping.getGroupby(),ExpressionPosition.UNKNOWN);
+        carryovers[0] = new FieldReference(userTable + "." + grouping.getGroupby(), null);
       }
     }
 
     String aggrColumn = eventTable + ".uid";
     FunctionCall fc;
-    FieldReference aggrOn = new FieldReference(aggrColumn,ExpressionPosition.UNKNOWN);
-    fc = (FunctionCall) functionRegistry.createExpression(COUNT.getKeyWord(),ExpressionPosition.UNKNOWN, aggrOn);
+    FieldReference aggrOn = new FieldReference(aggrColumn, null);
+    fc = (FunctionCall) functionRegistry.createExpression(COUNT.getKeyWord(), null, aggrOn);
     namedExpressions[0] = new NamedExpression(fc, buildColumn("event_count"));
 
-    fc = (FunctionCall) functionRegistry.createExpression(COUNT_DISTINCT.getKeyWord(),ExpressionPosition.UNKNOWN, aggrOn);
+    fc = (FunctionCall) functionRegistry.createExpression(COUNT_DISTINCT.getKeyWord(), null, aggrOn);
     namedExpressions[1] = new NamedExpression(fc, buildColumn("user_number"));
 
     aggrColumn = eventTable + ".value";
-    aggrOn = new FieldReference(aggrColumn,ExpressionPosition.UNKNOWN);
-    fc = (FunctionCall) functionRegistry.createExpression(SUM.getKeyWord(),ExpressionPosition.UNKNOWN, aggrOn);
+    aggrOn = new FieldReference(aggrColumn, null);
+    fc = (FunctionCall) functionRegistry.createExpression(SUM.getKeyWord(), null, aggrOn);
     namedExpressions[2] = new NamedExpression(fc, buildColumn("event_sum"));
     collapsingAggregate = new CollapsingAggregate(within, target, carryovers, namedExpressions);
 
@@ -348,8 +352,8 @@ public class ManualStaticLPBuilder {
     try {
       ObjectMapper mapper = new ObjectMapper();
       return new Store("console",
-                       mapper.readValue(new String("{\"file\":\"console:///stdout\"}").getBytes(), JSONOptions.class),
-                       null);
+        mapper.readValue(new String("{\"file\":\"console:///stdout\"}").getBytes(), JSONOptions.class),
+        null);
     } catch (Exception e) {
       return null;
     }
@@ -365,7 +369,7 @@ public class ManualStaticLPBuilder {
     segmentMap.put("register_time", "2013-07-12");
     System.out.println("---------------------------------");
     logicalPlan = buildStaticLogicalPlanManually("ddt", "visit.*", "20130701", null,
-                                                 Grouping.buildUserGroup("language"));
+      Grouping.buildUserGroup("language"));
     System.out.println(logicalPlan.toJsonString(c));
   }
 }
