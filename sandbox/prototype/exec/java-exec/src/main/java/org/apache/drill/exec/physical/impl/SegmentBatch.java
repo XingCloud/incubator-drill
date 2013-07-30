@@ -210,6 +210,11 @@ public class SegmentBatch extends BaseRecordBatch {
     public int hashCode() {
       return exprValues != null ? Arrays.hashCode(exprValues) : 0;
     }
+
+    @Override
+    public String toString() {
+      return Arrays.toString(exprValues) ;
+    }
   }
 
 

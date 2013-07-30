@@ -18,38 +18,18 @@
     } ]
   },
   {
-     pop: "hbase-user-scan",
-     @id: 2,
-     entries:[{
-         pid: "sof-dsk",
-         property: "language",
-         val :"null"
-     }]
-  },
-  {
-      pop : "join",
-      @id : 3,
-      left : 1,
-      right: 2,
-      condition:
-        { relationship :"==",
-       left: "uid",
-       right: "uid"
-       }
-  },
-  {
         pop: "segment",
-        @id : 4,
-        child : 3,
-        ref: "segment",
-        exprs:["language"]
-     },
+        @id : 2,
+        child : 1,
+        ref: "min5",
+        exprs:["min5(ts)"]
+    },
    {
       pop : "PhysicalCollapsingAggregate",
-      @id : 5,
-      child : 4,
-      within : "segment",
-      carryovers : ["language" ],
+      @id : 3,
+      child : 2,
+      within : "min5",
+      carryovers : ["ts" ],
       aggregations : [ {
         ref : "uid",
         expr : "count(uid) "
@@ -63,7 +43,7 @@
     },
     {
     pop : "screen",
-    @id : 6,
-    child : 5
+    @id : 4,
+    child : 3
   } ]
 }
