@@ -17,15 +17,14 @@
  ******************************************************************************/
 package org.apache.drill.exec.work;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.yammer.metrics.Timer;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.impl.RootExec;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus.FragmentState;
 import org.apache.drill.exec.rpc.user.UserServer.UserClientConnection;
 
-import com.yammer.metrics.Timer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Responsible for running a single fragment on a single Drillbit. Listens/responds to status request and cancellation
@@ -92,6 +91,7 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
       }
       
     }catch(Exception ex){
+      ex.printStackTrace();
       logger.debug("Caught exception while running fragment: {} ", ex);
       internalFail(ex);
     }finally{

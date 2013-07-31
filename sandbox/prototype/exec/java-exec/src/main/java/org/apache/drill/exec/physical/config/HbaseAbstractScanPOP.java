@@ -53,14 +53,14 @@ public class HbaseAbstractScanPOP extends AbstractScan<HbaseAbstractScanPOP.Hbas
 
     public static class HbaseAbstractScanEntry implements ReadEntry {
         private String tableName;
-        private byte[] startRowKey;
-        private byte[] endRowKey;
+        private String startRowKey;
+        private String endRowKey;
         private List<LogicalExpression> filters;
         private List<NamedExpression>   projections;
 
         @JsonCreator
-        public HbaseAbstractScanEntry(@JsonProperty("table")String tableName,@JsonProperty("startRowKey")byte[] startRowKey,
-                                      @JsonProperty("endRowKey")byte[] endRowKey,@JsonProperty("filters")List<LogicalExpression> filters,
+        public HbaseAbstractScanEntry(@JsonProperty("table")String tableName,@JsonProperty("startRowKey")String startRowKey,
+                                      @JsonProperty("endRowKey")String endRowKey,@JsonProperty("filters")List<LogicalExpression> filters,
                                       @JsonProperty("projections")List<NamedExpression> projections){
             this.tableName=tableName;
             this.startRowKey=startRowKey;
@@ -82,11 +82,11 @@ public class HbaseAbstractScanPOP extends AbstractScan<HbaseAbstractScanPOP.Hbas
             return tableName;
         }
 
-        public byte[] getStartRowKey() {
+        public String getStartRowKey() {
             return startRowKey;
         }
 
-        public byte[] getEndRowKey() {
+        public String getEndRowKey() {
             return endRowKey;
         }
 

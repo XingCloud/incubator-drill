@@ -35,8 +35,8 @@ public class TestGenerateUserData {
         GenerateData(1000*1000);
     }
     @Test
-    public  void generateData10000W(){
-        GenerateData(1000*1000*100);
+    public  void generateData1000W(){
+        GenerateData(1000*1000*10);
     }
     @Test
     public void test(){
@@ -80,6 +80,7 @@ public class TestGenerateUserData {
           try {
               HTable table=new HTable(conf,tableName);
               List<Properties> propertiesList=getProperties();
+              System.out.println("properties size "+propertiesList.size());
               String[] days={"20121201","20121202","20121203","20121204","20121205"};
               int forUnit=(batch/days.length)/propertiesList.size();
               table.setAutoFlush(false);
@@ -87,6 +88,8 @@ public class TestGenerateUserData {
               long t1=System.currentTimeMillis();
               long pret=System.currentTimeMillis();
               long post=pret;
+              Put put=null;
+              int emptyPropValueSize=0;
               for(int i=0;i< days.length;i++){
                   for(int l=0;l<propertiesList.size();l++){
                       Properties prop=propertiesList.get(l);
@@ -94,7 +97,10 @@ public class TestGenerateUserData {
                       Random uidR=new Random(uidSeed);
                       short propId=(short)prop.getId();
                       List<Object> Values=propertyValue.get(prop.getPropertyName());
-                      if(Values.size()==0)continue;
+                      if(Values.size()==0){
+                          emptyPropValueSize++;
+                          continue;
+                      }
                       int valueSize=Values.size();
                       for(int j=0;j<Values.size();j++){
                           Object o=Values.get(j);
@@ -121,9 +127,10 @@ public class TestGenerateUserData {
                               byte[] propIdBytes=Bytes.toBytes(propId);
                               byte[] hbaseValue=Bytes.toBytes(false);
                               byte[] rk= HBaseUserUtils.getRowKey(propIdBytes, dayBytes, valBytes);
-                              Put put=new Put(rk);
+                              if(k%1000==0&&put!=null)table.put(put);
+                              if(k%1000==0)
+                                  put=new Put(rk);
                               put.add(Bytes.toBytes("val"),uidBytes,hbaseValue);
-                              table.put(put);
                               recordNum++;
                               if(recordNum%cache==0){
                                   System.out.println(recordNum);
@@ -145,6 +152,7 @@ public class TestGenerateUserData {
               table.flushCommits();
 
               long t2=System.currentTimeMillis();
+              System.out.println("empty propvalue size "+emptyPropValueSize+" prop size "+propertiesList.size()*days.length);
               System.out.println("generate data into hbase costing "+(t2-t1)+"ms");
               System.out.println("create record num "+recordNum);
               for(int i=0;i<days.length;i++){

@@ -7,6 +7,8 @@ import com.xingcloud.meta.TableInfo;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.serde.Constants;
+import org.apache.thrift.TException;
 import org.junit.Test;
 
 import java.util.List;
@@ -21,7 +23,8 @@ public class TestDefaultDrillHiveMetaClient {
     String tableName = "testtable100W_deu";
     String dbName = "test_xa";
     String userTableName = "user_age";
-    String userIndexName = "user_index_age";
+    String userIndexName = "property_testtable_100W_index";
+    String userRegPropName="register_template_prop_index";
     deu.setTableName(tableName);
     deu.setDbName(dbName);
     client.dropTable(dbName, tableName);
@@ -79,17 +82,23 @@ public class TestDefaultDrillHiveMetaClient {
     TableInfo.setPrimaryKeyPattern(user, "${uid}");
     client.createTable(user);
     
-    
+
+
+
+    createPropRegisterTable();
+
     Table userIndex = TableInfo.newTable();
     userIndex.setDbName(dbName);
     userIndex.setTableName(userIndexName);
     client.dropTable(dbName, userIndexName);
-    FieldSchema propNumber = new FieldSchema("propnumber", "tinyint","TEXT");
-    HBaseFieldInfo.setColumnType(userIndex, propNumber, HBaseFieldInfo.FieldType.rowkey, null, null, HBaseFieldInfo.DataSerType.TEXT, 0);    
+    FieldSchema propNumber = new FieldSchema("propnumber", Constants.SMALLINT_TYPE_NAME,"BINARY:2");
+    HBaseFieldInfo.setColumnType(userIndex, propNumber, HBaseFieldInfo.FieldType.rowkey, null, null, HBaseFieldInfo.DataSerType.BINARY, 2);
     dateField = new FieldSchema("date", "int", "TEXT:8");
     HBaseFieldInfo.setColumnType(userIndex, dateField, HBaseFieldInfo.FieldType.rowkey, null, null, HBaseFieldInfo.DataSerType.TEXT, 8);
-    valueField = new FieldSchema("value", "binary", "BINARY");
-    HBaseFieldInfo.setColumnType(userIndex, valueField, HBaseFieldInfo.FieldType.rowkey, null, null, HBaseFieldInfo.DataSerType.BINARY, 8);
+    //valueField = new FieldSchema("value", "bigint", "BINARY");
+    //HBaseFieldInfo.setColumnType(userIndex, valueField, HBaseFieldInfo.FieldType.rowkey, null, null, HBaseFieldInfo.DataSerType.BINARY, 8);
+    //FieldSchema strValueField= new FieldSchema("value_string","string","TEXT");
+    //HBaseFieldInfo.setColumnType(userIndex,strValueField, HBaseFieldInfo.FieldType.rowkey,null,null, HBaseFieldInfo.DataSerType.WORD,0);
     uidField = new FieldSchema("uid", "int", "BINARY:4");
     HBaseFieldInfo.setColumnType(userIndex, uidField, HBaseFieldInfo.FieldType.cqname, "value", null, HBaseFieldInfo.DataSerType.BINARY, 4);
     
@@ -97,13 +106,14 @@ public class TestDefaultDrillHiveMetaClient {
     userIndex.getSd().addToCols(dateField);
     userIndex.getSd().addToCols(valueField);
     userIndex.getSd().addToCols(uidField);
-    TableInfo.setPrimaryKeyPattern(userIndex, "${propnumber}_${date}_${value}");
+    TableInfo.setPrimaryKeyPattern(userIndex, "${propnumber}${date}");
     client.createTable(userIndex);
     
     Table table = client.getTable(dbName, tableName);
     printColumns(table);
     printColumns(client.getTable(dbName, userTableName));
     printColumns(client.getTable(dbName, userIndexName));
+    printColumns(client.getTable(dbName,userRegPropName));
     
   }
 
@@ -115,4 +125,37 @@ public class TestDefaultDrillHiveMetaClient {
       System.out.println("fieldInfo = " + fieldInfo);
     }
   }
+
+  private void createPropRegisterTable() throws TException {
+       String[] propName={"coin_buy","coin_promotion","coin_initialstatus","grade","pay_amount",
+                          "first_pay_time","register_time","last_login_time","last_pay_time",
+                           "nation","geoip","identifier","platform","language","version",
+                           "ref","ref0","ref1","ref2","ref3","ref4"};
+       String tableName="register_template_prop_index";
+       String dbName="test_xa";
+       HiveConf conf = new HiveConf();
+       DefaultDrillHiveMetaClient client = new DefaultDrillHiveMetaClient(conf);
+       Table regPropIndex = TableInfo.newTable();
+       regPropIndex.setDbName(dbName);
+       regPropIndex.setTableName(tableName);
+       client.dropTable(dbName, tableName);
+       for(int i=0;i<21;i++){
+           if(i<9){
+               FieldSchema field=new FieldSchema(propName[i],"bigint","BINARY:8");
+               regPropIndex.getSd().addToCols(field);
+               HBaseFieldInfo.setColumnType(regPropIndex,field, HBaseFieldInfo.FieldType.rowkey,null,null,
+                       HBaseFieldInfo.DataSerType.BINARY,8);
+           }
+           else{
+              FieldSchema field=new FieldSchema(propName[i],"string","TEXT");
+              regPropIndex.getSd().addToCols(field);
+              HBaseFieldInfo.setColumnType(regPropIndex,field, HBaseFieldInfo.FieldType.rowkey,null,null,
+                      HBaseFieldInfo.DataSerType.WORD,0);
+           }
+       }
+       client.createTable(regPropIndex);
+  }
+
+
+
 }

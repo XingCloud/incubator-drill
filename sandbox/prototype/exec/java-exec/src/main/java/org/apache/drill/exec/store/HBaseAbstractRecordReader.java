@@ -3,6 +3,7 @@ package org.apache.drill.exec.store;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xingcloud.hbase.util.HBaseUserUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
@@ -70,18 +71,35 @@ public class HBaseAbstractRecordReader implements RecordReader {
   }
 
   private void initConfig() {
-    startRowKey = config.getStartRowKey();
-    endRowKey = config.getEndRowKey();
+    if(config.getStartRowKey().equals("null")){
+        byte[] propId=Bytes.toBytes((short)3);
+        byte[] srtDay=Bytes.toBytes("20121201");
+        startRowKey= HBaseUserUtils.getRowKey(propId,srtDay);
+    }
+    else
+        startRowKey = Bytes.toBytes(config.getStartRowKey());
+    if(config.getEndRowKey().equals("null")){
+        byte[] propId=Bytes.toBytes((short)3);
+        byte[] endDay=Bytes.toBytes("20121202");
+        startRowKey= HBaseUserUtils.getRowKey(propId,endDay);
+    }
+    else
+       endRowKey = Bytes.toBytes(config.getEndRowKey());
     tableName = config.getTableName();
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
     sourceRefMap = new HashMap<>();
+    List<NamedExpression> logProjection = config.getProjections();
+    List<String> options=new ArrayList<>();
+    for(int i=0;i<logProjection.size();i++){
+        options.add((String)((SchemaPath)logProjection.get(i).getExpr()).getPath());
+    }
     try {
-      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName);
+      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName,options);
       for (HBaseFieldInfo col : cols) {
         fieldInfoMap.put(col.fieldSchema.getName(), col);
       }
-      List<NamedExpression> logProjection = config.getProjections();
+
       for (NamedExpression e : logProjection) {
         String ref = (String) e.getRef().getPath();
         String name = (String) ((SchemaPath) e.getExpr()).getPath();
@@ -94,7 +112,7 @@ public class HBaseAbstractRecordReader implements RecordReader {
       }
       filters = config.getFilters();
 
-      primaryRowKeyParts = TableInfo.getRowKey(tableName);
+      primaryRowKeyParts = TableInfo.getRowKey(tableName,options);
       primaryRowKey = new ArrayList<>();
       for (KeyPart kp : primaryRowKeyParts) {
         if (kp.getType() == KeyPart.Type.field)
@@ -231,6 +249,10 @@ public class HBaseAbstractRecordReader implements RecordReader {
         scanType = new ScanType(info.fieldSchema.getName(), MinorType.BIGINT,
           DataMode.REQUIRED);
         return scanType.getMajorType();
+      case "smallint":
+        scanType =new ScanType(info.fieldSchema.getName(),MinorType.SMALLINT,
+                DataMode.REQUIRED);
+        return scanType.getMajorType();
     }
     return null;
   }
@@ -257,6 +279,17 @@ public class HBaseAbstractRecordReader implements RecordReader {
       initTableScanner();
       init = true;
     }
+
+    for (ValueVector v : valueVectors) {
+        if (v instanceof FixedWidthVector) {
+            ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
+        } else if (v instanceof VariableWidthVector) {
+            ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
     int recordSetSize = 0;
     while (true) {
       if (currentScannerIndex > scanners.size() - 1) return recordSetSize;
@@ -329,15 +362,15 @@ public class HBaseAbstractRecordReader implements RecordReader {
         valueVector.getMutator().setValueCount(recordSetSize);
         if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof IntVector) {
-        ((IntVector) valueVector).getMutator().set(recordSetSize, (short) result);
+        ((IntVector) valueVector).getMutator().set(recordSetSize, (int) result);
         valueVector.getMutator().setValueCount(recordSetSize);
         if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof BigIntVector) {
-        ((BigIntVector) valueVector).getMutator().set(recordSetSize, (int) result);
+        ((BigIntVector) valueVector).getMutator().set(recordSetSize, (long) result);
         valueVector.getMutator().setValueCount(recordSetSize);
         if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof SmallIntVector) {
-        ((SmallIntVector) valueVector).getMutator().set(recordSetSize, (int) result);
+        ((SmallIntVector) valueVector).getMutator().set(recordSetSize, (short) result);
         valueVector.getMutator().setValueCount(recordSetSize);
         if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof TinyIntVector) {
@@ -392,19 +425,8 @@ public class HBaseAbstractRecordReader implements RecordReader {
           if (optional && fieldEndindex > rk.length) return;
           byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
           String ret = Bytes.toString(result);
-          switch (info.fieldSchema.getType()) {
-            case "int":
-              rkObjectMap.put(info.fieldSchema.getName(), Integer.parseInt(ret));
-              break;
-            case "tinyint":
-              rkObjectMap.put(info.fieldSchema.getName(), ret.charAt(0));
-              break;
-            case "string":
-              rkObjectMap.put(info.fieldSchema.getName(), ret);
-              break;
-            case "bigint":
-              rkObjectMap.put(info.fieldSchema.getName(), Long.parseLong(ret));
-          }
+          Object o=parseString(ret,info.fieldSchema.getType());
+          rkObjectMap.put(info.fieldSchema.getName(),o);
           index = fieldEndindex;
         } else if (info.serType == HBaseFieldInfo.DataSerType.WORD) {
           if (i < keyParts.size() - 1) {
@@ -436,7 +458,8 @@ public class HBaseAbstractRecordReader implements RecordReader {
           if (fieldEndindex != index) {
             byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
             String ret = Bytes.toString(result);
-            rkObjectMap.put(info.fieldSchema.getName(), ret);
+            Object o=parseString(ret,info.fieldSchema.getType());
+            rkObjectMap.put(info.fieldSchema.getName(),o);
             index = fieldEndindex;
           } else {
             return;
@@ -449,6 +472,7 @@ public class HBaseAbstractRecordReader implements RecordReader {
           result = Arrays.copyOfRange(rk, index, fieldEndindex);
           Object ob = parseBytes(result, info.fieldSchema.getType());
           rkObjectMap.put(info.fieldSchema.getName(), ob);
+          index=fieldEndindex;
         }
       } else if (kp.getType() == KeyPart.Type.optionalgroup) {
         List<KeyPart> optionalKeyParts = kp.getOptionalGroup();
@@ -474,6 +498,15 @@ public class HBaseAbstractRecordReader implements RecordReader {
         for (int i = 4 - orig.length; i < 4; i++)
           result[i] = orig[index++];
         return Bytes.toInt(result);
+      case "smallint":
+        result=new byte[2];
+          for(int i=0;i<2-orig.length;i++){
+              result[i]=0;
+          }
+          for(int i=2-orig.length;i<2;i++){
+              result[i]=orig[index++];
+          }
+        return Bytes.toShort(result);
       case "tinyint":
         return orig[0];
       case "string":
@@ -488,6 +521,23 @@ public class HBaseAbstractRecordReader implements RecordReader {
     }
     return null;
   }
+
+  private Object parseString(String orig, String type){
+      switch (type) {
+          case "int":
+              return Integer.parseInt(orig);
+          case "tinyint":
+              return type.charAt(0);
+          case "smallint":
+              return (short)Integer.parseInt(orig);
+          case "string":
+              return orig;
+          case "bigint":
+               return Long.parseLong(orig);
+      }
+      return null;
+  }
+
 
   @Override
   public void cleanup() {

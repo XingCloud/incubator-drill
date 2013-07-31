@@ -70,10 +70,28 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
     super.createTable(tbl);    
   }
 
-  public static Table GetTable(String tableName) throws Exception{
+  public static Table GetTable(String tableName,List<String> options) throws Exception{
     HiveConf conf=new HiveConf();
     HiveMetaStoreClient client=new HiveMetaStoreClient(conf);
     Table table=client.getTable("test_xa",tableName);
+    if(tableName.endsWith("index")){
+        String regPropTableName="register_template_prop_index";
+        Table regPropTable=client.getTable("test_xa",regPropTableName);
+        List<FieldSchema> fieldSchemas=regPropTable.getSd().getCols();
+        for(int i=0;i<fieldSchemas.size();i++){
+            if(options.contains(fieldSchemas.get(i).getName())){
+               HBaseFieldInfo info=HBaseFieldInfo.getColumnType(regPropTable,fieldSchemas.get(i));
+               String primaryRK=TableInfo.getPrimaryKeyPattern(table);
+               primaryRK+="${"+fieldSchemas.get(i).getName()+"}";
+               table.getSd().addToCols(fieldSchemas.get(i));
+               HBaseFieldInfo.setColumnType(table,fieldSchemas.get(i),info.fieldType,info.cfName,
+                                            info.cqName,info.serType,info.serLength);
+               TableInfo.setPrimaryKeyPattern(table,primaryRK);
+               break;
+            }
+        }
+
+    }
     return table;
   }
   

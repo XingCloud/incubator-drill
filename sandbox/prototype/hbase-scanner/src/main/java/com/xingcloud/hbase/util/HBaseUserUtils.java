@@ -28,4 +28,17 @@ public class HBaseUserUtils {
         return rk;
     }
 
+    public static byte[] getRowKey(byte[] propId,byte[] date){
+        int length=propId.length+date.length;
+        byte[] rk=new byte[length];
+        int index=0;
+        for(int i=0;i<propId.length;i++){
+            rk[index++]=propId[i];
+        }
+        for(int i=0;i<date.length;i++){
+            rk[index++]=date[i];
+        }
+        return rk;
+    }
+
 }
