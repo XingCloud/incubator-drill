@@ -81,6 +81,8 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
   }
 
   public static Table GetTable(String tableName,List<String> options) throws Exception{
+    if(tableName.contains("-"))
+        tableName=tableName.replaceAll("-","Mns");
     HiveConf conf=new HiveConf();
     HiveMetaStoreClient client=new HiveMetaStoreClient(conf);
     Table table=client.getTable("test_xa",tableName);

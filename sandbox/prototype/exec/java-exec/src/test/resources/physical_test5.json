@@ -12,9 +12,9 @@
       pop : "hbase-scan",
       @id : 1,
       entries : [ {
-          table : "testtable100W_deu",
-          startRowKey : "20121201",
-          endRowKey : "20121202",
+          table : "sof-dsk_deu",
+          startRowKey : "20130601",
+          endRowKey : "20120602",
           filters : [],
           projections: [
           {
@@ -28,6 +28,10 @@
            {
              ref: "val",
              expr: "value"
+            },
+            {
+            ref: "ts",
+            expr: "timestamp"
             }
           ]
       } ]
