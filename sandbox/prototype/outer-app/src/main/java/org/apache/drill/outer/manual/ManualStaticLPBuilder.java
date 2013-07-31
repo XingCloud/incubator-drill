@@ -232,27 +232,6 @@ public class ManualStaticLPBuilder {
       }
     }
 
-    // Build fixed selections
-//    LogicalExpression condition1 = buildEventExpression(eventTable, event);
-//    LogicalExpression condition2 = buildSingleLogicalExpression(eventTable, "date", date, EQ);
-//    LogicalExpression combine = buildBinaryLogicalExpression(condition1, condition2);
-//    Filter eventfilter = new Filter(combine);
-//    eventfilter.setInput(fromEventTable);
-//    logicalOperators.add(eventfilter);
-//
-//    Filter userFilter = null;
-//    if (needJoin) {
-//      LogicalExpression[] userConditions = new LogicalExpression[segmentMap.size()];
-//      int counter = 0;
-//      for (Map.Entry<String, Object> entry : segmentMap.entrySet()) {
-//        userConditions[counter] = buildSingleLogicalExpression(userTable, entry.getKey(), entry.getValue(), EQ);
-//      }
-//      combine = buildBinaryLogicalExpression(userConditions);
-//      userFilter = new Filter(combine);
-//      userFilter.setInput(fromUserTable);
-//      logicalOperators.add(userFilter);
-//    }
-
     Join join = null;
     JoinCondition[] joinConditions;
     if (needJoin) {

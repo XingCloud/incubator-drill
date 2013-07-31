@@ -25,44 +25,45 @@ import java.util.List;
 @JsonTypeName("hbase-user-scan")
 public class HbaseUserScanPOP extends AbstractScan<HbaseUserScanPOP.HbaseUserScanEntry> {
 
+  @JsonCreator
+  public HbaseUserScanPOP(@JsonProperty("entries") List<HbaseUserScanEntry> entries) {
+    super(entries);
+  }
+
+  @Override
+  public void applyAssignments(List<CoordinationProtos.DrillbitEndpoint> endpoints) {
+
+  }
+
+  @Override
+  public Scan<?> getSpecificScan(int minorFragmentId) {
+    return this;
+  }
+
+  @Override
+  public List<EndpointAffinity> getOperatorAffinity() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
+    return this;
+  }
+
+  public static class HbaseUserScanEntry implements ReadEntry {
+    private String property;
+    private String value;
+    private String project;
+
     @JsonCreator
-    public HbaseUserScanPOP(@JsonProperty("entries") List<HbaseUserScanEntry> entries) {
-        super(entries);
+    public HbaseUserScanEntry(@JsonProperty("pid") String project,
+                              @JsonProperty("property") String property,
+                              @JsonProperty("val") String value) {
+      //super(project,"user");
+      this.project = project;
+      this.property = property;
+      this.value = value;
     }
-
-    @Override
-    public void applyAssignments(List<CoordinationProtos.DrillbitEndpoint> endpoints) {
-
-    }
-
-    @Override
-    public Scan<?> getSpecificScan(int minorFragmentId) {
-        return this;
-    }
-
-    @Override
-    public List<EndpointAffinity> getOperatorAffinity() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
-        return this;
-    }
-
-    public static class HbaseUserScanEntry implements ReadEntry {
-        private String property;
-        private String value;
-        private String project;
-        @JsonCreator
-        public HbaseUserScanEntry(@JsonProperty("pid") String project,
-                                  @JsonProperty("property") String property,
-                                  @JsonProperty("val")String value){
-            //super(project,"user");
-            this.project=project;
-            this.property=property;
-            this.value=value;
-        }
         /*
         @JsonCreator
         public HbaseUserScanEntry(@JsonProperty("pid") String project,
@@ -72,22 +73,26 @@ public class HbaseUserScanPOP extends AbstractScan<HbaseUserScanPOP.HbaseUserSca
             this.value=null;
         }*/
 
-        public String getProperty(){
-            return property;
-        }
-        public String getvalue(){
-            return value;
-        }
-        public String getProject(){
-            return project;
-        }
-        @Override
-        public OperatorCost getCost() {
-            return new OperatorCost(1, 2, 1, 1);
-        }
-        @Override
-        public Size getSize() {
-            return new Size(0,1);
-        }
+    public String getProperty() {
+      return property;
     }
+
+    public String getvalue() {
+      return value;
+    }
+
+    public String getProject() {
+      return project;
+    }
+
+    @Override
+    public OperatorCost getCost() {
+      return new OperatorCost(1, 2, 1, 1);
+    }
+
+    @Override
+    public Size getSize() {
+      return new Size(0, 1);
+    }
+  }
 }

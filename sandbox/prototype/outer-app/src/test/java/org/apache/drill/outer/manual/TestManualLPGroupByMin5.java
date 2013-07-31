@@ -1,8 +1,7 @@
-package org.apache.drill.exec.manual;
+package org.apache.drill.outer.manual;
 
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.apache.drill.common.logical.manual.ManualStaticLPBuilder;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.opt.BasicOptimizer;
@@ -19,22 +18,22 @@ import java.util.UUID;
 /**
  * User: Z J Wu Date: 13-7-9 Time: 上午10:24 Package: org.apache.drill.exec.manual
  */
-public class TestManualLPGroupByUser extends PopUnitTestBase {
+public class TestManualLPGroupByMin5 extends PopUnitTestBase {
 
-  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestManualLPGroupByUser.class);
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestManualLPGroupByMin5.class);
 
   @Test
   public void testManualStaticLogicalPlan() throws Exception {
     DrillConfig c = DrillConfig.create();
     UUID uuid = UUID.randomUUID();
     UserBitShared.QueryId id = UserBitShared.QueryId.newBuilder().setPart1(uuid.getMostSignificantBits())
-                                            .setPart2(uuid.getLeastSignificantBits()).build();
+      .setPart2(uuid.getLeastSignificantBits()).build();
     DrillbitContext dbc;
     QueryContext qc;
     String projectId = "ddt";
     String date = "20121201";
     String event = "visit.*";
-    ManualStaticLPBuilder.Grouping g = ManualStaticLPBuilder.Grouping.buildUserGroup("language");
+    ManualStaticLPBuilder.Grouping g = ManualStaticLPBuilder.Grouping.buildFuncGroup("min5", "timestamp");
     LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null, g);
     try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
          Drillbit bit = new Drillbit(CONFIG, serviceSet);
