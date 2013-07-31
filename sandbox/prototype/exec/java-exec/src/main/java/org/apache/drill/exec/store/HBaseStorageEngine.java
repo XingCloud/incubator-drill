@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
-import org.apache.drill.exec.physical.config.HbaseUserScanPOP;
 import org.apache.drill.exec.proto.CoordinationProtos;
 
 import java.io.IOException;
@@ -50,8 +49,6 @@ public class HBaseStorageEngine extends AbstractStorageEngine {
     public RecordReader getReader(FragmentContext context, ReadEntry readEntry) throws IOException {
         if(readEntry instanceof HbaseScanPOP.HbaseScanEntry)
             return new HBaseRecordReader(context,(HbaseScanPOP.HbaseScanEntry)readEntry);
-        else if(readEntry instanceof HbaseUserScanPOP.HbaseUserScanEntry)
-            return new HBaseUserRecordReader(context,(HbaseUserScanPOP.HbaseUserScanEntry)readEntry);
         return null;
     }
 

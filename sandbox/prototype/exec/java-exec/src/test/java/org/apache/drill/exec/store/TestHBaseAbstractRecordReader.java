@@ -5,7 +5,7 @@ import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.expression.fn.BooleanFunctions;
 import org.apache.drill.common.logical.data.NamedExpression;
-import org.apache.drill.exec.physical.config.HbaseAbstractScanPOP;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.vector.ValueVector;
@@ -29,10 +29,10 @@ public class TestHBaseAbstractRecordReader {
    public void  testAbstractRecordReader(){
        String eventTable="testtable100W_deu";
        String usrTable="property_testtable_100W_index";
-       //HbaseAbstractScanPOP.HbaseAbstractScanEntry eventEntry=getReadEntry(eventTable,"event");
-       //HBaseAbstractRecordReader eventReader=new HBaseAbstractRecordReader(null,eventEntry);
-       HbaseAbstractScanPOP.HbaseAbstractScanEntry userEntry=getReadEntry(usrTable,"user");
-       HBaseAbstractRecordReader userReader=new HBaseAbstractRecordReader(null,userEntry);
+       //HbaseScanPOP.HbaseScanEntry eventEntry=getReadEntry(eventTable,"event");
+       //HBaseRecordReader eventReader=new HBaseRecordReader(null,eventEntry);
+       HbaseScanPOP.HbaseScanEntry userEntry=getReadEntry(usrTable,"user");
+       HBaseRecordReader userReader=new HBaseRecordReader(null,userEntry);
        List<RecordReader> readerList = new ArrayList<RecordReader>();
        //readerList.add(eventReader);
        readerList.add(userReader);
@@ -95,11 +95,11 @@ public class TestHBaseAbstractRecordReader {
 
    }
 
-   private HbaseAbstractScanPOP.HbaseAbstractScanEntry getReadEntry(String table,String option){
+   private HbaseScanPOP.HbaseScanEntry getReadEntry(String table,String option){
        String srk,enk;
        List<LogicalExpression> filters=new ArrayList<>();
        List<NamedExpression> projections=new ArrayList<>();
-       HbaseAbstractScanPOP.HbaseAbstractScanEntry entry=null;
+       HbaseScanPOP.HbaseScanEntry entry=null;
        switch (option){
            case "user":
                 byte[] srtpropId=Bytes.toBytes((short)4);
@@ -118,7 +118,7 @@ public class TestHBaseAbstractRecordReader {
                 projections.add(ue1);
                 projections.add(ue2);
                 projections.add(ue3);
-                entry=new HbaseAbstractScanPOP.HbaseAbstractScanEntry(table,srk,enk,filters,projections);
+                entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,filters,projections);
                 return entry;
            case "event":
                srk= "20121201";
@@ -135,7 +135,7 @@ public class TestHBaseAbstractRecordReader {
                projections.add(e1);
                projections.add(e2);
                projections.add(e3);
-               entry=new HbaseAbstractScanPOP.HbaseAbstractScanEntry(table,srk,enk,filters,projections);
+               entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,filters,projections);
                return entry;
 
        }

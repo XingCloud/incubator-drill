@@ -8,7 +8,7 @@
     }
   },
   graph : [ {
-    pop : "hbase-abstract-scan",
+    pop : "hbase-scan",
     @id : 1,
     entries : [ {
       table : "testtable100W_deu",
@@ -33,7 +33,7 @@
     },
 
   {
-     pop: "hbase-abstract-scan",
+     pop: "hbase-scan",
      @id: 2,
      entries:[{
          table: "property_testtable_100W_index",
