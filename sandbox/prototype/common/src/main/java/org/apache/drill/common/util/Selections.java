@@ -1,7 +1,6 @@
 package org.apache.drill.common.util;
 
 import static org.apache.drill.common.util.DrillConstants.HBASE_TABLE_PREFIX_USER;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.drill.common.JSONOptions;
 
@@ -12,6 +11,12 @@ import java.io.IOException;
  */
 public class Selections {
   public static final String SELECTION_KEY_WORD_TABLE = "table";
+  public static final String SELECTION_KEY_WORD_ROWKEY = "rowkey";
+  public static final String SELECTION_KEY_WORD_ROWKEY_START = "start";
+  public static final String SELECTION_KEY_WORD_ROWKEY_END = "end";
+  public static final String SELECTION_KEY_WORD_FILTERS = "filters";
+  public static final String SELECTION_KEY_WORD_PROJECTIONS = "projections";
+
   public static final String SELECTION_KEY_WORD_B_DATE = "start_date";
   public static final String SELECTION_KEY_WORD_E_DATE = "end_date";
   public static final String SELECTION_KEY_WORD_EVENT = "event";

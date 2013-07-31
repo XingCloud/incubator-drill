@@ -3,7 +3,16 @@ package com.xingcloud.meta;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.*;
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.Order;
+import org.apache.hadoop.hive.metastore.api.SerDeInfo;
+import org.apache.hadoop.hive.metastore.api.SkewedInfo;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
 import java.util.ArrayList;
@@ -22,6 +31,7 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
 
   /**
    * make life easier when creating tables
+   *
    * @param tbl
    * @throws AlreadyExistsException
    * @throws InvalidObjectException
@@ -32,10 +42,10 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
   @Override
   public void createTable(Table tbl) throws AlreadyExistsException, InvalidObjectException, MetaException, NoSuchObjectException, TException {
     StorageDescriptor sd = tbl.getSd();
-    if(sd.getSkewedInfo() == null){
+    if (sd.getSkewedInfo() == null) {
       sd.setSkewedInfo(new SkewedInfo(new ArrayList<String>(), new ArrayList<List<String>>(), new HashMap<List<String>, String>()));
     }
-    if(sd.getSerdeInfo() == null){
+    if (sd.getSerdeInfo() == null) {
       SerDeInfo serdeInfo = new SerDeInfo();
       serdeInfo.setSerializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
       Map<String, String> parameters = new HashMap<String, String>();
@@ -43,31 +53,31 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
       serdeInfo.setParameters(parameters);
       sd.setSerdeInfo(serdeInfo);
     }
-    if(sd.getLocation() == null){
-      sd.setLocation("");      
+    if (sd.getLocation() == null) {
+      sd.setLocation("");
     }
-    if(sd.getInputFormat() == null){
+    if (sd.getInputFormat() == null) {
       sd.setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
     }
-    if(sd.getOutputFormat() == null){
+    if (sd.getOutputFormat() == null) {
       sd.setOutputFormat("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
     }
-    if(sd.getBucketCols() == null){
+    if (sd.getBucketCols() == null) {
       sd.setBucketCols(new ArrayList<String>());
     }
-    if(sd.getSortCols() == null){
-     sd.setSortCols(new ArrayList<Order>());
+    if (sd.getSortCols() == null) {
+      sd.setSortCols(new ArrayList<Order>());
     }
-    if(sd.getParameters() == null){
+    if (sd.getParameters() == null) {
       sd.setParameters(new HashMap<String, String>());
     }
-    if(tbl.getPartitionKeys()==null){
+    if (tbl.getPartitionKeys() == null) {
       tbl.setPartitionKeys(new ArrayList<FieldSchema>());
     }
-    if(tbl.getTableType()==null){
-      tbl.setTableType("EXTERNAL_TABLE");      
+    if (tbl.getTableType() == null) {
+      tbl.setTableType("EXTERNAL_TABLE");
     }
-    super.createTable(tbl);    
+    super.createTable(tbl);
   }
 
   public static Table GetTable(String tableName,List<String> options) throws Exception{
@@ -94,5 +104,9 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
     }
     return table;
   }
-  
+
+  public static DefaultDrillHiveMetaClient createClient() throws MetaException {
+    return new DefaultDrillHiveMetaClient(new HiveConf());
+  }
+
 }
