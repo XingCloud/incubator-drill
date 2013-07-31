@@ -1,38 +1,23 @@
 package org.apache.drill.exec.opt;
 
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_B_DATE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_EVENT;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_E_DATE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROPERTY;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROPERTY_VALUE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTERS;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
-
+import static org.apache.drill.exec.physical.config.HbaseAbstractScanPOP.HbaseAbstractScanEntry;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang3.StringUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.antlr.runtime.RecognitionException;
 import org.apache.drill.common.JSONOptions;
-
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.expression.LogicalExpressionParser;
 import org.apache.drill.common.logical.LogicalPlan;
-
-import org.apache.drill.common.logical.data.Project;
-import org.apache.drill.common.logical.data.Scan;
-import org.apache.drill.common.logical.data.SinkOperator;
-import org.apache.drill.common.logical.data.Store;
-import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
-import org.apache.drill.common.types.TypeProtos.DataMode;
-import org.apache.drill.common.types.TypeProtos.MinorType;
-
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
 import org.apache.drill.common.logical.data.Join;
@@ -45,27 +30,18 @@ import org.apache.drill.common.logical.data.Segment;
 import org.apache.drill.common.logical.data.SinkOperator;
 import org.apache.drill.common.logical.data.Store;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
-
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
-import org.apache.drill.exec.physical.ReadEntry;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
-
-import org.apache.drill.exec.physical.config.MockScanPOP;
-import org.apache.drill.exec.physical.config.Screen;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import org.apache.drill.exec.physical.config.Group;
-import org.apache.drill.exec.physical.config.HbaseScanPOP;
-import org.apache.drill.exec.physical.config.HbaseUserScanPOP;
+import org.apache.drill.exec.physical.config.HbaseAbstractScanPOP;
 import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
 import org.apache.drill.exec.physical.config.PhysicalJoin;
 import org.apache.drill.exec.physical.config.Screen;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -134,31 +110,57 @@ public class BasicOptimizer extends Optimizer {
       if (!SE_HBASE.equals(storageEngine)) {
         throw new OptimizerException("Unsupported storage engine - " + storageEngine);
       }
-      JSONOptions selection = scan.getSelection();
-      JsonNode root = selection.getRoot();
-      String table;
-      table = root.get(SELECTION_KEY_WORD_TABLE).textValue();
-
-      if (table.contains("deu")) {
-        String realBeginDate = root.get(SELECTION_KEY_WORD_B_DATE).textValue();
-        String realEndDate = root.get(SELECTION_KEY_WORD_E_DATE).textValue();
-        String event = root.get(SELECTION_KEY_WORD_EVENT).textValue();
-        return new HbaseScanPOP(
-          Arrays.asList(new HbaseScanPOP.HbaseScanEntry(table, realBeginDate, realEndDate, event)));
-      } else {
-        HbaseUserScanPOP.HbaseUserScanEntry userScanEntry;
-        String prop = root.get(SELECTION_KEY_WORD_PROPERTY).textValue();
-        String propValue = null;
-        if (root.has(SELECTION_KEY_WORD_PROPERTY_VALUE)) {
-          propValue = root.get(SELECTION_KEY_WORD_PROPERTY_VALUE).textValue();
-        }
-        if (StringUtils.isBlank(propValue)) {
-          userScanEntry = new HbaseUserScanPOP.HbaseUserScanEntry(table, prop, null);
-        } else {
-          userScanEntry = new HbaseUserScanPOP.HbaseUserScanEntry(table, prop, propValue);
-        }
-        return new HbaseUserScanPOP(Arrays.asList(userScanEntry));
+      JSONOptions selections = scan.getSelection();
+      if (selections == null) {
+        throw new OptimizerException("Selection is null");
       }
+
+      ObjectMapper mapper = DrillConfig.create().getMapper();
+      JsonNode root = selections.getRoot(), filters, projections, rowkey;
+      String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
+      int selectionSize = root.size();
+
+      HbaseAbstractScanEntry entry;
+      List<HbaseAbstractScanEntry> entries = new ArrayList<>(selectionSize);
+      List<LogicalExpression> filterList;
+      LogicalExpression le;
+      List<NamedExpression> projectionList;
+      NamedExpression ne;
+
+      for (JsonNode selection : root) {
+        table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
+        rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
+        rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
+        rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
+
+        filters = selection.get(SELECTION_KEY_WORD_FILTERS);
+
+        filterList = new ArrayList<>(filters.size());
+        for (JsonNode filterNode : filters) {
+          filterString = filterNode.textValue();
+          try {
+            le = LogicalExpressionParser.parse(filterString);
+          } catch (RecognitionException e) {
+            throw new OptimizerException("Cannot parse filter - " + filterString);
+          }
+          filterList.add(le);
+        }
+        projections = root.get(SELECTION_KEY_WORD_PROJECTIONS);
+        projectionList = new ArrayList<>(projections.size());
+
+        for (JsonNode projectionNode : projections) {
+          projectionString = projectionNode.textValue();
+          try {
+            ne = mapper.readValue(projectionString, NamedExpression.class);
+          } catch (IOException e) {
+            throw new OptimizerException("Cannot parse projection - " + projectionString);
+          }
+          projectionList.add(ne);
+        }
+        entry = new HbaseAbstractScanEntry(table, rowkeyStart.getBytes(), rowkeyEnd.getBytes(), filterList, projectionList);
+        entries.add(entry);
+      }
+      return new HbaseAbstractScanPOP(entries);
     }
 
     @Override
@@ -184,7 +186,7 @@ public class BasicOptimizer extends Optimizer {
       FieldReference[] carryovers = collapsingAggregate.getCarryovers();
       NamedExpression[] aggregations = collapsingAggregate.getAggregations();
       PhysicalCollapsingAggregate pca = new PhysicalCollapsingAggregate(next.accept(this, value), within, target,
-                                                                        carryovers, aggregations);
+        carryovers, aggregations);
       return pca;
     }
 
