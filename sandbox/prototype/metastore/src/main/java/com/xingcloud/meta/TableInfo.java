@@ -40,19 +40,19 @@ public class TableInfo {
     }
   }
 
-    public static List<HBaseFieldInfo> getCols(String tableName) throws Exception {
-        Table table=DefaultDrillHiveMetaClient.GetTable(tableName);
+    public static List<HBaseFieldInfo> getCols(String tableName,List<String> options) throws Exception {
+        Table table=DefaultDrillHiveMetaClient.GetTable(tableName,options);
         List<HBaseFieldInfo> colFieldInfoList=new ArrayList<HBaseFieldInfo>();
         for(FieldSchema fieldSchema: table.getSd().getCols()){
             HBaseFieldInfo fieldInfo = HBaseFieldInfo.getColumnType(table, fieldSchema);
-            colFieldInfoList.add(fieldInfo);
+            if(fieldInfo!=null)colFieldInfoList.add(fieldInfo);
         }
         return colFieldInfoList;
     }
 
-    public static List<HBaseFieldInfo> getPrimaryKey(String tableName) throws Exception{
-        List<HBaseFieldInfo> colInfos=getCols(tableName);
-        Table table=DefaultDrillHiveMetaClient.GetTable(tableName);
+    public static List<HBaseFieldInfo> getPrimaryKey(String tableName,List<String> options) throws Exception{
+        List<HBaseFieldInfo> colInfos=getCols(tableName,options);
+        Table table=DefaultDrillHiveMetaClient.GetTable(tableName,options);
         List<KeyPart> pkSequence = TableInfo.getPrimaryKey(table);
         List<HBaseFieldInfo> ret=new ArrayList<HBaseFieldInfo>();
         for(KeyPart kp: pkSequence){
@@ -64,8 +64,8 @@ public class TableInfo {
         return ret;
     }
 
-    public static List<KeyPart> getRowKey(String tableName) throws Exception{
-        Table table=DefaultDrillHiveMetaClient.GetTable(tableName);
+    public static List<KeyPart> getRowKey(String tableName,List<String> options) throws Exception{
+        Table table=DefaultDrillHiveMetaClient.GetTable(tableName,options);
         List<KeyPart> pkSequence = TableInfo.getPrimaryKey(table);
         return pkSequence;
     }

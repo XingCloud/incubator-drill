@@ -3,11 +3,13 @@ package org.apache.drill.exec.store;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xingcloud.hbase.filter.XARowKeyFilter;
-import com.xingcloud.mongodb.MongoDBOperation;
+import com.xingcloud.hbase.util.HBaseUserUtils;
+import com.xingcloud.meta.HBaseFieldInfo;
+import com.xingcloud.meta.KeyPart;
+import com.xingcloud.meta.TableInfo;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
-import org.apache.drill.common.expression.ExpressionPosition;
-import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.common.expression.*;
+import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.types.TypeProtos.DataMode;
 import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
@@ -19,120 +21,240 @@ import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.regionserver.TableScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
  * User: yangbo
- * Date: 7/2/13
- * Time: 8:40 PM
+ * Date: 7/23/13
+ * Time: 12:45 AM
  * To change this template use File | Settings | File Templates.
  */
 public class HBaseRecordReader implements RecordReader {
+  static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(HBaseRecordReader.class);
 
-  private String eventPattern;
-  private String pID;
   private HbaseScanPOP.HbaseScanEntry config;
   private FragmentContext context;
+  private byte[] startRowKey;
+  private byte[] endRowKey;
+  private String tableName;
 
-  private List<TableScanner> scanners = new ArrayList<TableScanner>();
+  private List<HBaseFieldInfo> projections;
+  private Map<String, String> sourceRefMap;
+  private List<LogicalExpression> filters;
+  private List<HBaseFieldInfo> primaryRowKey;
+  private List<KeyPart> primaryRowKeyParts;
+  private Map<String, HBaseFieldInfo> fieldInfoMap;
+  private Map<String, Object> rkObjectMap;
+  //private boolean optional=false;
+  private int index = 0;
+
+  private List<TableScanner> scanners = new ArrayList<>();
   private int currentScannerIndex = 0;
   private List<KeyValue> curRes = new ArrayList<KeyValue>();
   private int valIndex = -1;
   private boolean hasMore;
-  private int BATCHRECORDCOUNT = 1024;
+  private int BATCHRECORDCOUNT = 1024 * 4;
   private ValueVector[] valueVectors;
   private boolean init = false;
 
-  ScanType[] types = new ScanType[]{
-    new ScanType("ts", MinorType.BIGINT, DataMode.REQUIRED),
-    new ScanType("event", MinorType.VARCHAR4, DataMode.REQUIRED),
-    new ScanType("uid", MinorType.INT, DataMode.REQUIRED),
-    new ScanType("val", MinorType.BIGINT, DataMode.REQUIRED)
-  };
-
-  public static class ScanType {
-    public MinorType minorType;
-    private String name;
-    private DataMode mode;
-
-    @JsonCreator
-    public ScanType(@JsonProperty("name") String name, @JsonProperty("type") MinorType minorType,
-                    @JsonProperty("mode") DataMode mode) {
-      this.name = name;
-      this.minorType = minorType;
-      this.mode = mode;
-    }
-
-    @JsonProperty("type")
-    public MinorType getMinorType() {
-      return minorType;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public DataMode getMode() {
-      return mode;
-    }
-
-    @JsonIgnore
-    public MajorType getMajorType() {
-      MajorType.Builder b = MajorType.newBuilder();
-      b.setMode(mode);
-      b.setMinorType(minorType);
-      return b.build();
-    }
-
-  }
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
     this.context = context;
     this.config = config;
-
+    initConfig();
   }
 
-
-  private List<String> getDayList(String startDay, String endDay) {
-    List<String> dayList = new ArrayList<String>();
-    try {
-      for (String day = startDay; compareDate(day, endDay) <= 0; day = calDay(day, 1)) {
-        dayList.add(day);
-      }
-    } catch (Exception e) {
-
+  private void initConfig() {
+    if(config.getStartRowKey().equals("null")){
+        byte[] propId=Bytes.toBytes((short)3);
+        byte[] srtDay=Bytes.toBytes("20121201");
+        startRowKey= HBaseUserUtils.getRowKey(propId,srtDay);
     }
-    return dayList;
+    else
+        startRowKey = Bytes.toBytes(config.getStartRowKey());
+    if(config.getEndRowKey().equals("null")){
+        byte[] propId=Bytes.toBytes((short)3);
+        byte[] endDay=Bytes.toBytes("20121202");
+        startRowKey= HBaseUserUtils.getRowKey(propId,endDay);
+    }
+    else
+       endRowKey = Bytes.toBytes(config.getEndRowKey());
+    tableName = config.getTableName();
+    projections = new ArrayList<>();
+    fieldInfoMap = new HashMap<>();
+    sourceRefMap = new HashMap<>();
+    List<NamedExpression> logProjection = config.getProjections();
+    List<String> options=new ArrayList<>();
+    for(int i=0;i<logProjection.size();i++){
+        options.add((String)((SchemaPath)logProjection.get(i).getExpr()).getPath());
+    }
+    try {
+      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName,options);
+      for (HBaseFieldInfo col : cols) {
+        fieldInfoMap.put(col.fieldSchema.getName(), col);
+      }
+
+      for (NamedExpression e : logProjection) {
+        String ref = (String) e.getRef().getPath();
+        String name = (String) ((SchemaPath) e.getExpr()).getPath();
+        sourceRefMap.put(name, ref);
+        if (!fieldInfoMap.containsKey(name)) {
+          LOG.debug("wrong field " + name + " hbase table has no this field");
+        } else {
+          projections.add(fieldInfoMap.get(name));
+        }
+      }
+      filters = config.getFilters();
+
+      primaryRowKeyParts = TableInfo.getRowKey(tableName,options);
+      primaryRowKey = new ArrayList<>();
+      for (KeyPart kp : primaryRowKeyParts) {
+        if (kp.getType() == KeyPart.Type.field)
+          primaryRowKey.add(fieldInfoMap.get(kp.getField().getName()));
+      }
+      //primaryRowKey=TableInfo.getPrimaryKey(tableName);
+
+    } catch (Exception e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
   }
 
 
-  private String getTableNameFromProject(String pID) {
-    return pID + "_deu";
+  private void initTableScanner() {
+
+    scanners = new ArrayList<>();
+    List<Filter> filtersList = new ArrayList<>();
+    long startVersion = Long.MIN_VALUE;
+    long stopVersion = Long.MAX_VALUE;
+    if (filters != null) {
+      for (LogicalExpression e : filters) {
+        if (e instanceof FunctionCall) {
+          FunctionCall c = (FunctionCall) e;
+          Iterator iter = ((FunctionCall) e).iterator();
+          SchemaPath leftField = (SchemaPath) iter.next();
+          ValueExpressions.LongExpression rightField = (ValueExpressions.LongExpression) iter.next();
+          HBaseFieldInfo info = fieldInfoMap.get(leftField.getPath());
+          CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
+          switch (c.getDefinition().getName()) {
+            case "greater than":
+              op = CompareFilter.CompareOp.GREATER;
+              break;
+            case "less than":
+              op = CompareFilter.CompareOp.LESS;
+              break;
+            case "equal":
+              op = CompareFilter.CompareOp.EQUAL;
+              break;
+            case "greater than or equal to":
+              op = CompareFilter.CompareOp.GREATER_OR_EQUAL;
+              break;
+            case "less than or equal to":
+              op = CompareFilter.CompareOp.LESS_OR_EQUAL;
+              break;
+          }
+          switch (info.fieldType) {
+            case cellvalue:
+              String cfName = info.cfName;
+              String cqName = info.cqName;
+              SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
+                Bytes.toBytes(cfName),
+                Bytes.toBytes(cqName),
+                op,
+                new BinaryComparator(Bytes.toBytes(rightField.getLong()))
+              );
+              filtersList.add(valueFilter);
+              break;
+            case cversion:
+              switch (op) {
+                case GREATER:
+                  startVersion = rightField.getLong() + 1;
+                  break;
+                case GREATER_OR_EQUAL:
+                  startVersion = rightField.getLong();
+                  break;
+                case LESS:
+                  stopVersion = rightField.getLong();
+                  break;
+                case LESS_OR_EQUAL:
+                  stopVersion = rightField.getLong() + 1;
+                  break;
+                case EQUAL:
+                  List<Long> timestamps = new ArrayList<>();
+                  timestamps.add(rightField.getLong());
+                  Filter timeStampsFilter = new TimestampsFilter(timestamps);
+                  filtersList.add(timeStampsFilter);
+                  break;
+              }
+              break;
+            case cqname:
+              Filter qualifierFilter =
+                new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
+              filtersList.add(qualifierFilter);
+            default:
+              break;
+          }
+
+        }
+      }
+    }
+    TableScanner scanner;
+    if (startVersion == Long.MIN_VALUE && stopVersion == Long.MAX_VALUE)
+      scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false);
+    else
+      scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false, startVersion, stopVersion);
+    scanners.add(scanner);
   }
 
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
     try {
-      valueVectors = new ValueVector[types.length];
-      for (int i = 0; i < types.length; i++) {
-        MajorType type = types[i].getMajorType();
+      valueVectors = new ValueVector[projections.size()];
+      for (int i = 0; i < projections.size(); i++) {
+        MajorType type = getMajorType(projections.get(i));
         int batchRecordCount = BATCHRECORDCOUNT;
-        valueVectors[i] = getVector(i, types[i].getName(), type, batchRecordCount);
+        valueVectors[i] =
+          getVector(i, sourceRefMap.get(projections.get(i).fieldSchema.getName()), type, batchRecordCount);
         output.addField(valueVectors[i]);
         output.setNewSchema();
       }
     } catch (Exception e) {
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
+  }
+
+  private MajorType getMajorType(HBaseFieldInfo info) {
+    String type = info.fieldSchema.getType();
+    ScanType scanType;
+    switch (type) {
+      case "int":
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.INT,
+          DataMode.REQUIRED);
+        return scanType.getMajorType();
+      case "tinyint":
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.UINT1,
+          DataMode.REQUIRED);
+        return scanType.getMajorType();
+      case "string":
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.VARCHAR4,
+          DataMode.REQUIRED);
+        return scanType.getMajorType();
+      case "bigint":
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.BIGINT,
+          DataMode.REQUIRED);
+        return scanType.getMajorType();
+      case "smallint":
+        scanType =new ScanType(info.fieldSchema.getName(),MinorType.SMALLINT,
+                DataMode.REQUIRED);
+        return scanType.getMajorType();
+    }
+    return null;
   }
 
   private ValueVector getVector(int fieldId, String name, MajorType type, int length) {
@@ -144,79 +266,28 @@ public class HBaseRecordReader implements RecordReader {
     BufferAllocator allocator;
     if (context != null) allocator = context.getAllocator();
     else allocator = new DirectBufferAllocator();
-
     v = TypeHelper.getNewVector(f, allocator);
-    if (v instanceof FixedWidthVector) {
-      ((FixedWidthVector) v).allocateNew(length);
-    } else if (v instanceof VariableWidthVector) {
-      ((VariableWidthVector) v).allocateNew(50 * length, length);
-    }
+    AllocationHelper.allocate(v, length, 50);
     return v;
 
   }
 
-  private void init() {
-    this.pID = config.getProject();
-
-    //this.pID = "sof-dsk";
-    this.eventPattern = config.getEventPattern();
-    String tableName = getTableNameFromProject(pID);
-    boolean allEvents = true;
-    String[] events = eventPattern.split("\\.");
-    for (int i = 0; i < events.length; i++) {
-      if (!events[i].equals("*"))
-        allEvents = false;
-    }
-    try {
-      List<String> days = getDayList(config.getStartDate(), config.getEndDate());
-      Collections.sort(days);
-      if (!allEvents) {
-        Set<String> eventSet = MongoDBOperation.getEventSet(pID, eventPattern);
-        List<String> eventList = new ArrayList<String>(eventSet);
-        Collections.sort(eventList);
-        for (int i = 0; i < days.size(); i++) {
-          String day = days.get(i);
-          List<String> oneDayList = new ArrayList<String>();
-          oneDayList.add(day);
-          byte[] srk = Bytes.toBytes(day + eventList.get(0));
-          byte[] enk = Bytes.toBytes(day + getNextEvent(eventList.get(eventList.size() - 1)));
-          XARowKeyFilter filter1 = new XARowKeyFilter(0, Long.MAX_VALUE, eventList, oneDayList);
-          List<Filter> filters=new ArrayList<>();
-          filters.add(filter1);
-          TableScanner scanner = new TableScanner(srk, enk, tableName, filters, false, false);
-          scanners.add(scanner);
-        }
-      } else {
-        for (int i = 0; i < days.size(); i++) {
-          String day = days.get(i);
-          List<String> oneDayList = new ArrayList<String>();
-          oneDayList.add(day);
-          byte[] srk = Bytes.toBytes(day);
-          byte[] enk = Bytes.toBytes(calDay(day, 1));
-          //XARowKeyFilter filter1 = new XARowKeyFilter(0, Long.MAX_VALUE, eventList, oneDayList);
-          TableScanner scanner = new TableScanner(srk, enk, tableName, null, false, false);
-          scanners.add(scanner);
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
 
   @Override
   public int next() {
     if (!init) {
-      init();
+      initTableScanner();
       init = true;
     }
+
     for (ValueVector v : valueVectors) {
-      if (v instanceof FixedWidthVector) {
-        ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
-      } else if (v instanceof VariableWidthVector) {
-        ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
-      } else {
-        throw new UnsupportedOperationException();
-      }
+        if (v instanceof FixedWidthVector) {
+            ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
+        } else if (v instanceof VariableWidthVector) {
+            ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
+        } else {
+            throw new UnsupportedOperationException();
+        }
     }
 
     int recordSetSize = 0;
@@ -254,8 +325,7 @@ public class HBaseRecordReader implements RecordReader {
           if (curRes.size() != 0) {
             KeyValue kv = curRes.get(valIndex++);
             boolean next = PutValuesToVectors(kv, valueVectors, recordSetSize);
-            if (!next)
-              return recordSetSize;
+            if (!next) return recordSetSize;
             recordSetSize++;
             break;
           }
@@ -268,120 +338,206 @@ public class HBaseRecordReader implements RecordReader {
       }
       KeyValue kv = curRes.get(valIndex++);
       boolean next = PutValuesToVectors(kv, valueVectors, recordSetSize);
-      if (!next)
-        return recordSetSize;
+      if (!next) return recordSetSize;
       recordSetSize++;
     }
   }
 
   public boolean PutValuesToVectors(KeyValue kv, ValueVector[] valueVectors, int recordSetSize) {
-    for (int i = 0; i < types.length; i++) {
-      String name = types[i].getName();
-      Object result = getValFromKeyValue(kv, name);
+    rkObjectMap = new HashMap<>();
+    index = 0;
+    parseRowKey(kv, rkObjectMap);
+    for (int i = 0; i < projections.size(); i++) {
+      HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
-
-
-      String resultString = null;
-      long resultLong = 0;
-      int resultInt = 0;
+      Object result = getValFromKeyValue(kv, info);
+      String type = info.fieldSchema.getType();
       byte[] resultBytes = null;
-      if (name.equals("val") || name.equals("ts")) {
-        resultLong = (long) result;
-        resultBytes = Bytes.toBytes(resultLong);
-      } else if (name.equals("uid")) {
-        resultInt = (int) result;
-        resultBytes = Bytes.toBytes(resultInt);
-      } else {
-        resultString = (String) result;
-        resultBytes = Bytes.toBytes(resultString);
-      }
+      if (type.equals("string"))
+        resultBytes = Bytes.toBytes((String) result);
       if (valueVector instanceof VarChar4Vector) {
-        VarChar4Vector varChar4Vector = (VarChar4Vector) valueVector;
-        varChar4Vector.getMutator().setValueCount(recordSetSize);
-        varChar4Vector.getMutator().set(recordSetSize, resultBytes);
 
-                /*
-                Fixed4 lengthVector = ((VarLen4) valueVector).getLengthVector();
-                int preOffset = 0;
-                if (recordSetSize != 0) preOffset = lengthVector.getInt(recordSetSize - 1);
-                int offset = preOffset + resultBytes.length;
-                if (offset > (lengthVector.capacity()+1) * 4) return false;
-                ((VarLen4) valueVector).setBytes(recordSetSize, resultBytes); */
-        varChar4Vector.getMutator().setValueCount(recordSetSize);
-        if (recordSetSize + 2 > varChar4Vector.getValueCapacity())
-          return false;
+        if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
+        ((VarChar4Vector) valueVector).getMutator().set(recordSetSize, resultBytes);
+        valueVector.getMutator().setValueCount(recordSetSize);
+        if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof IntVector) {
-        IntVector intVector = (IntVector) valueVector;
-        intVector.getMutator().set(recordSetSize, resultInt);
-        intVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 1) > intVector.getValueCapacity()) return false;
+        ((IntVector) valueVector).getMutator().set(recordSetSize, (int) result);
+        valueVector.getMutator().setValueCount(recordSetSize);
+        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof BigIntVector) {
-        BigIntVector bigIntVector = (BigIntVector) valueVector;
-        bigIntVector.getMutator().set(recordSetSize, resultLong);
-        bigIntVector.getMutator().setValueCount(recordSetSize);
-        if (recordSetSize > 1000)
-          // System.out.println("recordSetSize "+recordSetSize+" capacity "+valueVector.capacity());
-          if ((recordSetSize + 2) > bigIntVector.getValueCapacity()) return false;
+        ((BigIntVector) valueVector).getMutator().set(recordSetSize, (long) result);
+        valueVector.getMutator().setValueCount(recordSetSize);
+        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
+      } else if (valueVector instanceof SmallIntVector) {
+        ((SmallIntVector) valueVector).getMutator().set(recordSetSize, (short) result);
+        valueVector.getMutator().setValueCount(recordSetSize);
+        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
+      } else if (valueVector instanceof TinyIntVector) {
+        ((TinyIntVector) valueVector).getMutator().set(recordSetSize, (byte) result);
+        valueVector.getMutator().setValueCount(recordSetSize);
+        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
       }
     }
     return true;
   }
 
+  public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option) {
+    String fieldName = option.fieldSchema.getName();
+    if (option.fieldType == HBaseFieldInfo.FieldType.rowkey) {
+      if (!rkObjectMap.containsKey(fieldName))
+        LOG.info("error! " + fieldName + " does not exists in this keyvalue");
+      else
+        return rkObjectMap.get(fieldName);
+    } else if (option.fieldType == HBaseFieldInfo.FieldType.cellvalue) {
+      String cfName = Bytes.toString(keyvalue.getFamily());
+      String cqName = Bytes.toString(keyvalue.getQualifier());
+      if (!option.cfName.equals(cfName) || !option.cqName.equals(cqName))
+        LOG.info("error! this field's column info---" + option.cqName + ":" + option.cqName +
+          " does not match the keyvalue's column info---" + cfName + ":" + cqName);
+      else {
+        return parseBytes(keyvalue.getValue(), option.fieldSchema.getType());
+      }
+    } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
+      return keyvalue.getTimestamp();
+    } else if (option.fieldType == HBaseFieldInfo.FieldType.cqname) {
+      return parseBytes(keyvalue.getQualifier(), option.fieldSchema.getType());
+    }
+    return null;
+  }
 
+  public void parseRowKey(KeyValue keyValue, Map<String, Object> rkObjectMap) {
+    byte[] rk = keyValue.getRow();
+    //int index=0;
+    parseRkey(rk, false, primaryRowKeyParts, null, rkObjectMap);
+  }
 
-    public Object getValFromKeyValue(KeyValue keyvalue, String option) {
-        if (option.equals("val")) {
-            byte[] value=keyvalue.getValue();
-            return Bytes.toLong(value);
-        } else {
-            byte[] rk = keyvalue.getRow();
-            if (option.equals("uid")) {
-                long uid = getUidOfLongFromDEURowKey(rk);
-                return getInnerUidFromSamplingUid(uid);
-            } else if (option.equals("event")) {
-                return getEventFromDEURowKey(rk);
-            } else if (option.equals("ts")) {
-                long ts=keyvalue.getTimestamp();
-                return ts;
+  private void parseRkey(byte[] rk, boolean optional, List<KeyPart> keyParts, KeyPart endKeyPart,
+                         Map<String, Object> rkObjectMap) {
+    int fieldEndindex = index;
+    for (int i = 0; i < keyParts.size(); i++) {
+      KeyPart kp = keyParts.get(i);
+      if (kp.getType() == KeyPart.Type.field) {
+        HBaseFieldInfo info = fieldInfoMap.get(kp.getField().getName());
+        if (info.serType == HBaseFieldInfo.DataSerType.TEXT
+          && info.serLength != 0) {
+          fieldEndindex = index + info.serLength;
+          if (optional && fieldEndindex > rk.length) return;
+          byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
+          String ret = Bytes.toString(result);
+          Object o=parseString(ret,info.fieldSchema.getType());
+          rkObjectMap.put(info.fieldSchema.getName(),o);
+          index = fieldEndindex;
+        } else if (info.serType == HBaseFieldInfo.DataSerType.WORD) {
+          if (i < keyParts.size() - 1) {
+            KeyPart nextkp = keyParts.get(i + 1);
+            String nextCons = nextkp.getConstant();
+            byte[] nextConsBytes = Bytes.toBytes(nextCons);
+
+            if (optional) {
+              byte[] endCons = Bytes.toBytes(endKeyPart.getConstant());
+              if (endKeyPart.getConstant().equals("\\xFF")) endCons[0] = -1;
+              while (fieldEndindex < rk.length && rk[fieldEndindex] != nextConsBytes[0] &&
+                rk[fieldEndindex] != endCons[0]) {
+                fieldEndindex++;
+              }
+            } else
+              while (fieldEndindex < rk.length && rk[fieldEndindex] != nextConsBytes[0]) {
+                fieldEndindex++;
+              }
+          } else {
+            if (endKeyPart == null)
+              fieldEndindex = rk.length;
+            else {
+              byte[] endCons = Bytes.toBytes(endKeyPart.getConstant());
+              while (fieldEndindex < rk.length && rk[fieldEndindex] != endCons[0]) {
+                fieldEndindex++;
+              }
             }
+          }
+          if (fieldEndindex != index) {
+            byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
+            String ret = Bytes.toString(result);
+            Object o=parseString(ret,info.fieldSchema.getType());
+            rkObjectMap.put(info.fieldSchema.getName(),o);
+            index = fieldEndindex;
+          } else {
+            return;
+          }
+
+        } else if (info.serType == HBaseFieldInfo.DataSerType.BINARY && info.serLength != 0) {
+          fieldEndindex = index + info.serLength;
+          if (optional && fieldEndindex > rk.length) return;
+          byte[] result;
+          result = Arrays.copyOfRange(rk, index, fieldEndindex);
+          Object ob = parseBytes(result, info.fieldSchema.getType());
+          rkObjectMap.put(info.fieldSchema.getName(), ob);
+          index=fieldEndindex;
         }
-        return null;
-  }
+      } else if (kp.getType() == KeyPart.Type.optionalgroup) {
+        List<KeyPart> optionalKeyParts = kp.getOptionalGroup();
+        KeyPart endKp;
+        if (optional == false) endKp = keyParts.get(i + 1);
+        else endKp = endKeyPart;
+        parseRkey(rk, true, optionalKeyParts, endKp, rkObjectMap);
 
-  public long getUidOfLongFromDEURowKey(byte[] rowKey) {
-    byte[] uid = new byte[8];
-    int i = 0;
-    for (; i < 3; i++) {
-      uid[i] = 0;
+      } else if (kp.getType() == KeyPart.Type.constant) {
+        index++;
+      }
     }
+  }
 
-    for (int j = rowKey.length - 5; j < rowKey.length; j++) {
-      uid[i++] = rowKey[j];
+  private Object parseBytes(byte[] orig, String type) {
+    byte[] result;
+    int index = 0;
+    switch (type) {
+      case "int":
+        result = new byte[4];
+        for (int i = 0; i < 4 - orig.length; i++)
+          result[i] = 0;
+        for (int i = 4 - orig.length; i < 4; i++)
+          result[i] = orig[index++];
+        return Bytes.toInt(result);
+      case "smallint":
+        result=new byte[2];
+          for(int i=0;i<2-orig.length;i++){
+              result[i]=0;
+          }
+          for(int i=2-orig.length;i<2;i++){
+              result[i]=orig[index++];
+          }
+        return Bytes.toShort(result);
+      case "tinyint":
+        return orig[0];
+      case "string":
+        return Bytes.toString(orig);
+      case "bigint":
+        result = new byte[8];
+        for (int i = 0; i < 8 - orig.length; i++)
+          result[i] = 0;
+        for (int i = 8 - orig.length; i < 8; i++)
+          result[i] = orig[index++];
+        return Bytes.toLong(result);
     }
-
-    return Bytes.toLong(uid);
+    return null;
   }
 
-  public String getDayFromDEURowKey(byte[] rowKey) {
-    byte[] day = new byte[8];
-    for (int i = 0; i < 8; i++) {
-      day[i] = rowKey[i];
-    }
-    return Bytes.toString(day);
+  private Object parseString(String orig, String type){
+      switch (type) {
+          case "int":
+              return Integer.parseInt(orig);
+          case "tinyint":
+              return type.charAt(0);
+          case "smallint":
+              return (short)Integer.parseInt(orig);
+          case "string":
+              return orig;
+          case "bigint":
+               return Long.parseLong(orig);
+      }
+      return null;
   }
 
-  public int getInnerUidFromSamplingUid(long suid) {
-    return (int) (0xffffffffl & suid);
-  }
-
-  public String getEventFromDEURowKey(byte[] rowKey) {
-    byte[] eventBytes = Arrays.copyOfRange(rowKey, 8, rowKey.length - 6);
-    return Bytes.toString(eventBytes);
-  }
-
-
-  public void setup() {
-  }
 
   @Override
   public void cleanup() {
@@ -394,60 +550,42 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  public String calDay(String date, int dis) throws ParseException {
-    try {
-      TimeZone TZ = TimeZone.getTimeZone("GMT+8");
-      SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
-      Date temp = new Date(getTimestamp(date));
+  public static class ScanType {
+    public MinorType minorType;
+    private String name;
+    private DataMode mode;
 
-      java.util.Calendar ca = Calendar.getInstance(TZ);
-      ca.setTime(temp);
-      ca.add(Calendar.DAY_OF_MONTH, dis);
-      return df.format(ca.getTime());
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new ParseException(date + " " + dis, 0);
+    @JsonCreator
+    public ScanType(@JsonProperty("name") String name, @JsonProperty("type") MinorType minorType,
+                    @JsonProperty("mode") DataMode mode) {
+      this.name = name;
+      this.minorType = minorType;
+      this.mode = mode;
     }
-  }
 
-  public long getTimestamp(String date) {
-    String dateString = date + " 00:00:00";
-    SimpleDateFormat tdf = new SimpleDateFormat("yyyyMMdd hh:mm:ss");
-    Date nowDate = null;
-    try {
-      nowDate = tdf.parse(dateString);
-    } catch (ParseException e) {
+    @JsonProperty("type")
+    public MinorType getMinorType() {
+      return minorType;
     }
-    if (nowDate != null) {
-      return nowDate.getTime();
-    } else {
-      return -1;
-    }
-  }
 
-  public int compareDate(String DATE1, String DATE2) throws ParseException {
-    try {
-      SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
-      Date dt1 = df.parse(DATE1);
-      Date dt2 = df.parse(DATE2);
-      if (dt1.getTime() > dt2.getTime()) {
-        return 1;
-      } else if (dt1.getTime() < dt2.getTime()) {
-        return -1;
-      } else {
-        return 0;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new ParseException(DATE1 + "\t" + DATE2, 0);
+    public String getName() {
+      return name;
+    }
+
+    public DataMode getMode() {
+      return mode;
+    }
+
+    @JsonIgnore
+    public MajorType getMajorType() {
+      MajorType.Builder b = MajorType.newBuilder();
+      b.setMode(mode);
+      b.setMinorType(minorType);
+      return b.build();
     }
 
   }
 
-  public String getNextEvent(String eventFilter) {
-    StringBuilder endEvent = new StringBuilder(eventFilter);
-    endEvent.setCharAt(eventFilter.length() - 1, (char) (endEvent.charAt(eventFilter.length() - 1) + 1));
-    return endEvent.toString();
-  }
 
 }
+
