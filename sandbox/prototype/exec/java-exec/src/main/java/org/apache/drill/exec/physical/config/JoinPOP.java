@@ -18,18 +18,20 @@ import java.util.List;
  */
 
 @JsonTypeName("join")
-public class PhysicalJoin extends AbstractBase {
+public class JoinPOP extends AbstractBase {
 
   private PhysicalOperator left;
   private PhysicalOperator right;
   private JoinCondition conditoin;
+  private org.apache.drill.common.logical.data.Join.JoinType type;
 
-  public PhysicalJoin(@JsonProperty("left") PhysicalOperator left,
-                      @JsonProperty("right") PhysicalOperator right,
-                      @JsonProperty("condition") JoinCondition conditoin) {
+  public JoinPOP(@JsonProperty("left") PhysicalOperator left,
+                 @JsonProperty("right") PhysicalOperator right,
+                 @JsonProperty("condition") JoinCondition conditoin, @JsonProperty("type") String type) {
     this.left = left;
     this.right = right;
     this.conditoin = conditoin;
+    this.type = org.apache.drill.common.logical.data.Join.JoinType.resolve(type);
   }
 
   @Override
@@ -44,12 +46,12 @@ public class PhysicalJoin extends AbstractBase {
 
   @Override
   public <T, X, E extends Throwable> T accept(PhysicalVisitor<T, X, E> physicalVisitor, X value) throws E {
-    return physicalVisitor.visitJoin(this,value);
+    return physicalVisitor.visitJoin(this, value);
   }
 
   @Override
   public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
-    return new PhysicalJoin(children.get(0),children.get(1),this.conditoin);
+    return new JoinPOP(children.get(0), children.get(1), this.conditoin, this.type.name());
   }
 
   @Override
@@ -57,7 +59,11 @@ public class PhysicalJoin extends AbstractBase {
     return Iterators.forArray(left, right);
   }
 
-    public JoinCondition getConditoin() {
-        return conditoin;
-    }
+  public JoinCondition getConditoin() {
+    return conditoin;
+  }
+
+  public org.apache.drill.common.logical.data.Join.JoinType getType() {
+    return type;
+  }
 }

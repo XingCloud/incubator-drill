@@ -11,9 +11,9 @@
     pop : "hbase-scan",
     @id : 1,
     entries : [ {
-      table : "testtable100W_deu",
-      startRowKey : "20121201",
-      endRowKey : "20121202",
+      table : "sof-dsk_deu",
+      startRowKey : "20130101",
+      endRowKey : "20130101",
       filters : [
       ],
       projections: [ {
@@ -36,7 +36,7 @@
      pop: "hbase-scan",
      @id: 2,
      entries:[{
-         table: "property_testtable_100W_index",
+         table: "sof-dsk_deu",
          startRowKey: "null",
          endRowKey: "null",
          filters:[
@@ -55,8 +55,9 @@
   {
       pop : "join",
       @id : 3,
-      left : 1,
-      right: 2,
+      left : 2,
+      right: 1,
+      type: "right",
       condition :
         { relationship :"==",
          left: "uid",

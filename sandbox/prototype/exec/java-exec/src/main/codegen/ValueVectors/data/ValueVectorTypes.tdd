@@ -74,10 +74,10 @@
       width: 2,
       javaType: "short",
       minor: [
-        { class: "VarBinary2" },
-        { class: "VarChar2" },
-        { class: "Proto2" },
-        { class: "MsgPack2" }
+        { class: "VarBinary2" ,classType: "byte[]"},
+        { class: "VarChar2" ,classType: "byte[]"},
+        { class: "Proto2" ,classType: "byte[]"},
+        { class: "MsgPack2" ,classType: "byte[]"}
       ]
     },
     {
@@ -85,10 +85,10 @@
       width: 4,
       javaType: "int",
       minor: [
-        { class: "VarBinary4" },
-        { class: "VarChar4" }
-        { class: "Proto4" },
-        { class: "MsgPack4" }
+        { class: "VarBinary4" ,classType: "byte[]"},
+        { class: "VarChar4" ,classType: "byte[]"}
+        { class: "Proto4" ,classType: "byte[]"},
+        { class: "MsgPack4" ,classType: "byte[]"}
       ]
     },
     {
@@ -96,7 +96,7 @@
       width: 1,
       javaType: "int",
       minor: [
-        { class: "Bit" }
+        { class: "Bit" ,classType:"Integer"}
       ]
     }
   ]

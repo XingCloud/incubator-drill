@@ -277,6 +277,9 @@ public final class Nullable${minor.class}Vector extends BaseValueVector implemen
     }
 
     public void setObject(int index,Object obj){
+      if(obj != null) {
+        set(index, (${minor.classType}) obj) ;
+      }
     }
 
 

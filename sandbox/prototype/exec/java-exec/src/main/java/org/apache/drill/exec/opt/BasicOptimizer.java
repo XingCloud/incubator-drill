@@ -20,13 +20,11 @@ import org.apache.drill.common.expression.LogicalExpressionParser;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
-import org.apache.drill.common.logical.data.Join;
 import org.apache.drill.common.logical.data.JoinCondition;
 import org.apache.drill.common.logical.data.LogicalOperator;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.logical.data.Project;
 import org.apache.drill.common.logical.data.Scan;
-import org.apache.drill.common.logical.data.Segment;
 import org.apache.drill.common.logical.data.SinkOperator;
 import org.apache.drill.common.logical.data.Store;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
@@ -198,21 +196,22 @@ public class BasicOptimizer extends Optimizer {
 
 
     @Override
-    public PhysicalOperator visitJoin(Join join, Object value) throws OptimizerException {
+    public PhysicalOperator visitJoin(org.apache.drill.common.logical.data.Join join, Object value) throws OptimizerException {
       LogicalOperator leftLO = join.getLeft();
       LogicalOperator rightLO = join.getRight();
       JoinCondition singleJoinCondition = join.getConditions()[0];
       PhysicalOperator leftPOP = leftLO.accept(this, value);
       PhysicalOperator rightPOP = rightLO.accept(this, value);
 
-      PhysicalJoin joinPOP = new PhysicalJoin(leftPOP, rightPOP, singleJoinCondition);
+      // TODO join type
+      JoinPOP joinPOP = new JoinPOP(leftPOP, rightPOP, singleJoinCondition,null);
       return joinPOP;
     }
 
     @Override
-    public PhysicalOperator visitSegment(Segment segment, Object value) throws OptimizerException {
+    public PhysicalOperator visitSegment(org.apache.drill.common.logical.data.Segment segment, Object value) throws OptimizerException {
       LogicalOperator next = segment.iterator().next();
-      Group segmentPOP = new Group(next.accept(this, value), segment.getExprs(), segment.getName());
+      SegmentPOP segmentPOP = new SegmentPOP(next.accept(this, value), segment.getExprs(), segment.getName());
       return segmentPOP;
     }
 

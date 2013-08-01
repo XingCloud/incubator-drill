@@ -14,9 +14,9 @@ import java.util.List;
  * Date: 7/16/13
  * Time: 11:43 AM
  */
-public class SegmentBatchCreator implements BatchCreator<Group> {
+public class SegmentBatchCreator implements BatchCreator<SegmentPOP> {
     @Override
-    public RecordBatch getBatch(FragmentContext context, Group config, List<RecordBatch> children) throws ExecutionSetupException {
+    public RecordBatch getBatch(FragmentContext context, SegmentPOP config, List<RecordBatch> children) throws ExecutionSetupException {
         return new SegmentBatch(context,config,children.get(0));
     }
 }

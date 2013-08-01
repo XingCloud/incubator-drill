@@ -13,8 +13,8 @@
       @id : 1,
       entries : [ {
           table : "sof-dsk_deu",
-          startRowKey : "20130601",
-          endRowKey : "20120602",
+          startRowKey : "20130101",
+          endRowKey : "20130102",
           filters : [],
           projections: [
           {
@@ -28,11 +28,12 @@
            {
              ref: "val",
              expr: "value"
-            },
+            }  ,
             {
-            ref: "ts",
-            expr: "timestamp"
+              ref: "ts",
+              expr: "timestamp"
             }
+
           ]
       } ]
    },
