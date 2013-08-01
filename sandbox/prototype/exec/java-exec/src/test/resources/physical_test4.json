@@ -55,8 +55,9 @@
   {
       pop : "join",
       @id : 3,
-      left : 1,
-      right: 2,
+      left : 2,
+      right: 1,
+      type: "right",
       condition :
         { relationship :"==",
          left: "uid",

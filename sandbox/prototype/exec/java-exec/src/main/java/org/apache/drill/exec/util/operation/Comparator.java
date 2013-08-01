@@ -95,9 +95,9 @@ public class Comparator {
         b = (byte) (l == i ? 0 : l > i ? 1 : -1);
         mutator.set(j, b);
       }
-    } else if (left instanceof VarChar4Vector) {
-      String leftString = new String(((VarChar4Vector) left).getAccessor().get(0));
-      VarChar4Vector.Accessor strs = ((VarChar4Vector) right).getAccessor();
+    } else if (left instanceof VarCharVector) {
+      String leftString = new String(((VarCharVector) left).getAccessor().get(0));
+      VarCharVector.Accessor strs = ((VarCharVector) right).getAccessor();
       for (j = 0; j < recordCount; j++) {
         mutator.set(j, (byte) leftString.compareTo(new String(strs.get(j))));
       }

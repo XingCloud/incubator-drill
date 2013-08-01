@@ -81,12 +81,12 @@ public class HBaseRecordReader implements RecordReader {
     fieldInfoMap = new HashMap<>();
     sourceRefMap = new HashMap<>();
     List<NamedExpression> logProjection = config.getProjections();
-    List<String> options=new ArrayList<>();
-    for(int i=0;i<logProjection.size();i++){
-        options.add((String)((SchemaPath)logProjection.get(i).getExpr()).getPath());
+    List<String> options = new ArrayList<>();
+    for (int i = 0; i < logProjection.size(); i++) {
+      options.add((String) ((SchemaPath) logProjection.get(i).getExpr()).getPath());
     }
     try {
-      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName,options);
+      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
       for (HBaseFieldInfo col : cols) {
         fieldInfoMap.put(col.fieldSchema.getName(), col);
       }
@@ -103,7 +103,7 @@ public class HBaseRecordReader implements RecordReader {
       }
       filters = config.getFilters();
 
-      primaryRowKeyParts = TableInfo.getRowKey(tableName,options);
+      primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
       primaryRowKey = new ArrayList<>();
       for (KeyPart kp : primaryRowKeyParts) {
         if (kp.getType() == KeyPart.Type.field)
@@ -147,14 +147,14 @@ public class HBaseRecordReader implements RecordReader {
   }
 
 
-  private byte[] addMaxByteToTail(byte[] orig){
-      byte[] result=new byte[orig.length+1];
-      int i=0;
-      for(;i<orig.length;i++){
-          result[i]=orig[i];
-      }
-      result[i]=(byte)255;
-      return result;
+  private byte[] addMaxByteToTail(byte[] orig) {
+    byte[] result = new byte[orig.length + 1];
+    int i = 0;
+    for (; i < orig.length; i++) {
+      result[i] = orig[i];
+    }
+    result[i] = (byte) 255;
+    return result;
   }
 
 
@@ -274,7 +274,7 @@ public class HBaseRecordReader implements RecordReader {
           DataMode.REQUIRED);
         return scanType.getMajorType();
       case "string":
-        scanType = new ScanType(info.fieldSchema.getName(), MinorType.VARCHAR4,
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.VARCHAR,
           DataMode.REQUIRED);
         return scanType.getMajorType();
       case "bigint":
@@ -282,8 +282,8 @@ public class HBaseRecordReader implements RecordReader {
           DataMode.REQUIRED);
         return scanType.getMajorType();
       case "smallint":
-        scanType =new ScanType(info.fieldSchema.getName(),MinorType.SMALLINT,
-                DataMode.REQUIRED);
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.SMALLINT,
+          DataMode.REQUIRED);
         return scanType.getMajorType();
     }
     return null;
@@ -313,13 +313,13 @@ public class HBaseRecordReader implements RecordReader {
     }
 
     for (ValueVector v : valueVectors) {
-        if (v instanceof FixedWidthVector) {
-            ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
-        } else if (v instanceof VariableWidthVector) {
-            ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+      if (v instanceof FixedWidthVector) {
+        ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
+      } else if (v instanceof VariableWidthVector) {
+        ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
+      } else {
+        throw new UnsupportedOperationException();
+      }
     }
 
     int recordSetSize = 0;
@@ -385,10 +385,10 @@ public class HBaseRecordReader implements RecordReader {
       byte[] resultBytes = null;
       if (type.equals("string"))
         resultBytes = Bytes.toBytes((String) result);
-      if (valueVector instanceof VarChar4Vector) {
+      if (valueVector instanceof VarCharVector) {
 
         if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
-        ((VarChar4Vector) valueVector).getMutator().set(recordSetSize, resultBytes);
+        ((VarCharVector) valueVector).getMutator().set(recordSetSize, resultBytes);
         valueVector.getMutator().setValueCount(recordSetSize);
         if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof IntVector) {

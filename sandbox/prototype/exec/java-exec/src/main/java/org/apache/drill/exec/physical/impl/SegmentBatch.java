@@ -6,7 +6,7 @@ import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.Group;
+import org.apache.drill.exec.physical.config.SegmentPOP;
 import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
@@ -26,7 +26,7 @@ import java.util.*;
  */
 public class SegmentBatch extends BaseRecordBatch {
 
-  private Group config;
+  private SegmentPOP config;
   private FragmentContext context;
   private RecordBatch incoming;
   private BatchSchema outSchema;
@@ -39,7 +39,7 @@ public class SegmentBatch extends BaseRecordBatch {
   private IntVector refVector;
   private boolean isFirst;
 
-  public SegmentBatch(FragmentContext context, Group config, RecordBatch incoming) {
+  public SegmentBatch(FragmentContext context, SegmentPOP config, RecordBatch incoming) {
     this.context = context;
     this.config = config;
     this.incoming = incoming;

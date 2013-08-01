@@ -26,9 +26,11 @@ import org.apache.drill.exec.physical.base.FragmentRoot;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.config.*;
+import org.apache.drill.exec.physical.impl.filter.BufferedBatchCreator;
 import org.apache.drill.exec.physical.impl.project.ProjectBatchCreator;
 import org.apache.drill.exec.physical.impl.svremover.SVRemoverCreator;
 import org.apache.drill.exec.record.RecordBatch;
+import org.apache.drill.exec.record.buffered.IterationBuffer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +47,7 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     private SVRemoverCreator svc = new SVRemoverCreator();
     private RootExec root = null;
 
-    private FilterBatchCreator fc = new FilterBatchCreator();
+    private BatchCreator<Filter> fc = new BufferedBatchCreator<Filter>(new FilterBatchCreator());
     private ProjectBatchCreator pc = new ProjectBatchCreator();
     private ScanBatchCreator sbc = new ScanBatchCreator();
     private SegmentBatchCreator sgc = new SegmentBatchCreator();
@@ -91,7 +93,11 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
 
     @Override
     public RecordBatch visitFilter(Filter filter, FragmentContext context) throws ExecutionSetupException {
+      if(filter.getIterationBuffer() == null){
         return fc.getBatch(context, filter, getChildren(filter, context));
+      }else{
+        return fc.getBatch(context, filter, null);
+      }
     }
 
     @Override
@@ -130,12 +136,12 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     }
 
     @Override
-    public RecordBatch visitSegment(Group op, FragmentContext value) throws ExecutionSetupException {
+    public RecordBatch visitSegment(SegmentPOP op, FragmentContext value) throws ExecutionSetupException {
         return sgc.getBatch(value, op, Arrays.asList(op.getChild().accept(this, value)));
     }
 
     @Override
-    public RecordBatch visitJoin(PhysicalJoin op, FragmentContext value) throws ExecutionSetupException {
+    public RecordBatch visitJoin(JoinPOP op, FragmentContext value) throws ExecutionSetupException {
         return new JoinBatchCreator().getBatch(value, op, getChildren(op, value));
     }
 }
