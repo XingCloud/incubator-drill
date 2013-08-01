@@ -122,7 +122,7 @@ public class HBaseRecordReader implements RecordReader {
       byte[] result=null;
       if(origRk.startsWith("test")){
           String propIdStr=origRk.substring(4,6);
-          System.out.println(propIdStr);
+          //System.out.println(propIdStr);
           byte[] propId=Bytes.toBytes((short)Integer.parseInt(propIdStr));
           byte[] srtDay=Bytes.toBytes(origRk.substring(6,14));
           if(origRk.length()>(4+2+8)){
@@ -431,6 +431,7 @@ public class HBaseRecordReader implements RecordReader {
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
       return keyvalue.getTimestamp();
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cqname) {
+      byte[] qualif=keyvalue.getQualifier();
       byte[] orig=new byte[4];
       for(int i=0;i<4;i++)
           orig[i]=keyvalue.getQualifier()[i+1];

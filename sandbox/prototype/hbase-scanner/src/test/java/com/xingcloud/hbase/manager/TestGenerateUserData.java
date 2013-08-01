@@ -94,7 +94,9 @@ public class TestGenerateUserData {
                   for(int l=0;l<propertiesList.size();l++){
                       Properties prop=propertiesList.get(l);
                       int uidSeed=batch/(10*days.length);
+                      int uhashSeed=255;
                       Random uidR=new Random(uidSeed);
+                      Random uhashR=new Random(uhashSeed);
                       short propId=(short)prop.getId();
                       List<Object> Values=propertyValue.get(prop.getPropertyName());
                       if(Values.size()==0){
@@ -123,6 +125,11 @@ public class TestGenerateUserData {
                           for(int k=0;k<forUnit/valueSize;k++){
                               int uid=uidR.nextInt(uidSeed);
                               byte[] uidBytes=Bytes.toBytes(uid);
+                              byte[] innerUidBytes=new byte[5];
+                              innerUidBytes[0]=(byte)uhashR.nextInt(100);
+                              for (int m = 0; m < uidBytes.length; m++) {
+                                  innerUidBytes[m+1]=uidBytes[m];
+                              }
                               byte[] dayBytes=Bytes.toBytes(days[i]);
                               byte[] propIdBytes=Bytes.toBytes(propId);
                               byte[] hbaseValue=Bytes.toBytes(false);
@@ -130,7 +137,7 @@ public class TestGenerateUserData {
                               if(k%1000==0&&put!=null)table.put(put);
                               if(k%1000==0)
                                   put=new Put(rk);
-                              put.add(Bytes.toBytes("val"),uidBytes,hbaseValue);
+                              put.add(Bytes.toBytes("val"),innerUidBytes,hbaseValue);
                               recordNum++;
                               if(recordNum%cache==0){
                                   System.out.println(recordNum);
