@@ -80,18 +80,18 @@ public class ConstantValues {
   }
 
   public static class StringScalar implements BasicEvaluator {
-    VarChar4Vector varChar4Vector;
+    VarCharVector varCharVector;
 
     public StringScalar(CharSequence seq, FragmentContext context) {
-      varChar4Vector = new VarChar4Vector(null, context.getAllocator());
-      varChar4Vector.allocateNew(seq.length() * 2 + 8, 1);
-      varChar4Vector.getMutator().setValueCount(1);
-      varChar4Vector.getMutator().set(0, seq.toString().getBytes());
+      varCharVector = new VarCharVector(null, context.getAllocator());
+      varCharVector.allocateNew(seq.length() * 2 + 8, 1);
+      varCharVector.getMutator().setValueCount(1);
+      varCharVector.getMutator().set(0, seq.toString().getBytes());
     }
 
     @Override
     public ValueVector eval() {
-      return varChar4Vector;
+      return varCharVector;
     }
   }
 
