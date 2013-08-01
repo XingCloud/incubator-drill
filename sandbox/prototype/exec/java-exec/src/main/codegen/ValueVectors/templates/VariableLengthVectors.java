@@ -160,6 +160,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
     data.retain();
     data.readerIndex(0);
     offsetVector.allocateNew(valueCount+1);
+    offsetVector.getMutator().set(0,0);
   }
 
   public Accessor getAccessor(){

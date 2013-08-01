@@ -11,10 +11,7 @@ import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.*;
-import org.apache.drill.exec.vector.AllocationHelper;
-import org.apache.drill.exec.vector.IntVector;
-import org.apache.drill.exec.vector.TypeHelper;
-import org.apache.drill.exec.vector.ValueVector;
+import org.apache.drill.exec.vector.*;
 
 import java.util.*;
 
@@ -137,17 +134,17 @@ public class SegmentBatch extends BaseRecordBatch {
       out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
       AllocationHelper.allocate(out, recordCount, 50);
       outMutator = out.getMutator();
-      outMutator.setValueCount(recordCount);
 
       for (int i = 0; i < recordCount; i++) {
         outMutator.setObject(i, inAccessor.getObject(indexes.get(i)));
       }
+      outMutator.setValueCount(recordCount);
       outputVectors.add(out);
     }
 
     refVector.allocateNew(1);
-    refVector.getMutator().setValueCount(1);
     refVector.getMutator().set(0, groupId);
+    refVector.getMutator().setValueCount(1);
     outputVectors.add(refVector);
   }
 

@@ -122,7 +122,6 @@ public class HBaseRecordReader implements RecordReader {
       byte[] result=null;
       if(origRk.startsWith("test")){
           String propIdStr=origRk.substring(4,6);
-          //System.out.println(propIdStr);
           byte[] propId=Bytes.toBytes((short)Integer.parseInt(propIdStr));
           byte[] srtDay=Bytes.toBytes(origRk.substring(6,14));
           if(origRk.length()>(4+2+8)){
