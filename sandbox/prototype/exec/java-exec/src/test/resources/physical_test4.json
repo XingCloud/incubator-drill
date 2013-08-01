@@ -11,9 +11,9 @@
     pop : "hbase-scan",
     @id : 1,
     entries : [ {
-      table : "sof-dsk_deu",
-      startRowKey : "20130101",
-      endRowKey : "20130101",
+      table : "testtable100W_deu",
+      startRowKey : "20121201",
+      endRowKey : "20121201",
       filters : [
       ],
       projections: [ {
@@ -36,7 +36,7 @@
      pop: "hbase-scan",
      @id: 2,
      entries:[{
-         table: "sof-dsk_deu",
+         table: "property_testtable_100W_index",
          startRowKey: "null",
          endRowKey: "null",
          filters:[

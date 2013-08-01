@@ -84,7 +84,11 @@ public class HBaseRecordReader implements RecordReader {
         startRowKey= HBaseUserUtils.getRowKey(propId,endDay);
     }
     else
+    {
        endRowKey = Bytes.toBytes(config.getEndRowKey());
+       if(config.getEndRowKey().equals(config.getEndRowKey()))
+           endRowKey=addMaxByteToTail(endRowKey);
+    }
     tableName = config.getTableName();
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
@@ -123,6 +127,16 @@ public class HBaseRecordReader implements RecordReader {
     } catch (Exception e) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
+  }
+
+  private byte[] addMaxByteToTail(byte[] orig){
+      byte[] result=new byte[orig.length+1];
+      int i=0;
+      for(;i<orig.length;i++){
+          result[i]=orig[i];
+      }
+      result[i]=(byte)255;
+      return result;
   }
 
 

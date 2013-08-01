@@ -321,6 +321,7 @@ public class JoinBatch extends BaseRecordBatch {
       cacheRight();
       rightMarkBits.allocateNew(rightIncoming.getRecordCount());
       BitVector.Mutator mutator = rightMarkBits.getMutator();
+      mutator.setValueCount(rightIncoming.getRecordCount());
 
       for (int i = 0; i < leftJoinKeys.size(); i++) {
         Accessor leftKeyAccessor = leftJoinKeys.get(i).getAccessor();
