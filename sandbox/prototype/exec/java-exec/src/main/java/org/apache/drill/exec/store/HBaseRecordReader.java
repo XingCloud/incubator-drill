@@ -71,35 +71,32 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() {
-    if(config.getStartRowKey().equals("null")){
-        byte[] propId=Bytes.toBytes((short)3);
-        byte[] srtDay=Bytes.toBytes("20121201");
-        startRowKey= HBaseUserUtils.getRowKey(propId,srtDay);
-    }
-    else
-        startRowKey = Bytes.toBytes(config.getStartRowKey());
-    if(config.getEndRowKey().equals("null")){
-        byte[] propId=Bytes.toBytes((short)3);
-        byte[] endDay=Bytes.toBytes("20121202");
-        startRowKey= HBaseUserUtils.getRowKey(propId,endDay);
-    }
-    else
-    {
-       endRowKey = Bytes.toBytes(config.getEndRowKey());
-       if(config.getEndRowKey().equals(config.getEndRowKey()))
-           endRowKey=addMaxByteToTail(endRowKey);
+    if (config.getStartRowKey().equals("null")) {
+      byte[] propId = Bytes.toBytes((short) 3);
+      byte[] srtDay = Bytes.toBytes("20121201");
+      startRowKey = HBaseUserUtils.getRowKey(propId, srtDay);
+    } else
+      startRowKey = Bytes.toBytes(config.getStartRowKey());
+    if (config.getEndRowKey().equals("null")) {
+      byte[] propId = Bytes.toBytes((short) 3);
+      byte[] endDay = Bytes.toBytes("20121202");
+      startRowKey = HBaseUserUtils.getRowKey(propId, endDay);
+    } else {
+      endRowKey = Bytes.toBytes(config.getEndRowKey());
+      if (config.getEndRowKey().equals(config.getEndRowKey()))
+        endRowKey = addMaxByteToTail(endRowKey);
     }
     tableName = config.getTableName();
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
     sourceRefMap = new HashMap<>();
     List<NamedExpression> logProjection = config.getProjections();
-    List<String> options=new ArrayList<>();
-    for(int i=0;i<logProjection.size();i++){
-        options.add((String)((SchemaPath)logProjection.get(i).getExpr()).getPath());
+    List<String> options = new ArrayList<>();
+    for (int i = 0; i < logProjection.size(); i++) {
+      options.add((String) ((SchemaPath) logProjection.get(i).getExpr()).getPath());
     }
     try {
-      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName,options);
+      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
       for (HBaseFieldInfo col : cols) {
         fieldInfoMap.put(col.fieldSchema.getName(), col);
       }
@@ -116,7 +113,7 @@ public class HBaseRecordReader implements RecordReader {
       }
       filters = config.getFilters();
 
-      primaryRowKeyParts = TableInfo.getRowKey(tableName,options);
+      primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
       primaryRowKey = new ArrayList<>();
       for (KeyPart kp : primaryRowKeyParts) {
         if (kp.getType() == KeyPart.Type.field)
@@ -129,14 +126,14 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  private byte[] addMaxByteToTail(byte[] orig){
-      byte[] result=new byte[orig.length+1];
-      int i=0;
-      for(;i<orig.length;i++){
-          result[i]=orig[i];
-      }
-      result[i]=(byte)255;
-      return result;
+  private byte[] addMaxByteToTail(byte[] orig) {
+    byte[] result = new byte[orig.length + 1];
+    int i = 0;
+    for (; i < orig.length; i++) {
+      result[i] = orig[i];
+    }
+    result[i] = (byte) 255;
+    return result;
   }
 
 
@@ -256,7 +253,7 @@ public class HBaseRecordReader implements RecordReader {
           DataMode.REQUIRED);
         return scanType.getMajorType();
       case "string":
-        scanType = new ScanType(info.fieldSchema.getName(), MinorType.VARCHAR4,
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.VARCHAR,
           DataMode.REQUIRED);
         return scanType.getMajorType();
       case "bigint":
@@ -264,8 +261,8 @@ public class HBaseRecordReader implements RecordReader {
           DataMode.REQUIRED);
         return scanType.getMajorType();
       case "smallint":
-        scanType =new ScanType(info.fieldSchema.getName(),MinorType.SMALLINT,
-                DataMode.REQUIRED);
+        scanType = new ScanType(info.fieldSchema.getName(), MinorType.SMALLINT,
+          DataMode.REQUIRED);
         return scanType.getMajorType();
     }
     return null;
@@ -295,13 +292,13 @@ public class HBaseRecordReader implements RecordReader {
     }
 
     for (ValueVector v : valueVectors) {
-        if (v instanceof FixedWidthVector) {
-            ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
-        } else if (v instanceof VariableWidthVector) {
-            ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+      if (v instanceof FixedWidthVector) {
+        ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
+      } else if (v instanceof VariableWidthVector) {
+        ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
+      } else {
+        throw new UnsupportedOperationException();
+      }
     }
 
     int recordSetSize = 0;
@@ -369,10 +366,10 @@ public class HBaseRecordReader implements RecordReader {
       byte[] resultBytes = null;
       if (type.equals("string"))
         resultBytes = Bytes.toBytes((String) result);
-      if (valueVector instanceof VarChar4Vector) {
+      if (valueVector instanceof VarCharVector) {
 
         if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
-        ((VarChar4Vector) valueVector).getMutator().set(recordSetSize, resultBytes);
+        ((VarCharVector) valueVector).getMutator().set(recordSetSize, resultBytes);
         valueVector.getMutator().setValueCount(recordSetSize);
         if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
       } else if (valueVector instanceof IntVector) {
@@ -439,8 +436,8 @@ public class HBaseRecordReader implements RecordReader {
           if (optional && fieldEndindex > rk.length) return;
           byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
           String ret = Bytes.toString(result);
-          Object o=parseString(ret,info.fieldSchema.getType());
-          rkObjectMap.put(info.fieldSchema.getName(),o);
+          Object o = parseString(ret, info.fieldSchema.getType());
+          rkObjectMap.put(info.fieldSchema.getName(), o);
           index = fieldEndindex;
         } else if (info.serType == HBaseFieldInfo.DataSerType.WORD) {
           if (i < keyParts.size() - 1) {
@@ -472,8 +469,8 @@ public class HBaseRecordReader implements RecordReader {
           if (fieldEndindex != index) {
             byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
             String ret = Bytes.toString(result);
-            Object o=parseString(ret,info.fieldSchema.getType());
-            rkObjectMap.put(info.fieldSchema.getName(),o);
+            Object o = parseString(ret, info.fieldSchema.getType());
+            rkObjectMap.put(info.fieldSchema.getName(), o);
             index = fieldEndindex;
           } else {
             return;
@@ -486,7 +483,7 @@ public class HBaseRecordReader implements RecordReader {
           result = Arrays.copyOfRange(rk, index, fieldEndindex);
           Object ob = parseBytes(result, info.fieldSchema.getType());
           rkObjectMap.put(info.fieldSchema.getName(), ob);
-          index=fieldEndindex;
+          index = fieldEndindex;
         }
       } else if (kp.getType() == KeyPart.Type.optionalgroup) {
         List<KeyPart> optionalKeyParts = kp.getOptionalGroup();
@@ -513,13 +510,13 @@ public class HBaseRecordReader implements RecordReader {
           result[i] = orig[index++];
         return Bytes.toInt(result);
       case "smallint":
-        result=new byte[2];
-          for(int i=0;i<2-orig.length;i++){
-              result[i]=0;
-          }
-          for(int i=2-orig.length;i<2;i++){
-              result[i]=orig[index++];
-          }
+        result = new byte[2];
+        for (int i = 0; i < 2 - orig.length; i++) {
+          result[i] = 0;
+        }
+        for (int i = 2 - orig.length; i < 2; i++) {
+          result[i] = orig[index++];
+        }
         return Bytes.toShort(result);
       case "tinyint":
         return orig[0];
@@ -536,20 +533,20 @@ public class HBaseRecordReader implements RecordReader {
     return null;
   }
 
-  private Object parseString(String orig, String type){
-      switch (type) {
-          case "int":
-              return Integer.parseInt(orig);
-          case "tinyint":
-              return type.charAt(0);
-          case "smallint":
-              return (short)Integer.parseInt(orig);
-          case "string":
-              return orig;
-          case "bigint":
-               return Long.parseLong(orig);
-      }
-      return null;
+  private Object parseString(String orig, String type) {
+    switch (type) {
+      case "int":
+        return Integer.parseInt(orig);
+      case "tinyint":
+        return type.charAt(0);
+      case "smallint":
+        return (short) Integer.parseInt(orig);
+      case "string":
+        return orig;
+      case "bigint":
+        return Long.parseLong(orig);
+    }
+    return null;
   }
 
 

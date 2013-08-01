@@ -11,11 +11,10 @@ import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.TransferPair;
 
 /**
- * Bit implements a vector of bit-width values.  Elements in the vector are accessed
- * by position from the logical start of the vector.
- * The width of each element is 1 bit.
- * The equivalent Java primitive is an int containing the value '0' or '1'.
- * <p/>
+ * Bit implements a vector of bit-width values. Elements in the vector are accessed by position from the logical start
+ * of the vector. The width of each element is 1 bit. The equivalent Java primitive is an int containing the value '0'
+ * or '1'.
+ * 
  * NB: this class is automatically generated from ValueVectorTypes.tdd using FreeMarker.
  */
 public final class BitVector extends BaseDataValueVector implements FixedWidthVector {
@@ -35,9 +34,10 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
   }
 
   /**
-   * Allocate a new memory space for this vector.  Must be called prior to using the ValueVector.
-   *
-   * @param valueCount The number of values which can be contained within this vector.
+   * Allocate a new memory space for this vector. Must be called prior to using the ValueVector.
+   * 
+   * @param valueCount
+   *          The number of values which can be contained within this vector.
    */
   public void allocateNew(int valueCount) {
     clear();
@@ -87,7 +87,6 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
     return new TransferImpl();
   }
 
-  
   public void transferTo(BitVector target, boolean needClear){
     target.data = data;
     target.data.retain();
@@ -108,7 +107,6 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
       return to;
     }
 
-    
     public void transfer(){
       transferTo(to, true);
     }
@@ -122,37 +120,44 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
   public class Accessor extends BaseAccessor {
 
     /**
-     * Get the byte holding the desired bit, then mask all other bits.  Iff the result is 0, the
-     * bit was not set.
-     *
-     * @param index position of the bit in the vector
+     * Get the byte holding the desired bit, then mask all other bits. Iff the result is 0, the bit was not set.
+     * 
+     * @param index
+     *          position of the bit in the vector
      * @return 1 if set, otherwise 0
      */
-    public int get(int index) {
+    public final int get(int index) {
       // logger.debug("BIT GET: index: {}, byte: {}, mask: {}, masked byte: {}",
-      //             index,
-      //             data.getByte((int)Math.floor(index/8)),
-      //             (int)Math.pow(2, (index % 8)),
-      //             data.getByte((int)Math.floor(index/8)) & (int)Math.pow(2, (index % 8)));
+      // index,
+      // data.getByte((int)Math.floor(index/8)),
+      // (int)Math.pow(2, (index % 8)),
+      // data.getByte((int)Math.floor(index/8)) & (int)Math.pow(2, (index % 8)));
       return ((data.getByte((int) Math.floor(index / 8)) & (int) Math.pow(2, (index % 8))) == 0) ? 0 : 1;
     }
 
     @Override
-    public Object getObject(int index) {
+    public final Object getObject(int index) {
       return new Boolean(get(index) != 0);
     }
 
-    public int getValueCount() {
+
+    public final int getValueCount() {
       return valueCount;
     }
 
+    public final void get(int index, BitHolder holder) {
+      holder.value = get(index);
+    }
+
+    final void get(int index, NullableBitHolder holder) {
+      holder.value = get(index);
+    }
   }
 
   /**
-   * MutableBit implements a vector of bit-width values.  Elements in the vector are accessed
-   * by position from the logical start of the vector.  Values should be pushed onto the vector
-   * sequentially, but may be randomly accessed.
-   * <p/>
+   * MutableBit implements a vector of bit-width values. Elements in the vector are accessed by position from the
+   * logical start of the vector. Values should be pushed onto the vector sequentially, but may be randomly accessed.
+   * 
    * NB: this class is automatically generated from ValueVectorTypes.tdd using FreeMarker.
    */
   public class Mutator extends BaseMutator {
@@ -163,10 +168,12 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
     /**
      * Set the bit at the given index to the specified value.
      *
-     * @param index position of the bit to set
-     * @param value value to set (either 1 or 0)
+     * @param index
+     *          position of the bit to set
+     * @param value
+     *          value to set (either 1 or 0)
      */
-    public void set(int index, int value) {
+    public final void set(int index, int value) {
       byte currentByte = data.getByte((int) Math.floor(index / 8));
       if (value != 0) {
         // true
@@ -178,19 +185,25 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
       data.setByte((int) Math.floor(index / 8), currentByte);
     }
 
-    public void setValueCount(int valueCount) {
+    public final void set(int index, BitHolder holder) {
+      set(index, holder.value);
+    }
+
+    final void set(int index, NullableBitHolder holder) {
+      set(index, holder.value);
+    }
+
+    public final void setValueCount(int valueCount) {
       BitVector.this.valueCount = valueCount;
       data.writerIndex(getSizeFromCount(valueCount));
     }
 
     @Override
-    public void randomizeData() {
-      if (data != DeadBuf.DEAD_BUFFER) {
-        Random r = new Random();
-        for (int i = 0; i < data.capacity() - 1; i++) {
-          byte[] bytes = new byte[1];
-          r.nextBytes(bytes);
-          data.setByte(i, bytes[0]);
+    public final void generateTestData() {
+      boolean even = true;
+      for (int i = 0; i < valueCount; i++, even = !even) {
+        if (even) {
+          set(i, 1);
         }
       }
     }

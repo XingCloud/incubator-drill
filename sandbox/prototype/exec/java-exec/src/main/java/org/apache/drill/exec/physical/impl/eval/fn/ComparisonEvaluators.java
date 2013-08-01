@@ -110,7 +110,7 @@ public class ComparisonEvaluators {
       this.right = args.getEvaluator(1);
       value = new BitVector(MaterializedField.create(new SchemaPath("and", ExpressionPosition.UNKNOWN),
         Types.required(
-          TypeProtos.MinorType.BOOLEAN)),
+          TypeProtos.MinorType.BIT)),
         recordBatch.getContext().getAllocator());
     }
 
