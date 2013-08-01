@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xingcloud.hbase.util.HBaseUserUtils;
+import com.xingcloud.hbase.util.RowKeyParser;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
@@ -50,9 +51,9 @@ public class HBaseRecordReader implements RecordReader {
   private List<HBaseFieldInfo> primaryRowKey;
   private List<KeyPart> primaryRowKeyParts;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
-  private Map<String, Object> rkObjectMap;
+  //private Map<String, Object> rkObjectMap;
   //private boolean optional=false;
-  private int index = 0;
+  //private int index = 0;
 
   private List<TableScanner> scanners = new ArrayList<>();
   private int currentScannerIndex = 0;
@@ -71,24 +72,10 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() {
-    if(config.getStartRowKey().equals("null")){
-        byte[] propId=Bytes.toBytes((short)3);
-        byte[] srtDay=Bytes.toBytes("20121201");
-        startRowKey= HBaseUserUtils.getRowKey(propId,srtDay);
-    }
-    else
-        startRowKey = Bytes.toBytes(config.getStartRowKey());
-    if(config.getEndRowKey().equals("null")){
-        byte[] propId=Bytes.toBytes((short)3);
-        byte[] endDay=Bytes.toBytes("20121202");
-        startRowKey= HBaseUserUtils.getRowKey(propId,endDay);
-    }
-    else
-    {
-       endRowKey = Bytes.toBytes(config.getEndRowKey());
-       if(config.getEndRowKey().equals(config.getEndRowKey()))
-           endRowKey=addMaxByteToTail(endRowKey);
-    }
+    startRowKey=parseRkStr(config.getStartRowKey());
+    endRowKey=parseRkStr(config.getEndRowKey());
+    if(config.getEndRowKey().equals(config.getEndRowKey()))
+         endRowKey=addMaxByteToTail(endRowKey);
     tableName = config.getTableName();
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
@@ -128,6 +115,37 @@ public class HBaseRecordReader implements RecordReader {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
   }
+  /*
+     parse Rk in physical_test: "test"+propId("03")+day("20121201")+[type("str"/"num")+val("en"/"123")]
+    */
+  private byte[] parseRkStr(String origRk){
+      byte[] result=null;
+      if(origRk.startsWith("test")){
+          String propIdStr=origRk.substring(4,6);
+          System.out.println(propIdStr);
+          byte[] propId=Bytes.toBytes((short)Integer.parseInt(propIdStr));
+          byte[] srtDay=Bytes.toBytes(origRk.substring(6,14));
+          if(origRk.length()>(4+2+8)){
+              String type=origRk.substring(14,17);
+              if(type.equals("str"))
+              {
+                  String val=origRk.substring(17,origRk.length());
+                  byte[] valBytes=Bytes.toBytes(val);
+                  result=HBaseUserUtils.getRowKey(propId,srtDay,valBytes);
+              }else if(type.equals("num")){
+                  Long val=Long.parseLong(origRk.substring(17,origRk.length()));
+                  byte[] valBytes=Bytes.toBytes(val);
+                  result=HBaseUserUtils.getRowKey(propId,srtDay,valBytes);
+              }
+          }
+          else
+             result= HBaseUserUtils.getRowKey(propId,srtDay);
+      }
+      else
+          result = Bytes.toBytes(config.getStartRowKey());
+      return result;
+  }
+
 
   private byte[] addMaxByteToTail(byte[] orig){
       byte[] result=new byte[orig.length+1];
@@ -358,13 +376,11 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   public boolean PutValuesToVectors(KeyValue kv, ValueVector[] valueVectors, int recordSetSize) {
-    rkObjectMap = new HashMap<>();
-    index = 0;
-    parseRowKey(kv, rkObjectMap);
+    Map<String,Object> rkObjectMap = RowKeyParser.parse(kv.getRow(),primaryRowKeyParts,fieldInfoMap);
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
-      Object result = getValFromKeyValue(kv, info);
+      Object result = getValFromKeyValue(kv, info,rkObjectMap);
       String type = info.fieldSchema.getType();
       byte[] resultBytes = null;
       if (type.equals("string"))
@@ -396,7 +412,7 @@ public class HBaseRecordReader implements RecordReader {
     return true;
   }
 
-  public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option) {
+  public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option,Map<String,Object> rkObjectMap) {
     String fieldName = option.fieldSchema.getName();
     if (option.fieldType == HBaseFieldInfo.FieldType.rowkey) {
       if (!rkObjectMap.containsKey(fieldName))
@@ -410,146 +426,17 @@ public class HBaseRecordReader implements RecordReader {
         LOG.info("error! this field's column info---" + option.cqName + ":" + option.cqName +
           " does not match the keyvalue's column info---" + cfName + ":" + cqName);
       else {
-        return parseBytes(keyvalue.getValue(), option.fieldSchema.getType());
+        return RowKeyParser.parseBytes(keyvalue.getValue(), option.fieldSchema.getType());
       }
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
       return keyvalue.getTimestamp();
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cqname) {
-      return parseBytes(keyvalue.getQualifier(), option.fieldSchema.getType());
+      byte[] orig=new byte[4];
+      for(int i=0;i<4;i++)
+          orig[i]=keyvalue.getQualifier()[i+1];
+      return RowKeyParser.parseBytes(orig, option.fieldSchema.getType());
     }
     return null;
-  }
-
-  public void parseRowKey(KeyValue keyValue, Map<String, Object> rkObjectMap) {
-    byte[] rk = keyValue.getRow();
-    //int index=0;
-    parseRkey(rk, false, primaryRowKeyParts, null, rkObjectMap);
-  }
-
-  private void parseRkey(byte[] rk, boolean optional, List<KeyPart> keyParts, KeyPart endKeyPart,
-                         Map<String, Object> rkObjectMap) {
-    int fieldEndindex = index;
-    for (int i = 0; i < keyParts.size(); i++) {
-      KeyPart kp = keyParts.get(i);
-      if (kp.getType() == KeyPart.Type.field) {
-        HBaseFieldInfo info = fieldInfoMap.get(kp.getField().getName());
-        if (info.serType == HBaseFieldInfo.DataSerType.TEXT
-          && info.serLength != 0) {
-          fieldEndindex = index + info.serLength;
-          if (optional && fieldEndindex > rk.length) return;
-          byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
-          String ret = Bytes.toString(result);
-          Object o=parseString(ret,info.fieldSchema.getType());
-          rkObjectMap.put(info.fieldSchema.getName(),o);
-          index = fieldEndindex;
-        } else if (info.serType == HBaseFieldInfo.DataSerType.WORD) {
-          if (i < keyParts.size() - 1) {
-            KeyPart nextkp = keyParts.get(i + 1);
-            String nextCons = nextkp.getConstant();
-            byte[] nextConsBytes = Bytes.toBytes(nextCons);
-
-            if (optional) {
-              byte[] endCons = Bytes.toBytes(endKeyPart.getConstant());
-              if (endKeyPart.getConstant().equals("\\xFF")) endCons[0] = -1;
-              while (fieldEndindex < rk.length && rk[fieldEndindex] != nextConsBytes[0] &&
-                rk[fieldEndindex] != endCons[0]) {
-                fieldEndindex++;
-              }
-            } else
-              while (fieldEndindex < rk.length && rk[fieldEndindex] != nextConsBytes[0]) {
-                fieldEndindex++;
-              }
-          } else {
-            if (endKeyPart == null)
-              fieldEndindex = rk.length;
-            else {
-              byte[] endCons = Bytes.toBytes(endKeyPart.getConstant());
-              while (fieldEndindex < rk.length && rk[fieldEndindex] != endCons[0]) {
-                fieldEndindex++;
-              }
-            }
-          }
-          if (fieldEndindex != index) {
-            byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
-            String ret = Bytes.toString(result);
-            Object o=parseString(ret,info.fieldSchema.getType());
-            rkObjectMap.put(info.fieldSchema.getName(),o);
-            index = fieldEndindex;
-          } else {
-            return;
-          }
-
-        } else if (info.serType == HBaseFieldInfo.DataSerType.BINARY && info.serLength != 0) {
-          fieldEndindex = index + info.serLength;
-          if (optional && fieldEndindex > rk.length) return;
-          byte[] result;
-          result = Arrays.copyOfRange(rk, index, fieldEndindex);
-          Object ob = parseBytes(result, info.fieldSchema.getType());
-          rkObjectMap.put(info.fieldSchema.getName(), ob);
-          index=fieldEndindex;
-        }
-      } else if (kp.getType() == KeyPart.Type.optionalgroup) {
-        List<KeyPart> optionalKeyParts = kp.getOptionalGroup();
-        KeyPart endKp;
-        if (optional == false) endKp = keyParts.get(i + 1);
-        else endKp = endKeyPart;
-        parseRkey(rk, true, optionalKeyParts, endKp, rkObjectMap);
-
-      } else if (kp.getType() == KeyPart.Type.constant) {
-        index++;
-      }
-    }
-  }
-
-  private Object parseBytes(byte[] orig, String type) {
-    byte[] result;
-    int index = 0;
-    switch (type) {
-      case "int":
-        result = new byte[4];
-        for (int i = 0; i < 4 - orig.length; i++)
-          result[i] = 0;
-        for (int i = 4 - orig.length; i < 4; i++)
-          result[i] = orig[index++];
-        return Bytes.toInt(result);
-      case "smallint":
-        result=new byte[2];
-          for(int i=0;i<2-orig.length;i++){
-              result[i]=0;
-          }
-          for(int i=2-orig.length;i<2;i++){
-              result[i]=orig[index++];
-          }
-        return Bytes.toShort(result);
-      case "tinyint":
-        return orig[0];
-      case "string":
-        return Bytes.toString(orig);
-      case "bigint":
-        result = new byte[8];
-        for (int i = 0; i < 8 - orig.length; i++)
-          result[i] = 0;
-        for (int i = 8 - orig.length; i < 8; i++)
-          result[i] = orig[index++];
-        return Bytes.toLong(result);
-    }
-    return null;
-  }
-
-  private Object parseString(String orig, String type){
-      switch (type) {
-          case "int":
-              return Integer.parseInt(orig);
-          case "tinyint":
-              return type.charAt(0);
-          case "smallint":
-              return (short)Integer.parseInt(orig);
-          case "string":
-              return orig;
-          case "bigint":
-               return Long.parseLong(orig);
-      }
-      return null;
   }
 
 

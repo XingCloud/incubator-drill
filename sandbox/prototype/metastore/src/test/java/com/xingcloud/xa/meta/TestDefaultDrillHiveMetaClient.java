@@ -16,15 +16,15 @@ public class TestDefaultDrillHiveMetaClient {
 
   @Test
   public void testCreateDEUTable() throws Exception{
-    String tableName = "sofMnsdsk_deu";
+    String tableName = "testtable100W_deu";
     String dbName = "test_xa";
-    String userTableName = "user_age";
-    String userIndexName = "property_testtable_100W_index";
+    String userTableName = "user_sofMnsdsk";
+    String userIndexName = "property_sofMnsdsk_index";
     String userRegPropName="register_template_prop_index";
-    createDEUTable(tableName);
+    //createDEUTable(tableName);
     createUserTable(userTableName);
     createUserIndex(userIndexName);
-    createPropRegisterTable();
+    //createPropRegisterTable();
 
     DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
     Table table = client.getTable(dbName, tableName);
