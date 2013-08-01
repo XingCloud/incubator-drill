@@ -37,10 +37,11 @@ public class XAEvaluators {
       timeStr.allocateNew(20 * recordCount, recordCount);
       VarCharVector.Mutator mutator = timeStr.getMutator();
 
-      mutator.setValueCount(recordCount);
+
       for (int i = 0; i < recordCount; i++) {
         mutator.set(i, getKeyBySpecificPeriod(accessor.get(i), period).getBytes());
       }
+      mutator.setValueCount(recordCount);
       return timeStr;
 
     }
