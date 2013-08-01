@@ -289,7 +289,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
     public void setValueCount(int valueCount) {
       assert valueCount >= 0;
       Nullable${minor.class}Vector.this.valueCount = valueCount;
-      values.getMutator().setValueCount(valueCount);
+      values.getMutator().setValueCount(setCount);
       bits.getMutator().setValueCount(valueCount);
     }
     
