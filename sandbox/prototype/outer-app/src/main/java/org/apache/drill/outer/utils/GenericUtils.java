@@ -39,7 +39,6 @@ public class GenericUtils {
     String pName;
     for (UserProp up : properties) {
       pName = up.getPropName();
-      System.out.println(pName);
       if (propName.equals(pName)) {
         thisId = (short) up.getId();
       }
@@ -95,7 +94,7 @@ public class GenericUtils {
   }
 
   public static void main(String[] args) throws Exception {
-    propertyString2TinyInt("sof-dsk","register_time");
+    propertyString2TinyInt("age", "register_time");
   }
 
 }
