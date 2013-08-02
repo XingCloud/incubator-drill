@@ -180,7 +180,7 @@ public class BasicOptimizer extends Optimizer {
       FieldReference within = collapsingAggregate.getWithin();
       FieldReference[] carryovers = collapsingAggregate.getCarryovers();
       NamedExpression[] aggregations = collapsingAggregate.getAggregations();
-      PhysicalCollapsingAggregate pca = new PhysicalCollapsingAggregate(next.accept(this, value), within, target,
+      CollapsingAggregatePOP pca = new CollapsingAggregatePOP(next.accept(this, value), within, target,
         carryovers, aggregations);
       return pca;
     }

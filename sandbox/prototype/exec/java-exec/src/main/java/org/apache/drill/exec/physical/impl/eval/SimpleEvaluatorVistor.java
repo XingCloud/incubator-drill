@@ -76,22 +76,22 @@ public class SimpleEvaluatorVistor extends SimpleExprVisitor<BasicEvaluator> {
 
   @Override
   public BasicEvaluator visitLongConstant(ValueExpressions.LongExpression intExpr) {
-    return new LongScalar(intExpr.getLong(), recordBatch.getContext());
+    return new LongScalar(intExpr.getLong(), recordBatch);
   }
 
   @Override
   public BasicEvaluator visitDoubleConstant(ValueExpressions.DoubleExpression dExpr) {
-    return new DoubleScalar(dExpr.getDouble(), recordBatch.getContext());
+    return new DoubleScalar(dExpr.getDouble(), recordBatch);
   }
 
   @Override
   public BasicEvaluator visitBooleanConstant(ValueExpressions.BooleanExpression e) {
-    return new BooleanScalar(e.getBoolean(), recordBatch.getContext());
+    return new BooleanScalar(e.getBoolean(), recordBatch);
   }
 
   @Override
   public BasicEvaluator visitQuotedStringConstant(ValueExpressions.QuotedString e) {
-    return new StringScalar(e.value, recordBatch.getContext());
+    return new StringScalar(e.value, recordBatch);
   }
 
   @Override

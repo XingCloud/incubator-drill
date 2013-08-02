@@ -30,14 +30,17 @@ public class XAEvaluators {
     public XAEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
       child = args.getOnlyEvaluator();
-      timeStr = new VarCharVector(MaterializedField.create(new SchemaPath("XA", ExpressionPosition.UNKNOWN),
-        Types.required(TypeProtos.MinorType.VARCHAR))
-        , recordBatch.getContext().getAllocator());
     }
 
     @Override
     public VarCharVector eval() {
       int period = getPeriod();
+
+      if (timeStr == null) {
+        timeStr = new VarCharVector(MaterializedField.create(new SchemaPath("XA", ExpressionPosition.UNKNOWN),
+          Types.required(TypeProtos.MinorType.VARCHAR))
+          , recordBatch.getContext().getAllocator());
+      }
 
       BigIntVector.Accessor accessor = ((BigIntVector) child.eval()).getAccessor();
       int recordCount = accessor.getValueCount();
