@@ -11,6 +11,20 @@
 
     <artifactId>outer-app</artifactId>
 
+    <repositories>
+        <repository>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <id>xamavenrepo</id>
+            <name>xamavenrepo</name>
+            <url>http://xamavenrepo:8044/archiva/repository/internal</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+
     <name>outer-app</name>
     <build>
         <plugins>
@@ -81,6 +95,12 @@
             <groupId>org.apache.drill</groupId>
             <artifactId>metastore</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -101,6 +121,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.xingcloud.xa</groupId>
+            <artifactId>userprops_meta_util</artifactId>
+            <version>0.1.4</version>
         </dependency>
     </dependencies>
 </project>

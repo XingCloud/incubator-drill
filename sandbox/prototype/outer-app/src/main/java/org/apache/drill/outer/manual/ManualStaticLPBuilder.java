@@ -67,7 +67,7 @@ public class ManualStaticLPBuilder {
     public static Grouping buildEventGroup(int level) {
       Grouping g = new Grouping();
       g.setGroupByType(GroupByType.EVENT);
-      g.setGroupby("l" + level);
+      g.setGroupby("event" + level);
       return g;
     }
 
@@ -171,9 +171,9 @@ public class ManualStaticLPBuilder {
     return left;
   }
 
-  private static Scan buildSingleSegmentScan(String userTable, String dateString, int propShort, Object propVal) throws IOException, TException {
+  private static Scan buildSingleSegmentScan(String userTable, String dateString, String propertyName, Object propVal) throws IOException, TException {
     Map<String, Selection.KeyPartParameter> parameterMap = new HashMap<>(2);
-    parameterMap.put("propnumber", Selection.KeyPartParameter.buildSingleKey(toBytes(propShort)));
+    parameterMap.put("propnumber", Selection.KeyPartParameter.buildSingleKey(toBytes(propertyString2TinyInt(propertyName))));
     parameterMap.put("date", Selection.KeyPartParameter.buildSingleKey(toBytes(dateString)));
     if (propVal instanceof String) {
       parameterMap.put("value", Selection.KeyPartParameter.buildSingleKey(toBytes(propVal.toString())));
@@ -184,7 +184,9 @@ public class ManualStaticLPBuilder {
     NamedExpression[] projections = new NamedExpression[1];
     projections[0] = new NamedExpression(new FieldReference("uid", ExpressionPosition.UNKNOWN), new FieldReference("uid", ExpressionPosition.UNKNOWN));
     Selection selection = new Selection(userTable, rowkeyRange, null, projections);
-    return new Scan(SE_HBASE, selection.toSingleJsonOptions(), new FieldReference("user_uid", ExpressionPosition.UNKNOWN));
+    Scan scan = new Scan(SE_HBASE, selection.toSingleJsonOptions(), new FieldReference("user_index_age", ExpressionPosition.UNKNOWN));
+    scan.setMemo("Scan(Table=" + userTable + ", Prop=" + propertyName + ", Val=" + propVal + ")");
+    return scan;
   }
 
   private static LogicalOperator buildSegment(String userTable, String dateString, List<LogicalOperator> operators, Map<String, Object> segmentMap) throws IOException, TException {
@@ -193,8 +195,7 @@ public class ManualStaticLPBuilder {
     Map.Entry<String, Object> entry = it.next();
     String propertyName = entry.getKey();
     Object propertyValue = entry.getValue();
-    short propertyShort = propertyString2TinyInt(propertyName);
-    LogicalOperator lo1 = buildSingleSegmentScan(userTable, dateString, propertyShort, propertyValue), lo2;
+    LogicalOperator lo1 = buildSingleSegmentScan(userTable, dateString, propertyName, propertyValue), lo2;
     operators.add(lo1);
 
     Join join;
@@ -206,8 +207,9 @@ public class ManualStaticLPBuilder {
           entry = it.next();
           propertyName = entry.getKey();
           propertyValue = entry.getValue();
-          propertyShort = propertyString2TinyInt(propertyName);
-          lo2 = buildSingleSegmentScan(userTable, dateString, propertyShort, propertyValue);
+          lo2 = buildSingleSegmentScan(userTable, dateString, propertyName, propertyValue);
+          operators.add(lo2);
+
           joinConditions = new JoinCondition[1];
           joinConditions[0] = new JoinCondition("==", buildColumn(userTable, "uid"), buildColumn(userTable, "uid"));
           join = new Join(lo1, lo2, joinConditions, Join.JoinType.INNER);
@@ -293,34 +295,36 @@ public class ManualStaticLPBuilder {
       parameterMap = new HashMap<>(1);
       parameterMap.put("propnumber", Selection.KeyPartParameter.buildSingleKey(toBytes(propShort)));
       parameterMap.put("date", Selection.KeyPartParameter.buildSingleKey(toBytes(dateString)));
-      rowkeyRange = Selection.resolveRowkeyRange(eventTable, parameterMap);
+      rowkeyRange = Selection.resolveRowkeyRange(userTable, parameterMap);
       projections = new NamedExpression[2];
       projections[0] = new NamedExpression(new FieldReference("uid", ExpressionPosition.UNKNOWN), new FieldReference("uid", ExpressionPosition.UNKNOWN));
-      projections[1] = new NamedExpression(new FieldReference("value", ExpressionPosition.UNKNOWN), new FieldReference("value", ExpressionPosition.UNKNOWN));
-      selection = new Selection(eventTable, rowkeyRange, null, projections);
+      projections[1] = new NamedExpression(new FieldReference(grouping.getGroupby(), ExpressionPosition.UNKNOWN),
+        new FieldReference(grouping.getGroupby(), ExpressionPosition.UNKNOWN));
+      selection = new Selection(userTable, rowkeyRange, null, projections);
       mapList = new ArrayList<>(1);
       mapList.add(selection.toSelectionMap());
-      userTableScan = new Scan(SE_HBASE, toJsonOptions(config, mapList), new FieldReference("user", ExpressionPosition.UNKNOWN));
+      userTableScan = new Scan(SE_HBASE, toJsonOptions(config, mapList), new FieldReference(userTable, ExpressionPosition.UNKNOWN));
+      logicalOperators.add(userTableScan);
       if (hasSegment) {
         segmentLogicalOperator = buildSegment(userTable, dateString, logicalOperators, segmentMap);
         joinConditions = new JoinCondition[1];
         joinConditions[0] = new JoinCondition("==", buildColumn(eventTable, "uid"), buildColumn(userTable, "uid"));
         join = new Join(eventTableScan, segmentLogicalOperator, joinConditions, Join.JoinType.INNER);
         logicalOperators.add(join);
+
         JoinCondition[] joinConditions2 = new JoinCondition[1];
-        joinConditions2[0] = new JoinCondition("==", buildColumn(eventTable, "uid"), buildColumn(userTable, "uid"));
-        Join join2 = new Join(userTableScan, join, joinConditions, Join.JoinType.INNER);
+        joinConditions2[0] = new JoinCondition("==", buildColumn(userTable, "uid"), buildColumn(eventTable, "uid"));
+        Join join2 = new Join(userTableScan, join, joinConditions2, Join.JoinType.RIGHT);
         logicalOperators.add(join2);
         scanRoot = join2;
       } else {
         joinConditions = new JoinCondition[1];
-        joinConditions[0] = new JoinCondition("==", buildColumn(eventTable, "uid"), buildColumn(userTable, "uid"));
+        joinConditions[0] = new JoinCondition("==", buildColumn(userTable, "uid"), buildColumn(eventTable, "uid"));
         join = new Join(userTableScan, eventTableScan, joinConditions, Join.JoinType.RIGHT);
         logicalOperators.add(join);
         scanRoot = join;
       }
     }
-
 
     // Build segment(Group By)
     Segment segment = null;
@@ -333,16 +337,15 @@ public class ManualStaticLPBuilder {
         String func = grouping.getFunc();
         singleGroupByLE = functionRegistry.createExpression(func, null, new FieldReference(groupBy, null));
         groupByRef = eventTable + "." + grouping.getFunc() + "." + groupBy;
-        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef, null));
       } else if (GroupByType.EVENT.equals(groupByType)) {
         groupByRef = eventTable + "." + groupBy;
         singleGroupByLE = new FieldReference(groupByRef, null);
-        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef, null));
       } else {
         groupByRef = userTable + "." + groupBy;
         singleGroupByLE = new FieldReference(groupByRef, null);
-        segment = new Segment(new LogicalExpression[]{singleGroupByLE}, new FieldReference("segment_" + groupByRef, null));
       }
+      fr = new FieldReference("segment_" + groupByRef, null);
+      segment = new Segment(new NamedExpression[]{new NamedExpression(singleGroupByLE, fr)}, fr);
       segment.setInput(scanRoot);
       logicalOperators.add(segment);
     }
@@ -356,9 +359,9 @@ public class ManualStaticLPBuilder {
     if (groupingQuery) {
       carryovers = new FieldReference[1];
       if (grouping.getGroupByType().equals(GroupByType.EVENT)) {
-        carryovers[0] = new FieldReference(grouping.getFunc() + "(" + eventTable + "." + grouping.getGroupby() + ")", null);
-      } else if (grouping.getGroupByType().equals(GroupByType.INTERNAL_FUNC)) {
         carryovers[0] = new FieldReference(eventTable + "." + grouping.getGroupby(), null);
+      } else if (grouping.getGroupByType().equals(GroupByType.INTERNAL_FUNC)) {
+        carryovers[0] = new FieldReference(grouping.getFunc() + "(" + eventTable + "." + grouping.getGroupby() + ")", null);
       } else {
         carryovers[0] = new FieldReference(userTable + "." + grouping.getGroupby(), null);
       }
@@ -411,16 +414,4 @@ public class ManualStaticLPBuilder {
     }
   }
 
-  public static void main(String[] args) throws IOException, TException {
-    DrillConfig c = DrillConfig.create();
-    LogicalPlan logicalPlan;
-//    logicalPlan = buildStaticLogicalPlanManually("sof_dsk", "a.b.c.*", "20130708", null);
-//    System.out.println(logicalPlan.unparse(c));
-
-    Map<String, Object> segmentMap = new HashMap<>(1);
-    segmentMap.put("register_time", "2013-07-12");
-    System.out.println("---------------------------------");
-    logicalPlan = buildStaticLogicalPlanManually("age", "visit.*", "20130701", null, null);
-    System.out.println(logicalPlan.toJsonString(c));
-  }
 }
