@@ -1,0 +1,85 @@
+coin_buy  \x00\x12  sql_bigint
+ coin_initialstatus   column=value:func, timestamp=1371716568737, value=inc
+ coin_initialstatus   column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x13
+ coin_initialstatus   column=value:orig, timestamp=1371716568737, value=sys
+ coin_initialstatus   column=value:type, timestamp=1371716568737, value=sql_bigi
+                      nt
+ coin_promotion       column=value:func, timestamp=1371716568737, value=inc
+ coin_promotion       column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x14
+ coin_promotion       column=value:orig, timestamp=1371716568737, value=sys
+ coin_promotion       column=value:type, timestamp=1371716568737, value=sql_bigi
+                      nt
+ first_pay_time       column=value:func, timestamp=1371716568737, value=once
+ first_pay_time       column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x00
+ first_pay_time       column=value:orig, timestamp=1371716568737, value=sys
+ first_pay_time       column=value:type, timestamp=1371716568737, value=sql_date
+                      time
+ geoip                column=value:func, timestamp=1371716568737, value=once
+ geoip                column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x11
+ geoip                column=value:orig, timestamp=1371716568737, value=sys
+ geoip                column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ grade \x00\x01 sql_bigint
+ identifier  \x00\x02 sql_string
+ language \x00\x03 sql_string
+ last_login_time  \x00\x04 sql_datetime
+ last_pay_time   \x00\x05 sql_datetime
+ nation  \x00\x06  sql_string
+ pay_amount   \x00\x07  sql_bigint
+ platform             column=value:func, timestamp=1371716568737, value=cover
+ platform             column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x08
+ platform             column=value:orig, timestamp=1371716568737, value=sys
+ platform             column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ ref                  column=value:func, timestamp=1371716568737, value=once
+ ref                  column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x09
+ ref                  column=value:orig, timestamp=1371716568737, value=sys
+ ref                  column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ ref0                 column=value:func, timestamp=1371716568737, value=once
+ ref0                 column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x0A
+ ref0                 column=value:orig, timestamp=1371716568737, value=sys
+ ref0                 column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ ref1                 column=value:func, timestamp=1371716568737, value=once
+ ref1                 column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x0B
+ ref1                 column=value:orig, timestamp=1371716568737, value=sys
+ ref1                 column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ ref2                 column=value:func, timestamp=1371716568737, value=once
+ ref2                 column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x0C
+ ref2                 column=value:orig, timestamp=1371716568737, value=sys
+ ref2                 column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ ref3                 column=value:func, timestamp=1371716568737, value=once
+ ref3                 column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x0D
+ ref3                 column=value:orig, timestamp=1371716568737, value=sys
+ ref3                 column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ ref4                 column=value:func, timestamp=1371716568737, value=once
+ ref4                 column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x0E
+ ref4                 column=value:orig, timestamp=1371716568737, value=sys
+ ref4                 column=value:type, timestamp=1371716568737, value=sql_stri
+                      ng
+ register_time        column=value:func, timestamp=1371716568737, value=once
+ register_time        column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x0F
+ register_time        column=value:orig, timestamp=1371716568737, value=sys
+ register_time        column=value:type, timestamp=1371716568737, value=sql_date
+                      time
+ version              column=value:func, timestamp=1371716568737, value=cover
+ version              column=value:id, timestamp=1371716568737, value=\x00\x00\x
+                      00\x10
+ version              column=value:orig, timestamp=1371716568737, value=sys
+ version              column=value:type, timestamp=1371716568737, value=sql_stri

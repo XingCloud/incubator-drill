@@ -9,7 +9,6 @@ import org.apache.drill.exec.physical.impl.VectorHolder;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
-import org.apache.drill.exec.vector.NonRepeatedMutator;
 import org.apache.drill.exec.vector.ValueVector;
 
 import java.util.ArrayList;
@@ -127,7 +126,7 @@ public class UnionRecordBatch implements RecordBatch {
 
   private void doTransfer() {
     outRecordCount = current.getRecordCount();
-    if (outSchema.getSelectionVector() == BatchSchema.SelectionVectorMode.TWO_BYTE) {
+    if (outSchema.getSelectionVectorMode() == BatchSchema.SelectionVectorMode.TWO_BYTE) {
       this.sv = current.getSelectionVector2();
     }
     for (TransferPair transfer : transfers) {
@@ -135,12 +134,7 @@ public class UnionRecordBatch implements RecordBatch {
     }
 
     for (ValueVector v : this.outputVectors) {
-      ValueVector.Mutator m = v.getMutator();
-      if (m instanceof NonRepeatedMutator) {
-        ((NonRepeatedMutator) m).setValueCount(outRecordCount);
-      } else {
-        throw new UnsupportedOperationException();
-      }
+      v.getMutator().setValueCount(outRecordCount);
     }
 
   }
@@ -160,7 +154,7 @@ public class UnionRecordBatch implements RecordBatch {
       outputVectors.add(pair.getTo());
       transfers.add(pair);
     }
-    SchemaBuilder bldr = BatchSchema.newBuilder().setSelectionVectorMode(current.getSchema().getSelectionVector());
+    SchemaBuilder bldr = BatchSchema.newBuilder().setSelectionVectorMode(current.getSchema().getSelectionVectorMode());
     for (ValueVector v : outputVectors) {
       bldr.addField(v.getField());
     }

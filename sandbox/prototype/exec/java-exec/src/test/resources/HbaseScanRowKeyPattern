@@ -1,0 +1,3 @@
+userTable
+test:
+    "test"+propId(short)+date("20120101")+value("en"/long(1000l))

@@ -81,8 +81,9 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
   }
 
   public static Table GetTable(String tableName,List<String> options) throws Exception{
-    HiveConf conf=new HiveConf();
-    HiveMetaStoreClient client=new HiveMetaStoreClient(conf);
+    if(tableName.contains("-"))
+        tableName=tableName.replaceAll("-","Mns");
+    DefaultDrillHiveMetaClient client= DefaultDrillHiveMetaClient.createClient();
     Table table=client.getTable("test_xa",tableName);
     if(tableName.endsWith("index")){
         String regPropTableName="register_template_prop_index";

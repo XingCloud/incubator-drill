@@ -1,6 +1,8 @@
 package org.apache.drill.exec.store;
 
 import com.xingcloud.hbase.util.HBaseEventUtils;
+import com.xingcloud.hbase.util.HBaseUserUtils;
+import com.xingcloud.hbase.util.RowKeyParser;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
@@ -21,30 +23,14 @@ import java.util.Map;
  */
 public class TestParseRowkey {
 
-    private int index=0;
-    private Map<String, HBaseFieldInfo> fieldInfoMap;
+    //private int index=0;
+    private Map<String, HBaseFieldInfo> rkFieldInfoMap=new HashMap<>();
     private Map<String, Object> rkObjectMap;
     private List<KeyPart> primaryRowKeyParts;
-
-    @Test
-    public void parseRowKey(){
-        try {
-            init();
-        } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-        String day="20120312";
-        String event="audit.consume.coin.";
-        byte[] uid=Bytes.toBytes((int)14000);
-        byte uhash=(byte)20;
-        byte[] iuid=new byte[5];
-        iuid[0]=uhash;
-        for(int i=0;i<4;i++)iuid[i+1]=uid[i];
-        byte[] rk= HBaseEventUtils.getRowKey(Bytes.toBytes(day),event,iuid);
-        for(int i=0;i<10000;i++){
-              parseRkey(rk,false,primaryRowKeyParts,null,rkObjectMap);
-        }
-    }
+    private List<KeyPart>[] propRowKeyParts;
+    private Map<String,HBaseFieldInfo>[] propRkFieldInfoMaps;
+    private String[] propertyNames={"grade","identifier","language",
+                                    "last_login_time","last_pay_time"};
 
     private void init() throws Exception {
         String tableName="testtable100W_deu";
@@ -52,135 +38,125 @@ public class TestParseRowkey {
         List<String> options=Arrays.asList(projections);
         List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
         for (HBaseFieldInfo col : cols) {
-            fieldInfoMap.put(col.fieldSchema.getName(), col);
+            rkFieldInfoMap.put(col.fieldSchema.getName(), col);
         }
         primaryRowKeyParts=TableInfo.getRowKey(tableName,options);
         rkObjectMap=new HashMap<>();
     }
 
-    private void parseRkey(byte[] rk, boolean optional, List<KeyPart> keyParts, KeyPart endKeyPart,
-                           Map<String, Object> rkObjectMap) {
-        int fieldEndindex = index;
-        for (int i = 0; i < keyParts.size(); i++) {
-            KeyPart kp = keyParts.get(i);
-            if (kp.getType() == KeyPart.Type.field) {
-                HBaseFieldInfo info = fieldInfoMap.get(kp.getField().getName());
-                if (info.serType == HBaseFieldInfo.DataSerType.TEXT
-                        && info.serLength != 0) {
-                    fieldEndindex = index + info.serLength;
-                    if (optional && fieldEndindex > rk.length) return;
-                    byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
-                    String ret = Bytes.toString(result);
-                    Object o=parseString(ret,info.fieldSchema.getType());
-                    rkObjectMap.put(info.fieldSchema.getName(),o);
-                    index = fieldEndindex;
-                } else if (info.serType == HBaseFieldInfo.DataSerType.WORD) {
-                    if (i < keyParts.size() - 1) {
-                        KeyPart nextkp = keyParts.get(i + 1);
-                        String nextCons = nextkp.getConstant();
-                        byte[] nextConsBytes = Bytes.toBytes(nextCons);
-
-                        if (optional) {
-                            byte[] endCons = Bytes.toBytes(endKeyPart.getConstant());
-                            if (endKeyPart.getConstant().equals("\\xFF")) endCons[0] = -1;
-                            while (fieldEndindex < rk.length && rk[fieldEndindex] != nextConsBytes[0] &&
-                                    rk[fieldEndindex] != endCons[0]) {
-                                fieldEndindex++;
-                            }
-                        } else
-                            while (fieldEndindex < rk.length && rk[fieldEndindex] != nextConsBytes[0]) {
-                                fieldEndindex++;
-                            }
-                    } else {
-                        if (endKeyPart == null)
-                            fieldEndindex = rk.length;
-                        else {
-                            byte[] endCons = Bytes.toBytes(endKeyPart.getConstant());
-                            while (fieldEndindex < rk.length && rk[fieldEndindex] != endCons[0]) {
-                                fieldEndindex++;
-                            }
-                        }
-                    }
-                    if (fieldEndindex != index) {
-                        byte[] result = Arrays.copyOfRange(rk, index, fieldEndindex);
-                        String ret = Bytes.toString(result);
-                        Object o=parseString(ret,info.fieldSchema.getType());
-                        rkObjectMap.put(info.fieldSchema.getName(),o);
-                        index = fieldEndindex;
-                    } else {
-                        return;
-                    }
-
-                } else if (info.serType == HBaseFieldInfo.DataSerType.BINARY && info.serLength != 0) {
-                    fieldEndindex = index + info.serLength;
-                    if (optional && fieldEndindex > rk.length) return;
-                    byte[] result;
-                    result = Arrays.copyOfRange(rk, index, fieldEndindex);
-                    Object ob = parseBytes(result, info.fieldSchema.getType());
-                    rkObjectMap.put(info.fieldSchema.getName(), ob);
-                    index=fieldEndindex;
-                }
-            } else if (kp.getType() == KeyPart.Type.optionalgroup) {
-                List<KeyPart> optionalKeyParts = kp.getOptionalGroup();
-                KeyPart endKp;
-                if (optional == false) endKp = keyParts.get(i + 1);
-                else endKp = endKeyPart;
-                parseRkey(rk, true, optionalKeyParts, endKp, rkObjectMap);
-
-            } else if (kp.getType() == KeyPart.Type.constant) {
-                index++;
+    private void initUserTable(String tableName) throws Exception{
+        propRkFieldInfoMaps=new Map[propertyNames.length];
+        propRowKeyParts=new List[propertyNames.length];
+        for(int i=0;i<propertyNames.length;i++){
+            String[] projections={propertyNames[i],"uid"};
+            List<String> options=Arrays.asList(projections);
+            List<HBaseFieldInfo> cols=TableInfo.getCols(tableName,options);
+            propRkFieldInfoMaps[i]=new HashMap<>();
+            for(HBaseFieldInfo col: cols){
+                propRkFieldInfoMaps[i].put(col.fieldSchema.getName(),col);
             }
+            propRowKeyParts[i]=TableInfo.getRowKey(tableName,options);
+        }
+        rkObjectMap=new HashMap<>();
+
+    }
+
+
+    @Test
+    public void tesetParse()throws Exception{
+        try {
+            //init();
+            initUserTable("property_sof-dsk_index");
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+
+        long  t1,t2;
+        int[] batches={1024*8,1024*1024,1024*1024*64,1024*1024*1024};
+
+        Object[][] params = new Object[5][];
+        params[0]= new Object[]{"20130312", "audit.", 1235, (byte)40};
+        params[1]= new Object[]{"20190312", "audit.change.", 1235, (byte)40};
+        params[2]= new Object[]{"20130312", "pay.", 1235, (byte)40};
+        params[3]= new Object[]{"20130312", "visit.gross.", 1235, (byte)40};
+        params[4]= new Object[]{"20130312", "a.b.c.d.e.f", 1235, (byte)40};
+
+        Object[][] userParams=new Object[5][];
+        userParams[0]=new Object[]{(short)1,20120210,12l};
+        userParams[1]=new Object[]{(short)2,20120210,"tr"};
+        userParams[2]=new Object[]{(short)3,20120210,"en"};
+        userParams[3]=new Object[]{(short)4,20120210,13000012222222l};
+        userParams[4]=new Object[]{(short)5,20120210,13000000122222l};
+
+
+        Map<String, Object>[] results = new Map[5];
+        for(int i=0;i<5;i++){
+            results[i]=new HashMap<>();
+            results[i].put("date",Integer.parseInt((String)params[i][0]));
+            String[] events=((String)params[i][1]).split("\\.");
+            for(int j=0;j<events.length;j++)
+                results[i].put("event"+j,events[j]);
+            results[i].put("uid",params[i][2]);
+            results[i].put("uhash",params[i][3]);
+        }
+
+        Map<String,Object>[] userResults=new Map[5];
+        for(int i=0;i<5;i++){
+            userResults[i]=new HashMap<>();
+            userResults[i].put("propnumber",userParams[i][0]);
+            userResults[i].put("date",userParams[i][1]);
+            userResults[i].put(propertyNames[i],userParams[i][2]);
+        }
+
+        for(int j=0;j<batches.length;j++){
+            t1=System.currentTimeMillis();
+            for(int k=0;k<batches[j];k++){
+              for (int i = 0; i < userParams.length; i++) {
+                //parseRowKey((String)params[i][0], (String)params[i][1], (int)params[i][2], (byte)params[i][3], results[i]);
+               parseUserRowKey((short)userParams[i][0], (int)userParams[i][1], userParams[i][2],
+                               userResults[i]);
+              }
+            }
+            t2=System.currentTimeMillis();
+            System.out.println((t2-t1)+" ms parse kv "+batches[j]*params.length);
+        }
+
+    }
+
+    public void parseUserRowKey(short propId,int date,Object val,
+                                Map<String,Object> refResults){
+        byte[] propIdBytes=Bytes.toBytes(propId);
+        byte[] dateBytes=Bytes.toBytes(String.valueOf(date));
+        byte[] valBytes;
+        if(val instanceof String)
+            valBytes=Bytes.toBytes((String)val);
+        else valBytes=Bytes.toBytes((long)val);
+        byte[] rk= HBaseUserUtils.getRowKey(propIdBytes,dateBytes,valBytes);
+        List<KeyPart> rkParts=propRowKeyParts[propId-1];
+        Map<String,HBaseFieldInfo> rkFieldInfoMap=propRkFieldInfoMaps[propId-1];
+        Map<String,Object> parsedResult=RowKeyParser.parse(rk,rkParts,rkFieldInfoMap);
+        for(Map.Entry<String,Object> entry: refResults.entrySet()){
+            Object o=parsedResult.get(entry.getKey());
+            if(null==o)System.out.println(entry.getKey()+":"+entry.getValue());
+            assert o.equals(entry.getValue());
         }
     }
 
-    private Object parseString(String orig, String type){
-        switch (type) {
-            case "int":
-                return Integer.parseInt(orig);
-            case "tinyint":
-                return type.charAt(0);
-            case "smallint":
-                return (short)Integer.parseInt(orig);
-            case "string":
-                return orig;
-            case "bigint":
-                return Long.parseLong(orig);
+    public void parseRowKey(String day, String event, int uid, byte uhash, Map<String, Object> result){
+        byte[] uidBytes=Bytes.toBytes(uid);
+        byte[] iuid=new byte[5];
+        iuid[0]=uhash;
+        for(int i=0;i<4;i++)iuid[i+1]=uidBytes[i];
+        byte[] rk= HBaseEventUtils.getRowKey(Bytes.toBytes(day),event,iuid);
+        Map<String,Object> parsedResult= RowKeyParser.parse(rk,primaryRowKeyParts,rkFieldInfoMap);
+        for(Map.Entry<String,Object> entry: result.entrySet()){
+            Object o=parsedResult.get(entry.getKey());
+            if(null==o)System.out.println(event);
+            assert o.equals(entry.getValue());
         }
-        return null;
     }
 
-    private Object parseBytes(byte[] orig, String type) {
-        byte[] result;
-        int index = 0;
-        switch (type) {
-            case "int":
-                result = new byte[4];
-                for (int i = 0; i < 4 - orig.length; i++)
-                    result[i] = 0;
-                for (int i = 4 - orig.length; i < 4; i++)
-                    result[i] = orig[index++];
-                return Bytes.toInt(result);
-            case "smallint":
-                result=new byte[2];
-                for(int i=0;i<2-orig.length;i++){
-                    result[i]=0;
-                }
-                for(int i=2-orig.length;i<2;i++){
-                    result[i]=orig[index++];
-                }
-                return Bytes.toShort(result);
-            case "tinyint":
-                return orig[0];
-            case "string":
-                return Bytes.toString(orig);
-            case "bigint":
-                result = new byte[8];
-                for (int i = 0; i < 8 - orig.length; i++)
-                    result[i] = 0;
-                for (int i = 8 - orig.length; i < 8; i++)
-                    result[i] = orig[index++];
-                return Bytes.toLong(result);
-        }
-        return null;
-    }
+
+
+
 }

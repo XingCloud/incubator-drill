@@ -17,14 +17,14 @@ import org.apache.drill.exec.physical.base.PhysicalVisitor;
  */
 
 @JsonTypeName("segment")
-public class Group extends AbstractSingle {
+public class SegmentPOP extends AbstractSingle {
 
     private LogicalExpression[] exprs ;
     private FieldReference ref ;
 
-    public Group(@JsonProperty("child") PhysicalOperator child,
-                 @JsonProperty("exprs") LogicalExpression[] exprs,
-                 @JsonProperty("ref") FieldReference ref) {
+    public SegmentPOP(@JsonProperty("child") PhysicalOperator child,
+                      @JsonProperty("exprs") LogicalExpression[] exprs,
+                      @JsonProperty("ref") FieldReference ref) {
         super(child);
         this.exprs = exprs;
         this.ref = ref ;
@@ -32,7 +32,7 @@ public class Group extends AbstractSingle {
 
     @Override
     protected PhysicalOperator getNewWithChild(PhysicalOperator child) {
-        return new Group(child,exprs,ref);
+        return new SegmentPOP(child,exprs,ref);
     }
 
     @Override

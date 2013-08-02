@@ -195,7 +195,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
     for (MaterializedField f : materializedFieldList) {
       v = TypeHelper.getNewVector(f, context.getAllocator());
       AllocationHelper.allocate(v, recordCount, 50);
-      v.getMutator().setValueCount(recordCount);
       outputVectors.add(v);
     }
 
@@ -208,6 +207,10 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
         outputVectors.get(j).getMutator().setObject(i, aggValue.getObject(j));
       }
       i++;
+    }
+
+    for(ValueVector vector : outputVectors){
+      vector.getMutator().setValueCount(recordCount);
     }
   }
 
@@ -245,8 +248,9 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       return "AggValue{" +
         "aggValues=" + Arrays.toString(aggValues) +
         ", carryOvers=" + Arrays.toString(carryOvers) +
-        '}';
+        '}' ;
     }
+
   }
 
 

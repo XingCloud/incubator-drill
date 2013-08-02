@@ -17,10 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import static org.junit.Assert.*;
-
-import java.util.List;
-
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import org.apache.drill.common.util.FileUtils;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.pop.PopUnitTestBase;
@@ -32,8 +30,9 @@ import org.apache.drill.exec.server.RemoteServiceSet;
 import org.apache.drill.exec.vector.ValueVector;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestSimpleFragmentRun extends PopUnitTestBase {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestSimpleFragmentRun.class);
