@@ -20,13 +20,14 @@ package org.apache.drill.exec.physical.base;
 import java.util.List;
 
 import org.apache.drill.exec.physical.ReadEntry;
+import org.apache.drill.exec.physical.base.reentrant.ReentrantPhysicalOperator;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.drill.exec.store.StorageEngine;
 import org.apache.drill.exec.store.StorageEngineRegistry;
 
-public interface Scan<R extends ReadEntry> extends Leaf, HasAffinity {
+public interface Scan<R extends ReadEntry> extends Leaf, HasAffinity, ReentrantPhysicalOperator {
 
     @JsonProperty("entries")
     public abstract List<R> getReadEntries();

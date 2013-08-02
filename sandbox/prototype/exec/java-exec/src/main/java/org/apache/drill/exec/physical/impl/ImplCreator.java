@@ -26,8 +26,10 @@ import org.apache.drill.exec.physical.base.FragmentRoot;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.config.*;
+import org.apache.drill.exec.physical.impl.filter.BufferedBatchCreator;
 import org.apache.drill.exec.physical.impl.project.ProjectBatchCreator;
 import org.apache.drill.exec.physical.impl.svremover.SVRemoverCreator;
+import org.apache.drill.exec.physical.impl.union.UnionBatchCreator;
 import org.apache.drill.exec.record.RecordBatch;
 
 import java.util.Arrays;
@@ -45,9 +47,10 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     private SVRemoverCreator svc = new SVRemoverCreator();
     private RootExec root = null;
 
-    private FilterBatchCreator fc = new FilterBatchCreator();
+  private BatchCreator<Filter> fc = new BufferedBatchCreator<Filter>(new FilterBatchCreator());
+  private UnionBatchCreator unionBatchCreator = new UnionBatchCreator();
     private ProjectBatchCreator pc = new ProjectBatchCreator();
-    private ScanBatchCreator sbc = new ScanBatchCreator();
+    private BatchCreator<Scan> sbc = new BufferedBatchCreator<Scan>(new ScanBatchCreator());
     private SegmentBatchCreator sgc = new SegmentBatchCreator();
 
 
@@ -67,8 +70,10 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     public RecordBatch visitScan(Scan<?> scan, FragmentContext context) throws ExecutionSetupException {
         Preconditions.checkNotNull(scan);
         Preconditions.checkNotNull(context);
-
+        if(scan.getIterationBuffer() == null){
         return sbc.getBatch(context,scan,getChildren(scan,context));
+        }
+      return sbc.getBatch(context, scan, null);
 
     }
 
@@ -91,10 +96,18 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
 
     @Override
     public RecordBatch visitFilter(Filter filter, FragmentContext context) throws ExecutionSetupException {
+      if(filter.getIterationBuffer() == null){  
         return fc.getBatch(context, filter, getChildren(filter, context));
+      }
+      return fc.getBatch(context, filter, null);
     }
 
-    @Override
+  @Override
+  public RecordBatch visitUnion(Union union, FragmentContext value) throws ExecutionSetupException {
+    return unionBatchCreator.getBatch(value, union, getChildren(union, value)); 
+  }
+
+  @Override
     public RecordBatch visitSingleSender(SingleSender op, FragmentContext context) throws ExecutionSetupException {
         root = ssc.getRoot(context, op, getChildren(op, context));
         return null;

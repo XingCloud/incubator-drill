@@ -39,7 +39,7 @@ public class TestSimpleUnion {
       bitContext.getAllocator(); result = BufferAllocator.getAllocator(c);
     }};
     
-    runPlan(bitContext, connection, "/union/test1.json", 150);
+//    runPlan(bitContext, connection, "/union/test1.json", 150);
     runPlan(bitContext, connection, "/union/test2_dag.json", 300);
     
   }
