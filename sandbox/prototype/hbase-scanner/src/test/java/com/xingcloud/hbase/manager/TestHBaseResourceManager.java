@@ -1,5 +1,6 @@
 package com.xingcloud.hbase.manager;
 
+import com.xingcloud.hbase.util.HBaseUserUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -31,7 +32,7 @@ public class TestHBaseResourceManager {
     public void testHTable() throws IOException {
         Configuration conf= HBaseConfiguration.create();
         //HTable table=HBaseResourceManager.getInstance().getTable("sof-dsk_deu");
-        HTable table=HBaseResourceManager.getInstance().getTable("testtable100W_deu");
+        HTable table=HBaseResourceManager.getInstance().getTable("property_testtable_100W_index");
         FileSystem fs=FileSystem.get(conf);
         System.out.println(fs.getHomeDirectory());
         System.out.println(fs.getStatus());
@@ -43,8 +44,13 @@ public class TestHBaseResourceManager {
         /*
         byte[] srk= Bytes.toBytes("20121106heartbeat.xFFxC7x00'x07xA2");
         byte[] enk= Bytes.toBytes("20121201visit");  */
-        byte[] srk= Bytes.toBytes("20121201");
-        byte[] enk= Bytes.toBytes("20121202");
+        byte[] srk;
+        byte[] enk;
+        byte[] propId=Bytes.toBytes((short)9);
+        byte[] srtDay=Bytes.toBytes("20121201");
+        byte[] endDay=Bytes.toBytes("20121202");
+        srk=HBaseUserUtils.getRowKey(propId, srtDay);
+        enk=HBaseUserUtils.getRowKey(propId,endDay);
         scan.setStartRow(srk);
         scan.setStopRow(enk);
         //Filter filter=new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL,
@@ -58,7 +64,7 @@ public class TestHBaseResourceManager {
         List<Filter> filters=new ArrayList<>();
         filters.add(filter);
         FilterList filterList=new FilterList(filters);
-        scan.setFilter(filterList);
+        //scan.setFilter(filterList);
         scan.setCaching(1000);
         scan.setBatch(8);
         long ts1=System.currentTimeMillis();
@@ -69,8 +75,7 @@ public class TestHBaseResourceManager {
             KeyValue[] kvs=res.raw();
             //System.out.println(kvs.length);
             for( KeyValue kv: res.raw()){
-                System.out.print(Bytes.toLong(kv.getValue())+" ");
-                recordCount++;
+                System.out.println(kv);
             }
         }
         long ts2=System.currentTimeMillis();

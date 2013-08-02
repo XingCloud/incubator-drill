@@ -7,7 +7,7 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
-import static org.apache.drill.exec.physical.config.HbaseAbstractScanPOP.HbaseAbstractScanEntry;
+import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.runtime.RecognitionException;
@@ -34,11 +34,8 @@ import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.config.Group;
-import org.apache.drill.exec.physical.config.HbaseAbstractScanPOP;
-import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
-import org.apache.drill.exec.physical.config.PhysicalJoin;
-import org.apache.drill.exec.physical.config.Screen;
+import org.apache.drill.exec.physical.config.*;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -120,8 +117,8 @@ public class BasicOptimizer extends Optimizer {
       String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
       int selectionSize = root.size();
 
-      HbaseAbstractScanEntry entry;
-      List<HbaseAbstractScanEntry> entries = new ArrayList<>(selectionSize);
+      HbaseScanPOP.HbaseScanEntry entry;
+      List<HbaseScanEntry> entries = new ArrayList<>(selectionSize);
       List<LogicalExpression> filterList;
       LogicalExpression le;
       List<NamedExpression> projectionList;
@@ -157,10 +154,10 @@ public class BasicOptimizer extends Optimizer {
           }
           projectionList.add(ne);
         }
-        entry = new HbaseAbstractScanEntry(table, rowkeyStart.getBytes(), rowkeyEnd.getBytes(), filterList, projectionList);
+        entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterList, projectionList);
         entries.add(entry);
       }
-      return new HbaseAbstractScanPOP(entries);
+      return new HbaseScanPOP(entries);
     }
 
     @Override

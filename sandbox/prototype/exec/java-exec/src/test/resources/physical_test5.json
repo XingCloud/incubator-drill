@@ -7,16 +7,31 @@
       info : "na"
     }
   },
-  graph : [ {
-    pop : "hbase-scan",
-    @id : 1,
-    entries : [ {
-      startDate : "20130101",
-      endDate : "20130101",
-      project : "sof-dsk",
-      eventPattern : "*.*"
-    } ]
-  },
+  graph : [
+   {
+      pop : "hbase-scan",
+      @id : 1,
+      entries : [ {
+          table : "testtable100W_deu",
+          startRowKey : "20121201",
+          endRowKey : "20121202",
+          filters : [],
+          projections: [
+          {
+             ref: "uid",
+             expr: "uid"
+          },
+           {
+             ref: "event0",
+             expr: "event0"
+            },
+           {
+             ref: "val",
+             expr: "value"
+            }
+          ]
+      } ]
+   },
   {
         pop: "segment",
         @id : 2,
