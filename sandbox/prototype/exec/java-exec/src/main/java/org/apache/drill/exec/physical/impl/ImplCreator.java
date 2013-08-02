@@ -25,6 +25,7 @@ import org.apache.drill.exec.physical.base.*;
 import org.apache.drill.exec.physical.config.*;
 import org.apache.drill.exec.physical.impl.filter.BufferedBatchCreator;
 import org.apache.drill.exec.physical.impl.svremover.SVRemoverCreator;
+import org.apache.drill.exec.physical.impl.union.UnionBatchCreator;
 import org.apache.drill.exec.record.RecordBatch;
 
 import java.util.Arrays;
@@ -46,7 +47,7 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     private BatchCreator<JoinPOP> jc = new BufferedBatchCreator<JoinPOP>(new JoinBatchCreator());
     private BatchCreator<CollapsingAggregatePOP> cac = new BufferedBatchCreator<CollapsingAggregatePOP>(new CollaspsAggreBatchCreator()) ;
     private BatchCreator<AbstractScan> sbc = new BufferedBatchCreator<AbstractScan>(new ScanBatchCreator()) ;
-
+    private BatchCreator<Union>  uc = new BufferedBatchCreator<Union>(new UnionBatchCreator());
 
     private ImplCreator() {
     }
@@ -123,7 +124,12 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
         return i.getRoot();
     }
 
-    @Override
+  @Override
+  public RecordBatch visitUnion(Union union, FragmentContext value) throws ExecutionSetupException {
+    return uc.getBatch(value,union,getChildren(union,value));
+  }
+
+  @Override
     public RecordBatch visitCollapsingAggregate(CollapsingAggregatePOP op, FragmentContext value) throws ExecutionSetupException {
         return cac.getBatch(value, op, Arrays.asList( op.getChild().accept(this, value)));
     }

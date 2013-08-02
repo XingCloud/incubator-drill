@@ -1,40 +1,108 @@
 {
-    head:{
-        type:"APACHE_DRILL_PHYSICAL",
-        version:"1",
-        generator:{
-            type:"manual"
+  head: {
+    type: "APACHE_DRILL_PHYSICAL",
+    version: 1,
+    generator: {
+      type: "manual",
+      info: "na"
+    }
+  },
+  graph: [
+    {
+      pop: "hbase-scan",
+      @id: 1,
+      entries: [
+        {
+          table: "sof-dsk_deu",
+          startRowKey: "20130101",
+          endRowKey: "20130102",
+          filters: [
+            
+          ],
+          projections: [
+            {
+              ref: "uid",
+              expr: "uid"
+            },
+            {
+              ref: "event0",
+              expr: "event0"
+            },
+            {
+              ref: "val",
+              expr: "value"
+            }
+          ]
         }
+      ]
     },
-	graph:[
+    {
+      pop: "hbase-scan",
+      @id: 2,
+      entries: [
         {
-            @id:1,
-            pop:"mock-scan",
-            url: "http://apache.org",
-            entries:[
-            	{records: 100, types: [
-            	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "INT", mode: "REQUIRED"}
-            	]}
-            ]
-        },
-        {
-            @id:2,
-            child: 1,
-            pop:"filter",
-            expr: "b > 5",
-            selectivity: 0.80
-        },
-        {
-            @id: 3,
-            child: 2,
-            pop: "mock-store"
-        },
-        {
-            @id: 4,
-            child: 3,
-            pop: "screen"
+          table: "property_sof-dsk_index",
+          startRowKey: "test0320130619",
+          endRowKey: "test0320130619",
+          filters: [
+            
+          ],
+          projections: [
+            {
+              ref: "uid",
+              expr: "uid"
+            },
+            {
+              ref: "register_time",
+              expr: "register_time"
+            }
+          ]
         }
-    ]
+      ]
+    },
+    {
+      pop: "join",
+      @id: 3,
+      left: 2,
+      right: 1,
+      type: "right",
+      condition: {
+        relationship: "==",
+        left: "uid",
+        right: "uid"
+      }
+    },
+    {
+      pop: "filter",
+      @id: 4,
+      child: 3,
+      expr: "register_time > 20100101000000"
+    },
+    {
+      pop: "PhysicalCollapsingAggregate",
+      @id: 5,
+      child: 4,
+      carryovers: [
+      ],
+      aggregations: [
+        {
+          ref: "count",
+          expr: "count(uid) "
+        },
+        {
+          ref: "user_num",
+          expr: "count_distinct(uid) "
+        },
+        {
+          ref: "sum",
+          expr: "sum(val) "
+        }
+      ]
+    },
+    {
+      pop: "screen",
+      @id: 6,
+      child: 5
+    }
+  ]
 }
