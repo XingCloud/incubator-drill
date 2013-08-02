@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.physical.base.AbstractScan;
 import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.impl.BatchCreator;
 import org.apache.drill.exec.physical.impl.ScanBatch;
@@ -19,10 +20,10 @@ import java.util.List;
  * Date: 7/12/13
  * Time: 3:30 PM
  */
-public class ScanBatchCreator implements BatchCreator<Scan> {
+public class ScanBatchCreator implements BatchCreator<AbstractScan> {
 
     @Override
-    public RecordBatch getBatch(FragmentContext context, Scan config, List<RecordBatch> children) throws ExecutionSetupException {
+    public RecordBatch getBatch(FragmentContext context, AbstractScan config, List<RecordBatch> children) throws ExecutionSetupException {
 
         Preconditions.checkArgument(children.isEmpty());
         List<RecordReader> readers = Lists.newArrayList();
