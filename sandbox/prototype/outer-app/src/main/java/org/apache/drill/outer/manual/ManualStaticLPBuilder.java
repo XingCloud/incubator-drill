@@ -6,7 +6,7 @@ import static org.apache.drill.common.enums.BinaryOperator.EQ;
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.FieldReferenceBuilder.buildColumn;
 import static org.apache.drill.common.util.FieldReferenceBuilder.buildTable;
-import static org.apache.drill.outer.selections.GenericUtils.*;
+import static org.apache.drill.outer.utils.GenericUtils.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -19,7 +19,6 @@ import org.apache.drill.common.logical.StorageEngineConfig;
 import org.apache.drill.common.logical.data.*;
 import org.apache.drill.outer.enums.GroupByType;
 import org.apache.drill.outer.selections.Selection;
-import org.apache.thrift.TException;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -171,9 +170,9 @@ public class ManualStaticLPBuilder {
     return left;
   }
 
-  private static Scan buildSingleSegmentScan(String userTable, String dateString, String propertyName, Object propVal) throws IOException, TException {
+  private static Scan buildSingleSegmentScan(String projectId, String userTable, String dateString, String propertyName, Object propVal) throws Exception {
     Map<String, Selection.KeyPartParameter> parameterMap = new HashMap<>(2);
-    parameterMap.put("propnumber", Selection.KeyPartParameter.buildSingleKey(toBytes(propertyString2TinyInt(propertyName))));
+    parameterMap.put("propnumber", Selection.KeyPartParameter.buildSingleKey(toBytes(propertyString2TinyInt(projectId, propertyName))));
     parameterMap.put("date", Selection.KeyPartParameter.buildSingleKey(toBytes(dateString)));
     if (propVal instanceof String) {
       parameterMap.put("value", Selection.KeyPartParameter.buildSingleKey(toBytes(propVal.toString())));
@@ -189,13 +188,13 @@ public class ManualStaticLPBuilder {
     return scan;
   }
 
-  private static LogicalOperator buildSegment(String userTable, String dateString, List<LogicalOperator> operators, Map<String, Object> segmentMap) throws IOException, TException {
+  private static LogicalOperator buildSegment(String projectId, String userTable, String dateString, List<LogicalOperator> operators, Map<String, Object> segmentMap) throws Exception {
     Set<Map.Entry<String, Object>> entrySet = segmentMap.entrySet();
     Iterator<Map.Entry<String, Object>> it = entrySet.iterator();
     Map.Entry<String, Object> entry = it.next();
     String propertyName = entry.getKey();
     Object propertyValue = entry.getValue();
-    LogicalOperator lo1 = buildSingleSegmentScan(userTable, dateString, propertyName, propertyValue), lo2;
+    LogicalOperator lo1 = buildSingleSegmentScan(projectId, userTable, dateString, propertyName, propertyValue), lo2;
     operators.add(lo1);
 
     Join join;
@@ -207,7 +206,7 @@ public class ManualStaticLPBuilder {
           entry = it.next();
           propertyName = entry.getKey();
           propertyValue = entry.getValue();
-          lo2 = buildSingleSegmentScan(userTable, dateString, propertyName, propertyValue);
+          lo2 = buildSingleSegmentScan(projectId, userTable, dateString, propertyName, propertyValue);
           operators.add(lo2);
 
           joinConditions = new JoinCondition[1];
@@ -230,7 +229,7 @@ public class ManualStaticLPBuilder {
 
   public static LogicalPlan buildStaticLogicalPlanManually(String projectId, String event, String date,
                                                            Map<String, Object> segmentMap, Grouping grouping) throws
-    IOException, TException {
+    Exception {
     List<LogicalOperator> logicalOperators = new ArrayList<>();
     DrillConfig config = DrillConfig.create();
 
@@ -241,7 +240,6 @@ public class ManualStaticLPBuilder {
     boolean hasSegment = MapUtils.isNotEmpty(segmentMap);
     boolean groupingQuery = grouping != null;
     boolean userPropertyGroupingQuery = groupingQuery && grouping.getGroupByType().equals(GroupByType.USER_PROPERTY);
-
 
     FieldReference fr = buildTable(eventTable);
     Map<String, Selection.KeyPartParameter> parameterMap = new HashMap<>(2);
@@ -261,25 +259,18 @@ public class ManualStaticLPBuilder {
     List<Map<String, Object>> mapList = new ArrayList<>(1);
     mapList.add(selection.toSelectionMap());
 
-    Scan eventTableScan = new Scan(SE_HBASE, toJsonOptions(config, mapList), fr);
-    Scan userTableScan = null;
-
-
+    Scan userTableScan, eventTableScan = new Scan(SE_HBASE, toJsonOptions(config, mapList), fr);
     eventTableScan.setMemo("Scan(Table=" + eventTable + ")");
     logicalOperators.add(eventTableScan);
 
-
     Join join;
     JoinCondition[] joinConditions;
-
     String dateString = new SimpleDateFormat("yyyyMMdd").format(new Date());
-
-
     // common query
     LogicalOperator scanRoot, segmentLogicalOperator;
     if (!userPropertyGroupingQuery) {
       if (hasSegment) {
-        segmentLogicalOperator = buildSegment(userTable, dateString, logicalOperators, segmentMap);
+        segmentLogicalOperator = buildSegment(projectId, userTable, dateString, logicalOperators, segmentMap);
         joinConditions = new JoinCondition[1];
         joinConditions[0] = new JoinCondition("==", buildColumn(eventTable, "uid"), buildColumn(userTable, "uid"));
         join = new Join(eventTableScan, segmentLogicalOperator, joinConditions, Join.JoinType.INNER);
@@ -291,7 +282,7 @@ public class ManualStaticLPBuilder {
     }
     // group by query
     else {
-      short propShort = propertyString2TinyInt(grouping.getGroupby());
+      short propShort = propertyString2TinyInt(projectId, grouping.getGroupby());
       parameterMap = new HashMap<>(1);
       parameterMap.put("propnumber", Selection.KeyPartParameter.buildSingleKey(toBytes(propShort)));
       parameterMap.put("date", Selection.KeyPartParameter.buildSingleKey(toBytes(dateString)));
@@ -306,7 +297,7 @@ public class ManualStaticLPBuilder {
       userTableScan = new Scan(SE_HBASE, toJsonOptions(config, mapList), new FieldReference(userTable, ExpressionPosition.UNKNOWN));
       logicalOperators.add(userTableScan);
       if (hasSegment) {
-        segmentLogicalOperator = buildSegment(userTable, dateString, logicalOperators, segmentMap);
+        segmentLogicalOperator = buildSegment(projectId, userTable, dateString, logicalOperators, segmentMap);
         joinConditions = new JoinCondition[1];
         joinConditions[0] = new JoinCondition("==", buildColumn(eventTable, "uid"), buildColumn(userTable, "uid"));
         join = new Join(eventTableScan, segmentLogicalOperator, joinConditions, Join.JoinType.INNER);

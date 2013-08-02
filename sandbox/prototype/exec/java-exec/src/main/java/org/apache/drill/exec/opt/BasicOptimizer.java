@@ -128,11 +128,11 @@ public class BasicOptimizer extends Optimizer {
           }
           filterList.add(le);
         }
-        projections = root.get(SELECTION_KEY_WORD_PROJECTIONS);
+        projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
         projectionList = new ArrayList<>(projections.size());
 
         for (JsonNode projectionNode : projections) {
-          projectionString = projectionNode.textValue();
+          projectionString = projectionNode.toString();
           try {
             ne = mapper.readValue(projectionString, NamedExpression.class);
           } catch (IOException e) {
@@ -168,6 +168,7 @@ public class BasicOptimizer extends Optimizer {
       FieldReference within = collapsingAggregate.getWithin();
       FieldReference[] carryovers = collapsingAggregate.getCarryovers();
       NamedExpression[] aggregations = collapsingAggregate.getAggregations();
+      System.out.println(next);
       CollapsingAggregatePOP pca = new CollapsingAggregatePOP(next.accept(this, value), within, target,
         carryovers, aggregations);
       return pca;

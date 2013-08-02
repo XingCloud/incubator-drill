@@ -1,12 +1,13 @@
-package org.apache.drill.outer.selections;
+package org.apache.drill.outer.utils;
 
+import com.xingcloud.userprops_meta_util.UserProp;
+import com.xingcloud.userprops_meta_util.UserProps_DEU_Util;
 import org.apache.drill.common.PlanProperties;
-import org.apache.drill.common.config.DrillConfig;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * User: Z J Wu
@@ -15,6 +16,7 @@ import java.util.Collection;
  * Package: org.apache.drill.outer.selections
  */
 public class GenericUtils {
+  private static final Map<String, Integer> USER_PROP_MAP = new ConcurrentHashMap<>(500);
 
   public static PlanProperties buildPlanProperties(String projectId) {
     PlanProperties pp = new PlanProperties();
@@ -26,8 +28,27 @@ public class GenericUtils {
     return pp;
   }
 
-  public static short propertyString2TinyInt(String propertyName) {
-    return 64;
+  public static short propertyString2TinyInt(String projectId, String propName) throws Exception {
+    String key = projectId + "." + propName;
+    Integer id = USER_PROP_MAP.get(key);
+    if (id != null) {
+      return id.shortValue();
+    }
+    List<UserProp> properties = UserProps_DEU_Util.getInstance().getUserProps(projectId);
+    short thisId = 0;
+    String pName;
+    for (UserProp up : properties) {
+      pName = up.getPropName();
+      System.out.println(pName);
+      if (propName.equals(pName)) {
+        thisId = (short) up.getId();
+      }
+      USER_PROP_MAP.put(projectId + "." + up.getPropName(), up.getId());
+    }
+    if (thisId == 0) {
+      throw new Exception("No such property(" + propName + ") in project(" + projectId + ")");
+    }
+    return thisId;
   }
 
   public static void addAll(Collection collection, byte[] bytes) {
@@ -73,22 +94,8 @@ public class GenericUtils {
     return b;
   }
 
-
-  public static void main(String[] args) throws IOException {
-    short s = 999;
-    byte[] bytes = toBytes(s);
-    String ss = new String(bytes, Charset.forName("utf8"));
-    System.out.println(ss);
-    System.out.println(Arrays.toString(bytes));
-    System.out.println(new String(ss.getBytes()));
-
-    DrillConfig config = DrillConfig.create();
-    String byteBase64String = config.getMapper().writeValueAsString(bytes);
-    System.out.println(byteBase64String);
-
-    byte[] rowkeyBytes = config.getMapper().readValue(byteBase64String, byte[].class);
-    System.out.println(Arrays.toString(rowkeyBytes));
+  public static void main(String[] args) throws Exception {
+    propertyString2TinyInt("sof-dsk","register_time");
   }
-
 
 }
