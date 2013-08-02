@@ -7,4 +7,6 @@ package org.apache.drill.outer.utils;
  * Package: org.apache.drill.outer.utils
  */
 public class OuterAppConstants {
+
+
 }

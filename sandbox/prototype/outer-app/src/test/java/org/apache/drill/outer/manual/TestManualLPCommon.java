@@ -6,7 +6,6 @@ import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.opt.BasicOptimizer;
 import org.apache.drill.exec.physical.PhysicalPlan;
-import org.apache.drill.exec.pop.PopUnitTestBase;
 import org.apache.drill.exec.proto.UserBitShared;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
@@ -18,11 +17,11 @@ import java.util.UUID;
 /**
  * User: Z J Wu Date: 13-7-9 Time: 上午10:24 Package: org.apache.drill.exec.manual
  */
-public class TestManualLPCommon extends PopUnitTestBase {
+public class TestManualLPCommon {
 
   private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestManualLPCommon.class);
 
-  @Test
+  // @Test
   public void testManualStaticLogicalPlan() throws Exception {
     DrillConfig c = DrillConfig.create();
     UUID uuid = UUID.randomUUID();
@@ -35,8 +34,8 @@ public class TestManualLPCommon extends PopUnitTestBase {
     String event = "visit.*";
     LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null, null);
     try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
-         Drillbit bit = new Drillbit(CONFIG, serviceSet);
-         DrillClient client = new DrillClient(CONFIG, serviceSet.getCoordinator());) {
+         Drillbit bit = new Drillbit(c, serviceSet);
+         DrillClient client = new DrillClient(c, serviceSet.getCoordinator());) {
       bit.run();
       client.connect();
       dbc = bit.getContext();
