@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.physical.OperatorCost;
 import org.apache.drill.exec.physical.base.AbstractSingle;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
@@ -19,11 +20,11 @@ import org.apache.drill.exec.physical.base.PhysicalVisitor;
 @JsonTypeName("segment")
 public class SegmentPOP extends AbstractSingle {
 
-    private LogicalExpression[] exprs ;
+    private NamedExpression[] exprs ;
     private FieldReference ref ;
 
     public SegmentPOP(@JsonProperty("child") PhysicalOperator child,
-                      @JsonProperty("exprs") LogicalExpression[] exprs,
+                      @JsonProperty("exprs") NamedExpression[] exprs,
                       @JsonProperty("ref") FieldReference ref) {
         super(child);
         this.exprs = exprs;
@@ -46,7 +47,7 @@ public class SegmentPOP extends AbstractSingle {
     }
 
 
-    public LogicalExpression[] getExprs() {
+    public NamedExpression[] getExprs() {
         return exprs;
     }
 

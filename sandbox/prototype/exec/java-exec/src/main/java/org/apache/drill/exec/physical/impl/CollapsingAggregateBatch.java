@@ -209,7 +209,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       i++;
     }
 
-    for(ValueVector vector : outputVectors){
+    for (ValueVector vector : outputVectors) {
       vector.getMutator().setValueCount(recordCount);
     }
   }
@@ -245,10 +245,24 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
     @Override
     public String toString() {
-      return "AggValue{" +
-        "aggValues=" + Arrays.toString(aggValues) +
-        ", carryOvers=" + Arrays.toString(carryOvers) +
-        '}' ;
+      // just for test
+      String value = "[";
+
+      for (int i = 0; i < aggValues.length; i++) {
+        value += aggValues[i] + " ";
+      }
+
+      for (int i = 0; i < carryOvers.length; i++) {
+        if (carryOvers[i] instanceof byte[]) {
+          value += new String((byte[]) carryOvers[i]);
+
+        } else
+          value += carryOvers[i];
+        value += " ";
+      }
+
+      value += "]";
+      return value;
     }
 
   }

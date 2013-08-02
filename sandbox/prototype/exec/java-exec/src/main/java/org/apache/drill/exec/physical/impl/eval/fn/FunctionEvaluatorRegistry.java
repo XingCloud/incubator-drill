@@ -29,7 +29,7 @@ public class FunctionEvaluatorRegistry {
     static Map<String, Constructor<? extends BasicEvaluator>> map;
 
     static {
-        final String scanPackage = "org.apache.drill.exec";
+        final String scanPackage = "org.apache.drill.exec.physical.impl";
 
         String s = FilterBuilder.Include.prefix(scanPackage);
 

@@ -1,7 +1,12 @@
 package org.apache.drill.exec.physical.impl.eval.fn;
 
+import org.apache.drill.common.expression.ExpressionPosition;
+import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.common.types.TypeProtos;
+import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.physical.impl.eval.BaseBasicEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
+import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.vector.BigIntVector;
 import org.apache.drill.exec.vector.VarCharVector;
@@ -25,7 +30,9 @@ public class XAEvaluators {
     public XAEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
       child = args.getOnlyEvaluator();
-      timeStr = new VarCharVector(null, recordBatch.getContext().getAllocator());
+      timeStr = new VarCharVector(MaterializedField.create(new SchemaPath("XA", ExpressionPosition.UNKNOWN),
+        Types.required(TypeProtos.MinorType.VARCHAR))
+        , recordBatch.getContext().getAllocator());
     }
 
     @Override
