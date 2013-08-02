@@ -77,13 +77,14 @@ public class FilterBatch extends BaseRecordBatch {
             ValueVector.Mutator mutator = out.getMutator();
             ValueVector.Accessor accessor = in.getAccessor();
 
-            mutator.setValueCount(recordCount);
+
 
             for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
               if (bitFilter.get(j) == 1) {
                 mutator.setObject(i++, accessor.getObject(j));
               }
             }
+            mutator.setValueCount(recordCount);
             outputVectors.add(out);
           } catch (Exception e) {
 

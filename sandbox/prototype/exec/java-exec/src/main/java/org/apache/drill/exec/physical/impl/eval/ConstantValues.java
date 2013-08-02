@@ -20,8 +20,8 @@ public class ConstantValues {
     public IntegerScalar(int i, FragmentContext context) {
       intVector = new IntVector(null, context.getAllocator());
       intVector.allocateNew(1);
-      intVector.getMutator().setValueCount(1);
       intVector.getMutator().set(0, i);
+      intVector.getMutator().setValueCount(1);
     }
 
     @Override
@@ -37,8 +37,8 @@ public class ConstantValues {
     public LongScalar(long l, FragmentContext context) {
       bigIntVector = new BigIntVector(null, context.getAllocator());
       bigIntVector.allocateNew(1);
-      bigIntVector.getMutator().setValueCount(1);
       bigIntVector.getMutator().set(0, l);
+      bigIntVector.getMutator().setValueCount(1);
     }
 
     @Override
@@ -53,8 +53,8 @@ public class ConstantValues {
     public FolatScalar(float f, FragmentContext context) {
       float4Vector = new Float4Vector(null, context.getAllocator());
       float4Vector.allocateNew(1);
-      float4Vector.getMutator().setValueCount(1);
       float4Vector.getMutator().set(0, f);
+      float4Vector.getMutator().setValueCount(1);
     }
 
     @Override
@@ -69,8 +69,8 @@ public class ConstantValues {
     public DoubleScalar(double d, FragmentContext context) {
       float8Vector = new Float8Vector(null, context.getAllocator());
       float8Vector.allocateNew(1);
-      float8Vector.getMutator().setValueCount(1);
       float8Vector.getMutator().set(0, d);
+      float8Vector.getMutator().setValueCount(1);
     }
 
     @Override
@@ -85,8 +85,8 @@ public class ConstantValues {
     public StringScalar(CharSequence seq, FragmentContext context) {
       varCharVector = new VarCharVector(null, context.getAllocator());
       varCharVector.allocateNew(seq.length() * 2 + 8, 1);
-      varCharVector.getMutator().setValueCount(1);
       varCharVector.getMutator().set(0, seq.toString().getBytes());
+      varCharVector.getMutator().setValueCount(1);
     }
 
     @Override
@@ -102,8 +102,8 @@ public class ConstantValues {
     public BooleanScalar(boolean b, FragmentContext context) {
       bitVector = new BitVector(null, context.getAllocator());
       bitVector.allocateNew(1);
-      bitVector.getMutator().setValueCount(1);
       bitVector.getMutator().set(0, 1);
+      bitVector.getMutator().setValueCount(1);
     }
 
     @Override

@@ -69,8 +69,8 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   @Override
   public ValueVector eval() {
     value.allocateNew(1);
-    value.getMutator().setValueCount(1);
     value.getMutator().set(0, l);
+    value.getMutator().setValueCount(1);
     l = 0;
     return value;
   }

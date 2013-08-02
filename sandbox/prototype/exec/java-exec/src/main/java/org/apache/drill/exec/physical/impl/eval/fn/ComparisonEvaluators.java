@@ -121,13 +121,13 @@ public class ComparisonEvaluators {
 
       value.allocateNew(leftAccessor.getValueCount());
       BitVector.Mutator valueMutator = value.getMutator();
-      valueMutator.setValueCount(leftAccessor.getValueCount());
       for (int i = 0; i < leftAccessor.getValueCount(); i++) {
 
         if (leftAccessor.get(i) == 1 && rightAccessor.get(i) == 1) {
           valueMutator.set(i, 1);
         }
       }
+      valueMutator.setValueCount(leftAccessor.getValueCount());
       return value;
     }
   }

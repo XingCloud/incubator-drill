@@ -284,12 +284,11 @@ public class JoinBatch extends BaseRecordBatch {
         out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-        outMutator.setValueCount(recordCount);
-
         for (int i = 0; i < outRecords.size(); i++) {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, getVector(f, leftIncomings.get(indexes[0])).getAccessor().getObject(indexes[1]));
         }
+        outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
 
@@ -299,7 +298,7 @@ public class JoinBatch extends BaseRecordBatch {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-        outMutator.setValueCount(recordCount);
+
         ValueVector.Accessor accessor = getVector(f, rightVectors).getAccessor();
 
         for (int i = 0; i < outRecords.size(); i++) {
@@ -311,6 +310,7 @@ public class JoinBatch extends BaseRecordBatch {
         for (int i : misMatchIndex) {
           outMutator.setObject(index++, accessor.getObject(i));
         }
+        outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
 
