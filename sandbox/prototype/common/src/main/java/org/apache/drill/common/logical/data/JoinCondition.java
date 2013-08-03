@@ -48,4 +48,25 @@ public class JoinCondition {
     return right;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JoinCondition that = (JoinCondition) o;
+
+    if (!left.equals(that.left)) return false;
+    if (!relationship.equals(that.relationship)) return false;
+    if (!right.equals(that.right)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = relationship.hashCode();
+    result = 31 * result + left.hashCode();
+    result = 31 * result + right.hashCode();
+    return result;
+  }
 }

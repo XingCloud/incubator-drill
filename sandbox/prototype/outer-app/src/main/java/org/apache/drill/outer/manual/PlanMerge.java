@@ -178,25 +178,34 @@ public class PlanMerge {
         }
         for(AdjacencyList<LogicalOperator>.Node opNode:currentStepSet){
           LogicalOperator op = opNode.getNodeValue();
-          //do not merge, simply add into result
-          // TODO check carefully and merge
-          
-          doMergeOperator(op, null, planCtx);
+          // check carefully and merge
+          // 遍历自己的所有儿子节点的其他父亲节点，看有没有合适的
+          LogicalOperator mergeTo = null;
+          childrenLoop:
+          for(LogicalOperator child:op){
+            Set<DefaultEdge> childEdges = planCtx.mergedGraph.incomingEdgesOf(child);
+            for(DefaultEdge e:childEdges){
+              LogicalOperator otherParent = planCtx.mergedGraph.getEdgeSource(e);
+              if(equals(op, otherParent)!=null){
+                //found someone to merge
+                mergeTo = otherParent;
+                break childrenLoop;
+              }
+            }
+          }
+          doMergeOperator(op, mergeTo, planCtx);
           lookForParentsAndSubstitute(opNode, child2Parents, nextStepSet, null);          
         }
       }
     }//for plans
     
     //add union to all roots
-    TopologicalOrderIterator<LogicalOperator, DefaultEdge> sorter = new TopologicalOrderIterator<LogicalOperator, DefaultEdge>(planCtx.mergedGraph);
     List<LogicalOperator> roots = new ArrayList<>();
-    for(;sorter.hasNext();){
-      LogicalOperator op = sorter.next();
-      if(planCtx.mergedGraph.inDegreeOf(op)!=0){
-        //not root now
-        break;
+    Set<LogicalOperator> vs = planCtx.mergedGraph.vertexSet();
+    for(LogicalOperator op:vs){
+      if(planCtx.mergedGraph.inDegreeOf(op)==0){
+        roots.add(op);
       }
-      roots.add(op);
     }
     if(roots.size()>1){
       Union union = new Union(roots.toArray(new LogicalOperator[roots.size()]), false);
@@ -221,19 +230,19 @@ public class PlanMerge {
     }
   }
 
-  private void lookForParentsAndSubstitute(AdjacencyList<LogicalOperator>.Node child, AdjacencyList<LogicalOperator> child2Parents, Collection<AdjacencyList<LogicalOperator>.Node> output
-    , LogicalOperator substitionInParents) {
+  private void lookForParentsAndSubstitute(AdjacencyList<LogicalOperator>.Node child, AdjacencyList<LogicalOperator> child2Parents, 
+                                           Collection<AdjacencyList<LogicalOperator>.Node> output, 
+                                           LogicalOperator substitutionInParents) {
     List<Edge<AdjacencyList<LogicalOperator>.Node>> parentEdges = child2Parents.getAdjacent(child);
     for (Edge<AdjacencyList<LogicalOperator>.Node> parentEdge : parentEdges) {
       //looking for all parents of scan, 
       // substitute scan with targetScan
-      Edge<AdjacencyList<LogicalOperator>.Node> edge = (Edge<AdjacencyList<LogicalOperator>.Node>) parentEdge;
-      AdjacencyList<LogicalOperator>.Node parentNode = edge.getTo();
+      AdjacencyList<LogicalOperator>.Node parentNode = parentEdge.getTo();
       LogicalOperator parent = parentNode.getNodeValue();      
       //add parent for candidate for next round check
       output.add(parentNode);
-      if(substitionInParents != null){
-        substituteInParent(child.getNodeValue(), substitionInParents, parent);
+      if(substitutionInParents != null){
+        substituteInParent(child.getNodeValue(), substitutionInParents, parent);
       }
     }
   }
@@ -303,6 +312,34 @@ public class PlanMerge {
 //      ctx.plan2MergeID.put(fromPlan, toID);
 //    }
 //    fromSet.clear();
+  }
+
+  private Mergeability<LogicalOperator> equals(LogicalOperator op1, LogicalOperator op2){
+    if(op1.equals(op2)){
+      return new Mergeability<>(MergeType.same, op1, op2);
+    }
+    if(!op1.getClass().equals(op2.getClass())){
+      return null;
+    }
+    if(op1.equals(op2)){
+      return new Mergeability<>(MergeType.same, op1, op2);
+    }
+    return null;
+    
+  }
+
+  private boolean childrenSame(LogicalOperator op1, LogicalOperator op2) {
+    Iterator<LogicalOperator> iter1 = op1.iterator();
+    Iterator<LogicalOperator> iter2 = op2.iterator();
+    for(;iter1.hasNext();){
+      if(!iter2.hasNext()){
+        return false;
+      }
+      if(!iter1.next().equals(iter2.next())){
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

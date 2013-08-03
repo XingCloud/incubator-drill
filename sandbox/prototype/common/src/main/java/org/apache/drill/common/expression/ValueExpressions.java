@@ -55,6 +55,22 @@ public class ValueExpressions {
 
     protected abstract V parseValue(String s);
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ValueExpression that = (ValueExpression) o;
+
+      if (value != null ? !value.equals(that.value) : that.value != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return value != null ? value.hashCode() : 0;
+    }
   }
 
   public static class BooleanExpression extends ValueExpression<Boolean> {
@@ -110,6 +126,23 @@ public class ValueExpressions {
       return visitor.visitDoubleConstant(this, value);
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      DoubleExpression that = (DoubleExpression) o;
+
+      if (Double.compare(that.d, d) != 0) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      long temp = Double.doubleToLongBits(d);
+      return (int) (temp ^ (temp >>> 32));
+    }
   }
 
   public static class LongExpression extends LogicalExpressionBase {
@@ -136,6 +169,23 @@ public class ValueExpressions {
     @Override
     public <T, V, E extends Exception> T accept(ExprVisitor<T, V, E> visitor, V value) throws E {
       return visitor.visitLongConstant(this, value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LongExpression that = (LongExpression) o;
+
+      if (l != that.l) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return (int) (l ^ (l >>> 32));
     }
   }
 

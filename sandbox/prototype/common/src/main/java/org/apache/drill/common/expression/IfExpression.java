@@ -53,7 +53,27 @@ public class IfExpression extends LogicalExpressionBase implements Iterable<IfCo
 			this.expression = expression;
 		}
 
-	}
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      IfCondition that = (IfCondition) o;
+
+      if (condition != null ? !condition.equals(that.condition) : that.condition != null) return false;
+      if (expression != null ? !expression.equals(that.expression) : that.expression != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = condition != null ? condition.hashCode() : 0;
+      result = 31 * result + (expression != null ? expression.hashCode() : 0);
+      return result;
+    }
+    
+  }
 	
 	@Override
   public <T, V, E extends Exception> T accept(ExprVisitor<T, V, E> visitor, V value) throws E{
@@ -110,5 +130,25 @@ public class IfExpression extends LogicalExpressionBase implements Iterable<IfCo
 	public UnmodifiableIterator<IfCondition> iterator() {
 		return conditions.iterator();
 	}
-	
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IfExpression that = (IfExpression) o;
+
+    if (conditions != null ? !conditions.equals(that.conditions) : that.conditions != null) return false;
+    if (elseExpression != null ? !elseExpression.equals(that.elseExpression) : that.elseExpression != null)
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = conditions != null ? conditions.hashCode() : 0;
+    result = 31 * result + (elseExpression != null ? elseExpression.hashCode() : 0);
+    return result;
+  }
 }

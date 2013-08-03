@@ -43,5 +43,24 @@ public class NamedExpression {
   public FieldReference getRef() {
     return ref;
   }
-  
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    NamedExpression that = (NamedExpression) o;
+
+    if (!expr.equals(that.expr)) return false;
+    if (!ref.equals(that.ref)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = expr.hashCode();
+    result = 31 * result + ref.hashCode();
+    return result;
+  }
 }

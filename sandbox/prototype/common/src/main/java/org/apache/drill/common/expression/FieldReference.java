@@ -57,7 +57,27 @@ public class FieldReference extends SchemaPath {
         }
     }
 
-    public static class De extends StdDeserializer<FieldReference> {
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    FieldReference that = (FieldReference) o;
+
+    if (overrideType != null ? !overrideType.equals(that.overrideType) : that.overrideType != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (overrideType != null ? overrideType.hashCode() : 0);
+    return result;
+  }
+
+  public static class De extends StdDeserializer<FieldReference> {
 
     public De() {
       super(FieldReference.class);

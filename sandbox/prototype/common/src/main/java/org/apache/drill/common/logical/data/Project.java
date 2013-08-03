@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("project")
@@ -62,5 +63,23 @@ public class Project extends SingleInputOperator {
         return Iterators.singletonIterator(getInput());
     }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
+    Project project = (Project) o;
+
+    if (!Arrays.equals(selections, project.selections)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (selections != null ? Arrays.hashCode(selections) : 0);
+    return result;
+  }
 }
