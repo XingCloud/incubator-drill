@@ -9,7 +9,6 @@ import org.apache.drill.exec.record.SchemaBuilder;
 import org.apache.drill.exec.record.TransferPair;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
-import org.apache.drill.exec.vector.NonRepeatedMutator;
 import org.apache.drill.exec.vector.ValueVector;
 
 import java.util.ArrayList;
@@ -21,34 +20,34 @@ import java.util.List;
 public class IterationBuffer {
 
   private List<BufferedStackFrameImpl> buffer = new ArrayList<>();
-  
+
   private int totalIterations = 0;
-  
+
   private RecordBatch head = null;
   private BatchSchema headSchema = null;
-  
+
   private RecordBatch.IterOutcome iterationEndState = null;
 
   public IterationBuffer(RecordBatch head) {
     this.head = head;
   }
 
-  public synchronized BufferedRecordBatch newIteration(){
+  public synchronized BufferedRecordBatch newIteration() {
     totalIterations++;
     return new BufferedRecordBatch(this);
   }
 
   public boolean forward(BufferedRecordBatch recordBatch) {
     StackFrameDelegate current = (StackFrameDelegate) recordBatch.current;
-    if(current.currentPos >= 0){
+    if (current.currentPos >= 0) {
       buffer.get(current.currentPos).leave(recordBatch);
     }
-    if(current.currentPos == buffer.size()-1){//came to buffer end
-      if(iterationEndState != null){
+    if (current.currentPos == buffer.size() - 1) {//came to buffer end
+      if (iterationEndState != null) {
         return false;//really end
-      }else{// go on with head
+      } else {// go on with head
         forwardHead();
-        if(current.currentPos == buffer.size()-1){//forward failed
+        if (current.currentPos == buffer.size() - 1) {//forward failed
           return false;
         }
       }
@@ -58,10 +57,10 @@ public class IterationBuffer {
     newFrame.enter(recordBatch);
     //if IterOutcome.NONE frame reached, there would be no forward() invoked
     //so leave this frame early
-    if(newFrame.getOutcome() == RecordBatch.IterOutcome.NONE 
-      || newFrame.getOutcome() == RecordBatch.IterOutcome.STOP){
-      if(current.currentPos!=buffer.size()-1){
-        throw new IllegalStateException(newFrame.getOutcome()+" frame not the last frame!");
+    if (newFrame.getOutcome() == RecordBatch.IterOutcome.NONE
+      || newFrame.getOutcome() == RecordBatch.IterOutcome.STOP) {
+      if (current.currentPos != buffer.size() - 1) {
+        throw new IllegalStateException(newFrame.getOutcome() + " frame not the last frame!");
       }
       newFrame.leave(recordBatch);
     }
@@ -70,7 +69,7 @@ public class IterationBuffer {
 
   private void forwardHead() {
     RecordBatch.IterOutcome outcome = head.next();
-    switch(outcome){
+    switch (outcome) {
       case OK_NEW_SCHEMA:
         setupSchema();
       case OK:
@@ -79,48 +78,45 @@ public class IterationBuffer {
       default:
         BufferedStackFrameImpl frame = new BufferedStackFrameImpl(head.getSchema(),
           0, null, null, null,
-          outcome, head.getContext()); 
+          outcome, head.getContext());
         buffer.add(frame);
-        if(outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NONE){
-          iterationEndState = outcome;          
+        if (outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NONE) {
+          iterationEndState = outcome;
         }
         break;
     }
   }
-  
+
   private void setupSchema() {
-    SchemaBuilder bldr = BatchSchema.newBuilder().setSelectionVectorMode(head.getSchema().getSelectionVector());
+    SchemaBuilder bldr = BatchSchema.newBuilder().setSelectionVectorMode(head.getSchema().getSelectionVectorMode());
     for (ValueVector v : head) {
       bldr.addField(v.getField());
     }
     this.headSchema = bldr.build();
   }
 
-  
+
   private void doTransfer(RecordBatch.IterOutcome outcome) {
     int outRecordCount = head.getRecordCount();
     SelectionVector2 sv2 = null;
     SelectionVector4 sv4 = null;
-    if (headSchema.getSelectionVector() == BatchSchema.SelectionVectorMode.TWO_BYTE) {
+    if (headSchema.getSelectionVectorMode() == BatchSchema.SelectionVectorMode.TWO_BYTE) {
       sv2 = head.getSelectionVector2();
     }
     ArrayList<ValueVector> vectors = new ArrayList<>();
-    for(ValueVector v:head){
+    for (ValueVector v : head) {
       TransferPair tp = v.getTransferPair();
       vectors.add(tp.getTo());
       tp.transfer();
     }
+    /*
     for (ValueVector v : vectors) {
-      ValueVector.Mutator m = v.getMutator();
-      if (m instanceof NonRepeatedMutator) {
-        ((NonRepeatedMutator) m).setValueCount(outRecordCount);
-      } else {
-        throw new UnsupportedOperationException();
-      }
-    }
+      v.getMutator().setValueCount(outRecordCount);
+    }*/
+
     BufferedStackFrameImpl frame = new BufferedStackFrameImpl(headSchema,
-              outRecordCount, sv2, sv4, vectors,
-              outcome, head.getContext());
+      outRecordCount, sv2, sv4, vectors,
+      outcome, head.getContext());
     buffer.add(frame);
   }
 
@@ -128,11 +124,11 @@ public class IterationBuffer {
     StackFrameDelegate current = (StackFrameDelegate) recordBatch.current;
     current.delegate.leave(recordBatch);
     totalIterations--;
-    for(int i = current.currentPos+1; i< buffer.size();i++){
+    for (int i = current.currentPos + 1; i < buffer.size(); i++) {
       BufferedStackFrameImpl frame = buffer.get(i);
-      if(frame.currentIterations == totalIterations){
-         frame.close();
-      }else{
+      if (frame.currentIterations == totalIterations) {
+        frame.close();
+      } else {
         break;
       }
     }
@@ -158,13 +154,13 @@ public class IterationBuffer {
     private List<ValueVector> vectors;
     private RecordBatch.IterOutcome outcome;
     private FragmentContext context;
-    
+
     /**
      * reference count for BufferedRecordBatch
      */
 
     private int currentIterations = 0;
-    
+
     public BufferedStackFrameImpl(BatchSchema schema,
                                   int recordCount,
                                   SelectionVector2 selectionVector2,
@@ -180,30 +176,30 @@ public class IterationBuffer {
       this.outcome = outcome;
       this.context = context;
     }
-    
-    public void enter(BufferedRecordBatch recordBatch){
-      if(currentIterations >= totalIterations){
-        throw new IllegalArgumentException("expectedIteration:"+totalIterations+",now:"+currentIterations);
+
+    public void enter(BufferedRecordBatch recordBatch) {
+      if (currentIterations >= totalIterations) {
+        throw new IllegalArgumentException("expectedIteration:" + totalIterations + ",now:" + currentIterations);
       }
-      ((StackFrameDelegate)recordBatch.current).setDelegate(this);      
+      ((StackFrameDelegate) recordBatch.current).setDelegate(this);
     }
-    
-    public void leave(BufferedRecordBatch recordBatch){
-      currentIterations ++;
-      if(currentIterations == totalIterations){
+
+    public void leave(BufferedRecordBatch recordBatch) {
+      currentIterations++;
+      if (currentIterations == totalIterations) {
         close();
-      }else if(currentIterations > totalIterations){
+      } else if (currentIterations > totalIterations) {
         //check
-        throw new IllegalArgumentException("expectedIteration:"+totalIterations+",now:"+currentIterations);        
+        throw new IllegalArgumentException("expectedIteration:" + totalIterations + ",now:" + currentIterations);
       }
     }
 
     private void close() {
-        //clear self
+      //clear self
       this.selectionVector2 = null;
       this.selectionVector4 = null;
-      if(vectors!=null){
-        for(ValueVector v:vectors){
+      if (vectors != null) {
+        for (ValueVector v : vectors) {
           v.close();
         }
         this.vectors.clear();
@@ -245,32 +241,32 @@ public class IterationBuffer {
       return context;
     }
   }
-  
-  public class StackFrameDelegate implements BufferedStackFrame{
+
+  public class StackFrameDelegate implements BufferedStackFrame {
 
     BufferedStackFrameImpl delegate;
 
     List<ValueVector> mirroredVectors;
 
     int currentPos = -1;
-    
+
     public StackFrameDelegate(BufferedStackFrameImpl delegate) {
-      if(delegate != null) setDelegate(delegate);
+      if (delegate != null) setDelegate(delegate);
     }
-    
+
     public void setDelegate(BufferedStackFrameImpl delegate) {
       this.delegate = delegate;
-      switch(delegate.getOutcome()){
+      switch (delegate.getOutcome()) {
         case OK_NEW_SCHEMA:
           //set up new vectors
-          if(this.mirroredVectors != null){
-            for(ValueVector v:mirroredVectors){
+          if (this.mirroredVectors != null) {
+            for (ValueVector v : mirroredVectors) {
               v.close();
             }
           }
           this.mirroredVectors = new ArrayList<>();
-          if(delegate.getVectors()!=null){
-            for(ValueVector v:delegate.getVectors()){
+          if (delegate.getVectors() != null) {
+            for (ValueVector v : delegate.getVectors()) {
               TransferPair tp = v.getTransferPair();
               tp.mirror();
               mirroredVectors.add(tp.getTo());

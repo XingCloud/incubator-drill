@@ -1,9 +1,10 @@
 package org.apache.drill.exec.physical.impl;
 
 import org.apache.drill.common.expression.ExpressionPosition;
-import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.expression.SchemaPath;
-import org.apache.drill.common.types.TypeProtos;
+import org.apache.drill.common.logical.data.NamedExpression;
+import org.apache.drill.common.types.TypeProtos.MajorType;
+import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.SegmentPOP;
@@ -37,6 +38,9 @@ public class SegmentBatch extends BaseRecordBatch {
   private Map<Integer, List<Integer>> groups;
   private Map<GroupByExprsValue, Integer> groupInfo;
   private IntVector refVector;
+  private SchemaPath[] groupRefs;
+  private MajorType[] groupRefsTypes;
+  private ValueVector[] evalValues;
   private boolean isFirst;
 
   public SegmentBatch(FragmentContext context, SegmentPOP config, RecordBatch incoming) {
@@ -51,17 +55,20 @@ public class SegmentBatch extends BaseRecordBatch {
 
   @Override
   public void setupEvals() {
-    LogicalExpression[] logicalExpressions = config.getExprs();
-    evaluators = new BasicEvaluator[logicalExpressions.length];
+    NamedExpression[] namedExpressions = config.getExprs();
+    evaluators = new BasicEvaluator[namedExpressions.length];
+    groupRefs = new SchemaPath[namedExpressions.length];
+    groupRefsTypes = new MajorType[namedExpressions.length];
     EvaluatorFactory evaluatorFactory = new BasicEvaluatorFactory();
     for (int i = 0; i < evaluators.length; i++) {
-      evaluators[i] = evaluatorFactory.getBasicEvaluator(incoming, logicalExpressions[i]);
+      evaluators[i] = evaluatorFactory.getBasicEvaluator(incoming, namedExpressions[i].getExpr());
+      groupRefs[i] = new SchemaPath(namedExpressions[i].getRef().getPath(), ExpressionPosition.UNKNOWN);
     }
     groupByExprsLength = evaluators.length;
 
     refVector = new IntVector(MaterializedField.create(new SchemaPath(
       config.getRef().getPath(), ExpressionPosition.UNKNOWN),
-      Types.required(TypeProtos.MinorType.INT))
+      Types.required(MinorType.INT))
       , context.getAllocator());
 
 
@@ -137,32 +144,42 @@ public class SegmentBatch extends BaseRecordBatch {
       out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
       AllocationHelper.allocate(out, recordCount, 50);
       outMutator = out.getMutator();
-      outMutator.setValueCount(recordCount);
 
       for (int i = 0; i < recordCount; i++) {
         outMutator.setObject(i, inAccessor.getObject(indexes.get(i)));
       }
+      outMutator.setValueCount(recordCount);
       outputVectors.add(out);
     }
 
     refVector.allocateNew(1);
-    refVector.getMutator().setValueCount(1);
     refVector.getMutator().set(0, groupId);
+    refVector.getMutator().setValueCount(1);
+
+    for (int i = 0; i < groupByExprsLength; i++) {
+      ValueVector v = TypeHelper.getNewVector(MaterializedField.create(groupRefs[i], groupRefsTypes[i]), context.getAllocator());
+      AllocationHelper.allocate(v, 1, 50);
+      v.getMutator().setObject(0, evalValues[i].getAccessor().getObject(indexes.get(0)));
+      v.getMutator().setValueCount(1);
+      outputVectors.add(v);
+    }
+
     outputVectors.add(refVector);
   }
 
   private void grouping() {
-    ValueVector[] vectors = new ValueVector[groupByExprsLength];
+    evalValues = new ValueVector[groupByExprsLength];
     for (int i = 0; i < groupByExprsLength; i++) {
-      vectors[i] = evaluators[i].eval();
+      evalValues[i] = evaluators[i].eval();
+      groupRefsTypes[i] = evalValues[i].getField().getType();
     }
     Object[] groupByExprs;
     GroupByExprsValue groupByExprsValue;
-    recordCount = vectors[0].getAccessor().getValueCount();
+    recordCount = evalValues[0].getAccessor().getValueCount();
     for (int i = 0; i < recordCount; i++) {
       groupByExprs = new Object[groupByExprsLength];
       for (int j = 0; j < groupByExprsLength; j++) {
-        groupByExprs[j] = vectors[j].getAccessor().getObject(i);
+        groupByExprs[j] = evalValues[j].getAccessor().getObject(i);
       }
       groupByExprsValue = new GroupByExprsValue(groupByExprs);
       Integer groupNum = groupInfo.get(groupByExprsValue);
@@ -213,7 +230,7 @@ public class SegmentBatch extends BaseRecordBatch {
 
     @Override
     public String toString() {
-      return Arrays.toString(exprValues) ;
+      return Arrays.toString(exprValues);
     }
   }
 

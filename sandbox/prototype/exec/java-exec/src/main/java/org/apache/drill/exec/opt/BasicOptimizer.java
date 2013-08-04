@@ -1,12 +1,7 @@
 package org.apache.drill.exec.opt;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTERS;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
+import static org.apache.drill.common.util.Selections.*;
 import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,22 +13,15 @@ import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.expression.LogicalExpressionParser;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.apache.drill.common.logical.data.CollapsingAggregate;
+import org.apache.drill.common.logical.data.*;
 import org.apache.drill.common.logical.data.Filter;
-import org.apache.drill.common.logical.data.JoinCondition;
-import org.apache.drill.common.logical.data.LogicalOperator;
-import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.logical.data.Project;
-import org.apache.drill.common.logical.data.Scan;
-import org.apache.drill.common.logical.data.SinkOperator;
-import org.apache.drill.common.logical.data.Store;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.config.*;
-import org.apache.drill.exec.physical.config.HbaseScanPOP;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -140,11 +128,11 @@ public class BasicOptimizer extends Optimizer {
           }
           filterList.add(le);
         }
-        projections = root.get(SELECTION_KEY_WORD_PROJECTIONS);
+        projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
         projectionList = new ArrayList<>(projections.size());
 
         for (JsonNode projectionNode : projections) {
-          projectionString = projectionNode.textValue();
+          projectionString = projectionNode.toString();
           try {
             ne = mapper.readValue(projectionString, NamedExpression.class);
           } catch (IOException e) {
@@ -180,7 +168,8 @@ public class BasicOptimizer extends Optimizer {
       FieldReference within = collapsingAggregate.getWithin();
       FieldReference[] carryovers = collapsingAggregate.getCarryovers();
       NamedExpression[] aggregations = collapsingAggregate.getAggregations();
-      PhysicalCollapsingAggregate pca = new PhysicalCollapsingAggregate(next.accept(this, value), within, target,
+      System.out.println(next);
+      CollapsingAggregatePOP pca = new CollapsingAggregatePOP(next.accept(this, value), within, target,
         carryovers, aggregations);
       return pca;
     }
@@ -202,9 +191,8 @@ public class BasicOptimizer extends Optimizer {
       JoinCondition singleJoinCondition = join.getConditions()[0];
       PhysicalOperator leftPOP = leftLO.accept(this, value);
       PhysicalOperator rightPOP = rightLO.accept(this, value);
-
-      // TODO join type
-      JoinPOP joinPOP = new JoinPOP(leftPOP, rightPOP, singleJoinCondition,null);
+      Join.JoinType joinType = join.getJointType();
+      JoinPOP joinPOP = new JoinPOP(leftPOP, rightPOP, singleJoinCondition, joinType.name());
       return joinPOP;
     }
 

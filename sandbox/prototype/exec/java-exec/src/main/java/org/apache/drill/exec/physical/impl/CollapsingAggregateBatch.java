@@ -7,7 +7,7 @@ import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.PhysicalCollapsingAggregate;
+import org.apache.drill.exec.physical.config.CollapsingAggregatePOP;
 import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.ConstantValues;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
@@ -18,7 +18,6 @@ import org.apache.drill.exec.physical.impl.eval.fn.agg.CountDistinctAggregator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,7 @@ import java.util.Map;
 public class CollapsingAggregateBatch extends BaseRecordBatch {
 
   private FragmentContext context;
-  private PhysicalCollapsingAggregate config;
+  private CollapsingAggregatePOP config;
   private RecordBatch incoming;
   private BatchSchema batchSchema;
   private boolean hasMore = true;
@@ -55,7 +54,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   private List<MaterializedField> materializedFieldList = Lists.newArrayList();
 
 
-  public CollapsingAggregateBatch(FragmentContext context, PhysicalCollapsingAggregate config, RecordBatch incoming) {
+  public CollapsingAggregateBatch(FragmentContext context, CollapsingAggregatePOP config, RecordBatch incoming) {
     this.context = context;
     this.config = config;
     this.incoming = incoming;
@@ -82,13 +81,13 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       aggregatingEvaluators[i] = evaluatorFactory.
         getAggregateEvaluator(incoming, config.getAggregations()[i].getExpr());
       if (aggregatingEvaluators[i] instanceof CountDistinctAggregator) {
-        BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, context);
+        BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, this);
         ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within);
       } else if (aggregatingEvaluators[i] instanceof AggregatingWrapperEvaluator) {
         CountDistinctAggregator countDistinctAggregator =
           ((AggregatingWrapperEvaluator) aggregatingEvaluators[i]).getCountDistinctAggregator();
         if (countDistinctAggregator != null) {
-          BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, context);
+          BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, this);
           countDistinctAggregator.setWithin(within);
         }
       }
@@ -195,7 +194,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
     for (MaterializedField f : materializedFieldList) {
       v = TypeHelper.getNewVector(f, context.getAllocator());
       AllocationHelper.allocate(v, recordCount, 50);
-      v.getMutator().setValueCount(recordCount);
       outputVectors.add(v);
     }
 
@@ -208,6 +206,10 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
         outputVectors.get(j).getMutator().setObject(i, aggValue.getObject(j));
       }
       i++;
+    }
+
+    for (ValueVector vector : outputVectors) {
+      vector.getMutator().setValueCount(recordCount);
     }
   }
 
@@ -242,11 +244,26 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
     @Override
     public String toString() {
-      return "AggValue{" +
-        "aggValues=" + Arrays.toString(aggValues) +
-        ", carryOvers=" + Arrays.toString(carryOvers) +
-        '}';
+      // just for test
+      String value = "[";
+
+      for (int i = 0; i < aggValues.length; i++) {
+        value += aggValues[i] + ", ";
+      }
+
+      for (int i = 0; i < carryOvers.length; i++) {
+        if (carryOvers[i] instanceof byte[]) {
+          value += new String((byte[]) carryOvers[i]);
+
+        } else
+          value += carryOvers[i];
+        value += " ";
+      }
+
+      value += "]";
+      return value;
     }
+
   }
 
 

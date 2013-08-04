@@ -1,98 +1,116 @@
 {
-  head : {
-    type : "APACHE_DRILL_PHYSICAL",
-    version : 1,
-    generator : {
-      type : "manual",
-      info : "na"
+  head: {
+    type: "APACHE_DRILL_PHYSICAL",
+    version: 1,
+    generator: {
+      type: "manual",
+      info: "na"
     }
   },
-  graph : [ {
-    pop : "hbase-scan",
-    @id : 1,
-    entries : [ {
-      table : "testtable100W_deu",
-      startRowKey : "20121201",
-      endRowKey : "20121201",
-      filters : [
-      ],
-      projections: [ {
-        ref: "uid",
-        expr: "uid"
-        },
+  graph: [
+    {
+      pop: "hbase-scan",
+      @id: 1,
+      entries: [
         {
-        ref: "event0",
-        expr: "event0"
-        },
-        {
-        ref: "val",
-        expr: "value"
+          table: "sof-dsk_deu",
+          startRowKey: "20130101",
+          endRowKey: "20130102",
+          filters: [
+            
+          ],
+          projections: [
+            {
+              ref: "uid",
+              expr: "uid"
+            },
+            {
+              ref: "event0",
+              expr: "event0"
+            },
+            {
+              ref: "val",
+              expr: "value"
+            }
+          ]
         }
       ]
-    } ]
     },
-
-  {
-     pop: "hbase-scan",
-     @id: 2,
-     entries:[{
-         table: "property_testtable_100W_index",
-         startRowKey: "null",
-         endRowKey: "null",
-         filters:[
-         ],
-         projections:[{
-         ref: "uid",
-         expr: "uid"
-         },
-         {
-         ref: "language",
-         expr: "language"
-         }
-         ]
-     }]
-  },
-  {
-      pop : "join",
-      @id : 3,
-      left : 2,
+    {
+      pop: "hbase-scan",
+      @id: 2,
+      entries: [
+        {
+          table: "property_sof-dsk_index",
+          startRowKey: "test0320130619",
+          endRowKey: "test0320130619",
+          filters: [
+            
+          ],
+          projections: [
+            {
+              ref: "uid",
+              expr: "uid"
+            },
+            {
+              ref: "language",
+              expr: "language"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      pop: "join",
+      @id: 3,
+      left: 2,
       right: 1,
       type: "right",
-      condition :
-        { relationship :"==",
-         left: "uid",
-         right: "uid"
-       }
-  },
-
-  {
-        pop: "segment",
-        @id : 4,
-        child : 3,
-        ref: "segment",
-        exprs:["language"]
-     },
-   {
-      pop : "PhysicalCollapsingAggregate",
-      @id : 5,
-      child : 4,
-      within : "segment",
-      carryovers : ["language" ],
-      aggregations : [ {
-        ref : "uid",
-        expr : "count(uid) "
-      }, {
-        ref : "uid",
-        expr : "count_distinct(uid) "
-      }, {
-        ref : "val",
-        expr : "sum(val) "
-      } ]
+      condition: {
+        relationship: "==",
+        left: "uid",
+        right: "uid"
+      }
     },
-
     {
-    pop : "screen",
-    @id : 6,
-    child : 5
-  }]
+      pop: "segment",
+      @id: 4,
+      child: 3,
+      ref: "segment",
+      exprs: [
+        {
+          ref: "language",
+          expr: "language"
+        }
+      ]
+    },
+    {
+      pop: "PhysicalCollapsingAggregate",
+      @id: 5,
+      child: 4,
+      within: "segment",
+      carryovers: [
+        "language"
+      ],
+      aggregations: [
+        {
+          ref: "count",
+          expr: "count(uid) "
+        },
+        {
+          ref: "user_num",
+          expr: "count_distinct(uid) "
+        },
+        {
+          ref: "sum",
+          expr: "sum(val) "
+        }
+      ]
+    },
+    {
+      pop: "screen",
+      @id: 6,
+      child: 5
+    }
+  ]
 }

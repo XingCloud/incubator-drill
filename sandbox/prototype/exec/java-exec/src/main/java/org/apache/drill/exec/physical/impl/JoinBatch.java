@@ -44,6 +44,8 @@ public class JoinBatch extends BaseRecordBatch {
 
   private Connector connector;
 
+  private MaterializedField leftJoinKeyField ;
+
 
   public JoinBatch(FragmentContext context, JoinPOP config, RecordBatch leftIncoming, RecordBatch rightIncoming) {
     this.context = context;
@@ -130,6 +132,7 @@ public class JoinBatch extends BaseRecordBatch {
     o = leftIncoming.next();
     while (o != IterOutcome.NONE) {
       ValueVector v = leftEvaluator.eval();
+      leftJoinKeyField = v.getField() ;
       leftJoinKeys.add(TransferHelper.mirrorVector(v));
       leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
 
@@ -204,12 +207,13 @@ public class JoinBatch extends BaseRecordBatch {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-        outMutator.setValueCount(recordCount);
+
 
         for (int i = 0; i < recordCount; i++) {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, getVector(f, leftIncomings.get(indexes[0])).getAccessor().getObject(indexes[1]));
         }
+        outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
 
@@ -218,13 +222,14 @@ public class JoinBatch extends BaseRecordBatch {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-        outMutator.setValueCount(recordCount);
+
         ValueVector.Accessor accessor = getVector(f, rightVectors).getAccessor();
 
         for (int i = 0; i < recordCount; i++) {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, accessor.getObject(indexes[2]));
         }
+        outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
 
@@ -273,15 +278,17 @@ public class JoinBatch extends BaseRecordBatch {
       ValueVector out;
       Mutator outMutator;
       for (MaterializedField f : leftIncoming.getSchema()) {
+        if(f.equals(leftJoinKeyField)){
+          continue;
+        }
         out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-        outMutator.setValueCount(recordCount);
-
         for (int i = 0; i < outRecords.size(); i++) {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, getVector(f, leftIncomings.get(indexes[0])).getAccessor().getObject(indexes[1]));
         }
+        outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
 
@@ -291,7 +298,7 @@ public class JoinBatch extends BaseRecordBatch {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-        outMutator.setValueCount(recordCount);
+
         ValueVector.Accessor accessor = getVector(f, rightVectors).getAccessor();
 
         for (int i = 0; i < outRecords.size(); i++) {
@@ -303,6 +310,7 @@ public class JoinBatch extends BaseRecordBatch {
         for (int i : misMatchIndex) {
           outMutator.setObject(index++, accessor.getObject(i));
         }
+        outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
 

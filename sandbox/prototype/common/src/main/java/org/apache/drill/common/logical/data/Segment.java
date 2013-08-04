@@ -30,17 +30,17 @@ import java.util.Iterator;
 
 @JsonTypeName("segment")
 public class Segment extends SingleInputOperator{
-  private final LogicalExpression[] exprs;
+  private final NamedExpression[] exprs;
   private final FieldReference name;
   
   @JsonCreator
-  public Segment(@JsonProperty("exprs") LogicalExpression[] exprs, @JsonProperty("ref") FieldReference name) {
+  public Segment(@JsonProperty("exprs") NamedExpression[] exprs, @JsonProperty("ref") FieldReference name) {
     super();
     this.exprs = exprs;
     this.name = name;
   }
 
-  public LogicalExpression[] getExprs() {
+  public NamedExpression[] getExprs() {
     return exprs;
   }
 

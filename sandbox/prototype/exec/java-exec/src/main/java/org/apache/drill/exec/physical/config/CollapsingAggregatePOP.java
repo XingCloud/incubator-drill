@@ -1,6 +1,7 @@
 package org.apache.drill.exec.physical.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.physical.OperatorCost;
@@ -11,18 +12,21 @@ import org.apache.drill.exec.physical.base.PhysicalVisitor;
 /**
  * User: Z J Wu Date: 13-7-12 Time: 下午2:58 Package: org.apache.drill.exec.physical.config
  */
-public class PhysicalCollapsingAggregate extends AbstractSingle {
+
+@JsonTypeName("PhysicalCollapsingAggregate")
+public class CollapsingAggregatePOP extends AbstractSingle {
 
   private final FieldReference within;
   private final FieldReference target;
   private final FieldReference[] carryovers;
   private final NamedExpression[] aggregations;
 
-  public PhysicalCollapsingAggregate(@JsonProperty("child") PhysicalOperator child,
-                                     @JsonProperty("within") FieldReference within,
-                                     @JsonProperty("target") FieldReference target,
-                                     @JsonProperty("carryovers") FieldReference[] carryovers,
-                                     @JsonProperty("aggregations") NamedExpression[] aggregations) {
+
+  public CollapsingAggregatePOP(@JsonProperty("child") PhysicalOperator child,
+                                @JsonProperty("within") FieldReference within,
+                                @JsonProperty("target") FieldReference target,
+                                @JsonProperty("carryovers") FieldReference[] carryovers,
+                                @JsonProperty("aggregations") NamedExpression[] aggregations) {
     super(child);
     this.within = within;
     this.target = target;
@@ -32,7 +36,7 @@ public class PhysicalCollapsingAggregate extends AbstractSingle {
 
   @Override
   protected PhysicalOperator getNewWithChild(PhysicalOperator child) {
-    return new PhysicalCollapsingAggregate(child, within, target, carryovers, aggregations);
+    return new CollapsingAggregatePOP(child, within, target, carryovers, aggregations);
   }
 
   @Override

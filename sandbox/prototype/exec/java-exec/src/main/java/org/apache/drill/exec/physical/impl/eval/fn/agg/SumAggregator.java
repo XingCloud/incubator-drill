@@ -31,9 +31,6 @@ public class SumAggregator implements AggregatingEvaluator {
   public SumAggregator(RecordBatch recordBatch, FunctionArguments args) {
     this.recordBatch = recordBatch;
     child = args.getOnlyEvaluator();
-    value = new BigIntVector(MaterializedField.create(new SchemaPath("sum", ExpressionPosition.UNKNOWN),
-      Types.required(TypeProtos.MinorType.BIGINT)),
-      recordBatch.getContext().getAllocator());
 
   }
 
@@ -56,9 +53,16 @@ public class SumAggregator implements AggregatingEvaluator {
   @Override
   public ValueVector eval() {
 
+    if (value == null) {
+      value = new BigIntVector(MaterializedField.create(new SchemaPath("sum", ExpressionPosition.UNKNOWN),
+        Types.required(TypeProtos.MinorType.BIGINT)),
+        recordBatch.getContext().getAllocator());
+
+    }
+
     value.allocateNew(1);
-    value.getMutator().setValueCount(1);
     value.getMutator().set(0, l);
+    value.getMutator().setValueCount(1);
     l = 0;
     return value;
   }

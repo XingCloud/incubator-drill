@@ -31,23 +31,24 @@ public class CountAggregator implements AggregatingEvaluator {
   public CountAggregator(RecordBatch recordBatch, FunctionArguments args) {
     this.recordBatch = recordBatch;
     child = args.getOnlyEvaluator();
-    value = new BigIntVector(MaterializedField.create(
-      new SchemaPath("count", ExpressionPosition.UNKNOWN),
-      Types.required(MinorType.BIGINT)), recordBatch.getContext().getAllocator());
 
   }
 
   @Override
   public void addBatch() {
-
     l += child.eval().getAccessor().getValueCount();
   }
 
   @Override
   public BigIntVector eval() {
+    if (value == null) {
+      value = new BigIntVector(MaterializedField.create(
+        new SchemaPath("count", ExpressionPosition.UNKNOWN),
+        Types.required(MinorType.BIGINT)), recordBatch.getContext().getAllocator());
+    }
     value.allocateNew(1);
-    value.getMutator().setValueCount(1);
     value.getMutator().set(0, l);
+    value.getMutator().setValueCount(1);
     l = 0;
     return value;
   }

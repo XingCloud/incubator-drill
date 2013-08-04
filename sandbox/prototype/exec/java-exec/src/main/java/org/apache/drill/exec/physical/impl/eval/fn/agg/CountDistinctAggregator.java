@@ -40,10 +40,6 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   public CountDistinctAggregator(RecordBatch recordBatch, FunctionArguments args) {
     this.child = args.getOnlyEvaluator();
     this.recordBatch = recordBatch;
-    value = new BigIntVector(MaterializedField.create(new SchemaPath("count_distinct", ExpressionPosition.UNKNOWN),
-      Types.required(TypeProtos.MinorType.BIGINT)),
-      recordBatch.getContext().getAllocator());
-
   }
 
   @Override
@@ -68,9 +64,14 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
 
   @Override
   public ValueVector eval() {
+    if (value == null) {
+      value = new BigIntVector(MaterializedField.create(new SchemaPath("count_distinct", ExpressionPosition.UNKNOWN),
+        Types.required(TypeProtos.MinorType.BIGINT)),
+        recordBatch.getContext().getAllocator());
+    }
     value.allocateNew(1);
-    value.getMutator().setValueCount(1);
     value.getMutator().set(0, l);
+    value.getMutator().setValueCount(1);
     l = 0;
     return value;
   }
