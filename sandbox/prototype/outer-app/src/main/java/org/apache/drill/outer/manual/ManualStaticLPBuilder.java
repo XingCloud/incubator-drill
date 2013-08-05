@@ -183,7 +183,7 @@ public class ManualStaticLPBuilder {
     NamedExpression[] projections = new NamedExpression[1];
     projections[0] = new NamedExpression(new FieldReference("uid", ExpressionPosition.UNKNOWN), new FieldReference("uid", ExpressionPosition.UNKNOWN));
     Selection selection = new Selection(userTable, rowkeyRange, null, projections);
-    Scan scan = new Scan(SE_HBASE, selection.toSingleJsonOptions(), new FieldReference("user_index_age", ExpressionPosition.UNKNOWN));
+    Scan scan = new Scan(SE_HBASE, selection.toSingleJsonOptions(), new FieldReference(userTable, ExpressionPosition.UNKNOWN));
     scan.setMemo("Scan(Table=" + userTable + ", Prop=" + propertyName + ", Val=" + propVal + ")");
     return scan;
   }
