@@ -14,6 +14,7 @@ import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.types.TypeProtos.DataMode;
 import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
+import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
@@ -72,10 +73,10 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() {
-    startRowKey=parseRkStr(config.getStartRowKey());
-    endRowKey=parseRkStr(config.getEndRowKey());
-    if(config.getEndRowKey().equals(config.getEndRowKey()))
-         endRowKey=addMaxByteToTail(endRowKey);
+    startRowKey = parseRkStr(config.getStartRowKey());
+    endRowKey = parseRkStr(config.getEndRowKey());
+    if (config.getEndRowKey().equals(config.getEndRowKey()))
+      endRowKey = addMaxByteToTail(endRowKey);
     tableName = config.getTableName();
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
@@ -115,34 +116,32 @@ public class HBaseRecordReader implements RecordReader {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
   }
+
   /*
      parse Rk in physical_test: "test"+propId("03")+day("20121201")+[type("str"/"num")+val("en"/"123")]
     */
-  private byte[] parseRkStr(String origRk){
-      byte[] result=null;
-      if(origRk.startsWith("test")){
-          String propIdStr=origRk.substring(4,6);
-          byte[] propId=Bytes.toBytes((short)Integer.parseInt(propIdStr));
-          byte[] srtDay=Bytes.toBytes(origRk.substring(6,14));
-          if(origRk.length()>(4+2+8)){
-              String type=origRk.substring(14,17);
-              if(type.equals("str"))
-              {
-                  String val=origRk.substring(17,origRk.length());
-                  byte[] valBytes=Bytes.toBytes(val);
-                  result=HBaseUserUtils.getRowKey(propId,srtDay,valBytes);
-              }else if(type.equals("num")){
-                  Long val=Long.parseLong(origRk.substring(17,origRk.length()));
-                  byte[] valBytes=Bytes.toBytes(val);
-                  result=HBaseUserUtils.getRowKey(propId,srtDay,valBytes);
-              }
-          }
-          else
-             result= HBaseUserUtils.getRowKey(propId,srtDay);
-      }
-      else
-          result = Bytes.toBytes(config.getStartRowKey());
-      return result;
+  private byte[] parseRkStr(String origRk) {
+    byte[] result = null;
+    if (origRk.startsWith("test")) {
+      String propIdStr = origRk.substring(4, 6);
+      byte[] propId = Bytes.toBytes((short) Integer.parseInt(propIdStr));
+      byte[] srtDay = Bytes.toBytes(origRk.substring(6, 14));
+      if (origRk.length() > (4 + 2 + 8)) {
+        String type = origRk.substring(14, 17);
+        if (type.equals("str")) {
+          String val = origRk.substring(17, origRk.length());
+          byte[] valBytes = Bytes.toBytes(val);
+          result = HBaseUserUtils.getRowKey(propId, srtDay, valBytes);
+        } else if (type.equals("num")) {
+          Long val = Long.parseLong(origRk.substring(17, origRk.length()));
+          byte[] valBytes = Bytes.toBytes(val);
+          result = HBaseUserUtils.getRowKey(propId, srtDay, valBytes);
+        }
+      } else
+        result = HBaseUserUtils.getRowKey(propId, srtDay);
+    } else
+      result = Bytes.toBytes(config.getStartRowKey());
+    return result;
   }
 
 
@@ -262,28 +261,17 @@ public class HBaseRecordReader implements RecordReader {
 
   private MajorType getMajorType(HBaseFieldInfo info) {
     String type = info.fieldSchema.getType();
-    ScanType scanType;
     switch (type) {
       case "int":
-        scanType = new ScanType(info.fieldSchema.getName(), MinorType.INT,
-          DataMode.REQUIRED);
-        return scanType.getMajorType();
+        return Types.required(MinorType.INT);
       case "tinyint":
-        scanType = new ScanType(info.fieldSchema.getName(), MinorType.UINT1,
-          DataMode.REQUIRED);
-        return scanType.getMajorType();
+        return Types.required(MinorType.UINT1);
       case "string":
-        scanType = new ScanType(info.fieldSchema.getName(), MinorType.VARCHAR,
-          DataMode.REQUIRED);
-        return scanType.getMajorType();
+        return Types.required(MinorType.VARCHAR);
       case "bigint":
-        scanType = new ScanType(info.fieldSchema.getName(), MinorType.BIGINT,
-          DataMode.REQUIRED);
-        return scanType.getMajorType();
+        return Types.required(MinorType.BIGINT);
       case "smallint":
-        scanType = new ScanType(info.fieldSchema.getName(), MinorType.SMALLINT,
-          DataMode.REQUIRED);
-        return scanType.getMajorType();
+        return Types.required(MinorType.SMALLINT);
     }
     return null;
   }
@@ -356,8 +344,8 @@ public class HBaseRecordReader implements RecordReader {
           if (curRes.size() != 0) {
             KeyValue kv = curRes.get(valIndex++);
             boolean next = PutValuesToVectors(kv, valueVectors, recordSetSize);
-            if (!next) return recordSetSize;
             recordSetSize++;
+            if (!next) return recordSetSize;
             break;
           }
         }
@@ -369,17 +357,18 @@ public class HBaseRecordReader implements RecordReader {
       }
       KeyValue kv = curRes.get(valIndex++);
       boolean next = PutValuesToVectors(kv, valueVectors, recordSetSize);
-      if (!next) return recordSetSize;
       recordSetSize++;
+      if (!next) return recordSetSize;
+
     }
   }
 
   public boolean PutValuesToVectors(KeyValue kv, ValueVector[] valueVectors, int recordSetSize) {
-    Map<String,Object> rkObjectMap = RowKeyParser.parse(kv.getRow(),primaryRowKeyParts,fieldInfoMap);
+    Map<String, Object> rkObjectMap = RowKeyParser.parse(kv.getRow(), primaryRowKeyParts, fieldInfoMap);
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
-      Object result = getValFromKeyValue(kv, info,rkObjectMap);
+      Object result = getValFromKeyValue(kv, info, rkObjectMap);
       String type = info.fieldSchema.getType();
       byte[] resultBytes = null;
       if (type.equals("string"))
@@ -411,7 +400,7 @@ public class HBaseRecordReader implements RecordReader {
     return true;
   }
 
-  public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option,Map<String,Object> rkObjectMap) {
+  public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option, Map<String, Object> rkObjectMap) {
     String fieldName = option.fieldSchema.getName();
     if (option.fieldType == HBaseFieldInfo.FieldType.rowkey) {
       if (!rkObjectMap.containsKey(fieldName))
@@ -430,9 +419,9 @@ public class HBaseRecordReader implements RecordReader {
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
       return keyvalue.getTimestamp();
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cqname) {
-      byte[] orig=new byte[4];
-      for(int i=0;i<4;i++)
-          orig[i]=keyvalue.getQualifier()[i+1];
+      byte[] orig = new byte[4];
+      for (int i = 0; i < 4; i++)
+        orig[i] = keyvalue.getQualifier()[i + 1];
       return RowKeyParser.parseBytes(orig, option.fieldSchema.getType());
     }
     return null;
@@ -448,42 +437,6 @@ public class HBaseRecordReader implements RecordReader {
         e.printStackTrace();
       }
     }
-  }
-
-  public static class ScanType {
-    public MinorType minorType;
-    private String name;
-    private DataMode mode;
-
-    @JsonCreator
-    public ScanType(@JsonProperty("name") String name, @JsonProperty("type") MinorType minorType,
-                    @JsonProperty("mode") DataMode mode) {
-      this.name = name;
-      this.minorType = minorType;
-      this.mode = mode;
-    }
-
-    @JsonProperty("type")
-    public MinorType getMinorType() {
-      return minorType;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public DataMode getMode() {
-      return mode;
-    }
-
-    @JsonIgnore
-    public MajorType getMajorType() {
-      MajorType.Builder b = MajorType.newBuilder();
-      b.setMode(mode);
-      b.setMinorType(minorType);
-      return b.build();
-    }
-
   }
 
 
