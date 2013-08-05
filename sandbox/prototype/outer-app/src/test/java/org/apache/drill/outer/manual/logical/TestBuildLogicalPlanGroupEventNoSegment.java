@@ -18,7 +18,7 @@ public class TestBuildLogicalPlanGroupEventNoSegment extends LogicalTestBase {
   @Test
   public void buildLogical1() throws Exception {
     DrillConfig c = DrillConfig.create();
-    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("age", "visit.*", "20130701", null,
+    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("testtable_100w", "visit.*", "20130701", null,
       ManualStaticLPBuilder.Grouping.buildEventGroup(0));
     System.out.println(logicalPlan.toJsonString(c));
 

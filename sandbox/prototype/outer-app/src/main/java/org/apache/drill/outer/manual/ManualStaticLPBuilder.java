@@ -234,8 +234,8 @@ public class ManualStaticLPBuilder {
     DrillConfig config = DrillConfig.create();
 
     // Build from item
-    String eventTable = "deu_" + projectId;
-    String userTable = "user_index_" + projectId;
+    String eventTable = projectId + "_deu";
+    String userTable = "property_" + projectId + "_index";
 
     boolean hasSegment = MapUtils.isNotEmpty(segmentMap);
     boolean groupingQuery = grouping != null;

@@ -23,7 +23,7 @@ public class TestBuildLogicalPlanGroupEventWithSegment extends LogicalTestBase {
     DrillConfig c = DrillConfig.create();
     Map<String, Object> segmentMap = new HashMap<>(1);
     segmentMap.put("register_time", "2013-07-12");
-    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("age", "visit.*", "20130701", segmentMap,
+    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("testtable_100w", "visit.*", "20130701", segmentMap,
       ManualStaticLPBuilder.Grouping.buildEventGroup(0));
     System.out.println(logicalPlan.toJsonString(c));
 
