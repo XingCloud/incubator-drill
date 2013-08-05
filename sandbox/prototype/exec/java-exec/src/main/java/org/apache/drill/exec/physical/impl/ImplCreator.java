@@ -47,7 +47,7 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     private BatchCreator<SegmentPOP> sgc = new BufferedBatchCreator<SegmentPOP>(new SegmentBatchCreator());
     private BatchCreator<JoinPOP> jc = new BufferedBatchCreator<JoinPOP>(new JoinBatchCreator());
     private BatchCreator<CollapsingAggregatePOP> cac = new BufferedBatchCreator<CollapsingAggregatePOP>(new CollaspsAggreBatchCreator()) ;
-    private BatchCreator<AbstractScan> sbc = new BufferedBatchCreator<AbstractScan>(new ScanBatchCreator()) ;
+    private BatchCreator<Scan> sbc = new BufferedBatchCreator<Scan>(new ScanBatchCreator()) ;
 
 
     private ImplCreator() {
@@ -63,7 +63,7 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     }
 
     @Override
-    public RecordBatch visitScan(Scan<?> scan, FragmentContext context) throws ExecutionSetupException {
+    public RecordBatch visitScan(Scan scan, FragmentContext context) throws ExecutionSetupException {
         Preconditions.checkNotNull(scan);
         Preconditions.checkNotNull(context);
         if(scan.getIterationBuffer() == null){

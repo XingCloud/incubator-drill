@@ -20,10 +20,10 @@ import java.util.List;
  * Date: 7/12/13
  * Time: 3:30 PM
  */
-public class ScanBatchCreator implements BatchCreator<AbstractScan> {
+public class ScanBatchCreator implements BatchCreator<Scan> {
 
     @Override
-    public RecordBatch getBatch(FragmentContext context, AbstractScan config, List<RecordBatch> children) throws ExecutionSetupException {
+    public RecordBatch getBatch(FragmentContext context, Scan config, List<RecordBatch> children) throws ExecutionSetupException {
 
         Preconditions.checkArgument(children.isEmpty());
         List<RecordReader> readers = Lists.newArrayList();
