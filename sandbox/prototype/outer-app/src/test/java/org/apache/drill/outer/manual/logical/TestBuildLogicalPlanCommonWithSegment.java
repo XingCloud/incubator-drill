@@ -24,7 +24,7 @@ public class TestBuildLogicalPlanCommonWithSegment extends LogicalTestBase {
     segmentMap.put("register_time", "2013-07-12");
     segmentMap.put("language", "zh_cn");
     segmentMap.put("ref", "google");
-    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("age", "visit.*", "20130701", segmentMap, null);
+    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("testtable_100w", "visit.*", "20130701", segmentMap, null);
     System.out.println(logicalPlan.toJsonString(c));
 
     PhysicalPlan physicalPlan = convert2Physical(c, logicalPlan);
