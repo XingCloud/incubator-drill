@@ -17,7 +17,7 @@ public class TestBuildLogicalPlanCommonNoSegment extends LogicalTestBase {
   @Test
   public void buildLogical1() throws Exception {
     DrillConfig c = DrillConfig.create();
-    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("age", "visit.*", "20130701", null, null);
+    LogicalPlan logicalPlan = buildStaticLogicalPlanManually(c, "age", "visit.*", "20130701", null, null);
     System.out.println(logicalPlan.toJsonString(c));
 
     PhysicalPlan physicalPlan = convert2Physical(c, logicalPlan);
