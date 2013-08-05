@@ -1,8 +1,5 @@
 package org.apache.drill.exec.store;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xingcloud.hbase.util.HBaseUserUtils;
 import com.xingcloud.hbase.util.RowKeyParser;
 import com.xingcloud.meta.HBaseFieldInfo;
@@ -309,9 +306,13 @@ public class HBaseRecordReader implements RecordReader {
       }
     }
 
-    int recordSetSize = 0;
+    int recordSetIndex = 0;
     while (true) {
-      if (currentScannerIndex > scanners.size() - 1) return recordSetSize;
+      if (currentScannerIndex > scanners.size() - 1)
+      {
+        setValueCount(recordSetIndex);
+        return recordSetIndex;
+      }
       TableScanner scanner = scanners.get(currentScannerIndex);
       if (valIndex == -1) {
         if (scanner == null) {
@@ -343,9 +344,13 @@ public class HBaseRecordReader implements RecordReader {
           if (!hasMore) currentScannerIndex++;
           if (curRes.size() != 0) {
             KeyValue kv = curRes.get(valIndex++);
-            boolean next = PutValuesToVectors(kv, valueVectors, recordSetSize);
-            recordSetSize++;
-            if (!next) return recordSetSize;
+            boolean next = setValues(kv, valueVectors, recordSetIndex);
+            recordSetIndex++;
+            if (!next) {
+              setValueCount(recordSetIndex);
+              return recordSetIndex;
+
+            }
             break;
           }
         }
@@ -356,48 +361,38 @@ public class HBaseRecordReader implements RecordReader {
 
       }
       KeyValue kv = curRes.get(valIndex++);
-      boolean next = PutValuesToVectors(kv, valueVectors, recordSetSize);
-      recordSetSize++;
-      if (!next) return recordSetSize;
+      boolean next = setValues(kv, valueVectors, recordSetIndex);
+      recordSetIndex++;
+      if (!next) {
+        setValueCount(recordSetIndex);
+        return recordSetIndex;
+      }
 
     }
   }
 
-  public boolean PutValuesToVectors(KeyValue kv, ValueVector[] valueVectors, int recordSetSize) {
+  public boolean setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
+    boolean next = true;
     Map<String, Object> rkObjectMap = RowKeyParser.parse(kv.getRow(), primaryRowKeyParts, fieldInfoMap);
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
       Object result = getValFromKeyValue(kv, info, rkObjectMap);
       String type = info.fieldSchema.getType();
-      byte[] resultBytes = null;
       if (type.equals("string"))
-        resultBytes = Bytes.toBytes((String) result);
-      if (valueVector instanceof VarCharVector) {
-
-        if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
-        ((VarCharVector) valueVector).getMutator().set(recordSetSize, resultBytes);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof IntVector) {
-        ((IntVector) valueVector).getMutator().set(recordSetSize, (int) result);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof BigIntVector) {
-        ((BigIntVector) valueVector).getMutator().set(recordSetSize, (long) result);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof SmallIntVector) {
-        ((SmallIntVector) valueVector).getMutator().set(recordSetSize, (short) result);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof TinyIntVector) {
-        ((TinyIntVector) valueVector).getMutator().set(recordSetSize, (byte) result);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
+        result = Bytes.toBytes((String) result);
+      valueVector.getMutator().setObject(index, result);
+      if (valueVector.getValueCapacity() - index == 1) {
+        next = false;
       }
     }
-    return true;
+    return next;
+  }
+
+  private void setValueCount(int valueCount) {
+    for (int i = 0; i < valueVectors.length; i++) {
+      valueVectors[i].getMutator().setValueCount(valueCount);
+    }
   }
 
   public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option, Map<String, Object> rkObjectMap) {

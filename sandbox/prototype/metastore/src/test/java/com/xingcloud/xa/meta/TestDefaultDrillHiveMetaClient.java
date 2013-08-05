@@ -16,7 +16,7 @@ public class TestDefaultDrillHiveMetaClient {
 
   @Test
   public void testCreateDEUTable() throws Exception{
-    String tableName = "testtable100W_deu";
+    String tableName = "testtable_100W_deu";
     String dbName = "test_xa";
     String userTableName = "user_sofMnsdsk";
     String userIndexName = "property_sofMnsdsk_index";

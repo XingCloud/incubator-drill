@@ -89,7 +89,7 @@ public class MysqlRecordReaderTest {
       }
 
     } catch (Exception e) {
-
+        e.printStackTrace();
     }
   }
 

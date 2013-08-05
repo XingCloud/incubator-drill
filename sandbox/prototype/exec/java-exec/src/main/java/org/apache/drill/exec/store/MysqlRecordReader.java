@@ -139,23 +139,30 @@ public class MysqlRecordReader implements RecordReader {
       }
     }
 
-    int recordSetSize = 0;
+    int recordSetIndex = 0;
     try {
       while (rs.next()) {
-        boolean next = PutValuesToVectors(rs, valueVectors, recordSetSize);
-        recordSetSize++;
+        boolean next = setValues(rs, valueVectors, recordSetIndex);
+        recordSetIndex++;
         if (!next)
-          return recordSetSize;
+          break;
       }
-      return recordSetSize ;
+      setValueCount(recordSetIndex);
+      return recordSetIndex;
     } catch (SQLException e) {
       logger.error("Scan mysql failed : " + e.getMessage());
     }
     return 0;
   }
 
+  private void setValueCount(int valueCount) {
+    for (int i = 0; i < valueVectors.length; i++) {
+      valueVectors[i].getMutator().setValueCount(valueCount);
+    }
+  }
 
-  public boolean PutValuesToVectors(ResultSet rs, ValueVector[] valueVectors, int recordSetSize) {
+  public boolean setValues(ResultSet rs, ValueVector[] valueVectors, int index) {
+    boolean next = true;
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
@@ -166,40 +173,22 @@ public class MysqlRecordReader implements RecordReader {
         logger.error("" + e.getMessage());
       }
       String type = info.fieldSchema.getType();
-      byte[] resultBytes = null;
       if (type.equals("string"))
-        resultBytes = Bytes.toBytes((String) result);
-      if (valueVector instanceof VarCharVector) {
+        result = Bytes.toBytes((String) result);
 
-        if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
-        ((VarCharVector) valueVector).getMutator().set(recordSetSize, resultBytes);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if (recordSetSize + 2 > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof IntVector) {
-        ((IntVector) valueVector).getMutator().set(recordSetSize, ((int)(long) result));
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof BigIntVector) {
-        ((BigIntVector) valueVector).getMutator().set(recordSetSize, (long) result);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof SmallIntVector) {
-        ((SmallIntVector) valueVector).getMutator().set(recordSetSize, (short) result);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
-      } else if (valueVector instanceof TinyIntVector) {
-        ((TinyIntVector) valueVector).getMutator().set(recordSetSize, (byte) result);
-        valueVector.getMutator().setValueCount(recordSetSize);
-        if ((recordSetSize + 2) > valueVector.getValueCapacity()) return false;
+      valueVector.getMutator().setObject(index, result);
+      if (valueVector.getValueCapacity() - index == 1) {
+        next = false;
       }
     }
-    return true;
+
+    return next;
   }
 
   private void initConfig() {
-    String fields[] = config.getTableName().split("\\.") ;
+    String fields[] = config.getTableName().split("\\.");
     String project = fields[0];
-    String dbName = "fix_" + project ;
+    String dbName = "fix_" + project;
     String tableName = fields[1];
 
     projections = new ArrayList<>();
@@ -211,7 +200,7 @@ public class MysqlRecordReader implements RecordReader {
       options.add((String) ((SchemaPath) logProjection.get(i).getExpr()).getPath());
     }
     try {
-      List<HBaseFieldInfo> cols = TableInfo.getCols("property_" + project + "_index", options);
+      List<HBaseFieldInfo> cols = TableInfo.getCols("mysql_property_" + project, options);
       for (HBaseFieldInfo col : cols) {
         fieldInfoMap.put(col.fieldSchema.getName(), col);
       }
