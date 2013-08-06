@@ -3,40 +3,31 @@ package org.apache.drill.outer.selections;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.xingcloud.meta.KeyPart.Type;
 import static org.apache.drill.common.expression.ValueExpressions.LongExpression;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTERS;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
-import static org.apache.drill.outer.selections.GenericUtils.GENERIC_OBJECT_MAPPER;
+import static org.apache.drill.common.util.Selections.*;
+import static org.apache.drill.outer.utils.GenericUtils.addAll;
+import static org.apache.drill.outer.utils.GenericUtils.toBytes;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xingcloud.meta.DefaultDrillHiveMetaClient;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import org.antlr.runtime.RecognitionException;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.config.DrillConfig;
-import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.FunctionRegistry;
 import org.apache.drill.common.expression.LogicalExpression;
-import org.apache.drill.common.expression.ValueExpressions;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
+import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: Z J Wu Date: 13-7-24 Time: 上午10:49 Package: org.apache.drill.common.util
@@ -60,16 +51,16 @@ public class Selection {
   }
 
   public static class KeyPartParameter {
-    private String parameterValue1;
-    private String parameterValue2;
+    private byte[] parameterValue1;
+    private byte[] parameterValue2;
     private KeyPartParameterType parameterValueType;
 
-    public KeyPartParameter(String parameterValue1, KeyPartParameterType parameterValueType) {
+    public KeyPartParameter(byte[] parameterValue1, KeyPartParameterType parameterValueType) {
       this.parameterValue1 = parameterValue1;
       this.parameterValueType = parameterValueType;
     }
 
-    public KeyPartParameter(String parameterValue1, String parameterValue2, KeyPartParameterType parameterValueType) {
+    public KeyPartParameter(byte[] parameterValue1, byte[] parameterValue2, KeyPartParameterType parameterValueType) {
       this.parameterValue1 = parameterValue1;
       this.parameterValue2 = parameterValue2;
       this.parameterValueType = parameterValueType;
@@ -79,11 +70,11 @@ public class Selection {
       return getParameterValueType().equals(KeyPartParameterType.SINGLE);
     }
 
-    public String getParameterValue1() {
+    public byte[] getParameterValue1() {
       return parameterValue1;
     }
 
-    public String getParameterValue2() {
+    public byte[] getParameterValue2() {
       return parameterValue2;
     }
 
@@ -91,69 +82,42 @@ public class Selection {
       return parameterValueType;
     }
 
-    public static KeyPartParameter buildSingleKey(String parameterValue) {
+    public static KeyPartParameter buildSingleKey(byte[] parameterValue) {
       return new KeyPartParameter(parameterValue, KeyPartParameterType.SINGLE);
     }
 
-    public static KeyPartParameter buildRangeKey(String parameterValue1, String parameterValue2) {
+    public static KeyPartParameter buildRangeKey(byte[] parameterValue1, byte[] parameterValue2) {
       return new KeyPartParameter(parameterValue1, parameterValue2, KeyPartParameterType.RANGE);
     }
   }
 
   public static class RowkeyRange {
 
-    protected String startKey;
-    protected String endKey;
+    protected byte[] startKey;
+    protected byte[] endKey;
 
-    public RowkeyRange(String startKey, String endKey) {
+    public RowkeyRange(byte[] startKey, byte[] endKey) {
       this.startKey = startKey;
       this.endKey = endKey;
     }
 
-    public String getStartKey() {
+    public byte[] getStartKey() {
       return startKey;
     }
 
-    public String getEndKey() {
+    public byte[] getEndKey() {
       return endKey;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (!(o instanceof RowkeyRange)) {
-        return false;
-      }
 
-      RowkeyRange that = (RowkeyRange) o;
-
-      if (!endKey.equals(that.endKey)) {
-        return false;
-      }
-      if (!startKey.equals(that.startKey)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = startKey.hashCode();
-      result = 31 * result + endKey.hashCode();
-      return result;
-    }
-
-    private static boolean validate(String startKey, String endKey) {
-      if (StringUtils.isBlank(startKey) || StringUtils.isBlank(endKey)) {
+    private static boolean validate(byte[] startKey, byte[] endKey) {
+      if (ArrayUtils.isEmpty(startKey) || ArrayUtils.isEmpty(endKey)) {
         return false;
       }
       return true;
     }
 
-    public static RowkeyRange create(String startKey, String endKey) {
+    public static RowkeyRange create(byte[] startKey, byte[] endKey) {
       if (validate(startKey, endKey)) {
         return new RowkeyRange(startKey, endKey);
       }
@@ -162,7 +126,8 @@ public class Selection {
 
     @Override
     public String toString() {
-      return "PK(" + startKey + ',' + endKey + ")";
+      BASE64Encoder encoder = new BASE64Encoder();
+      return "PK(" + encoder.encode(startKey) + ',' + encoder.encode(endKey) + ")";
     }
   }
 
@@ -220,20 +185,19 @@ public class Selection {
     }
   }
 
-  public static RowkeyRange resolveRowkeyRange(String tableName, Map<String, KeyPartParameter> parameterMap,
-                                               int[] parameterLength) throws NoSuchObjectException, TException {
+  public static RowkeyRange resolveRowkeyRange(String tableName, Map<String, KeyPartParameter> parameterMap
+  ) throws NoSuchObjectException, TException {
     Table table = CLIENT.getTable("test_xa", tableName);
-
-    String pattern = TableInfo.getPrimaryKeyPattern(table);
+    int[] parameterLength = keyPartParameterLength(parameterMap);
     List<KeyPart> pkKeyParts = TableInfo.getPrimaryKey(table), allKeyParts = new ArrayList<>();
 
     extractColumns(pkKeyParts, allKeyParts);
 
-    StringBuilder startKeySB = new StringBuilder(), endKeySB = new StringBuilder();
-
+    List<Byte> startKeyList = new ArrayList<>(20), endKeyList = new ArrayList<>(20);
     Type keyPartType;
     // There has no optional keys.
-    String fieldName, keyPartValue1, keyPartValue2;
+    String fieldName;
+    byte[] keyPartValue1, keyPartValue2;
     KeyPartParameter keyPartParameter;
 
     int resolvedStartCount = 0, resolvedEndCount = 0;
@@ -253,11 +217,11 @@ public class Selection {
             break;
           } else {
             if (resolvedStartCount < startParamSize) {
-              startKeySB.append(keyPartValue1);
+              addAll(startKeyList, keyPartValue1);
               ++resolvedStartCount;
             }
             if (resolvedEndCount < endParamSize) {
-              endKeySB.append(keyPartValue1);
+              addAll(endKeyList, keyPartValue1);
               ++resolvedEndCount;
             }
           }
@@ -265,24 +229,34 @@ public class Selection {
           keyPartValue1 = keyPartParameter.getParameterValue1();
           keyPartValue2 = keyPartParameter.getParameterValue2();
           if (resolvedStartCount < startParamSize) {
-            startKeySB.append(keyPartValue1);
+            addAll(startKeyList, keyPartValue1);
             ++resolvedStartCount;
           }
           if (resolvedEndCount < endParamSize) {
-            endKeySB.append(keyPartValue2);
+            addAll(endKeyList, keyPartValue2);
             ++resolvedEndCount;
           }
         }
       } else {
         if (resolvedStartCount < startParamSize) {
-          startKeySB.append(kp.getConstant());
+          addAll(startKeyList, kp.getConstant().getBytes());
         }
         if (resolvedEndCount < endParamSize) {
-          endKeySB.append(kp.getConstant());
+          addAll(endKeyList, kp.getConstant().getBytes());
         }
       }
     }
-    return new RowkeyRange(startKeySB.toString(), endKeySB.toString());
+    int size = startKeyList.size();
+    byte[] startKey = new byte[size];
+    for (int i = 0; i < size; i++) {
+      startKey[i] = startKeyList.get(i);
+    }
+    size = endKeyList.size();
+    byte[] endKey = new byte[size];
+    for (int i = 0; i < size; i++) {
+      endKey[i] = endKeyList.get(i);
+    }
+    return new RowkeyRange(startKey, endKey);
   }
 
   // int[0] = start keypart parameter length
@@ -291,7 +265,7 @@ public class Selection {
     int startParameterCount = 0;
     int endParameterCount = 0;
     KeyPartParameter kpp;
-    String v1, v2;
+    byte[] v1, v2;
     for (Map.Entry<String, KeyPartParameter> entry : parameterMap.entrySet()) {
       kpp = entry.getValue();
       if (kpp.isSingle()) {
@@ -364,71 +338,66 @@ public class Selection {
     return map;
   }
 
+  public JSONOptions toSingleJsonOptions() throws IOException {
+    List<Map<String, Object>> mapList = new ArrayList<>(1);
+    mapList.add(this.toSelectionMap());
+    ObjectMapper mapper = DrillConfig.create().getMapper();
+    String s = mapper.writeValueAsString(mapList);
+    return mapper.readValue(s, JSONOptions.class);
+  }
+
+  public static void testEvent() throws IOException, TException {
+    Map<String, KeyPartParameter> parameterMap = new HashMap<>(5);
+    parameterMap.put("date", KeyPartParameter.buildSingleKey(toBytes("20130801")));
+    // Real event is from a.001 to a.999.x.z, transform to these entries.
+    parameterMap.put("event0", KeyPartParameter.buildSingleKey(toBytes("visit")));
+    parameterMap.put("event1", KeyPartParameter.buildRangeKey(toBytes("001"), toBytes("999")));
+    parameterMap.put("event2", KeyPartParameter.buildRangeKey(toBytes("v"), null));
+    parameterMap.put("event3", KeyPartParameter.buildRangeKey(toBytes("b"), null));
+
+    RowkeyRange rowkeyRange = Selection.resolveRowkeyRange("deu_age", parameterMap);
+
+    String dbname = "text_xa";
+    String tableName = "deu_age";
+
+    LogicalExpression[] filters = new LogicalExpression[2];
+    LogicalExpression value = new LongExpression(123l, null);
+    filters[0] = new FunctionRegistry(DrillConfig.create()).createExpression(">", null, new FieldReference("deu_age.value", null), value);
+
+    value = new LongExpression(new Date().getTime(), null);
+    filters[1] = new FunctionRegistry(DrillConfig.create()).createExpression("=", null, new FieldReference("deu_age.version", null), value);
+
+    NamedExpression[] projections = new NamedExpression[1];
+    projections[0] = new NamedExpression(new FieldReference("deu_age.uid", null), new FieldReference("deu_age.uid", null));
+    Selection selection = new Selection(dbname, tableName, rowkeyRange, filters,
+      projections);
+
+    Map<String, Object> map = selection.toSelectionMap();
+    List<Map<String, Object>> mapList = new ArrayList<>(1);
+    mapList.add(map);
+    ObjectMapper mapper = DrillConfig.create().getMapper();
+    String s = mapper.writeValueAsString(mapList);
+    System.out.println(s);
+  }
+
+  public static void testUser() throws NoSuchObjectException, TException, JsonProcessingException {
+    DrillConfig config = DrillConfig.create();
+    String dbname = "text_xa";
+    String tableName = "user_index_age";
+
+    Map<String, KeyPartParameter> parameterMap = new HashMap<>(5);
+    parameterMap.put("propnumber", KeyPartParameter.buildSingleKey(toBytes(65)));
+    parameterMap.put("propnumber", KeyPartParameter.buildSingleKey(toBytes("20130801")));
+    RowkeyRange rowkeyRange = Selection.resolveRowkeyRange("user_index_age", parameterMap);
+
+    System.out.println(config.getMapper().writeValueAsString(rowkeyRange));
+    System.out.println(rowkeyRange);
+
+  }
 
 
   public static void main(String[] args) throws IOException, TException, RecognitionException {
-    LogicalExpression le=new ValueExpressions.LongExpression(1l,ExpressionPosition.UNKNOWN);
-    System.out.println(le);
-//    Map<String, KeyPartParameter> parameterMap = new HashMap<>(5);
-//    parameterMap.put("date", KeyPartParameter.buildSingleKey("20130726"));
-//    // Real event is from a.001 to a.999.x.z, transform to these entries.
-//    parameterMap.put("event0", KeyPartParameter.buildSingleKey("visit"));
-//    parameterMap.put("event1", KeyPartParameter.buildRangeKey("001", "999"));
-//    parameterMap.put("event2", KeyPartParameter.buildRangeKey("v", null));
-//    parameterMap.put("event3", KeyPartParameter.buildRangeKey("b", null));
-//
-//    int[] parameterLength = keyPartParameterLength(parameterMap);
-//    RowkeyRange rowkeyRange = Selection.resolveRowkeyRange("deu_age", parameterMap, parameterLength);
-//    ObjectMapper mapper = new ObjectMapper();
-//
-//    String dbname = "text_xa";
-//    String tableName = "deu_age";
-//
-//    LogicalExpression[] filters = new LogicalExpression[2];
-//    LogicalExpression value = new LongExpression(123l, null);
-//    filters[0] = new FunctionRegistry(DrillConfig.create()).createExpression(">", null, new FieldReference("deu_age.value", null), value);
-//
-//    value = new LongExpression(new Date().getTime(), null);
-//    filters[1] = new FunctionRegistry(DrillConfig.create()).createExpression("=", null, new FieldReference("deu_age.version", null), value);
-//
-//    NamedExpression[] projections = new NamedExpression[1];
-//    projections[0] = new NamedExpression(new FieldReference("deu_age.uid", null), new FieldReference("deu_age.uid", null));
-//    Selection selection = new Selection(dbname, tableName, rowkeyRange, filters,
-//      projections);
-//
-//    Map<String, Object> map = selection.toSelectionMap();
-//    List<Map<String, Object>> mapList = new ArrayList<>(1);
-//    mapList.add(map);
-//
-//    String s = GENERIC_OBJECT_MAPPER.writeValueAsString(mapList);
-//    System.out.println(s);
-//    JSONOptions options = GENERIC_OBJECT_MAPPER.readValue(GENERIC_OBJECT_MAPPER.writeValueAsBytes(mapList), JSONOptions.class);
-//
-//    JsonNode rootNode = options.getRoot();
-//    System.out.println(rootNode.size());
-//
-//    JsonNode filterss, projectionss, rowkey;
-//    String table, rowkeyStart, rowkeyEnd, projectionRef, projectionExpr;
-//    for (JsonNode child : rootNode) {
-//      table = child.get(SELECTION_KEY_WORD_TABLE).textValue();
-//      System.out.println(table);
-//
-//      rowkey = child.get(SELECTION_KEY_WORD_ROWKEY);
-//
-//      rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
-//      rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-//      System.out.println(rowkeyStart + " to " + rowkeyEnd);
-//
-//      filterss = child.get(SELECTION_KEY_WORD_FILTERS);
-//      projectionss = child.get(SELECTION_KEY_WORD_PROJECTIONS);
-//    }
-//    ExprLexer lexer = new ExprLexer(new ANTLRStringStream("a>1"));
-//
-//    CommonTokenStream tokens = new CommonTokenStream(lexer);
-//    ExprParser parser = new ExprParser(tokens);
-//    ExprParser.parse_return ret = parser.parse();
-//    LogicalExpression e = ret.e;
-//    System.out.println(e);
+    testUser();
   }
 
 }

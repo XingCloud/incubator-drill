@@ -1,9 +1,16 @@
 package org.apache.drill.exec.physical.impl.eval.fn;
 
+import org.apache.drill.common.expression.ExpressionPosition;
+import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.common.types.TypeProtos;
+import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.physical.impl.eval.BaseBasicEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
+import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.vector.BigIntVector;
+import org.apache.drill.exec.vector.IntVector;
+import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.VarCharVector;
 
 import java.text.SimpleDateFormat;
@@ -25,22 +32,28 @@ public class XAEvaluators {
     public XAEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
       child = args.getOnlyEvaluator();
-      timeStr = new VarCharVector(null, recordBatch.getContext().getAllocator());
     }
 
     @Override
     public VarCharVector eval() {
       int period = getPeriod();
 
+      if (timeStr == null) {
+        timeStr = new VarCharVector(MaterializedField.create(new SchemaPath("XA", ExpressionPosition.UNKNOWN),
+          Types.required(TypeProtos.MinorType.VARCHAR))
+          , recordBatch.getContext().getAllocator());
+      }
+
       BigIntVector.Accessor accessor = ((BigIntVector) child.eval()).getAccessor();
       int recordCount = accessor.getValueCount();
       timeStr.allocateNew(20 * recordCount, recordCount);
       VarCharVector.Mutator mutator = timeStr.getMutator();
 
-      mutator.setValueCount(recordCount);
+
       for (int i = 0; i < recordCount; i++) {
         mutator.set(i, getKeyBySpecificPeriod(accessor.get(i), period).getBytes());
       }
+      mutator.setValueCount(recordCount);
       return timeStr;
 
     }
@@ -84,6 +97,43 @@ public class XAEvaluators {
     @Override
     public int getPeriod() {
       return 60;
+    }
+
+
+    @FunctionEvaluator("hid2inner")
+    public static class Hid2Inner extends BaseBasicEvaluator {
+      RecordBatch recordBatch;
+      BasicEvaluator child;
+      private IntVector intVector;
+
+      public Hid2Inner(RecordBatch recordBatch, FunctionArguments args) {
+        super(args.isOnlyConstants(), recordBatch);
+        this.recordBatch = recordBatch;
+        child = args.getOnlyEvaluator();
+      }
+
+      @Override
+      public IntVector eval() {
+        if (intVector == null) {
+          intVector = new IntVector(MaterializedField.create(new SchemaPath("uid", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.INT)),
+            recordBatch.getContext().getAllocator());
+        }
+
+        BigIntVector bigIntVector = (BigIntVector) child.eval();
+        BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+        int recordCount = accessor.getValueCount();
+        IntVector.Mutator mutator = intVector.getMutator();
+        intVector.allocateNew(recordCount);
+        for (int i = 0; i < recordCount; i++) {
+          mutator.set(i, getInnerUidFromSamplingUid(accessor.get(i)));
+        }
+        mutator.setValueCount(recordCount);
+        return intVector;
+      }
+
+      private int getInnerUidFromSamplingUid(long suid) {
+        return (int) (0xffffffffl & suid);
+      }
     }
   }
 

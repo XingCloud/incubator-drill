@@ -109,9 +109,11 @@ public class IterationBuffer {
       vectors.add(tp.getTo());
       tp.transfer();
     }
+    /*
     for (ValueVector v : vectors) {
       v.getMutator().setValueCount(outRecordCount);
-    }
+    }*/
+
     BufferedStackFrameImpl frame = new BufferedStackFrameImpl(headSchema,
       outRecordCount, sv2, sv4, vectors,
       outcome, head.getContext());

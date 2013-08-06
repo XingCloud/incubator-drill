@@ -1,6 +1,5 @@
 package org.apache.drill.exec.logical;
 
-import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.apache.drill.common.util.FileUtils;
@@ -23,29 +22,29 @@ import java.util.List;
  */
 public class TestLogicalRun extends PopUnitTestBase {
 
-    @Test
-    public void runLogicalPlan() throws Exception {
+  @Test
+  public void runLogicalPlan() throws Exception {
 
-        try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
-             Drillbit bit = new Drillbit(CONFIG, serviceSet);
-             DrillClient client = new DrillClient(CONFIG, serviceSet.getCoordinator());) {
+    try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
+         Drillbit bit = new Drillbit(CONFIG, serviceSet);
+         DrillClient client = new DrillClient(CONFIG, serviceSet.getCoordinator());) {
 
-            // run query.
-            bit.run();
-            client.connect();
-            List<QueryResultBatch> results = client.runQuery(UserProtos.QueryType.PHYSICAL, Files
-                    .toString(FileUtils.getResourceAsFile("/physical_test2.json"), Charsets.UTF_8));
+      // run query.
+      bit.run();
+      client.connect();
+      List<QueryResultBatch> results = client.runQuery(UserProtos.QueryType.PHYSICAL, Files
+        .toString(FileUtils.getResourceAsFile("/physical_test2.json"), Charsets.UTF_8));
 
-            // look at records
-            RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());
-            int recordCount = 0;
-            for (QueryResultBatch batch : results) {
-                if (!batch.hasData())
-                    continue;
-                boolean schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
-                boolean firstColumn = true;
+      // look at records
+      RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());
+      int recordCount = 0;
+      for (QueryResultBatch batch : results) {
+        if (!batch.hasData())
+          continue;
+        boolean schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
+        boolean firstColumn = true;
 
-                // print headers.
+        // print headers.
               /*
                 if (schemaChanged) {
                     System.out.println("\n\n========NEW SCHEMA=========\n\n");
@@ -82,10 +81,10 @@ public class TestLogicalRun extends PopUnitTestBase {
                 //assertEquals(recordCount, 200);
 
                  */
-            }
-
-        }
+      }
 
     }
+
+  }
 
 }

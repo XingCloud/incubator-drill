@@ -39,36 +39,35 @@ public class TestHBaseAbstractRecordReader {
        Iterator<RecordReader> iter = readerList.iterator();
        long startTime = System.currentTimeMillis();
 
-       int recordCount=0;
-       int count=0;
-       try {
-           ScanBatch batch = new ScanBatch(null, iter);
-           long ts1,ts2;
-           ts1=System.currentTimeMillis();
-           while (batch.next() != RecordBatch.IterOutcome.NONE) {
-               recordCount += batch.getRecordCount();
-               ts2=System.currentTimeMillis();
-               System.out.println();
-               System.out.println(recordCount+": "+batch.getRecordCount()+" costs "+(ts2-ts1)+"ms");
-               ts1=ts2;
+    int recordCount = 0;
+    int count = 0;
+    try {
+      ScanBatch batch = new ScanBatch(null, iter);
+      long ts1, ts2;
+      ts1 = System.currentTimeMillis();
+      while (batch.next() != RecordBatch.IterOutcome.NONE) {
+        recordCount += batch.getRecordCount();
+        ts2 = System.currentTimeMillis();
+        System.out.println();
+        System.out.println(recordCount + ": " + batch.getRecordCount() + " costs " + (ts2 - ts1) + "ms");
+        ts1 = ts2;
 
-               for(ValueVector v: batch){
-                   System.out.print(v.getField().getName()+": ");
-                   ValueVector.Accessor accessor=v.getAccessor();
-                   if(v instanceof VariableWidthVector){
-                       for(int i=0;i<accessor.getValueCount();i++){
-                           System.out.print(Bytes.toString((byte[])accessor.getObject(i))+" ");
-                           count++;
-                       }
-                   }
-                   else {
-                       for(int i=0;i<accessor.getValueCount();i++){
-                           System.out.print(accessor.getObject(i)+" ");
-                           count++;
-                       }
-                   }
-                   System.out.println();
-               }
+        for (ValueVector v : batch) {
+          System.out.print(v.getField().getName() + ": ");
+          ValueVector.Accessor accessor = v.getAccessor();
+          if (v instanceof VariableWidthVector) {
+            for (int i = 0; i < accessor.getValueCount(); i++) {
+              System.out.print(Bytes.toString((byte[]) accessor.getObject(i)) + " ");
+              count++;
+            }
+          } else {
+            for (int i = 0; i < accessor.getValueCount(); i++) {
+              System.out.print(accessor.getObject(i) + " ");
+              count++;
+            }
+          }
+          System.out.println();
+        }
 
                /*
                for (MaterializedField f : batch.getSchema()) {
@@ -86,15 +85,16 @@ public class TestHBaseAbstractRecordReader {
                    }
                    System.out.println();
                }*/
-           }
-       } catch (ExecutionSetupException e) {
-           e.printStackTrace();
-       }
-       System.out.println("count "+count);
-       System.out.println("Done , recordCount :" +  recordCount + ", cost time " + (System.currentTimeMillis() - startTime)/1000 + " seconds");
+      }
+    } catch (ExecutionSetupException e) {
+      e.printStackTrace();
+    }
+    System.out.println("count " + count);
+    System.out.println("Done , recordCount :" + recordCount + ", cost time " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
 
-   }
+  }
 
+<<<<<<< HEAD
    private HbaseScanPOP.HbaseScanEntry getReadEntry(String table,String option){
        String srk,enk;
        List<LogicalExpression> filters=new ArrayList<>();
@@ -137,10 +137,54 @@ public class TestHBaseAbstractRecordReader {
                projections.add(e3);
                entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,filters,projections);
                return entry;
+=======
+  private HbaseScanPOP.HbaseScanEntry getReadEntry(String table, String option) {
+    String srk, enk;
+    List<LogicalExpression> filters = new ArrayList<>();
+    List<NamedExpression> projections = new ArrayList<>();
+    HbaseScanPOP.HbaseScanEntry entry = null;
+    switch (option) {
+      case "user":
+        byte[] srtpropId = Bytes.toBytes((short) 4);
+        byte[] endpropId = Bytes.toBytes((short) 4);
+        byte[] srtDay = Bytes.toBytes("20121201");
+        byte[] endDay = Bytes.toBytes("20121202");
+        srk = Bytes.toString(HBaseUserUtils.getRowKey(srtpropId, srtDay));
+        enk = Bytes.toString(HBaseUserUtils.getRowKey(endpropId, endDay));
+        System.out.println(srk + " " + enk);
+        NamedExpression ue1 = new NamedExpression(new SchemaPath("uid", ExpressionPosition.UNKNOWN),
+          new FieldReference("uid", ExpressionPosition.UNKNOWN));
+        NamedExpression ue2 = new NamedExpression(new SchemaPath("propnumber", ExpressionPosition.UNKNOWN),
+          new FieldReference("propId", ExpressionPosition.UNKNOWN));
+        NamedExpression ue3 = new NamedExpression(new SchemaPath("last_login_time", ExpressionPosition.UNKNOWN),
+          new FieldReference("val", ExpressionPosition.UNKNOWN));
+        projections.add(ue1);
+        projections.add(ue2);
+        projections.add(ue3);
+        entry = new HbaseScanPOP.HbaseScanEntry(table, srk, enk, filters, projections);
+        return entry;
+      case "event":
+        srk = "20121201";
+        enk = "20121202";
+        FunctionDefinition funcDef = new BooleanFunctions().getFunctionDefintions()[3];
+        List<LogicalExpression> funcArgs = new ArrayList<>();
+        funcArgs.add(new SchemaPath("value", ExpressionPosition.UNKNOWN));
+        funcArgs.add(new ValueExpressions.LongExpression(1000l, ExpressionPosition.UNKNOWN));
+        FunctionCall func = new FunctionCall(funcDef, funcArgs, ExpressionPosition.UNKNOWN);
+        filters.add(func);
+        NamedExpression e1 = new NamedExpression(new SchemaPath("uid", ExpressionPosition.UNKNOWN), new FieldReference("uid", ExpressionPosition.UNKNOWN));
+        NamedExpression e2 = new NamedExpression(new SchemaPath("event0", ExpressionPosition.UNKNOWN), new FieldReference("event0", ExpressionPosition.UNKNOWN));
+        NamedExpression e3 = new NamedExpression(new SchemaPath("value", ExpressionPosition.UNKNOWN), new FieldReference("value", ExpressionPosition.UNKNOWN));
+        projections.add(e1);
+        projections.add(e2);
+        projections.add(e3);
+        entry = new HbaseScanPOP.HbaseScanEntry(table, srk, enk, filters, projections);
+        return entry;
+>>>>>>> 7b638bece5fc6c52dad429ece24c0a76abf8e8e0
 
-       }
-       return null;
-   }
+    }
+    return null;
+  }
 
 
 }

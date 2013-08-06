@@ -21,16 +21,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.base.AbstractPhysicalVisitor;
-import org.apache.drill.exec.physical.base.FragmentRoot;
-import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.base.Scan;
+import org.apache.drill.exec.physical.base.*;
 import org.apache.drill.exec.physical.config.*;
 import org.apache.drill.exec.physical.impl.filter.BufferedBatchCreator;
-import org.apache.drill.exec.physical.impl.project.ProjectBatchCreator;
 import org.apache.drill.exec.physical.impl.svremover.SVRemoverCreator;
+import org.apache.drill.exec.physical.impl.union.UnionBatchCreator;
 import org.apache.drill.exec.record.RecordBatch;
-import org.apache.drill.exec.record.buffered.IterationBuffer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,19 +35,19 @@ import java.util.List;
 public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentContext, ExecutionSetupException> {
     static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ImplCreator.class);
 
-    private MockScanBatchCreator msc = new MockScanBatchCreator();
     private ScreenCreator sc = new ScreenCreator();
     private RandomReceiverCreator rrc = new RandomReceiverCreator();
     private SingleSenderCreator ssc = new SingleSenderCreator();
-    private ProjectBatchCreator pbc = new ProjectBatchCreator();
     private SVRemoverCreator svc = new SVRemoverCreator();
     private RootExec root = null;
 
     private BatchCreator<Filter> fc = new BufferedBatchCreator<Filter>(new FilterBatchCreator());
-    private ProjectBatchCreator pc = new ProjectBatchCreator();
-    private ScanBatchCreator sbc = new ScanBatchCreator();
-    private SegmentBatchCreator sgc = new SegmentBatchCreator();
-
+    private BatchCreator<Project> pc = new BufferedBatchCreator<Project>(new ProjectBatchCreator());
+    private BatchCreator<SegmentPOP> sgc = new BufferedBatchCreator<SegmentPOP>(new SegmentBatchCreator());
+    private BatchCreator<JoinPOP> jc = new BufferedBatchCreator<JoinPOP>(new JoinBatchCreator());
+    private BatchCreator<CollapsingAggregatePOP> cac = new BufferedBatchCreator<CollapsingAggregatePOP>(new CollaspsAggreBatchCreator()) ;
+    private BatchCreator<AbstractScan> sbc = new BufferedBatchCreator<AbstractScan>(new ScanBatchCreator()) ;
+    private BatchCreator<Union>  uc = new BufferedBatchCreator<Union>(new UnionBatchCreator());
 
     private ImplCreator() {
     }
@@ -70,7 +66,7 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
         Preconditions.checkNotNull(scan);
         Preconditions.checkNotNull(context);
 
-        return sbc.getBatch(context,scan,getChildren(scan,context));
+        return sbc.getBatch(context, (AbstractScan)scan,getChildren(scan,context));
 
     }
 
@@ -128,11 +124,14 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
         return i.getRoot();
     }
 
-    @Override
-    public RecordBatch visitCollapsingAggregate(PhysicalCollapsingAggregate op, FragmentContext value) throws ExecutionSetupException {
-        //return ac.getBatch(value,op,Arrays.asList(op.accept(this,value)));
+  @Override
+  public RecordBatch visitUnion(Union union, FragmentContext value) throws ExecutionSetupException {
+    return uc.getBatch(value,union,getChildren(union,value));
+  }
 
-        return new CollapsingAggregateBatch(value, op, op.getChild().accept(this, value));
+  @Override
+    public RecordBatch visitCollapsingAggregate(CollapsingAggregatePOP op, FragmentContext value) throws ExecutionSetupException {
+        return cac.getBatch(value, op, Arrays.asList( op.getChild().accept(this, value)));
     }
 
     @Override
@@ -142,6 +141,6 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
 
     @Override
     public RecordBatch visitJoin(JoinPOP op, FragmentContext value) throws ExecutionSetupException {
-        return new JoinBatchCreator().getBatch(value, op, getChildren(op, value));
+        return jc.getBatch(value, op, getChildren(op, value));
     }
 }

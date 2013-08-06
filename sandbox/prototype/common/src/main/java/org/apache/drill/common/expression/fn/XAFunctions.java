@@ -29,7 +29,8 @@ public class XAFunctions implements CallProvider {
   public FunctionDefinition[] getFunctionDefintions() {
     return new FunctionDefinition[]{
       FunctionDefinition.operator("min5", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "min5"),
-      FunctionDefinition.operator("hour", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "hour")
+      FunctionDefinition.operator("hour", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "hour"),
+      FunctionDefinition.operator("hid2inner", new AnyTypeAllowed(1),new OutputTypeDeterminer.SameAsFirstInput(),"hid2inner")
     };
   }
 }

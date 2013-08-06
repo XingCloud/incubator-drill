@@ -51,7 +51,7 @@ public interface PhysicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
   public RETURN visitSingleSender(SingleSender op, EXTRA value) throws EXCEP;
   public RETURN visitUnionExchange(UnionExchange op, EXTRA value) throws EXCEP;
 
-  public RETURN visitCollapsingAggregate(PhysicalCollapsingAggregate op, EXTRA value) throws EXCEP;
+  public RETURN visitCollapsingAggregate(CollapsingAggregatePOP op, EXTRA value) throws EXCEP;
   public RETURN visitSegment(SegmentPOP op,EXTRA value) throws EXCEP;
   public RETURN visitJoin(JoinPOP op,EXTRA value) throws EXCEP;
 }

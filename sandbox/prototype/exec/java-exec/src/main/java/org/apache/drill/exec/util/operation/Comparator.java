@@ -74,7 +74,7 @@ public class Comparator {
     int recordCount = right.getAccessor().getValueCount();
     v.allocateNew(recordCount);
     IntVector.Mutator mutator = v.getMutator();
-    mutator.setValueCount(recordCount);
+
     int j = 0;
     byte b = 0;
     if (left instanceof IntVector) {
@@ -102,7 +102,7 @@ public class Comparator {
         mutator.set(j, (byte) leftString.compareTo(new String(strs.get(j))));
       }
     }
-
+    mutator.setValueCount(recordCount);
     return v;
   }
 
@@ -121,7 +121,7 @@ public class Comparator {
     BitVector bits = new BitVector(null, allocator);
     bits.allocateNew(recordCount);
     BitVector.Mutator bitMutator = bits.getMutator();
-    bitMutator.setValueCount(recordCount);
+
     int b;
     for (int i = 0; i < recordCount; i++) {
       b = intAccessor.get(i);
@@ -136,6 +136,7 @@ public class Comparator {
           if (b < value) bitMutator.set(i, 1);
       }
     }
+    bitMutator.setValueCount(recordCount);
     return bits;
   }
 }

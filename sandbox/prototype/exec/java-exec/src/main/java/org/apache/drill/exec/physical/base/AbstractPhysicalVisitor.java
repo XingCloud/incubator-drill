@@ -117,7 +117,7 @@ public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> impleme
             .getClass().getCanonicalName(), op.getClass().getCanonicalName()));
   }
 
-  @Override public T visitCollapsingAggregate(PhysicalCollapsingAggregate op, X value) throws E {
+  @Override public T visitCollapsingAggregate(CollapsingAggregatePOP op, X value) throws E {
     return visitOp(op,value);
   }
 

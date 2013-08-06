@@ -19,12 +19,11 @@ import org.apache.drill.exec.vector.ValueVector;
  * Time: 11:02 AM
  */
 public class FilterBatch extends BaseRecordBatch {
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FilterBatch.class);
 
   private FragmentContext context;
   private Filter config;
   private RecordBatch incoming;
-
-  private BatchSchema batchSchema;
   private BooleanEvaluator eval;
 
 
@@ -61,7 +60,6 @@ public class FilterBatch extends BaseRecordBatch {
     IterOutcome o = incoming.next();
     switch (o) {
       case OK_NEW_SCHEMA:
-        batchSchema = incoming.getSchema();
       case OK:
         recordCount = 0;
         BitVector.Accessor bitFilter = eval.eval().getAccessor();
@@ -70,24 +68,22 @@ public class FilterBatch extends BaseRecordBatch {
             recordCount++;
           }
         }
+        if(recordCount == 0){
+          return IterOutcome.NONE;
+        }
         for (ValueVector in : incoming) {
-          try {
-            ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
-            AllocationHelper.allocate(out, recordCount, 50);
-            ValueVector.Mutator mutator = out.getMutator();
-            ValueVector.Accessor accessor = in.getAccessor();
-
-            mutator.setValueCount(recordCount);
-
-            for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
-              if (bitFilter.get(j) == 1) {
-                mutator.setObject(i++, accessor.getObject(j));
-              }
+          ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
+          AllocationHelper.allocate(out, recordCount, 50);
+          ValueVector.Mutator mutator = out.getMutator();
+          ValueVector.Accessor accessor = in.getAccessor();
+          for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
+            if (bitFilter.get(j) == 1) {
+              mutator.setObject(i++, accessor.getObject(j));
             }
-            outputVectors.add(out);
-          } catch (Exception e) {
-
           }
+          mutator.setValueCount(recordCount);
+          outputVectors.add(out);
+
         }
         vh = new VectorHolder(outputVectors);
         break;
