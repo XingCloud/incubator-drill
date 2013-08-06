@@ -36,29 +36,26 @@
         }
       ]
     },
-    {
-      pop: "mysql-scan",
-      @id: 2,
-      entries: [
-        {
-          table: "sof-dsk.language",
-          projections: [
-            {
-              ref: "uid",
-              expr: "uid"
-            },
-            {
-              ref: "language",
-              expr: "val"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      pop: "join",
-      @id: 3,
-      left: 2,
+  {
+     pop: "hbase-scan",
+     @id: 2,
+     entries:[{
+         table: "property_sof-dsk_index.language",
+         startRowKey: "test\\x00\\x0320130619en",
+         endRowKey: "test\\x00\\x0320130619en\\x00",
+         filters:[
+         ],
+         projections:[{
+         ref: "uid",
+         expr: "uid"
+         }
+         ]
+     }]
+  },
+  {
+      pop : "join",
+      @id : 3,
+      left : 2,
       right: 1,
       type: "right",
       condition: {
@@ -68,25 +65,10 @@
       }
     },
     {
-      pop: "segment",
+      pop: "PhysicalCollapsingAggregate",
       @id: 4,
       child: 3,
-      ref: "segment",
-      exprs: [
-        {
-          ref: "language",
-          expr: "language"
-        }
-      ]
-    },
-    {
-      pop: "PhysicalCollapsingAggregate",
-      @id: 5,
-      child: 4,
-      within: "segment",
-      carryovers: [
-        "language"
-      ],
+      carryovers:[ ],
       aggregations: [
         {
           ref: "count",
@@ -104,8 +86,8 @@
     },
     {
       pop: "screen",
-      @id: 6,
-      child: 5
+      @id: 5,
+      child: 4
     }
   ]
 }

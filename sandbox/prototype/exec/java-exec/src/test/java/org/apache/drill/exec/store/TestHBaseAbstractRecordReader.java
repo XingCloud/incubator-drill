@@ -25,19 +25,19 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class TestHBaseAbstractRecordReader {
-  @Test
-  public void testAbstractRecordReader() {
-    String eventTable = "testtable100W_deu";
-    String usrTable = "property_testtable_100W_index";
-    //HbaseScanPOP.HbaseScanEntry eventEntry=getReadEntry(eventTable,"event");
-    //HBaseRecordReader eventReader=new HBaseRecordReader(null,eventEntry);
-    HbaseScanPOP.HbaseScanEntry userEntry = getReadEntry(usrTable, "user");
-    HBaseRecordReader userReader = new HBaseRecordReader(null, userEntry);
-    List<RecordReader> readerList = new ArrayList<RecordReader>();
-    //readerList.add(eventReader);
-    readerList.add(userReader);
-    Iterator<RecordReader> iter = readerList.iterator();
-    long startTime = System.currentTimeMillis();
+   @Test
+   public void  testAbstractRecordReader(){
+       String eventTable="sof-dsk_deu";
+       String usrTable="property_sof-dsk_index";
+       HbaseScanPOP.HbaseScanEntry eventEntry=getReadEntry(eventTable,"event");
+       HBaseRecordReader eventReader=new HBaseRecordReader(null,eventEntry);
+       HbaseScanPOP.HbaseScanEntry userEntry=getReadEntry(usrTable,"user");
+       HBaseRecordReader userReader=new HBaseRecordReader(null,userEntry);
+       List<RecordReader> readerList = new ArrayList<RecordReader>();
+       readerList.add(eventReader);
+       readerList.add(userReader);
+       Iterator<RecordReader> iter = readerList.iterator();
+       long startTime = System.currentTimeMillis();
 
     int recordCount = 0;
     int count = 0;
@@ -94,48 +94,48 @@ public class TestHBaseAbstractRecordReader {
 
   }
 
-  private HbaseScanPOP.HbaseScanEntry getReadEntry(String table, String option) {
-    String srk, enk;
-    List<LogicalExpression> filters = new ArrayList<>();
-    List<NamedExpression> projections = new ArrayList<>();
-    HbaseScanPOP.HbaseScanEntry entry = null;
-    switch (option) {
-      case "user":
-        byte[] srtpropId = Bytes.toBytes((short) 4);
-        byte[] endpropId = Bytes.toBytes((short) 4);
-        byte[] srtDay = Bytes.toBytes("20121201");
-        byte[] endDay = Bytes.toBytes("20121202");
-        srk = Bytes.toString(HBaseUserUtils.getRowKey(srtpropId, srtDay));
-        enk = Bytes.toString(HBaseUserUtils.getRowKey(endpropId, endDay));
-        System.out.println(srk + " " + enk);
-        NamedExpression ue1 = new NamedExpression(new SchemaPath("uid", ExpressionPosition.UNKNOWN),
-          new FieldReference("uid", ExpressionPosition.UNKNOWN));
-        NamedExpression ue2 = new NamedExpression(new SchemaPath("propnumber", ExpressionPosition.UNKNOWN),
-          new FieldReference("propId", ExpressionPosition.UNKNOWN));
-        NamedExpression ue3 = new NamedExpression(new SchemaPath("last_login_time", ExpressionPosition.UNKNOWN),
-          new FieldReference("val", ExpressionPosition.UNKNOWN));
-        projections.add(ue1);
-        projections.add(ue2);
-        projections.add(ue3);
-        entry = new HbaseScanPOP.HbaseScanEntry(table, srk, enk, filters, projections);
-        return entry;
-      case "event":
-        srk = "20121201";
-        enk = "20121202";
-        FunctionDefinition funcDef = new BooleanFunctions().getFunctionDefintions()[3];
-        List<LogicalExpression> funcArgs = new ArrayList<>();
-        funcArgs.add(new SchemaPath("value", ExpressionPosition.UNKNOWN));
-        funcArgs.add(new ValueExpressions.LongExpression(1000l, ExpressionPosition.UNKNOWN));
-        FunctionCall func = new FunctionCall(funcDef, funcArgs, ExpressionPosition.UNKNOWN);
-        filters.add(func);
-        NamedExpression e1 = new NamedExpression(new SchemaPath("uid", ExpressionPosition.UNKNOWN), new FieldReference("uid", ExpressionPosition.UNKNOWN));
-        NamedExpression e2 = new NamedExpression(new SchemaPath("event0", ExpressionPosition.UNKNOWN), new FieldReference("event0", ExpressionPosition.UNKNOWN));
-        NamedExpression e3 = new NamedExpression(new SchemaPath("value", ExpressionPosition.UNKNOWN), new FieldReference("value", ExpressionPosition.UNKNOWN));
-        projections.add(e1);
-        projections.add(e2);
-        projections.add(e3);
-        entry = new HbaseScanPOP.HbaseScanEntry(table, srk, enk, filters, projections);
-        return entry;
+   private HbaseScanPOP.HbaseScanEntry getReadEntry(String table,String option){
+       String srk,enk;
+       List<LogicalExpression> filters=new ArrayList<>();
+       List<NamedExpression> projections=new ArrayList<>();
+       HbaseScanPOP.HbaseScanEntry entry=null;
+       switch (option){
+           case "user":
+                byte[] srtpropId=Bytes.toBytes((short)3);
+                byte[] endpropId=Bytes.toBytes((short)3);
+                byte[] srtDay=Bytes.toBytes("20130619");
+                byte[] endDay=Bytes.toBytes("20130619");
+                srk=Bytes.toString(HBaseUserUtils.getRowKey(srtpropId,srtDay));
+                enk=Bytes.toString(HBaseUserUtils.getRowKey(endpropId,endDay));
+                //System.out.println(srk+" "+enk);
+                NamedExpression ue1=new NamedExpression(new SchemaPath("uid",ExpressionPosition.UNKNOWN),
+                                                      new FieldReference("uid",ExpressionPosition.UNKNOWN));
+                NamedExpression ue2=new NamedExpression(new SchemaPath("propnumber",ExpressionPosition.UNKNOWN),
+                                                       new FieldReference("propId",ExpressionPosition.UNKNOWN));
+                NamedExpression ue3=new NamedExpression(new SchemaPath("language",ExpressionPosition.UNKNOWN),
+                       new FieldReference("val",ExpressionPosition.UNKNOWN));
+                projections.add(ue1);
+                projections.add(ue2);
+                projections.add(ue3);
+                entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,filters,projections);
+                return entry;
+           case "event":
+               srk= "20130601";
+               enk= "20130602";
+               FunctionDefinition funcDef=new BooleanFunctions().getFunctionDefintions()[3];
+               List<LogicalExpression> funcArgs=new ArrayList<>();
+               funcArgs.add(new SchemaPath("value",ExpressionPosition.UNKNOWN));
+               funcArgs.add(new ValueExpressions.LongExpression(1000l,ExpressionPosition.UNKNOWN));
+               FunctionCall func=new FunctionCall(funcDef,funcArgs,ExpressionPosition.UNKNOWN);
+               filters.add(func);
+               NamedExpression e1=new NamedExpression(new SchemaPath("uid",ExpressionPosition.UNKNOWN),new FieldReference("uid",ExpressionPosition.UNKNOWN));
+               NamedExpression e2=new NamedExpression(new SchemaPath("event0",ExpressionPosition.UNKNOWN),new FieldReference("event0",ExpressionPosition.UNKNOWN));
+               NamedExpression e3=new NamedExpression(new SchemaPath("value",ExpressionPosition.UNKNOWN),new FieldReference("value",ExpressionPosition.UNKNOWN));
+               projections.add(e1);
+               projections.add(e2);
+               projections.add(e3);
+               entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,filters,projections);
+               return entry;
 
     }
     return null;

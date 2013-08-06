@@ -14,8 +14,8 @@
       entries: [
         {
           table: "sof-dsk_deu",
-          startRowKey: "20130101",
-          endRowKey: "20130102",
+          startRowKey: "test20130101",
+          endRowKey: "test20130101\\xFF",
           filters: [
             
           ],

@@ -14,8 +14,8 @@
       entries: [
         {
           table: "sof-dsk_deu",
-          startRowKey: "20130101",
-          endRowKey: "20130102",
+          startRowKey: "test20130101",
+          endRowKey: "test20130102",
           filters: [
             
           ],
@@ -36,34 +36,30 @@
         }
       ]
     },
-    {
-      pop: "hbase-scan",
-      @id: 2,
-      entries: [
-        {
-          table: "property_sof-dsk_index",
-          startRowKey: "test0320130619",
-          endRowKey: "test0320130619",
-          filters: [
-            
-          ],
-          projections: [
-            {
-              ref: "uid",
-              expr: "uid"
-            },
-            {
-              ref: "language",
-              expr: "language"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      pop: "join",
-      @id: 3,
-      left: 2,
+  {
+     pop: "hbase-scan",
+     @id: 2,
+     entries:[{
+         table: "property_sof-dsk_index",
+         startRowKey: "test\\x00\\x0320130619en",
+         endRowKey: "test\\x00\\x0320130619en\\x00",
+         filters:[
+         ],
+         projections:[{
+         ref: "uid",
+         expr: "uid"
+         },
+         {
+         ref: "language",
+         expr: "language"
+         }
+         ]
+     }]
+  },
+  {
+      pop : "join",
+      @id : 3,
+      left : 2,
       right: 1,
       type: "right",
       condition: {
