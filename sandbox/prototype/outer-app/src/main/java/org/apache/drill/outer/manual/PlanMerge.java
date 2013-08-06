@@ -49,17 +49,18 @@ public class PlanMerge {
       List<LogicalPlan> plans = entry.getValue();
 
       ProjectMergeContext ctx = new ProjectMergeContext();
-//      int mergeID = 1;
       for(LogicalPlan plan:plans){
         //init merging plan sets:初始状态每个plan自成一组
+        ctx.mergePlanSets.addVertex(plan);
 //        ctx.mergeID2plans.put(mergeID, new HashSet<LogicalPlan>(Arrays.asList(plan)));
 //        ctx.plan2MergeID.put(plan, mergeID);
-//        mergeID++;
         //找到有对相同table操作的scan
         Collection<SourceOperator> leaves = plan.getGraph().getLeaves();
         for(SourceOperator leaf:leaves){
           if(leaf instanceof Scan){
             Scan scan = (Scan) leaf;
+            //初始状态，每个scan自成一组
+            ctx.mergedScanSets.addVertex(scan);
             String tableName = getTableName(scan);
             ScanWithPlan swp = new ScanWithPlan(scan, plan, tableName);
             Set<ScanWithPlan> swps = ctx.tableName2Plans.get(tableName);
@@ -126,7 +127,7 @@ public class PlanMerge {
         head = plan.getProperties();
       }
       AdjacencyList<LogicalOperator> child2Parents = plan.getGraph().getAdjList().getReversedList();
-      Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalLeafNodes();
+      Collection<AdjacencyList<LogicalOperator>.Node> leaves = child2Parents.getInternalRootNodes();
       Set<AdjacencyList<LogicalOperator>.Node> nextStepSet = new HashSet<>();
       //merge leaves first; then merge their parents
       for (AdjacencyList<LogicalOperator>.Node leaf : leaves) {
@@ -183,6 +184,10 @@ public class PlanMerge {
           LogicalOperator mergeTo = null;
           childrenLoop:
           for(LogicalOperator child:op){
+            if(!planCtx.mergedGraph.containsVertex(child)){
+              //只寻找已经被合并了的儿子节点
+              continue;
+            }
             Set<DefaultEdge> childEdges = planCtx.mergedGraph.incomingEdgesOf(child);
             for(DefaultEdge e:childEdges){
               LogicalOperator otherParent = planCtx.mergedGraph.getEdgeSource(e);
@@ -207,10 +212,12 @@ public class PlanMerge {
         roots.add(op);
       }
     }
+    /*
     if(roots.size()>1){
+      //todo cannot union store.
       Union union = new Union(roots.toArray(new LogicalOperator[roots.size()]), false);
       doMergeOperator(union, null, planCtx);
-    }
+    }*/
     return new LogicalPlan(head, se, planCtx.mergeResult);  
   }
 
@@ -247,18 +254,16 @@ public class PlanMerge {
     }
   }
 
-  private DirectedGraph<LogicalOperator, DefaultEdge> buildDirectedGraph(LogicalPlan plan) {
-    return null;//adjList = plan.getGraph().getAdjList();
-  }
+
 
   private void substituteInParent(LogicalOperator source, LogicalOperator target, LogicalOperator parent) {
     if (parent instanceof SingleInputOperator) {
       ((SingleInputOperator) parent).setInput(target);
     } else if (parent instanceof Join) {
       Join join = (Join) parent;
-      if (join.getLeft().equals(source)) {
+      if (join.getLeft() == source) {
         join.setLeft(target);
-      } else if (join.getRight().equals(source)) {
+      } else if (join.getRight() == (source)) {
         join.setRight(target);
       }
     } else if (parent instanceof Union) {
@@ -266,7 +271,7 @@ public class PlanMerge {
       LogicalOperator[] inputs = union.getInputs();
       for (int j = 0; j < inputs.length; j++) {
         LogicalOperator input = inputs[j];
-        if (input.equals(source)) {
+        if (input == (source)) {
           inputs[j] = target;
           break;
         }
@@ -346,7 +351,7 @@ public class PlanMerge {
    * 判断两个plan是否合并：
    * 如果两个plan有相同的scan，那就合并。
    * 如果两个plan，其中一个的scan范围包含另外一个，那就合并。
-   * TODO 现在只合并一模一样的scan。
+   * TODO 现在只合并一模一样的scan。需要更多的merge的策略和相应的数据
    * @param scan1
    * @param scan2
    * @return
@@ -373,10 +378,10 @@ public class PlanMerge {
   }
   
   static class ProjectMergeContext{
-    Map<String, Set<ScanWithPlan>> tableName2Plans = new HashMap<>();
-    Map<LogicalPlan, Set<String>> plan2TableNames = new HashMap<>();
-    UndirectedGraph<LogicalPlan, DefaultEdge> mergePlanSets = new SimpleGraph<LogicalPlan, DefaultEdge>(DefaultEdge.class);
-    UndirectedGraph<Scan, DefaultEdge> mergedScanSets = new SimpleGraph<Scan, DefaultEdge>(DefaultEdge.class);
+    Map<String, Set<ScanWithPlan>> tableName2Plans = new HashMap<>();//equals
+    Map<LogicalPlan, Set<String>> plan2TableNames = new HashMap<>();//equals
+    UndirectedGraph<LogicalPlan, DefaultEdge> mergePlanSets = new SimpleGraph<LogicalPlan, DefaultEdge>(DefaultEdge.class);//==
+    UndirectedGraph<Scan, DefaultEdge> mergedScanSets = new SimpleGraph<Scan, DefaultEdge>(DefaultEdge.class);//==
     ConnectivityInspector<Scan, DefaultEdge> scanInspector = null;
     ConnectivityInspector<LogicalPlan, DefaultEdge> planInspector = null;
     
@@ -452,7 +457,7 @@ public class PlanMerge {
   }
   
   public static String getTableName(Scan scan){
-    return scan.getSelection().getRoot().get("table").asText();    
+    return scan.getSelection().getRoot().get(0).get("table").asText();    
   }
 
   public static List<LogicalPlan> sortAndMerge(List<LogicalPlan> plans) {

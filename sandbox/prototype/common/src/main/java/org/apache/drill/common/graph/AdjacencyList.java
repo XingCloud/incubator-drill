@@ -99,7 +99,7 @@ public class AdjacencyList<V extends GraphValue<V>> {
   }
 
 
-  Collection<Node> getInternalRootNodes() {
+  public Collection<Node> getInternalRootNodes() {
     Set<Node> nodes = new HashSet<Node>(getNodeSet());
     for (Edge<Node> e : adjacencies.values()) {
       nodes.remove(e.to);
