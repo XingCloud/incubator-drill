@@ -73,7 +73,8 @@ public class HBaseRecordReader implements RecordReader {
   private void initConfig() {
     startRowKey = parseRkStr(config.getStartRowKey());
     endRowKey = parseRkStr(config.getEndRowKey());
-    tableName = config.getTableName();
+    String tableFields[]=config.getTableName().split("\\.");
+    tableName = tableFields[0];
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
     sourceRefMap = new HashMap<>();
@@ -82,6 +83,7 @@ public class HBaseRecordReader implements RecordReader {
     for (int i = 0; i < logProjection.size(); i++) {
       options.add((String) ((SchemaPath) logProjection.get(i).getExpr()).getPath());
     }
+    if(tableFields.length>1)options.add(tableFields[1]);
     try {
       List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
       for (HBaseFieldInfo col : cols) {
