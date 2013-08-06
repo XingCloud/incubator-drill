@@ -56,7 +56,8 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
   
   @Override
   public ByteBuf[] getBuffers() {
-    return new ByteBuf[]{bits.data, values.data};
+    ByteBuf[] byteBufs = values.getBuffers();
+    return new ByteBuf[]{bits.data, byteBufs[0],byteBufs[1]};
   }
   
   @Override
@@ -97,6 +98,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
     
     // remove bits part of buffer.
     buf = buf.slice(loaded, buf.capacity() - loaded);
+    dataBytes -= loaded ;
     loaded += values.load(dataBytes, valueCount, buf);
     return loaded;
   }
@@ -104,7 +106,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
   @Override
   public void load(FieldMetadata metadata, ByteBuf buffer) {
     assert this.field.getDef().equals(metadata.getDef());
-    int loaded = load(metadata.getVarByteLength(), metadata.getValueCount(), buffer);
+    int loaded = load(metadata.getBufferLength(), metadata.getValueCount(), buffer);
     assert metadata.getBufferLength() == loaded;
   }
   
@@ -263,8 +265,18 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
      */
     public void set(int index, <#if type.major == "VarLen">byte[]<#elseif (type.width < 4)>int<#else>${minor.javaType!type.javaType}</#if> value) {
       setCount++;
+      <#if type.major == "VarLen">
+      if(value == null){
+        values.getMutator().set(index,new byte[0]);
+      }else{
+        bits.getMutator().set(index, 1);
+        values.getMutator().set(index, value);
+      }
+      <#else>
       bits.getMutator().set(index, 1);
       values.getMutator().set(index, value);
+      </#if>
+
     }
 
 
@@ -289,7 +301,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
     public void setValueCount(int valueCount) {
       assert valueCount >= 0;
       Nullable${minor.class}Vector.this.valueCount = valueCount;
-      values.getMutator().setValueCount(setCount);
+      values.getMutator().setValueCount(valueCount);
       bits.getMutator().setValueCount(valueCount);
     }
     
@@ -307,9 +319,14 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
     }
 
     public void setObject(int index,Object obj){
-      if(obj != null) {
+      <#if type.major == "VarLen">
         set(index, (${minor.classType}) obj) ;
-      }
+      <#else>
+        if(obj != null){
+          set(index, (${minor.classType}) obj) ;
+        }
+      </#if>
+
     }
 
 
