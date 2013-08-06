@@ -3,8 +3,8 @@ package org.apache.drill.exec.store;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.hbase.util.HBaseUserUtils;
-import com.xingcloud.hbase.util.RowKeyParser;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
@@ -51,9 +51,7 @@ public class HBaseRecordReader implements RecordReader {
   private List<HBaseFieldInfo> primaryRowKey;
   private List<KeyPart> primaryRowKeyParts;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
-  //private Map<String, Object> rkObjectMap;
-  //private boolean optional=false;
-  //private int index = 0;
+  private DFARowKeyParser dfaParser;
 
   private List<TableScanner> scanners = new ArrayList<>();
   private int currentScannerIndex = 0;
@@ -63,6 +61,8 @@ public class HBaseRecordReader implements RecordReader {
   private int BATCHRECORDCOUNT = 1024 * 4;
   private ValueVector[] valueVectors;
   private boolean init = false;
+
+  private Map<Object,String> testMap=new HashMap<>();
 
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
@@ -109,6 +109,7 @@ public class HBaseRecordReader implements RecordReader {
         if (kp.getType() == KeyPart.Type.field)
           primaryRowKey.add(fieldInfoMap.get(kp.getField().getName()));
       }
+      dfaParser=new DFARowKeyParser(primaryRowKeyParts,fieldInfoMap);
       //primaryRowKey=TableInfo.getPrimaryKey(tableName);
 
     } catch (Exception e) {
@@ -152,7 +153,7 @@ public class HBaseRecordReader implements RecordReader {
     for (; i < orig.length; i++) {
       result[i] = orig[i];
     }
-    result[i] = (byte) 255;
+    result[i] = (byte)255;
     return result;
   }
 
@@ -310,7 +311,6 @@ public class HBaseRecordReader implements RecordReader {
       initTableScanner();
       init = true;
     }
-
     for (ValueVector v : valueVectors) {
       if (v instanceof FixedWidthVector) {
         ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
@@ -375,11 +375,13 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   public boolean PutValuesToVectors(KeyValue kv, ValueVector[] valueVectors, int recordSetSize) {
-    Map<String,Object> rkObjectMap = RowKeyParser.parse(kv.getRow(),primaryRowKeyParts,fieldInfoMap);
+    Map<String,Object> rkObjectMap = dfaParser.parse(kv.getRow());
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
       Object result = getValFromKeyValue(kv, info,rkObjectMap);
+      if(info.fieldSchema.getName().equals("language"))
+          testMap.put(result,"test");
       String type = info.fieldSchema.getType();
       byte[] resultBytes = null;
       if (type.equals("string"))
@@ -425,7 +427,7 @@ public class HBaseRecordReader implements RecordReader {
         LOG.info("error! this field's column info---" + option.cqName + ":" + option.cqName +
           " does not match the keyvalue's column info---" + cfName + ":" + cqName);
       else {
-        return RowKeyParser.parseBytes(keyvalue.getValue(), option.fieldSchema.getType());
+        return DFARowKeyParser.parseBytes(keyvalue.getValue(),option.fieldSchema.getType());
       }
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
       return keyvalue.getTimestamp();
@@ -434,7 +436,7 @@ public class HBaseRecordReader implements RecordReader {
       byte[] orig=new byte[4];
       for(int i=0;i<4;i++)
           orig[i]=keyvalue.getQualifier()[i+1];
-      return RowKeyParser.parseBytes(orig, option.fieldSchema.getType());
+      return DFARowKeyParser.parseBytes(orig,option.fieldSchema.getType());
     }
     return null;
   }

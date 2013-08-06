@@ -90,8 +90,8 @@ public class RowKeyParser {
                             if(info.serLength==0)continue;
                             fieldEndindex = index + info.serLength;
                             if (fieldEndindex > rk.length) return index;
-                            result = Arrays.copyOfRange(rk, index, fieldEndindex);
-                            Object ob = parseBytes(result, info.fieldSchema.getType());
+                            //result = Arrays.copyOfRange(rk, index, fieldEndindex);
+                            Object ob = parseBytes(rk,index,fieldEndindex, info.fieldSchema.getType());
                             rkObjectMap.put(info.fieldSchema.getName(), ob);
                             index=fieldEndindex;
 
@@ -112,9 +112,9 @@ public class RowKeyParser {
         return index;
     }
 
-    public static Object parseBytes(byte[] orig, String type) {
+    public static Object parseBytes(byte[] orig, int start,int end,String type) {
         byte[] result;
-        int index = 0;
+        int index = start;
         switch (type) {
             case "int":
                 result = new byte[4];

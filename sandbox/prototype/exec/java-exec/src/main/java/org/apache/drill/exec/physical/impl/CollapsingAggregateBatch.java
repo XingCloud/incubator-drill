@@ -17,6 +17,7 @@ import org.apache.drill.exec.physical.impl.eval.fn.agg.AggregatingWrapperEvaluat
 import org.apache.drill.exec.physical.impl.eval.fn.agg.CountDistinctAggregator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -248,7 +249,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       return "AggValue{" +
         "aggValues=" + Arrays.toString(aggValues) +
         ", carryOvers=" + Arrays.toString(carryOvers) +
-        '}' ;
+        '}' + Bytes.toString((byte[])carryOvers[0]);
     }
 
   }

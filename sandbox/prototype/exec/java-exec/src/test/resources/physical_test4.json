@@ -37,8 +37,8 @@
      @id: 2,
      entries:[{
          table: "property_sof-dsk_index",
-         startRowKey: "test0320130619",
-         endRowKey: "test0320130619",
+         startRowKey: "test0320130619stren",
+         endRowKey: "test0320130619stren",
          filters:[
          ],
          projections:[{
