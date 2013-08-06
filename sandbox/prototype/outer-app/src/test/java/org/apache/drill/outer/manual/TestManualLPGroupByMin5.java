@@ -10,7 +10,6 @@ import org.apache.drill.exec.proto.UserBitShared;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.server.RemoteServiceSet;
-import org.junit.Test;
 
 import java.util.UUID;
 
@@ -33,7 +32,7 @@ public class TestManualLPGroupByMin5 {
     String date = "20121201";
     String event = "visit.*";
     ManualStaticLPBuilder.Grouping g = ManualStaticLPBuilder.Grouping.buildFuncGroup("min5", "timestamp");
-    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null, g);
+    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(c, projectId, event, date, null, g);
     try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
          Drillbit bit = new Drillbit(c, serviceSet);
          DrillClient client = new DrillClient(c, serviceSet.getCoordinator());) {

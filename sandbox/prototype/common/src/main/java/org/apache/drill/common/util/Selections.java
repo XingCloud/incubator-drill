@@ -15,6 +15,7 @@ public class Selections {
   public static final String SELECTION_KEY_WORD_ROWKEY_START = "start";
   public static final String SELECTION_KEY_WORD_ROWKEY_END = "end";
   public static final String SELECTION_KEY_WORD_FILTERS = "filters";
+  public static final String SELECTION_KEY_WORD_FILTER = "filter" ;
   public static final String SELECTION_KEY_WORD_PROJECTIONS = "projections";
 
   public static final String SELECTION_KEY_WORD_B_DATE = "start_date";

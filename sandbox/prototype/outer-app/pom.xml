@@ -91,6 +91,16 @@
             <artifactId>java-exec</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+		<dependency>
+    		<groupId>net.sf.jgrapht</groupId>
+    		<artifactId>jgrapht</artifactId>
+    		<version>0.8.3</version>
+		</dependency>
+        <dependency>
+            <groupId>jgraph</groupId>
+            <artifactId>jgraph</artifactId>
+            <version>5.13.0.0</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.drill</groupId>
             <artifactId>metastore</artifactId>
@@ -122,11 +132,10 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.1</version>
         </dependency>
-
         <dependency>
-            <groupId>com.xingcloud.xa</groupId>
-            <artifactId>userprops_meta_util</artifactId>
-            <version>0.1.4</version>
+          <groupId>com.xingcloud.xa</groupId>
+          <artifactId>dbutil</artifactId>
+          <version>1.0</version>
         </dependency>
     </dependencies>
 </project>

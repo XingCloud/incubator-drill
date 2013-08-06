@@ -24,6 +24,7 @@ import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.*;
 import org.apache.drill.exec.physical.config.*;
 import org.apache.drill.exec.physical.impl.filter.BufferedBatchCreator;
+import org.apache.drill.exec.physical.impl.project.ProjectBatchCreator;
 import org.apache.drill.exec.physical.impl.svremover.SVRemoverCreator;
 import org.apache.drill.exec.physical.impl.union.UnionBatchCreator;
 import org.apache.drill.exec.record.RecordBatch;
@@ -40,14 +41,16 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     private SingleSenderCreator ssc = new SingleSenderCreator();
     private SVRemoverCreator svc = new SVRemoverCreator();
     private RootExec root = null;
-
     private BatchCreator<Filter> fc = new BufferedBatchCreator<Filter>(new FilterBatchCreator());
     private BatchCreator<Project> pc = new BufferedBatchCreator<Project>(new ProjectBatchCreator());
     private BatchCreator<SegmentPOP> sgc = new BufferedBatchCreator<SegmentPOP>(new SegmentBatchCreator());
     private BatchCreator<JoinPOP> jc = new BufferedBatchCreator<JoinPOP>(new JoinBatchCreator());
     private BatchCreator<CollapsingAggregatePOP> cac = new BufferedBatchCreator<CollapsingAggregatePOP>(new CollaspsAggreBatchCreator()) ;
-    private BatchCreator<AbstractScan> sbc = new BufferedBatchCreator<AbstractScan>(new ScanBatchCreator()) ;
     private BatchCreator<Union>  uc = new BufferedBatchCreator<Union>(new UnionBatchCreator());
+
+    private BatchCreator<Scan> sbc = new BufferedBatchCreator<Scan>(new ScanBatchCreator()) ;
+
+
 
     private ImplCreator() {
     }
@@ -62,12 +65,13 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
     }
 
     @Override
-    public RecordBatch visitScan(Scan<?> scan, FragmentContext context) throws ExecutionSetupException {
+    public RecordBatch visitScan(Scan scan, FragmentContext context) throws ExecutionSetupException {
         Preconditions.checkNotNull(scan);
         Preconditions.checkNotNull(context);
-
-        return sbc.getBatch(context, (AbstractScan)scan,getChildren(scan,context));
-
+        if(scan.getIterationBuffer() == null){
+        return sbc.getBatch(context,scan,getChildren(scan,context));
+        }
+      return sbc.getBatch(context, scan, null);
     }
 
 
@@ -89,14 +93,15 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
 
     @Override
     public RecordBatch visitFilter(Filter filter, FragmentContext context) throws ExecutionSetupException {
-      if(filter.getIterationBuffer() == null){
+     if(filter.getIterationBuffer() == null){
         return fc.getBatch(context, filter, getChildren(filter, context));
       }else{
         return fc.getBatch(context, filter, null);
       }
     }
 
-    @Override
+
+  @Override
     public RecordBatch visitSingleSender(SingleSender op, FragmentContext context) throws ExecutionSetupException {
         root = ssc.getRoot(context, op, getChildren(op, context));
         return null;

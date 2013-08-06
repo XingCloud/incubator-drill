@@ -77,23 +77,29 @@ public class Comparator {
 
     int j = 0;
     byte b = 0;
-    if (left instanceof IntVector) {
-      long l = ((IntVector) left).getAccessor().get(0);
-      IntVector.Accessor ints = ((IntVector) right).getAccessor();
-      int i = 0;
-      for (j = 0; j < recordCount; j++) {
-        i = ints.get(j);
-        b = (byte) (l == i ? 0 : l > i ? 1 : -1);
-        mutator.set(j, b);
+    long leftValue = 0;
+    
+    if(left instanceof FixedWidthVector){
+      if(left instanceof IntVector){
+        leftValue = ((IntVector) left).getAccessor().get(0);
+      }else if(left instanceof BigIntVector){
+        leftValue = ((BigIntVector) left).getAccessor().get(0);
       }
-    } else if (left instanceof BigIntVector) {
-      long l = ((BigIntVector) left).getAccessor().get(0);
-      BigIntVector.Accessor longs = ((BigIntVector) right).getAccessor();
-      long i = 0;
-      for (j = 0; j < recordCount; j++) {
-        i = longs.get(j);
-        b = (byte) (l == i ? 0 : l > i ? 1 : -1);
-        mutator.set(j, b);
+      if(right instanceof IntVector){
+        IntVector.Accessor ints = ((IntVector) right).getAccessor();
+        for (j = 0; j < recordCount; j++) {
+          int rightValue = ints.get(j);
+          b = (byte) (leftValue == rightValue ? 0 : leftValue > rightValue ? 1 : -1);
+          mutator.set(j, b);
+        }
+      }else if(right instanceof BigIntVector){
+        BigIntVector.Accessor longs = ((BigIntVector) right).getAccessor();
+        long i = 0;
+        for (j = 0; j < recordCount; j++) {
+          long rightValue = longs.get(j);
+          b = (byte) (leftValue == rightValue ? 0 : leftValue > rightValue ? 1 : -1);
+          mutator.set(j, b);
+        } 
       }
     } else if (left instanceof VarCharVector) {
       String leftString = new String(((VarCharVector) left).getAccessor().get(0));

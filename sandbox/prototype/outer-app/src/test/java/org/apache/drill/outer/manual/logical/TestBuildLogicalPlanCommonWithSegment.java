@@ -1,6 +1,8 @@
 package org.apache.drill.outer.manual.logical;
 
 import static org.apache.drill.outer.manual.ManualStaticLPBuilder.buildStaticLogicalPlanManually;
+import static org.apache.drill.outer.physical.TestPhysicalPlan.runNoExchangeFragment;
+
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.exec.physical.PhysicalPlan;
@@ -24,11 +26,12 @@ public class TestBuildLogicalPlanCommonWithSegment extends LogicalTestBase {
     segmentMap.put("register_time", "2013-07-12");
     segmentMap.put("language", "zh_cn");
     segmentMap.put("ref", "google");
-    LogicalPlan logicalPlan = buildStaticLogicalPlanManually("testtable_100w", "visit.*", "20130701", segmentMap, null);
+    LogicalPlan logicalPlan = buildStaticLogicalPlanManually(c, "age", "visit.*", "20130701", segmentMap, null);
     System.out.println(logicalPlan.toJsonString(c));
 
     PhysicalPlan physicalPlan = convert2Physical(c, logicalPlan);
     System.out.println(physicalPlan.unparse(c.getMapper().writer()));
+    runNoExchangeFragment(physicalPlan.unparse(c.getMapper().writer()));
   }
 
 }

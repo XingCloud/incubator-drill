@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("join")
@@ -57,8 +58,8 @@ public class Join extends LogicalOperatorBase {
     this.type = JoinType.resolve(type);
 
   }
-  @JsonCreator
-  public Join(@JsonProperty("left") LogicalOperator left, @JsonProperty("right") LogicalOperator right, @JsonProperty("conditions") JoinCondition[] conditions, @JsonProperty("type") JoinType type) {
+  
+  public Join( LogicalOperator left,  LogicalOperator right,  JoinCondition[] conditions, JoinType type) {
     super();
     this.conditions = conditions;
     this.left = left;
@@ -115,4 +116,30 @@ public class Join extends LogicalOperatorBase {
     public Iterator<LogicalOperator> iterator() {
         return Iterators.forArray(getLeft(), getRight());
     }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    Join that = (Join) o;
+
+    if (!Arrays.equals(conditions, that.conditions)) return false;
+    if (!left.equals(that.left)) return false;
+    if (!right.equals(that.right)) return false;
+    if (type != that.type) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + left.hashCode();
+    result = 31 * result + right.hashCode();
+    result = 31 * result + type.hashCode();
+    result = 31 * result + Arrays.hashCode(conditions);
+    return result;
+  }
 }

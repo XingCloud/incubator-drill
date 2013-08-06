@@ -29,5 +29,17 @@ public class NullExpression implements LogicalExpression{
   public ExpressionPosition getPosition() {
     return ExpressionPosition.UNKNOWN;
   }
-  
+
+  @Override
+  public boolean equals(Object o) {
+    if(o != null){
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return t != null ? t.hashCode() : 0;
+  }
 }

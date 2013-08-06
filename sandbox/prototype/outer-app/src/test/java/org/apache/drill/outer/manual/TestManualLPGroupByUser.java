@@ -32,7 +32,7 @@ public class TestManualLPGroupByUser {
     String date = "20121201";
     String event = "visit.*";
     ManualStaticLPBuilder.Grouping g = ManualStaticLPBuilder.Grouping.buildUserGroup("language");
-    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(projectId, event, date, null, g);
+    LogicalPlan logicalPlan = ManualStaticLPBuilder.buildStaticLogicalPlanManually(c, projectId, event, date, null, g);
     try (RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
          Drillbit bit = new Drillbit(c, serviceSet);
          DrillClient client = new DrillClient(c, serviceSet.getCoordinator());) {

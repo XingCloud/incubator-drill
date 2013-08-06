@@ -37,7 +37,7 @@ public abstract class LogicalOperatorBase implements LogicalOperator {
   private List<LogicalOperator> children = new ArrayList<LogicalOperator>();
   private String memo;
 
-  public final int hashCode() {
+  public int hashCode() {
     return super.hashCode();
   }
 
@@ -97,4 +97,16 @@ public abstract class LogicalOperatorBase implements LogicalOperator {
     return new ArrayList<LogicalOperator>(this.children);
   }
 
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    LogicalOperatorBase that = (LogicalOperatorBase) o;
+
+    if (children != null ? !children.equals(that.children) : that.children != null) return false;
+
+    return true;
+  }
 }
