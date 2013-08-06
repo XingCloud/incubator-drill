@@ -12,9 +12,9 @@
       pop : "hbase-scan",
       @id : 1,
       entries : [ {
-           table : "testtable100W_deu",
-           startRowKey : "20121201",
-           endRowKey : "20121202",
+           table : "testtable_100W_deu",
+           startRowKey : "test20121201",
+           endRowKey : "test20121202",
            filters : [
             ],
             projections: [

@@ -1,7 +1,7 @@
 package org.apache.drill.exec.store;
 
+import com.sun.jersey.core.util.Base64;
 import com.xingcloud.hbase.util.DFARowKeyParser;
-import com.xingcloud.hbase.util.HBaseUserUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.regionserver.TableScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -72,8 +73,6 @@ public class HBaseRecordReader implements RecordReader {
   private void initConfig() {
     startRowKey = parseRkStr(config.getStartRowKey());
     endRowKey = parseRkStr(config.getEndRowKey());
-    if (config.getEndRowKey().equals(config.getEndRowKey()))
-      endRowKey = addMaxByteToTail(endRowKey);
     tableName = config.getTableName();
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
@@ -119,30 +118,35 @@ public class HBaseRecordReader implements RecordReader {
      parse Rk in physical_test: "test"+propId("03")+day("20121201")+[type("str"/"num")+val("en"/"123")]
     */
   private byte[] parseRkStr(String origRk) {
-    byte[] result = null;
+    byte[] result;
     if (origRk.startsWith("test")) {
-      String propIdStr = origRk.substring(4, 6);
-      byte[] propId = Bytes.toBytes((short) Integer.parseInt(propIdStr));
-      byte[] srtDay = Bytes.toBytes(origRk.substring(6, 14));
-      if (origRk.length() > (4 + 2 + 8)) {
-        String type = origRk.substring(14, 17);
-        if (type.equals("str")) {
-          String val = origRk.substring(17, origRk.length());
-          byte[] valBytes = Bytes.toBytes(val);
-          result = HBaseUserUtils.getRowKey(propId, srtDay, valBytes);
-        } else if (type.equals("num")) {
-          Long val = Long.parseLong(origRk.substring(17, origRk.length()));
-          byte[] valBytes = Bytes.toBytes(val);
-          result = HBaseUserUtils.getRowKey(propId, srtDay, valBytes);
-        }
-      } else
-        result = HBaseUserUtils.getRowKey(propId, srtDay);
-    } else
-      result = Bytes.toBytes(config.getStartRowKey());
+      String content=origRk.substring(4);
+      result=escape(content);
+    }
+    else {
+        result= Base64.decode(origRk);
+    }
     return result;
   }
 
+  private static byte[] escape(String constant) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    for (int i = 0; i < constant.length(); i++) {
+        char c = constant.charAt(i);
+        if(c == '\\' && constant.length()>i+3
+                && constant.charAt(i+1) =='x'){
+            char h = constant.charAt(i+2);
+            char l = constant.charAt(i+3);
+            baos.write(Integer.parseInt(constant.substring(i+2, i+4), 16));
+            i+=3;
+        }else{
+            baos.write(c);
+        }
+    }
+    return baos.toByteArray();
+  }
 
+  /*
   private byte[] addMaxByteToTail(byte[] orig) {
     byte[] result = new byte[orig.length + 1];
     int i = 0;
@@ -152,6 +156,7 @@ public class HBaseRecordReader implements RecordReader {
     result[i] = (byte)255;
     return result;
   }
+  */
 
 
   private void initTableScanner() {
