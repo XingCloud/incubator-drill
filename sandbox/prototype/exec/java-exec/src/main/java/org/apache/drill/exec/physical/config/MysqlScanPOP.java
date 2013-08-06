@@ -56,31 +56,33 @@ public class MysqlScanPOP extends AbstractScan<MysqlScanPOP.MysqlReadEntry> {
   public static class MysqlReadEntry implements ReadEntry {
 
     private String tableName ;
-    private List<LogicalExpression> filters ;
+    private String filter ;
     private List<NamedExpression> projections ;
 
-    public MysqlReadEntry(String tableName, List<LogicalExpression> filters, List<NamedExpression> projections) {
+    public MysqlReadEntry(@JsonProperty("table")String tableName,
+                          @JsonProperty("filter") String filter,
+                          @JsonProperty("projections") List<NamedExpression> projections) {
       this.tableName = tableName;
-      this.filters = filters;
+      this.filter = filter;
       this.projections = projections;
     }
 
     @Override
     public OperatorCost getCost() {
-      return null;
+      return new OperatorCost(1,2,1,1);
     }
 
     @Override
     public Size getSize() {
-      return null;
+      return new Size(0,1);
     }
 
     public String getTableName() {
       return tableName;
     }
 
-    public List<LogicalExpression> getFilters() {
-      return filters;
+    public String getFilter() {
+      return filter;
     }
 
     public List<NamedExpression> getProjections() {

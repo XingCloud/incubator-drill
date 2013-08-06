@@ -85,7 +85,7 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
         tableName=tableName.replaceAll("-","Mns");
     DefaultDrillHiveMetaClient client= DefaultDrillHiveMetaClient.createClient();
     Table table=client.getTable("test_xa",tableName);
-    if(tableName.endsWith("index")){
+    if(tableName.contains("property")){
         String regPropTableName="register_template_prop_index";
         Table regPropTable=client.getTable("test_xa",regPropTableName);
         List<FieldSchema> fieldSchemas=regPropTable.getSd().getCols();

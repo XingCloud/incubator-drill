@@ -10,6 +10,7 @@ import org.apache.drill.exec.physical.impl.BatchCreator;
 import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.store.HBaseRecordReader;
+import org.apache.drill.exec.store.MysqlRecordReader;
 import org.apache.drill.exec.store.RecordReader;
 
 import java.util.List;
@@ -37,7 +38,13 @@ public class ScanBatchCreator implements BatchCreator<AbstractScan> {
             for(HbaseScanPOP.HbaseScanEntry entry: readEntries){
                 readers.add(new HBaseRecordReader(context,entry));
             }
+        } else if(config instanceof  MysqlScanPOP){
+          List<MysqlScanPOP.MysqlReadEntry> readEntries = ((MysqlScanPOP) config).getReadEntries();
+          for(MysqlScanPOP.MysqlReadEntry entry:readEntries){
+            readers.add(new MysqlRecordReader(context,entry));
+          }
         }
+
         return new ScanBatch(context, readers.iterator());
     }
 

@@ -119,7 +119,7 @@ public class JoinBatch extends BaseRecordBatch {
           connector.upstream();
           if (isFirst) {
             isFirst = false;
-            buildSchema();
+            setupSchema();
             return IterOutcome.OK_NEW_SCHEMA;
           }
           return o;
@@ -162,7 +162,7 @@ public class JoinBatch extends BaseRecordBatch {
     rightVectors.addAll(TransferHelper.transferVectors(rightIncoming));
   }
 
-  public void buildSchema() {
+  public void setupSchema() {
 
     SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
     for (ValueVector v : outputVectors) {

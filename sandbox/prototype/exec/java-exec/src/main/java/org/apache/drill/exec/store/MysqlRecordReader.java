@@ -5,7 +5,6 @@ import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.TableInfo;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
-import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.types.TypeProtos.DataMode;
@@ -51,8 +50,6 @@ public class MysqlRecordReader implements RecordReader {
   private ValueVector[] valueVectors;
 
   private List<HBaseFieldInfo> projections;
-  private Map<String, String> sourceRefMap;
-  private List<LogicalExpression> filters;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
 
 
@@ -82,7 +79,7 @@ public class MysqlRecordReader implements RecordReader {
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
         valueVectors[i] =
-          getVector(i, sourceRefMap.get(projections.get(i).fieldSchema.getName()), type, batchSize);
+          getVector(i, projections.get(i).fieldSchema.getName() ,type, batchSize);
         output.addField(valueVectors[i]);
         output.setNewSchema();
       }
@@ -193,11 +190,10 @@ public class MysqlRecordReader implements RecordReader {
 
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
-    sourceRefMap = new HashMap<>();
     List<NamedExpression> logProjection = config.getProjections();
     List<String> options = new ArrayList<>();
     for (int i = 0; i < logProjection.size(); i++) {
-      options.add((String) ((SchemaPath) logProjection.get(i).getExpr()).getPath());
+      options.add((String) ((SchemaPath) logProjection.get(i).getRef()).getPath());
     }
     try {
       List<HBaseFieldInfo> cols = TableInfo.getCols("mysql_property_" + project, options);
@@ -218,19 +214,18 @@ public class MysqlRecordReader implements RecordReader {
         }
         selection += name + " as " + ref;
 
-        sourceRefMap.put(name, ref);
-        if (!fieldInfoMap.containsKey(name)) {
-          logger.debug("wrong field " + name + " hbase table has no this field");
+        if (!fieldInfoMap.containsKey(ref)) {
+          logger.debug("wrong field " + ref + " hbase table has no this field");
         } else {
-          projections.add(fieldInfoMap.get(name));
+          projections.add(fieldInfoMap.get(ref));
         }
       }
 
       selection += " FROM `" + dbName + "`.`" + tableName + "`";
-      filters = config.getFilters();
 
-      if (filters != null) {
-        selection += " WHERE " + filters.get(0);
+      String filter = config.getFilter() ;
+      if (filter != null && !filter.equals("")) {
+        selection += " WHERE " + filter;
       }
       sql = selection;
 

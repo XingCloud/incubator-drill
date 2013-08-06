@@ -27,18 +27,17 @@ public class MysqlRecordReaderTest {
     String propertyName = "language";
 
     String tableName = project + "." + propertyName;
-    List<LogicalExpression> filters = Lists.newArrayList();
     List<NamedExpression> projections = Lists.newArrayList();
     FieldReference f = new FieldReference(propertyName, ExpressionPosition.UNKNOWN);
-    QuotedString propertyValue = new QuotedString("en", ExpressionPosition.UNKNOWN);
 
+    String filter = "val = 'en'" ;
 
     NamedExpression uid = new NamedExpression(new FieldReference("uid", ExpressionPosition.UNKNOWN),
       new FieldReference("uid", ExpressionPosition.UNKNOWN));
 
     projections.add(uid);
 
-    MysqlScanPOP.MysqlReadEntry readEntry = new MysqlScanPOP.MysqlReadEntry(tableName, filters, projections);
+    MysqlScanPOP.MysqlReadEntry readEntry = new MysqlScanPOP.MysqlReadEntry(tableName, filter, projections);
 
     MysqlRecordReader mysqlRecordReader = new MysqlRecordReader(null, readEntry);
     List<RecordReader> recordReaders = Lists.newArrayList();
@@ -46,8 +45,10 @@ public class MysqlRecordReaderTest {
 
     try {
       ScanBatch scanBatch = new ScanBatch(null, recordReaders.iterator());
+      int recordSize = 0 ;
       while (scanBatch.next() != RecordBatch.IterOutcome.NONE) {
-        System.out.println("Incoming record size : + " + scanBatch.getRecordCount());
+        recordSize +=   scanBatch.getRecordCount() ;
+        System.out.println("Incoming record size :  " + recordSize);
       }
 
     } catch (Exception e) {

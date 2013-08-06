@@ -160,13 +160,17 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       o = incoming.next();
     }
 
+    if(aggValues.isEmpty()){
+      return IterOutcome.NONE;
+    }
+
     writeOutPut();
     hasMore = false;
     return IterOutcome.OK_NEW_SCHEMA;
   }
 
 
-  private void buildSchema() {
+  private void setupSchema() {
     SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
     for (int i = 0; i < aggNames.length; i++) {
 
@@ -189,7 +193,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
     recordCount = aggValues.size();
     outputVectors.clear();
 
-    buildSchema();
+    setupSchema();
 
     for (MaterializedField f : materializedFieldList) {
       v = TypeHelper.getNewVector(f, context.getAllocator());

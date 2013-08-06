@@ -9,6 +9,8 @@ import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.vector.BigIntVector;
+import org.apache.drill.exec.vector.IntVector;
+import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.VarCharVector;
 
 import java.text.SimpleDateFormat;
@@ -95,6 +97,43 @@ public class XAEvaluators {
     @Override
     public int getPeriod() {
       return 60;
+    }
+
+
+    @FunctionEvaluator("hid2inner")
+    public static class Hid2Inner extends BaseBasicEvaluator {
+      RecordBatch recordBatch;
+      BasicEvaluator child;
+      private IntVector intVector;
+
+      public Hid2Inner(RecordBatch recordBatch, FunctionArguments args) {
+        super(args.isOnlyConstants(), recordBatch);
+        this.recordBatch = recordBatch;
+        child = args.getOnlyEvaluator();
+      }
+
+      @Override
+      public IntVector eval() {
+        if (intVector == null) {
+          intVector = new IntVector(MaterializedField.create(new SchemaPath("uid", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.INT)),
+            recordBatch.getContext().getAllocator());
+        }
+
+        BigIntVector bigIntVector = (BigIntVector) child.eval();
+        BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+        int recordCount = accessor.getValueCount();
+        IntVector.Mutator mutator = intVector.getMutator();
+        intVector.allocateNew(recordCount);
+        for (int i = 0; i < recordCount; i++) {
+          mutator.set(i, getInnerUidFromSamplingUid(accessor.get(i)));
+        }
+        mutator.setValueCount(recordCount);
+        return intVector;
+      }
+
+      private int getInnerUidFromSamplingUid(long suid) {
+        return (int) (0xffffffffl & suid);
+      }
     }
   }
 

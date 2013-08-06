@@ -110,13 +110,13 @@ public class SegmentBatch extends BaseRecordBatch {
       case OK:
         grouping();
         writeOutput();
-        buildSchema();
+        setupSchema();
 
     }
     return o;
   }
 
-  private void buildSchema() {
+  private void setupSchema() {
     if (!isFirst)
       return;
     isFirst = false;
