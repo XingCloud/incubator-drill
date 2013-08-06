@@ -16,28 +16,22 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class TestCreateMysqlMeta {
-    String dbName = "test_xa_mysql";
+    String dbName = "test_xa";
     String pid="testtable_1000W";
     String hivePid=pid.replaceAll("-","Mns");
-    String tableName = hivePid+"_deu";
-    String userTableName = hivePid+"_user";
-    String userIndexName = "property_"+hivePid+"_mysql";
-    String userRegPropName="register_template_prop_mysql";
+    //String tableName = hivePid+"_deu";
+    //String userTableName = "user_"+hivePid;
+    String userIndexName = "mysql_property_"+hivePid;
+    String userRegPropName="mysql_register_template_prop";
 
-    @Test
-    public void createEventMeta() throws TException {
-        CreateMysqlMeta.createDEUTable(dbName,tableName);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
-        Table table = client.getTable(dbName, tableName);
-        printColumns(table);
-    }
+    /*
     @Test
     public void createUserMeta() throws TException{
         CreateMysqlMeta.createUserTable(dbName,userTableName);
         DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
         Table table = client.getTable(dbName, userTableName);
         printColumns(table);
-    }
+    }*/
     @Test
     public void createUserIndexMeta() throws TException{
         CreateMysqlMeta.createUserIndex(dbName,userIndexName);
@@ -55,8 +49,7 @@ public class TestCreateMysqlMeta {
     }
     @Test
     public void createMetas() throws TException{
-        createEventMeta();
-        createUserMeta();
+        //createUserMeta();
         createUserIndexMeta();
         createPropMeta();
     }

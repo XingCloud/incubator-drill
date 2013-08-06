@@ -20,7 +20,7 @@ public class TestCreateHBaseMeta {
     String hivePid=pid.replaceAll("-","Mns");
     String tableName = hivePid+"_deu";
     String dbName = "test_xa";
-    String userTableName = hivePid+"_user";
+    String userTableName = "user_"+hivePid;
     String userIndexName = "property_"+hivePid+"_index";
     String userRegPropName="register_template_prop_index";
     @Test

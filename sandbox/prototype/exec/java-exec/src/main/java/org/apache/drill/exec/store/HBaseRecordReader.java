@@ -1,8 +1,5 @@
 package org.apache.drill.exec.store;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.hbase.util.HBaseUserUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
@@ -376,7 +373,7 @@ public class HBaseRecordReader implements RecordReader {
 
   public boolean setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
     boolean next = true;
-    Map<String, Object> rkObjectMap = RowKeyParser.parse(kv.getRow(), primaryRowKeyParts, fieldInfoMap);
+    Map<String, Object> rkObjectMap = dfaParser.parse(kv.getRow());
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
