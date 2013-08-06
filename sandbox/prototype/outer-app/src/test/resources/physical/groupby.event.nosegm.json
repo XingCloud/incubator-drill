@@ -1,0 +1,80 @@
+{
+  head: {
+    type: "APACHE_DRILL_PHYSICAL",
+    version: 1,
+    generator: {
+      type: "manual",
+      info: "na"
+    }
+  },
+  graph: [
+    {
+      pop: "hbase-scan",
+      @id: 1,
+      entries: [
+        {
+          table: "sof-dsk_deu",
+          startRowKey: "20130101",
+          endRowKey: "20130102",
+          filters: [
+
+          ],
+          projections: [
+            {
+              ref: "uid",
+              expr: "uid"
+            },
+            {
+              ref: "event0",
+              expr: "event0"
+            },
+            {
+              ref: "val",
+              expr: "value"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      pop: "segment",
+      @id: 2,
+      child: 1,
+      ref: "segment",
+      exprs: [
+        {
+          ref: "event0",
+          expr: "event0"
+        }
+      ]
+    },
+    {
+      pop: "PhysicalCollapsingAggregate",
+      @id: 3,
+      child: 2,
+      within: "segment",
+      carryovers: [
+        "event0"
+      ],
+      aggregations: [
+        {
+          ref: "count",
+          expr: "count(uid) "
+        },
+        {
+          ref: "user_num",
+          expr: "count_distinct(uid) "
+        },
+        {
+          ref: "sum",
+          expr: "sum(val) "
+        }
+      ]
+    },
+    {
+      pop: "screen",
+      @id: 4,
+      child: 3
+    }
+  ]
+}
