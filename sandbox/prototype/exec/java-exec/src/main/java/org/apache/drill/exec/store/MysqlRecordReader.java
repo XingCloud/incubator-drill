@@ -78,8 +78,12 @@ public class MysqlRecordReader implements RecordReader {
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
+        String field = projections.get(i).fieldSchema.getName() ;
+        if(field.equals("uid")){
+          type = Types.required(MinorType.INT);
+        }
         valueVectors[i] =
-          getVector(i, projections.get(i).fieldSchema.getName() ,type, batchSize);
+          getVector(i, field ,type, batchSize);
         output.addField(valueVectors[i]);
         output.setNewSchema();
       }
@@ -173,6 +177,11 @@ public class MysqlRecordReader implements RecordReader {
       if (type.equals("string"))
         result = Bytes.toBytes((String) result);
 
+      // TODO
+      if(projections.get(i).fieldSchema.getName().equals("uid")){
+        result = getInnerUidFromSamplingUid((Long)result );
+      }
+
       valueVector.getMutator().setObject(index, result);
       if (valueVector.getValueCapacity() - index == 1) {
         next = false;
@@ -261,4 +270,9 @@ public class MysqlRecordReader implements RecordReader {
       }
     }
   }
+
+  private int getInnerUidFromSamplingUid(long suid) {
+    return (int) (0xffffffffl & suid);
+  }
+
 }

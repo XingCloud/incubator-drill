@@ -18,7 +18,7 @@
 package org.apache.drill.common.graph;
 
 
-class Edge<N> implements Comparable<Edge<N>> {
+public class Edge<N> implements Comparable<Edge<N>> {
 
   final N from, to;
   final int weight;
@@ -37,6 +37,16 @@ class Edge<N> implements Comparable<Edge<N>> {
   public String toString() {
     return "Edge [from=" + from + ", to=" + to + "]";
   }
-  
-  
+
+  public N getFrom() {
+    return from;
+  }
+
+  public N getTo() {
+    return to;
+  }
+
+  public int getWeight() {
+    return weight;
+  }
 }

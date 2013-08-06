@@ -14,12 +14,12 @@
             entries:[
             	{records: 100, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
+            	  {name: "red", type: "INT", mode: "REQUIRED"},
             	  {name: "green", type: "INT", mode: "REQUIRED"}
             	]},
             	{records: 200, types: [
             	  {name: "blue", type: "INT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
+            	  {name: "red", type: "INT", mode: "REQUIRED"},
             	  {name: "green", type: "INT", mode: "REQUIRED"}
             	]}
             ]
@@ -29,19 +29,19 @@
             @id:2,
             child: 1,
             pop:"filter",
-            expr: "alternate()"
+            expr: "blue > 10000"
         },
         {
             @id:3,
             child: 2,
             pop:"filter",
-            expr: "alternate()"
+            expr: "red > 10000"
         },
         {
             @id:4,
             child: 2,
             pop:"filter",
-            expr: "alternate()"
+            expr: "green > 10000"
         },
         {
             @id:5,

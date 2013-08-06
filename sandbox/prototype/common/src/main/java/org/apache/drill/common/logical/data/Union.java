@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.Iterators;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("union")
@@ -63,6 +64,26 @@ public class Union extends LogicalOperatorBase {
     }
 
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
+    Union union = (Union) o;
+    if(!super.equals(o)){
+      return false;
+    }
+    if (distinct != union.distinct) return false;
+    if (!Arrays.equals(inputs, union.inputs)) return false;
 
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + Arrays.hashCode(inputs);
+    result = 31 * result + (distinct ? 1 : 0);
+    return result;
+  }
 }

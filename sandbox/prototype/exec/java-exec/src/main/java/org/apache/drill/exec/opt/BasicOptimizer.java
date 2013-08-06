@@ -1,8 +1,11 @@
 package org.apache.drill.exec.opt;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
+import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
 import static org.apache.drill.common.util.Selections.*;
 import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
+
+import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.runtime.RecognitionException;
@@ -90,60 +93,88 @@ public class BasicOptimizer extends Optimizer {
     @Override
     public PhysicalOperator visitScan(Scan scan, Object obj) throws OptimizerException {
       String storageEngine = scan.getStorageEngine();
-      if (!SE_HBASE.equals(storageEngine)) {
+      if (SE_HBASE.equals(storageEngine)) {
+        JSONOptions selections = scan.getSelection();
+        if (selections == null) {
+          throw new OptimizerException("Selection is null");
+        }
+
+        ObjectMapper mapper = DrillConfig.create().getMapper();
+        JsonNode root = selections.getRoot(), filters, projections, rowkey;
+        String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
+        int selectionSize = root.size();
+
+        HbaseScanPOP.HbaseScanEntry entry;
+        List<HbaseScanEntry> entries = new ArrayList<>(selectionSize);
+        List<LogicalExpression> filterList;
+        LogicalExpression le;
+        List<NamedExpression> projectionList;
+        NamedExpression ne;
+
+        for (JsonNode selection : root) {
+          table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
+          rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
+          rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
+          rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
+
+          filters = selection.get(SELECTION_KEY_WORD_FILTERS);
+
+          filterList = new ArrayList<>(filters.size());
+          for (JsonNode filterNode : filters) {
+            filterString = filterNode.textValue();
+            try {
+              le = LogicalExpressionParser.parse(filterString);
+            } catch (RecognitionException e) {
+              throw new OptimizerException("Cannot parse filter - " + filterString);
+            }
+            filterList.add(le);
+          }
+          projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
+          projectionList = new ArrayList<>(projections.size());
+
+          for (JsonNode projectionNode : projections) {
+            projectionString = projectionNode.toString();
+            try {
+              ne = mapper.readValue(projectionString, NamedExpression.class);
+            } catch (IOException e) {
+              throw new OptimizerException("Cannot parse projection - " + projectionString);
+            }
+            projectionList.add(ne);
+          }
+          entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterList, projectionList);
+          entries.add(entry);
+        }
+        return new HbaseScanPOP(entries);
+
+      } else if (SE_MYSQL.equals(storageEngine)) {
+        JSONOptions selections = scan.getSelection();
+        if (selections == null) {
+          throw new OptimizerException("Selection is null");
+        }
+        ObjectMapper mapper = DrillConfig.create().getMapper();
+        JsonNode root = selections.getRoot(), projections;
+        String tableName , filter ;
+        List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
+        List<NamedExpression> projectionList = Lists.newArrayList();
+        for (JsonNode selection : root) {
+          tableName = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
+          filter = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
+          projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
+          for (JsonNode projection : projections) {
+            try {
+              projectionList.add(mapper.readValue(projection.toString(), NamedExpression.class));
+            } catch (IOException e) {
+              throw new OptimizerException("Cannot parse projection : " + projection.toString());
+            }
+          }
+          readEntries.add(new MysqlScanPOP.MysqlReadEntry(tableName, filter, projectionList));
+        }
+        return new MysqlScanPOP(readEntries);
+
+      } else {
         throw new OptimizerException("Unsupported storage engine - " + storageEngine);
       }
-      JSONOptions selections = scan.getSelection();
-      if (selections == null) {
-        throw new OptimizerException("Selection is null");
-      }
 
-      ObjectMapper mapper = DrillConfig.create().getMapper();
-      JsonNode root = selections.getRoot(), filters, projections, rowkey;
-      String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
-      int selectionSize = root.size();
-
-      HbaseScanPOP.HbaseScanEntry entry;
-      List<HbaseScanEntry> entries = new ArrayList<>(selectionSize);
-      List<LogicalExpression> filterList;
-      LogicalExpression le;
-      List<NamedExpression> projectionList;
-      NamedExpression ne;
-
-      for (JsonNode selection : root) {
-        table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
-        rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
-        rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
-        rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-
-        filters = selection.get(SELECTION_KEY_WORD_FILTERS);
-
-        filterList = new ArrayList<>(filters.size());
-        for (JsonNode filterNode : filters) {
-          filterString = filterNode.textValue();
-          try {
-            le = LogicalExpressionParser.parse(filterString);
-          } catch (RecognitionException e) {
-            throw new OptimizerException("Cannot parse filter - " + filterString);
-          }
-          filterList.add(le);
-        }
-        projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
-        projectionList = new ArrayList<>(projections.size());
-
-        for (JsonNode projectionNode : projections) {
-          projectionString = projectionNode.toString();
-          try {
-            ne = mapper.readValue(projectionString, NamedExpression.class);
-          } catch (IOException e) {
-            throw new OptimizerException("Cannot parse projection - " + projectionString);
-          }
-          projectionList.add(ne);
-        }
-        entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterList, projectionList);
-        entries.add(entry);
-      }
-      return new HbaseScanPOP(entries);
     }
 
     @Override

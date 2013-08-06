@@ -56,5 +56,25 @@ public class Limit extends SingleInputOperator{
         return Iterators.singletonIterator(getInput());
     }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
+    Limit that = (Limit) o;
+
+    if (first != that.first) return false;
+    if (last != that.last) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + first;
+    result = 31 * result + last;
+    return result;
+  }
 }

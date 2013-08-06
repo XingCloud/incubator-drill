@@ -30,7 +30,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 
-class AdjacencyList<V extends GraphValue<V>> {
+public class AdjacencyList<V extends GraphValue<V>> {
   private Set<Node> allNodes = new HashSet<Node>();
   private ListMultimap<Node, Edge<Node>> adjacencies = ArrayListMultimap.create();
 
@@ -74,7 +74,7 @@ class AdjacencyList<V extends GraphValue<V>> {
   }
 
 
-  Collection<Node> getInternalLeafNodes() {
+  public Collection<Node> getInternalLeafNodes() {
     // we have to use the allNodes list as otherwise destination only nodes won't be found.
     List<Node> nodes = new LinkedList<Node>(allNodes);
 
@@ -99,7 +99,7 @@ class AdjacencyList<V extends GraphValue<V>> {
   }
 
 
-  Collection<Node> getInternalRootNodes() {
+  public Collection<Node> getInternalRootNodes() {
     Set<Node> nodes = new HashSet<Node>(getNodeSet());
     for (Edge<Node> e : adjacencies.values()) {
       nodes.remove(e.to);
@@ -141,7 +141,7 @@ class AdjacencyList<V extends GraphValue<V>> {
     return out;
   }
 
-  class Node implements Comparable<Node> {
+  public class Node implements Comparable<Node> {
     final V nodeValue;
     boolean visited = false; // used for Kosaraju's algorithm and Edmonds's
                              // algorithm

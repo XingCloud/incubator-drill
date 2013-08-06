@@ -227,11 +227,10 @@ public class ManualStaticLPBuilder {
     return mapper.readValue(mapper.writeValueAsString(o), JSONOptions.class);
   }
 
-  public static LogicalPlan buildStaticLogicalPlanManually(String projectId, String event, String date,
+  public static LogicalPlan buildStaticLogicalPlanManually(DrillConfig config, String projectId, String event, String date,
                                                            Map<String, Object> segmentMap, Grouping grouping) throws
     Exception {
     List<LogicalOperator> logicalOperators = new ArrayList<>();
-    DrillConfig config = DrillConfig.create();
 
     // Build from item
     String eventTable = projectId + "_deu";
