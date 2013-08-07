@@ -137,7 +137,7 @@ public class CreateMysqlMeta {
                 null, null, HBaseFieldInfo.DataSerType.TEXT, 8);
         FieldSchema uidField = new FieldSchema("uid", "bigint", "BINARY:8");
         HBaseFieldInfo.setColumnType(userIndex, uidField, HBaseFieldInfo.FieldType.cqname,
-                "value", null, HBaseFieldInfo.DataSerType.BINARY, 4);
+                "value", null, HBaseFieldInfo.DataSerType.BINARY, 8);
         userIndex.getSd().addToCols(propNumber);
         userIndex.getSd().addToCols(dateField);
         userIndex.getSd().addToCols(uidField);
