@@ -99,7 +99,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   @Override
   public void load(FieldMetadata metadata, ByteBuf buffer) {
     assert this.field.getDef().equals(metadata.getDef());
-    int loaded = load(metadata.getVarByteLength(), metadata.getValueCount(), buffer);
+    int loaded = load(metadata.getBufferLength(), metadata.getValueCount(), buffer);
     assert metadata.getBufferLength() == loaded;
   }
   

@@ -37,16 +37,12 @@
       ]
     },
     {
-      pop: "hbase-scan",
+      pop: "mysql-scan",
       @id: 2,
       entries: [
         {
-          table: "property_sof-dsk_index",
-          startRowKey: "test0320130619",
-          endRowKey: "test0320130619",
-          filters: [
-            
-          ],
+          table: "sof-dsk.register_time",
+          filter: "val > 20100101000000",
           projections: [
             {
               ref: "uid",
@@ -54,7 +50,7 @@
             },
             {
               ref: "register_time",
-              expr: "register_time"
+              expr: "val"
             }
           ]
         }
@@ -65,7 +61,7 @@
       @id: 3,
       left: 2,
       right: 1,
-      type: "right",
+      type: "inner",
       condition: {
         relationship: "==",
         left: "uid",
@@ -73,16 +69,24 @@
       }
     },
     {
-      pop: "filter",
+      pop : "segment",
       @id: 4,
       child: 3,
-      expr: "register_time > 20100101000000"
+      ref: "segment",
+      exprs:[
+        {
+          ref: "date",
+          expr: "date(register_time)"
+        }
+        ]
     },
     {
       pop: "PhysicalCollapsingAggregate",
       @id: 5,
       child: 4,
+      within: "segment",
       carryovers: [
+        "date"
       ],
       aggregations: [
         {

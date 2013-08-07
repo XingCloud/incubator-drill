@@ -46,23 +46,4 @@ public abstract class SingleInputOperator extends LogicalOperatorBase {
       input.registerAsSubscriber(this);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    SingleInputOperator that = (SingleInputOperator) o;
-
-    if (input != null ? !input.equals(that.input) : that.input != null) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (input != null ? input.hashCode() : 0);
-    return result;
-  }
 }
