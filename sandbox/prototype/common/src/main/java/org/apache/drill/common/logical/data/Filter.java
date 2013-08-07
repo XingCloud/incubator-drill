@@ -53,23 +53,4 @@ public class Filter extends SingleInputOperator {
     return Iterators.singletonIterator(getInput());
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    Filter that = (Filter) o;
-
-    if (expr != null ? !expr.equals(that.expr) : that.expr != null) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (expr != null ? expr.hashCode() : 0);
-    return result;
-  }
 }
