@@ -40,7 +40,6 @@ public class TestGenerateData {
     public void generateData100W(){
         generateData(1000*1000);
     }
-    @Test
     public void generateData10000W(){
         generateData(1000*1000*100);
     }
