@@ -14,6 +14,7 @@ import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.VarCharVector;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -46,7 +47,7 @@ public class XAEvaluators {
 
       BigIntVector.Accessor accessor = ((BigIntVector) child.eval()).getAccessor();
       int recordCount = accessor.getValueCount();
-      timeStr.allocateNew(20 * recordCount, recordCount);
+      timeStr.allocateNew(40 * recordCount, recordCount);
       VarCharVector.Mutator mutator = timeStr.getMutator();
 
 
@@ -97,6 +98,44 @@ public class XAEvaluators {
     @Override
     public int getPeriod() {
       return 60;
+    }
+
+    @FunctionEvaluator("date")
+    public static class DateEvaluator extends BaseBasicEvaluator {
+
+      RecordBatch recordBatch;
+      BasicEvaluator child;
+      private VarCharVector varCharVector;
+
+      public DateEvaluator(RecordBatch recordBatch, FunctionArguments args) {
+        super(args.isOnlyConstants(), recordBatch);
+        this.recordBatch = recordBatch;
+        child = args.getOnlyEvaluator();
+      }
+
+      @Override
+      public VarCharVector eval() {
+        if (varCharVector == null) {
+          varCharVector = new VarCharVector(MaterializedField.create(new SchemaPath("date", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR)),
+            recordBatch.getContext().getAllocator());
+        }
+        BigIntVector bigIntVector = (BigIntVector) child.eval();
+        BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+        int recordCount = accessor.getValueCount();
+        varCharVector.allocateNew(20 * recordCount, recordCount);
+        VarCharVector.Mutator mutator = varCharVector.getMutator();
+        for (int i = 0; i < recordCount; i++) {
+          mutator.set(i, getDateString(accessor.get(i)).getBytes());
+        }
+        mutator.setValueCount(recordCount);
+
+        return varCharVector;
+      }
+
+      private String getDateString(long l) {
+        String sqlDate = String.valueOf(l) ;
+        return sqlDate.substring(0,4) + "-" + sqlDate.substring(4,6) + "-" + sqlDate.substring(6,8);
+      }
     }
 
 
