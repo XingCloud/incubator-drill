@@ -83,6 +83,8 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
   public static Table GetTable(String tableName,List<String> options) throws Exception{
     if(tableName.contains("-"))
         tableName=tableName.replaceAll("-","Mns");
+    if(tableName.endsWith("_deu"))
+        tableName="eventTableMeta";
     DefaultDrillHiveMetaClient client= DefaultDrillHiveMetaClient.createClient();
     String dbName="test_xa";
     String regPropTableName;
