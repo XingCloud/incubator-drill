@@ -16,9 +16,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class TestCreateHBaseMeta {
-    String pid="sof-dsk";
+    String pid="age";
     String hivePid=pid.replaceAll("-","Mns");
-    String tableName = "eventTableMeta";
+    String tableName = hivePid+"_deu";
     String dbName = "test_xa";
     String userTableName = "user_"+hivePid;
     String userIndexName = "property_"+hivePid+"_index";

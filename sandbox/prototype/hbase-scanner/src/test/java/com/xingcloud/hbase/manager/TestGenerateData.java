@@ -52,7 +52,7 @@ public class TestGenerateData {
         Configuration conf= HBaseConfiguration.create();
         HBaseAdmin admin = null;
         int num=batch/10000;
-        String tableName="testtable_100W_deu";
+        String tableName="age_deu";
 
 
         try {
