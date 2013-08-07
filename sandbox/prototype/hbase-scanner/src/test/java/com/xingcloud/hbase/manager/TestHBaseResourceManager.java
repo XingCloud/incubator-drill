@@ -75,9 +75,11 @@ public class TestHBaseResourceManager {
             //System.out.println(res);
             KeyValue[] kvs=res.raw();
             //System.out.println(kvs.length);
+            /*
             for( KeyValue kv: res.raw()){
                 System.out.println(kv);
             }
+            */
         }
         long ts2=System.currentTimeMillis();
         System.out.println(ts2-ts1+" ms used. recordCount "+recordCount);

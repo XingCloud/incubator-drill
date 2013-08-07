@@ -30,7 +30,7 @@ public class TestGenerateUserData {
     public  void createTable10W(){
         GenerateData(1000*100);
     }
-    @Test
+
     public void generateData100W(){
         GenerateData(1000*1000);
     }
