@@ -1,3 +1,5 @@
+import java.lang.Override;
+
 <@pp.dropOutputFile />
 <#list types as type>
 <#list type.minor as minor>
@@ -70,24 +72,28 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   public int getVarByteLength(){
     return offsetVector.getAccessor().get(valueCount); 
   }
+
+  @Override
+  public int getBufferSize() {
+    return offsetVector.getBufferSize()  + getVarByteLength() ;
+  }
   
   @Override
   public FieldMetadata getMetadata() {
-    int len = valueCount * ${type.width} + getVarByteLength();
     return FieldMetadata.newBuilder()
              .setDef(getField().getDef())
              .setValueCount(valueCount)
              .setVarByteLength(getVarByteLength())
-             .setBufferLength(len)
+             .setBufferLength(getBufferSize())
              .build();
   }
 
   public int load(int dataBytes, int valueCount, ByteBuf buf){
     this.valueCount = valueCount;
     int loaded = offsetVector.load(valueCount+1, buf);
-    data = buf.slice(loaded, dataBytes);
+    data = buf.slice(loaded, dataBytes - loaded);
     data.retain();
-    return loaded + dataBytes;
+    return dataBytes;
   }
   
   @Override

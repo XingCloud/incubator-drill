@@ -18,7 +18,6 @@ import org.apache.drill.exec.physical.impl.eval.fn.agg.CountDistinctAggregator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -205,8 +204,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
     int i = 0;
     for (AggValue aggValue : aggValues.values()) {
-      // test
-      System.out.println(aggValue);
       for (int j = 0; j < outColumnsLength; j++) {
         outputVectors.get(j).getMutator().setObject(i, aggValue.getObject(j));
       }
@@ -246,14 +243,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
         return carryOvers[i - aggValues.length];
       }
     }
-
-    @Override
-    public String toString() {
-
-      // just for test
-     return "AggValues : " + Arrays.toString(aggValues);
-    }
-
   }
 
 
