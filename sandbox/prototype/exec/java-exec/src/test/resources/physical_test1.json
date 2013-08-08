@@ -37,56 +37,10 @@
       ]
     },
     {
-      pop: "mysql-scan",
-      @id: 2,
-      entries: [
-        {
-          table: "sof-dsk.register_time",
-          filter: "val > 20100101000000",
-          projections: [
-            {
-              ref: "uid",
-              expr: "uid"
-            },
-            {
-              ref: "register_time",
-              expr: "val"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      pop: "join",
-      @id: 3,
-      left: 2,
-      right: 1,
-      type: "inner",
-      condition: {
-        relationship: "==",
-        left: "uid",
-        right: "uid"
-      }
-    },
-    {
-      pop : "segment",
-      @id: 4,
-      child: 3,
-      ref: "segment",
-      exprs:[
-        {
-          ref: "date",
-          expr: "date(register_time)"
-        }
-        ]
-    },
-    {
       pop: "PhysicalCollapsingAggregate",
-      @id: 5,
-      child: 4,
-      within: "segment",
+      @id: 2,
+      child: 1,
       carryovers: [
-        "date"
       ],
       aggregations: [
         {
@@ -105,8 +59,8 @@
     },
     {
       pop: "screen",
-      @id: 6,
-      child: 5
+      @id: 3,
+      child: 2
     }
   ]
 }

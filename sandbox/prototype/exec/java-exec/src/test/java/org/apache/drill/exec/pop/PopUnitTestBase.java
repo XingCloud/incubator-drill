@@ -45,7 +45,7 @@ public abstract class PopUnitTestBase {
   protected static DrillConfig CONFIG;
 
   // Set a timeout unless we're debugging.
-  @Rule public TestRule globalTimeout = IS_DEBUG ? new TestName() : new Timeout(10000);
+  @Rule public TestRule globalTimeout = IS_DEBUG ? new TestName() : new Timeout(10000000);
   
   @BeforeClass
   public static void setup() {
