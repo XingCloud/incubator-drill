@@ -40,7 +40,7 @@
      pop: "hbase-scan",
      @id: 2,
      entries:[{
-         table: "property_sof-dsk_index.language",
+         table: "property_sof-dsk_index",
          startRowKey: "test\\x00\\x0320130619en",
          endRowKey: "test\\x00\\x0320130619en\\x00",
          filters:[

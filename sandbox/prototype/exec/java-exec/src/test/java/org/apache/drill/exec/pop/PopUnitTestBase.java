@@ -17,8 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.pop;
 
-import java.io.IOException;
-
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.util.FileUtils;
 import org.apache.drill.exec.exception.FragmentSetupException;
@@ -34,8 +34,7 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import java.io.IOException;
 
 public abstract class PopUnitTestBase {
      static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PopUnitTestBase.class);

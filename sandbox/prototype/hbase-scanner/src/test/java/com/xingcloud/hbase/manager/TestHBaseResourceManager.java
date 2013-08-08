@@ -1,6 +1,5 @@
 package com.xingcloud.hbase.manager;
 
-import com.xingcloud.hbase.util.HBaseUserUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -31,8 +30,8 @@ public class TestHBaseResourceManager {
     @Test
     public void testHTable() throws IOException {
         Configuration conf= HBaseConfiguration.create();
-        //HTable table=HBaseResourceManager.getInstance().getTable("sof-dsk_deu");
-        HTable table=HBaseResourceManager.getInstance().getTable("property_testtable_100W_index");
+        HTable table=HBaseResourceManager.getInstance().getTable("sof-dsk_deu");
+        //HTable table=HBaseResourceManager.getInstance().getTable("property_testtable_100W_index");
         FileSystem fs=FileSystem.get(conf);
         System.out.println(fs.getHomeDirectory());
         System.out.println(fs.getStatus());
@@ -41,9 +40,10 @@ public class TestHBaseResourceManager {
 
         //HTable table=new HTable(conf,"sof-dsk_deu");
         Scan scan=new Scan();
-        /*
+
         byte[] srk= Bytes.toBytes("20121106heartbeat.xFFxC7x00'x07xA2");
-        byte[] enk= Bytes.toBytes("20121201visit");  */
+        byte[] enk= Bytes.toBytes("20121201visit");
+        /*
         byte[] srk;
         byte[] enk;
         byte[] propId=Bytes.toBytes((short)9);
@@ -51,6 +51,7 @@ public class TestHBaseResourceManager {
         byte[] endDay=Bytes.toBytes("20121202");
         srk=HBaseUserUtils.getRowKey(propId, srtDay);
         enk=HBaseUserUtils.getRowKey(propId,endDay);
+        */
         scan.setStartRow(srk);
         scan.setStopRow(enk);
         //Filter filter=new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL,
@@ -74,9 +75,11 @@ public class TestHBaseResourceManager {
             //System.out.println(res);
             KeyValue[] kvs=res.raw();
             //System.out.println(kvs.length);
+            /*
             for( KeyValue kv: res.raw()){
                 System.out.println(kv);
             }
+            */
         }
         long ts2=System.currentTimeMillis();
         System.out.println(ts2-ts1+" ms used. recordCount "+recordCount);

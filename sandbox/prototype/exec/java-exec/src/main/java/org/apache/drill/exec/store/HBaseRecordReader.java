@@ -46,11 +46,15 @@ public class HBaseRecordReader implements RecordReader {
 
   private List<HBaseFieldInfo> projections;
   private Map<String, String> sourceRefMap;
-  private List<LogicalExpression> filters;
-  private List<HBaseFieldInfo> primaryRowKey;
   private List<KeyPart> primaryRowKeyParts;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
+  private boolean parseRk=false;
+
   private DFARowKeyParser dfaParser;
+
+  private List<LogicalExpression> filters;
+
+
 
   private List<TableScanner> scanners = new ArrayList<>();
   private int currentScannerIndex = 0;
@@ -97,17 +101,15 @@ public class HBaseRecordReader implements RecordReader {
         if (!fieldInfoMap.containsKey(name)) {
           LOG.debug("wrong field " + name + " hbase table has no this field");
         } else {
-          projections.add(fieldInfoMap.get(name));
+          HBaseFieldInfo proInfo=fieldInfoMap.get(name);
+          projections.add(proInfo);
+          if(false==parseRk&&proInfo.fieldType== HBaseFieldInfo.FieldType.rowkey)
+              parseRk=true;
         }
       }
       filters = config.getFilters();
 
       primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
-      primaryRowKey = new ArrayList<>();
-      for (KeyPart kp : primaryRowKeyParts) {
-        if (kp.getType() == KeyPart.Type.field)
-          primaryRowKey.add(fieldInfoMap.get(kp.getField().getName()));
-      }
       dfaParser=new DFARowKeyParser(primaryRowKeyParts,fieldInfoMap);
       //primaryRowKey=TableInfo.getPrimaryKey(tableName);
 
@@ -380,7 +382,8 @@ public class HBaseRecordReader implements RecordReader {
 
   public boolean setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
     boolean next = true;
-    Map<String, Object> rkObjectMap = dfaParser.parse(kv.getRow());
+    Map<String, Object> rkObjectMap=new HashMap<>();
+    if(parseRk)rkObjectMap= dfaParser.parse(kv.getRow());
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];

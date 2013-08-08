@@ -36,11 +36,9 @@ public class TestGenerateData {
     public  void createTable10W(){
         generateData(1000*100);
     }
-    @Test
     public void generateData100W(){
         generateData(1000*1000);
     }
-    @Test
     public void generateData10000W(){
         generateData(1000*1000*100);
     }
@@ -52,7 +50,7 @@ public class TestGenerateData {
         Configuration conf= HBaseConfiguration.create();
         HBaseAdmin admin = null;
         int num=batch/10000;
-        String tableName="testtable_100W_deu";
+        String tableName="age_deu";
 
 
         try {
