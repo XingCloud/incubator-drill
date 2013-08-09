@@ -36,57 +36,37 @@
         }
       ]
     },
-  {
-     pop: "hbase-scan",
-     @id: 2,
-     entries:[{
-         table: "property_sof-dsk_index",
-         startRowKey: "test\\x00\\x0320130619en",
-         endRowKey: "test\\x00\\x0320130619en\\x00",
-         filters:[
-         ],
-         projections:[{
-         ref: "uid",
-         expr: "uid"
-         },
-         {
-         ref: "language",
-         expr: "language"
-         }
-         ]
-     }]
-  },
-  {
-      pop : "join",
-      @id : 3,
-      left : 2,
-      right: 1,
-      type: "right",
-      condition: {
-        relationship: "==",
-        left: "uid",
-        right: "uid"
-      }
+    {
+      pop: "filter",
+      @id: 2,
+      child: 1,
+      expr: "event0 == 'click'"
     },
     {
-      pop: "segment",
-      @id: 4,
-      child: 3,
-      ref: "segment",
+      pop: "project",
+      @id: 3,
+      child: 2,
       exprs: [
         {
-          ref: "language",
-          expr: "language"
+          ref: "uid",
+          expr: "uid"
+        },
+        {
+          ref: "val",
+          expr: "val"
+        },
+        {
+          ref: "query_id",
+          expr: 1
         }
       ]
     },
     {
       pop: "PhysicalCollapsingAggregate",
-      @id: 5,
-      child: 4,
-      within: "segment",
+      @id: 4,
+      child: 3,
       carryovers: [
-        "language"
+        "query_id"
       ],
       aggregations: [
         {
@@ -105,8 +85,8 @@
     },
     {
       pop: "screen",
-      @id: 6,
-      child: 5
+      @id: 5,
+      child: 4
     }
   ]
 }

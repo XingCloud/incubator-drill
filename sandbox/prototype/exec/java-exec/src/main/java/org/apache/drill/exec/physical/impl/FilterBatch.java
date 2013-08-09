@@ -62,6 +62,7 @@ public class FilterBatch extends BaseRecordBatch {
       case OK_NEW_SCHEMA:
       case OK:
         recordCount = 0;
+        outputVectors.clear();
         BitVector.Accessor bitFilter = eval.eval().getAccessor();
         for (int i = 0; i < bitFilter.getValueCount(); i++) {
           if (bitFilter.get(i) == 1) {

@@ -40,13 +40,13 @@ public class Comparator {
   }
 
   private static IntVector Compare(ValueVector left, ValueVector right, BufferAllocator allocator) {
-    if (left.getValueCapacity() > 1) {
-      if (right.getValueCapacity() > 1) {
+    if (left.getAccessor().getValueCount() > 1) {
+      if (right.getAccessor().getValueCount() > 1) {
         return V2V(left, right, allocator);
       }
       return V2O(left, right, allocator);
     } else {
-      if (right.getValueCapacity() > 1) {
+      if (right.getAccessor().getValueCount() > 1) {
         return O2V(left, right, allocator);
       }
       return O2O(left, right, allocator);

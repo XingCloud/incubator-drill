@@ -51,6 +51,11 @@ public class TestQuery extends PopUnitTestBase {
   }
 
   @Test
+  public void filterAndProject() throws Exception{
+    submitQuery("/physical_test4.json");
+  }
+
+  @Test
   public void uion() throws Exception{
     submitQuery("/physical_test5.json");
   }
