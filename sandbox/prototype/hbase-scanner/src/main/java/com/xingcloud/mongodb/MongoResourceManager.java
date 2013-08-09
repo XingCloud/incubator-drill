@@ -49,15 +49,15 @@ public class MongoResourceManager {
 
     private void init() throws Exception {
         if (mongo == null) {
-            host = ConfigReader.getConfig("mongodb_conf.xml", "mongodb", "host");
-            port = Integer.parseInt(ConfigReader.getConfig("mongodb_conf.xml",
+            host = ConfigReader.getConfig("src/test/resources/mongodb_conf.xml", "mongodb", "host");
+            port = Integer.parseInt(ConfigReader.getConfig("src/test/resources/mongodb_conf.xml",
                     "mongodb", "port"));
-            DB_NAME = ConfigReader.getConfig("mongodb_conf.xml", "mongodb", "dbname");
-            poolSize = Integer.parseInt(ConfigReader.getConfig("mongodb_conf.xml", "mongodb", "pool_size"));
-            int maxWait = Integer.parseInt(ConfigReader.getConfig("mongodb_conf.xml", "mongodb", "max_wait"));
-            int socketTimeOut = Integer.parseInt(ConfigReader.getConfig("mongodb_conf.xml", "mongodb", "socket_timeout"));
-            int connectionTimeOut =  Integer.parseInt(ConfigReader.getConfig("mongodb_conf.xml", "mongodb", "connection_timeout"));
-            int threadsAllowedToBlockForConnectionMultiplier = Integer.parseInt(ConfigReader.getConfig("mongodb_conf.xml", "mongodb", "threads_allowed_to_block_for_connection_multiplier"));
+            DB_NAME = ConfigReader.getConfig("src/test/resources/mongodb_conf.xml", "mongodb", "dbname");
+            poolSize = Integer.parseInt(ConfigReader.getConfig("src/test/resources/mongodb_conf.xml", "mongodb", "pool_size"));
+            int maxWait = Integer.parseInt(ConfigReader.getConfig("src/test/resources/mongodb_conf.xml", "mongodb", "max_wait"));
+            int socketTimeOut = Integer.parseInt(ConfigReader.getConfig("src/test/resources/mongodb_conf.xml", "mongodb", "socket_timeout"));
+            int connectionTimeOut =  Integer.parseInt(ConfigReader.getConfig("src/test/resources/mongodb_conf.xml", "mongodb", "connection_timeout"));
+            int threadsAllowedToBlockForConnectionMultiplier = Integer.parseInt(ConfigReader.getConfig("src/test/resources/mongodb_conf.xml", "mongodb", "threads_allowed_to_block_for_connection_multiplier"));
 
             logger.info("\nHost: " + host + "\nPort: " + port + "\nPool size: " + poolSize + "\nMax wait: " + maxWait + "\nSocket timeout: " + socketTimeOut
                     + "\nConnection time out: " + connectionTimeOut + "\nthreadsAllowedToBlockForConnectionMultiplier: " + threadsAllowedToBlockForConnectionMultiplier);

@@ -58,7 +58,7 @@ public class MysqlRecordReader implements RecordReader {
 
   public static Connection getConnection() throws Exception {
     if (cpds == null) {
-      System.setProperty("com.mchange.v2.c3p0.cfg.xml", FileUtils.getResourceAsFile("/mysql-c3p0.xml").getPath());
+      System.setProperty("com.mchange.v2.c3p0.cfg.xml", "conf/mysql-c3p0.xml");
       cpds = new ComboPooledDataSource();
     }
     return cpds.getConnection();

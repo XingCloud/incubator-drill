@@ -40,7 +40,7 @@ public class ComparisonEvaluators {
 
     @Override
     public ValueVector eval() {
-      return Comparator.Equal(left.eval(), right.eval(),recordBatch.getContext().getAllocator());
+      return Comparator.Equal(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
     }
   }
 
@@ -53,7 +53,7 @@ public class ComparisonEvaluators {
 
     @Override
     public ValueVector eval() {
-      return Comparator.GreaterThan(left.eval(), right.eval(),recordBatch.getContext().getAllocator());
+      return Comparator.GreaterThan(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
     }
 
   }
@@ -67,7 +67,7 @@ public class ComparisonEvaluators {
 
     @Override
     public ValueVector eval() {
-      return Comparator.LessThan(left.eval(), right.eval(),recordBatch.getContext().getAllocator());
+      return Comparator.LessThan(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
     }
   }
 
@@ -80,7 +80,7 @@ public class ComparisonEvaluators {
 
     @Override
     public ValueVector eval() {
-      return Comparator.LessEqual(left.eval(), right.eval(),recordBatch.getContext().getAllocator());
+      return Comparator.LessEqual(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
     }
   }
 
@@ -93,7 +93,7 @@ public class ComparisonEvaluators {
 
     @Override
     public ValueVector eval() {
-      return Comparator.GreaterEqual(left.eval(), right.eval(),recordBatch.getContext().getAllocator());
+      return Comparator.GreaterEqual(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
     }
   }
 
@@ -108,16 +108,19 @@ public class ComparisonEvaluators {
       super(args.isOnlyConstants(), recordBatch);
       this.left = args.getEvaluator(0);
       this.right = args.getEvaluator(1);
-      value = new BitVector(MaterializedField.create(new SchemaPath("and", ExpressionPosition.UNKNOWN),
-        Types.required(
-          TypeProtos.MinorType.BIT)),
-        recordBatch.getContext().getAllocator());
+
     }
 
     @Override
     public ValueVector eval() {
       BitVector.Accessor leftAccessor = ((BitVector) left.eval()).getAccessor();
       BitVector.Accessor rightAccessor = ((BitVector) right.eval()).getAccessor();
+      if (value == null) {
+        value = new BitVector(MaterializedField.create(new SchemaPath("and", ExpressionPosition.UNKNOWN),
+          Types.required(
+            TypeProtos.MinorType.BIT)),
+          recordBatch.getContext().getAllocator());
+      }
 
       value.allocateNew(leftAccessor.getValueCount());
       BitVector.Mutator valueMutator = value.getMutator();
