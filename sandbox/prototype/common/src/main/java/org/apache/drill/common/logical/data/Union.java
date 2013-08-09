@@ -28,7 +28,7 @@ import java.util.Iterator;
 
 @JsonTypeName("union")
 public class Union extends LogicalOperatorBase {
-  private final LogicalOperator[] inputs;
+  private LogicalOperator[] inputs;
   private final boolean distinct;
 
 //  @JsonCreator
@@ -47,6 +47,19 @@ public class Union extends LogicalOperatorBase {
 
   public LogicalOperator[] getInputs() {
     return inputs;
+  }
+  
+  public void setInputs(LogicalOperator[] inputs){
+    if(this.inputs != null){
+      for (int i = 0; i < inputs.length; i++) {
+        inputs[i].unregisterSubscriber(this);
+        
+      }
+    }
+    this.inputs = inputs;
+    for (int i = 0; i < inputs.length; i++) {
+      inputs[i].registerAsSubscriber(this);
+    }
   }
 
   public boolean isDistinct() {
