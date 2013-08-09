@@ -20,7 +20,8 @@ package org.apache.drill.common.logical;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.io.Serializable;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property="type")
-public interface StorageEngineConfig{
+public interface StorageEngineConfig extends Serializable{
 }

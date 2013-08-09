@@ -19,6 +19,7 @@ package org.apache.drill.common.logical;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
 @JsonPropertyOrder({ "head", "storage", "query" })
-public class LogicalPlan {
+public class LogicalPlan implements Serializable{
   static final Logger logger = LoggerFactory.getLogger(LogicalPlan.class);
 
   private final PlanProperties properties;

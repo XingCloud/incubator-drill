@@ -17,6 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.common.graph;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class Graph<G extends GraphValue<G>, R extends G, T extends G> {
+public class Graph<G extends GraphValue<G>, R extends G, T extends G> implements Serializable {
 
   static final Logger logger = LoggerFactory.getLogger(Graph.class);
 

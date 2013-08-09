@@ -23,7 +23,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class OrderDef {
+import java.io.Serializable;
+
+public class OrderDef implements Serializable {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OrderDef.class);
 
   private final Direction direction;

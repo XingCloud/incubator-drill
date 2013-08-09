@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,11 @@
  ******************************************************************************/
 package org.apache.drill.common.graph;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,11 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimaps;
-
-public class AdjacencyList<V extends GraphValue<V>> {
+public class AdjacencyList<V extends GraphValue<V>> implements Serializable {
   private Set<Node> allNodes = new HashSet<Node>();
   private ListMultimap<Node, Edge<Node>> adjacencies = ArrayListMultimap.create();
 
@@ -47,10 +48,10 @@ public class AdjacencyList<V extends GraphValue<V>> {
     }
   }
 
-  Node getNewNode(V value){
+  Node getNewNode(V value) {
     return new Node(value);
   }
-  
+
   public List<Edge<Node>> getAdjacent(AdjacencyList<V>.Node source) {
     return adjacencies.get(source);
   }
@@ -73,31 +74,30 @@ public class AdjacencyList<V extends GraphValue<V>> {
     return adjacencies.keySet();
   }
 
-
   public Collection<Node> getInternalLeafNodes() {
     // we have to use the allNodes list as otherwise destination only nodes won't be found.
     List<Node> nodes = new LinkedList<Node>(allNodes);
 
-    for (Iterator<Node> i = nodes.iterator(); i.hasNext();) {
+    for (Iterator<Node> i = nodes.iterator(); i.hasNext(); ) {
       final Node n = i.next();
 
       // remove any nodes that have one or more outbound edges.
       List<Edge<Node>> adjList = this.getAdjacent(n);
-      if (adjList != null && !adjList.isEmpty()) i.remove();
+      if (adjList != null && !adjList.isEmpty())
+        i.remove();
 
     }
     return nodes;
   }
-  
+
   /**
    * Get a list of nodes that have no outbound edges.
-   * 
+   *
    * @return
    */
-  public Collection<V> getLeafNodes(){
+  public Collection<V> getLeafNodes() {
     return convert(getInternalLeafNodes());
   }
-
 
   public Collection<Node> getInternalRootNodes() {
     Set<Node> nodes = new HashSet<Node>(getNodeSet());
@@ -109,13 +109,13 @@ public class AdjacencyList<V extends GraphValue<V>> {
 
   /**
    * Get a list of all nodes that have no incoming edges.
-   * 
+   *
    * @return
    */
-  public List<V> getRootNodes(){
+  public List<V> getRootNodes() {
     return convert(getInternalRootNodes());
   }
-  
+
   public Collection<Edge<Node>> getAllEdges() {
     return adjacencies.values();
   }
@@ -128,7 +128,7 @@ public class AdjacencyList<V extends GraphValue<V>> {
       List<List<Node>> cyclicReferences = GraphAlgos.checkDirected(this);
       if (cyclicReferences.size() > 0) {
         throw new IllegalArgumentException(
-            "A logical plan must be a valid DAG.  You have cyclic references in your graph.  " + cyclicReferences);
+          "A logical plan must be a valid DAG.  You have cyclic references in your graph.  " + cyclicReferences);
       }
     }
   }
@@ -144,12 +144,13 @@ public class AdjacencyList<V extends GraphValue<V>> {
   public class Node implements Comparable<Node> {
     final V nodeValue;
     boolean visited = false; // used for Kosaraju's algorithm and Edmonds's
-                             // algorithm
+    // algorithm
     int lowlink = -1; // used for Tarjan's algorithm
     int index = -1; // used for Tarjan's algorithm
 
     public Node(final V operator) {
-      if (operator == null) throw new IllegalArgumentException("Operator node was null.");
+      if (operator == null)
+        throw new IllegalArgumentException("Operator node was null.");
       this.nodeValue = operator;
     }
 
@@ -173,12 +174,12 @@ public class AdjacencyList<V extends GraphValue<V>> {
     }
 
   }
-  
-  public static <V extends GraphValue<V>> AdjacencyList<V> newInstance(Collection<V> nodes){
+
+  public static <V extends GraphValue<V>> AdjacencyList<V> newInstance(Collection<V> nodes) {
     AdjacencyList<V> list = new AdjacencyList<V>();
     AdjacencyListBuilder<V> builder = new AdjacencyListBuilder<V>(list);
-    for(V v : nodes){
-      v.accept(builder); 
+    for (V v : nodes) {
+      v.accept(builder);
     }
     return builder.getAdjacencyList();
   }
