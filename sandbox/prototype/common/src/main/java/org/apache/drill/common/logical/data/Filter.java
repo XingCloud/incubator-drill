@@ -45,10 +45,6 @@ public class Filter extends SingleInputOperator {
   }
 
   @Override
-  public void unregisterSubscriber(LogicalOperator operator) {
-  }
-
-  @Override
   public Iterator<LogicalOperator> iterator() {
     return Iterators.singletonIterator(getInput());
   }
