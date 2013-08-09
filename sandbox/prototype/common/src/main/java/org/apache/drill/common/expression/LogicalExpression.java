@@ -17,8 +17,15 @@
  ******************************************************************************/
 package org.apache.drill.common.expression;
 
-import java.io.IOException;
-
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
@@ -31,15 +38,8 @@ import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import java.io.IOException;
+import java.io.Serializable;
 
 //@JsonDeserialize(using = LogicalExpression.De.class)  // Excluded as we need to register this with the DrillConfig.
 @JsonSerialize(using = LogicalExpression.Se.class)
@@ -62,7 +62,7 @@ public interface LogicalExpression {
 
     @Override
     public LogicalExpression deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException,
-        JsonProcessingException {
+      JsonProcessingException {
       String expr = jp.getText();
 
       if (expr == null || expr.isEmpty())
@@ -96,7 +96,7 @@ public interface LogicalExpression {
 
     @Override
     public void serialize(LogicalExpression value, JsonGenerator jgen, SerializerProvider provider) throws IOException,
-        JsonGenerationException {
+      JsonGenerationException {
       StringBuilder sb = new StringBuilder();
       ExpressionStringBuilder esb = new ExpressionStringBuilder();
       value.accept(esb, sb);

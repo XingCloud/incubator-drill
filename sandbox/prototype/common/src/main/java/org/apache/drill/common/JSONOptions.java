@@ -18,6 +18,7 @@
 package org.apache.drill.common;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 @JsonSerialize(using = Se.class)
 @JsonDeserialize(using = De.class)
-public class JSONOptions {
+public class JSONOptions{
   
   final static Logger logger = LoggerFactory.getLogger(JSONOptions.class);
   
