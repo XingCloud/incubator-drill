@@ -22,7 +22,9 @@ import org.apache.drill.common.expression.LogicalExpression;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class PartitionDef {
+import java.io.Serializable;
+
+public class PartitionDef implements Serializable {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PartitionDef.class);
 
   private final PartitionType partitionType;

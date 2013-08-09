@@ -20,8 +20,9 @@ package org.apache.drill.common;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import java.io.Serializable;
 
-public class PlanProperties {
+public class PlanProperties implements Serializable {
   public static enum PlanType {APACHE_DRILL_LOGICAL, APACHE_DRILL_PHYSICAL}
 
   public PlanType type;
