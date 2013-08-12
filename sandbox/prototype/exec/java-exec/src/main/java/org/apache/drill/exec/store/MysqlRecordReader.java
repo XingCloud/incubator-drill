@@ -56,7 +56,7 @@ public class MysqlRecordReader implements RecordReader {
   private final int batchSize = 1024;
   private boolean start = false;
 
-  public static Connection getConnection() throws Exception {
+  public static synchronized Connection getConnection() throws Exception {
     if (cpds == null) {
       System.setProperty("com.mchange.v2.c3p0.cfg.xml", "conf/mysql-c3p0.xml");
       cpds = new ComboPooledDataSource();

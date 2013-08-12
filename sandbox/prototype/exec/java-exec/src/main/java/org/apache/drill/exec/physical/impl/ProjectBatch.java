@@ -1,7 +1,6 @@
 package org.apache.drill.exec.physical.impl;
 
 import org.apache.drill.common.expression.ExpressionPosition;
-import org.apache.drill.common.expression.PathSegment;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.ops.FragmentContext;
@@ -35,7 +34,7 @@ public class ProjectBatch extends BaseRecordBatch {
 
 
   private BatchSchema batchSchema;
-  private boolean isFirst = true;
+  private boolean new_schema = true;
   private SchemaBuilder schemaBuilder;
 
 
@@ -83,7 +82,7 @@ public class ProjectBatch extends BaseRecordBatch {
         recordCount = 0;
         break;
       case OK_NEW_SCHEMA:
-        isFirst = true;
+        new_schema = true;
         schemaBuilder = BatchSchema.newBuilder();
       case OK:
         outputVectors.clear();
@@ -92,14 +91,14 @@ public class ProjectBatch extends BaseRecordBatch {
           MaterializedField f = MaterializedField.create(new SchemaPath(paths[i], ExpressionPosition.UNKNOWN),v.getField().getType()) ;
           v.setField(f);
           outputVectors.add(v);
-          if (isFirst) {
+          if (new_schema) {
             schemaBuilder.addField(v.getField());
           }
         }
-        if (isFirst) {
+        if (new_schema) {
           batchSchema = schemaBuilder.build();
+          new_schema = false;
         }
-        isFirst = false;
         recordCount = incoming.getRecordCount();
     }
     return o;

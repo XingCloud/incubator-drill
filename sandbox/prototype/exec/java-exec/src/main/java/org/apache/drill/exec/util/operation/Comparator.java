@@ -104,8 +104,11 @@ public class Comparator {
     } else if (left instanceof VarCharVector) {
       String leftString = new String(((VarCharVector) left).getAccessor().get(0));
       VarCharVector.Accessor strs = ((VarCharVector) right).getAccessor();
+      int i ;
       for (j = 0; j < recordCount; j++) {
-        mutator.set(j, (byte) leftString.compareTo(new String(strs.get(j))));
+        i =  leftString.compareTo(new String(strs.get(j))) ;
+        i = i == 0 ? 0 : i > 0 ? 1 : -1 ;
+        mutator.set(j, i );
       }
     }
     mutator.setValueCount(recordCount);

@@ -40,7 +40,7 @@
       pop: "filter",
       @id: 2,
       child: 1,
-      expr: "event0 == 'click'"
+      expr: "event0 == 'visit'"
     },
     {
       pop: "project",

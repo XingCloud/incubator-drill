@@ -38,7 +38,7 @@ public class JoinBatch extends BaseRecordBatch {
   private ValueVector rightJoinKey;
   private Map<Object, List<Integer>> rightValueMap = new HashMap<>();
   private boolean leftCached = false;
-  private boolean isFirst = true;
+  private boolean new_schema = true;
 
   private List<ValueVector> rightVectors;
 
@@ -113,12 +113,13 @@ public class JoinBatch extends BaseRecordBatch {
         case NOT_YET:
           return o;
         case OK_NEW_SCHEMA:
+          new_schema = true;
         case OK:
           if (!connector.connect())
             continue;
           connector.upstream();
-          if (isFirst) {
-            isFirst = false;
+          if (new_schema) {
+            new_schema = false;
             setupSchema();
             return IterOutcome.OK_NEW_SCHEMA;
           }
@@ -135,10 +136,8 @@ public class JoinBatch extends BaseRecordBatch {
       leftJoinKeyField = v.getField() ;
       leftJoinKeys.add(TransferHelper.mirrorVector(v));
       leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
-
       o = leftIncoming.next();
     }
-
     return !leftIncomings.isEmpty();
   }
 
