@@ -42,7 +42,6 @@ public class Project extends SingleInputOperator {
       PathSegment segment = selections[i].getRef().getRootSegment();
       CharSequence path = segment.getNameSegment().getPath();
       /*
-
       Comment by Z J Wu @ 2013-08-12
       =========================================================================
       We don't understand that why a root path segment must start with "output"
@@ -52,7 +51,6 @@ public class Project extends SingleInputOperator {
         throw new ExpressionParsingException(String.format(
           "Outputs for projections always have to start with named path of output. First segment was named '%s' or was named [%s]",
           path, segment.isNamed()));
-
       */
 
       if (!segment.isNamed())
@@ -63,7 +61,7 @@ public class Project extends SingleInputOperator {
     }
   }
 
-  @JsonProperty("exprs")
+  @JsonProperty("projections")
   public NamedExpression[] getSelections() {
     return selections;
   }
