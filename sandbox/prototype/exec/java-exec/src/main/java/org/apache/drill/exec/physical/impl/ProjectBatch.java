@@ -9,6 +9,7 @@ import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.*;
+import org.apache.drill.exec.vector.AllocationHelper;
 import org.apache.drill.exec.vector.TransferHelper;
 import org.apache.drill.exec.vector.ValueVector;
 
@@ -86,9 +87,10 @@ public class ProjectBatch extends BaseRecordBatch {
         schemaBuilder = BatchSchema.newBuilder();
       case OK:
         outputVectors.clear();
+        recordCount = incoming.getRecordCount();
         for (int i = 0; i < evaluators.length; i++) {
-          ValueVector v = TransferHelper.transferVector(evaluators[i].eval()) ;
-          MaterializedField f = MaterializedField.create(new SchemaPath(paths[i], ExpressionPosition.UNKNOWN),v.getField().getType()) ;
+          ValueVector v = padConstant(TransferHelper.transferVector(evaluators[i].eval()));
+          MaterializedField f = MaterializedField.create(new SchemaPath(paths[i], ExpressionPosition.UNKNOWN), v.getField().getType());
           v.setField(f);
           outputVectors.add(v);
           if (new_schema) {
@@ -99,9 +101,23 @@ public class ProjectBatch extends BaseRecordBatch {
           batchSchema = schemaBuilder.build();
           new_schema = false;
         }
-        recordCount = incoming.getRecordCount();
+
     }
     return o;
+  }
+
+  private ValueVector padConstant(ValueVector v) {
+    if (v.getAccessor().getValueCount() < recordCount) {
+      Object constant = v.getAccessor().getObject(0);
+      AllocationHelper.allocate(v, recordCount, 50);
+      ValueVector.Mutator mutator = v.getMutator();
+      for (int i = 0; i < recordCount; i++) {
+        mutator.setObject(i, constant);
+      }
+      mutator.setValueCount(recordCount);
+    }
+
+    return v;
   }
 
 }
