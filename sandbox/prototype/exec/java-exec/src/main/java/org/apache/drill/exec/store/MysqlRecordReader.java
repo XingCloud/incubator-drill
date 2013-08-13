@@ -12,6 +12,7 @@ import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.common.util.FileUtils;
+import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
@@ -46,7 +47,6 @@ public class MysqlRecordReader implements RecordReader {
   private Connection conn = null;
   private Statement stmt = null;
   private ResultSet rs = null;
-  private ResultSetMetaData rsMetaData = null;
   private ValueVector[] valueVectors;
 
   private List<HBaseFieldInfo> projections;
@@ -54,7 +54,6 @@ public class MysqlRecordReader implements RecordReader {
 
 
   private final int batchSize = 1024;
-  private boolean start = false;
 
   public static synchronized Connection getConnection() throws Exception {
     if (cpds == null) {
@@ -67,26 +66,29 @@ public class MysqlRecordReader implements RecordReader {
   public MysqlRecordReader(FragmentContext context, MysqlReadEntry config) {
     this.context = context;
     this.config = config;
-    initConfig();
   }
 
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
     try {
+      initConfig();
+      initStmtExecutor();
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
-        String field = projections.get(i).fieldSchema.getName() ;
-        if(field.equals("uid")){
+        String field = projections.get(i).fieldSchema.getName();
+        if (field.equals("uid")) {
           type = Types.required(MinorType.INT);
         }
         valueVectors[i] =
-          getVector(i, field ,type, batchSize);
+          getVector(field, type);
         output.addField(valueVectors[i]);
         output.setNewSchema();
       }
     } catch (Exception e) {
+      e.printStackTrace();
+      logger.error("Mysql record reader setup failed : " + e.getMessage());
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
   }
@@ -108,35 +110,17 @@ public class MysqlRecordReader implements RecordReader {
     return null;
   }
 
-  private ValueVector getVector(int fieldId, String name, MajorType type, int length) {
+  private ValueVector getVector(String field, MajorType type) {
 
     if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
-
-    MaterializedField f = MaterializedField.create(new SchemaPath(name, ExpressionPosition.UNKNOWN), type);
-    ValueVector v;
-    BufferAllocator allocator;
-    if (context != null) allocator = context.getAllocator();
-    else allocator = new DirectBufferAllocator();
-    v = TypeHelper.getNewVector(f, allocator);
-    AllocationHelper.allocate(v, length, 50);
-    return v;
-
+    MaterializedField f = MaterializedField.create(new SchemaPath(field, ExpressionPosition.UNKNOWN), type);
+    return TypeHelper.getNewVector(f, context.getAllocator());
   }
 
   @Override
   public int next() {
-    if (!start) {
-      initStmtExecutor();
-      start = true;
-    }
     for (ValueVector v : valueVectors) {
-      if (v instanceof FixedWidthVector) {
-        ((FixedWidthVector) v).allocateNew(batchSize);
-      } else if (v instanceof VariableWidthVector) {
-        ((VariableWidthVector) v).allocateNew(50 * batchSize, batchSize);
-      } else {
-        throw new UnsupportedOperationException();
-      }
+      AllocationHelper.allocate(v, batchSize, 50);
     }
 
     int recordSetIndex = 0;
@@ -177,8 +161,8 @@ public class MysqlRecordReader implements RecordReader {
         result = Bytes.toBytes((String) result);
 
       // TODO
-      if(projections.get(i).fieldSchema.getName().equals("uid")){
-        result = getInnerUidFromSamplingUid((Long)result );
+      if (projections.get(i).fieldSchema.getName().equals("uid")) {
+        result = getInnerUidFromSamplingUid((Long) result);
       }
 
       valueVector.getMutator().setObject(index, result);
@@ -190,7 +174,7 @@ public class MysqlRecordReader implements RecordReader {
     return next;
   }
 
-  private void initConfig() {
+  private void initConfig() throws Exception {
     String fields[] = config.getTableName().split("\\.");
     String project = fields[0];
     String dbName = "fix_" + project;
@@ -203,57 +187,45 @@ public class MysqlRecordReader implements RecordReader {
     for (int i = 0; i < logProjection.size(); i++) {
       options.add((String) ((SchemaPath) logProjection.get(i).getRef()).getPath());
     }
-    try {
-      List<HBaseFieldInfo> cols = TableInfo.getCols("mysql_property_" + project, options);
-      for (HBaseFieldInfo col : cols) {
-        fieldInfoMap.put(col.fieldSchema.getName(), col);
-      }
 
-      String selection = "SELECT ";
-      boolean isFirst = true;
-
-      for (NamedExpression e : logProjection) {
-        String ref = (String) e.getRef().getPath();
-        String name = (String) ((SchemaPath) e.getExpr()).getPath();
-        if (isFirst) {
-          isFirst = false;
-        } else {
-          selection += ",";
-        }
-        selection += name + " as " + ref;
-
-        if (!fieldInfoMap.containsKey(ref)) {
-          logger.debug("wrong field " + ref + " hbase table has no this field");
-        } else {
-          projections.add(fieldInfoMap.get(ref));
-        }
-      }
-
-      selection += " FROM `" + dbName + "`.`" + tableName + "`";
-
-      String filter = config.getFilter() ;
-      if (filter != null && !filter.equals("")) {
-        selection += " WHERE " + filter;
-      }
-      sql = selection;
-
-
-    } catch (Exception e) {
-      logger.error("Init mysql recordReader exception : " + e.getMessage());
+    List<HBaseFieldInfo> cols = TableInfo.getCols("mysql_property_" + project, options);
+    for (HBaseFieldInfo col : cols) {
+      fieldInfoMap.put(col.fieldSchema.getName(), col);
     }
 
+    String selection = "SELECT ";
+    boolean isFirst = true;
+
+    for (NamedExpression e : logProjection) {
+      String ref = (String) e.getRef().getPath();
+      String name = (String) ((SchemaPath) e.getExpr()).getPath();
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        selection += ",";
+      }
+      selection += name + " as " + ref;
+
+      if (!fieldInfoMap.containsKey(ref)) {
+        logger.debug("wrong field " + ref + " hbase table has no this field");
+      } else {
+        projections.add(fieldInfoMap.get(ref));
+      }
+    }
+
+    selection += " FROM `" + dbName + "`.`" + tableName + "`";
+
+    String filter = config.getFilter();
+    if (filter != null && !filter.equals("")) {
+      selection += " WHERE " + filter;
+    }
+    sql = selection;
   }
 
-  private void initStmtExecutor() {
-    try {
-      conn = getConnection();
-      stmt = conn.createStatement();
-      rs = stmt.executeQuery(sql);
-      rsMetaData = rs.getMetaData();
-    } catch (Exception e) {
-      e.printStackTrace();
-      logger.error("Stmt execute failed : " + e.getMessage());
-    }
+  private void initStmtExecutor() throws SQLException, Exception {
+    conn = getConnection();
+    stmt = conn.createStatement();
+    rs = stmt.executeQuery(sql);
   }
 
 

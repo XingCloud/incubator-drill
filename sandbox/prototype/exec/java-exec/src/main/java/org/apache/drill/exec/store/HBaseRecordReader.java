@@ -36,7 +36,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class HBaseRecordReader implements RecordReader {
-  static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(HBaseRecordReader.class);
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HBaseRecordReader.class);
 
   private HbaseScanPOP.HbaseScanEntry config;
   private FragmentContext context;
@@ -48,12 +48,11 @@ public class HBaseRecordReader implements RecordReader {
   private Map<String, String> sourceRefMap;
   private List<KeyPart> primaryRowKeyParts;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
-  private boolean parseRk=false;
+  private boolean parseRk = false;
 
   private DFARowKeyParser dfaParser;
 
   private List<LogicalExpression> filters;
-
 
 
   private List<TableScanner> scanners = new ArrayList<>();
@@ -61,23 +60,22 @@ public class HBaseRecordReader implements RecordReader {
   private List<KeyValue> curRes = new ArrayList<KeyValue>();
   private int valIndex = -1;
   private boolean hasMore;
-  private int BATCHRECORDCOUNT = 1024 * 4;
+  private int batchSize = 1024 * 4;
   private ValueVector[] valueVectors;
   private boolean init = false;
 
-  private Map<Object,String> testMap=new HashMap<>();
+  private Map<Object, String> testMap = new HashMap<>();
 
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
     this.context = context;
     this.config = config;
-    initConfig();
   }
 
-  private void initConfig() {
+  private void initConfig() throws Exception {
     startRowKey = parseRkStr(config.getStartRowKey());
     endRowKey = parseRkStr(config.getEndRowKey());
-    String tableFields[]=config.getTableName().split("\\.");
+    String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
     projections = new ArrayList<>();
     fieldInfoMap = new HashMap<>();
@@ -87,35 +85,29 @@ public class HBaseRecordReader implements RecordReader {
     for (int i = 0; i < logProjection.size(); i++) {
       options.add((String) ((SchemaPath) logProjection.get(i).getExpr()).getPath());
     }
-    if(tableFields.length>1)options.add(tableFields[1]);
-    try {
-      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
-      for (HBaseFieldInfo col : cols) {
-        fieldInfoMap.put(col.fieldSchema.getName(), col);
-      }
-
-      for (NamedExpression e : logProjection) {
-        String ref = (String) e.getRef().getPath();
-        String name = (String) ((SchemaPath) e.getExpr()).getPath();
-        sourceRefMap.put(name, ref);
-        if (!fieldInfoMap.containsKey(name)) {
-          LOG.debug("wrong field " + name + " hbase table has no this field");
-        } else {
-          HBaseFieldInfo proInfo=fieldInfoMap.get(name);
-          projections.add(proInfo);
-          if(false==parseRk&&proInfo.fieldType== HBaseFieldInfo.FieldType.rowkey)
-              parseRk=true;
-        }
-      }
-      filters = config.getFilters();
-
-      primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
-      dfaParser=new DFARowKeyParser(primaryRowKeyParts,fieldInfoMap);
-      //primaryRowKey=TableInfo.getPrimaryKey(tableName);
-
-    } catch (Exception e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    if (tableFields.length > 1) options.add(tableFields[1]);
+    List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
+    for (HBaseFieldInfo col : cols) {
+      fieldInfoMap.put(col.fieldSchema.getName(), col);
     }
+
+    for (NamedExpression e : logProjection) {
+      String ref = (String) e.getRef().getPath();
+      String name = (String) ((SchemaPath) e.getExpr()).getPath();
+      sourceRefMap.put(name, ref);
+      if (!fieldInfoMap.containsKey(name)) {
+        logger.debug("wrong field " + name + " hbase table has no this field");
+      } else {
+        HBaseFieldInfo proInfo = fieldInfoMap.get(name);
+        projections.add(proInfo);
+        if (false == parseRk && proInfo.fieldType == HBaseFieldInfo.FieldType.rowkey)
+          parseRk = true;
+      }
+    }
+    filters = config.getFilters();
+
+    primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
+    dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
   }
 
   /*
@@ -124,11 +116,10 @@ public class HBaseRecordReader implements RecordReader {
   private byte[] parseRkStr(String origRk) {
     byte[] result;
     if (origRk.startsWith("test")) {
-      String content=origRk.substring(4);
-      result=escape(content);
-    }
-    else {
-        result= Base64.decode(origRk);
+      String content = origRk.substring(4);
+      result = escape(content);
+    } else {
+      result = Base64.decode(origRk);
     }
     return result;
   }
@@ -136,31 +127,19 @@ public class HBaseRecordReader implements RecordReader {
   private static byte[] escape(String constant) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     for (int i = 0; i < constant.length(); i++) {
-        char c = constant.charAt(i);
-        if(c == '\\' && constant.length()>i+3
-                && constant.charAt(i+1) =='x'){
-            char h = constant.charAt(i+2);
-            char l = constant.charAt(i+3);
-            baos.write(Integer.parseInt(constant.substring(i+2, i+4), 16));
-            i+=3;
-        }else{
-            baos.write(c);
-        }
+      char c = constant.charAt(i);
+      if (c == '\\' && constant.length() > i + 3
+        && constant.charAt(i + 1) == 'x') {
+        char h = constant.charAt(i + 2);
+        char l = constant.charAt(i + 3);
+        baos.write(Integer.parseInt(constant.substring(i + 2, i + 4), 16));
+        i += 3;
+      } else {
+        baos.write(c);
+      }
     }
     return baos.toByteArray();
   }
-
-  /*
-  private byte[] addMaxByteToTail(byte[] orig) {
-    byte[] result = new byte[orig.length + 1];
-    int i = 0;
-    for (; i < orig.length; i++) {
-      result[i] = orig[i];
-    }
-    result[i] = (byte)255;
-    return result;
-  }
-  */
 
 
   private void initTableScanner() {
@@ -252,12 +231,14 @@ public class HBaseRecordReader implements RecordReader {
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
     try {
+      initConfig();
+      initTableScanner();
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
-        int batchRecordCount = BATCHRECORDCOUNT;
+        int batchRecordCount = batchSize;
         valueVectors[i] =
-          getVector(i, sourceRefMap.get(projections.get(i).fieldSchema.getName()), type, batchRecordCount);
+          getVector( sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
         output.addField(valueVectors[i]);
         output.setNewSchema();
       }
@@ -283,42 +264,23 @@ public class HBaseRecordReader implements RecordReader {
     return null;
   }
 
-  private ValueVector getVector(int fieldId, String name, MajorType type, int length) {
-
+  private ValueVector getVector( String name, MajorType type) {
     if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
-
     MaterializedField f = MaterializedField.create(new SchemaPath(name, ExpressionPosition.UNKNOWN), type);
-    ValueVector v;
-    BufferAllocator allocator;
-    if (context != null) allocator = context.getAllocator();
-    else allocator = new DirectBufferAllocator();
-    v = TypeHelper.getNewVector(f, allocator);
-    AllocationHelper.allocate(v, length, 50);
-    return v;
-
+    return TypeHelper.getNewVector(f, context.getAllocator());
   }
 
 
   @Override
   public int next() {
-    if (!init) {
-      initTableScanner();
-      init = true;
-    }
+
     for (ValueVector v : valueVectors) {
-      if (v instanceof FixedWidthVector) {
-        ((FixedWidthVector) v).allocateNew(BATCHRECORDCOUNT);
-      } else if (v instanceof VariableWidthVector) {
-        ((VariableWidthVector) v).allocateNew(50 * BATCHRECORDCOUNT, BATCHRECORDCOUNT);
-      } else {
-        throw new UnsupportedOperationException();
-      }
+      AllocationHelper.allocate(v, batchSize, 50);
     }
 
     int recordSetIndex = 0;
     while (true) {
-      if (currentScannerIndex > scanners.size() - 1)
-      {
+      if (currentScannerIndex > scanners.size() - 1) {
         setValueCount(recordSetIndex);
         return recordSetIndex;
       }
@@ -382,8 +344,8 @@ public class HBaseRecordReader implements RecordReader {
 
   public boolean setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
     boolean next = true;
-    Map<String, Object> rkObjectMap=new HashMap<>();
-    if(parseRk)rkObjectMap= dfaParser.parse(kv.getRow());
+    Map<String, Object> rkObjectMap = new HashMap<>();
+    if (parseRk) rkObjectMap = dfaParser.parse(kv.getRow());
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
@@ -409,26 +371,26 @@ public class HBaseRecordReader implements RecordReader {
     String fieldName = option.fieldSchema.getName();
     if (option.fieldType == HBaseFieldInfo.FieldType.rowkey) {
       if (!rkObjectMap.containsKey(fieldName))
-        LOG.info("error! " + fieldName + " does not exists in this keyvalue");
+        logger.info("error! " + fieldName + " does not exists in this keyvalue");
       else
         return rkObjectMap.get(fieldName);
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cellvalue) {
       String cfName = Bytes.toString(keyvalue.getFamily());
       String cqName = Bytes.toString(keyvalue.getQualifier());
       if (!option.cfName.equals(cfName) || !option.cqName.equals(cqName))
-        LOG.info("error! this field's column info---" + option.cqName + ":" + option.cqName +
+        logger.info("error! this field's column info---" + option.cqName + ":" + option.cqName +
           " does not match the keyvalue's column info---" + cfName + ":" + cqName);
       else {
-        return DFARowKeyParser.parseBytes(keyvalue.getValue(),option.fieldSchema.getType());
+        return DFARowKeyParser.parseBytes(keyvalue.getValue(), option.fieldSchema.getType());
       }
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
       return keyvalue.getTimestamp();
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cqname) {
-      byte[] qualif=keyvalue.getQualifier();
-      byte[] orig=new byte[4];
-      for(int i=0;i<4;i++)
-          orig[i]=keyvalue.getQualifier()[i+1];
-      return DFARowKeyParser.parseBytes(orig,option.fieldSchema.getType());
+      byte[] qualif = keyvalue.getQualifier();
+      byte[] orig = new byte[4];
+      for (int i = 0; i < 4; i++)
+        orig[i] = keyvalue.getQualifier()[i + 1];
+      return DFARowKeyParser.parseBytes(orig, option.fieldSchema.getType());
     }
     return null;
   }
@@ -440,7 +402,7 @@ public class HBaseRecordReader implements RecordReader {
       try {
         scanner.close();
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error("Scanners close failed : " + e.getMessage());
       }
     }
   }
