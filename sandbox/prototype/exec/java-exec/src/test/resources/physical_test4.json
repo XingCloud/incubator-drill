@@ -43,30 +43,10 @@
       expr: "event0 == 'visit'"
     },
     {
-      pop: "project",
+      pop: "PhysicalCollapsingAggregate",
       @id: 3,
       child: 2,
-      exprs: [
-        {
-          ref: "uid",
-          expr: "uid"
-        },
-        {
-          ref: "val",
-          expr: "val"
-        },
-        {
-          ref: "query_id",
-          expr: 1
-        }
-      ]
-    },
-    {
-      pop: "PhysicalCollapsingAggregate",
-      @id: 4,
-      child: 3,
       carryovers: [
-        "query_id"
       ],
       aggregations: [
         {
@@ -83,6 +63,30 @@
         }
       ]
     },
+    {
+          pop: "project",
+          @id: 4,
+          child: 3,
+          exprs: [
+            {
+              ref: "count",
+              expr: "count"
+            },
+            {
+              ref: "user_num",
+              expr: "user_num"
+            },
+            {
+              ref: "sum",
+              expr: "sum"
+            },
+            {
+              ref: "query_id",
+              expr: "'1'"
+            }
+
+          ]
+     },
     {
       pop: "screen",
       @id: 5,

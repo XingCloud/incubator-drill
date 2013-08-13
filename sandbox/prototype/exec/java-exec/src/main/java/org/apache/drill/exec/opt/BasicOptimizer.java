@@ -20,6 +20,7 @@ import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.*;
 import org.apache.drill.common.logical.data.Filter;
 import org.apache.drill.common.logical.data.Project;
+import org.apache.drill.common.logical.data.Union;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
@@ -264,5 +265,23 @@ public class BasicOptimizer extends Optimizer {
       return pop;
     }
 
+    @Override
+    public PhysicalOperator visitUnion(Union union, Object value) throws OptimizerException {
+      PhysicalOperator pop = operatorMap.get(union);
+      if (pop == null) {
+        List<PhysicalOperator> inputs = Lists.newArrayList();
+        for (LogicalOperator lop : union.getInputs()) {
+          PhysicalOperator input = operatorMap.get(lop);
+          if (input == null) {
+            input = lop.accept(this, value);
+            operatorMap.put(lop, input);
+          }
+          inputs.add(input);
+        }
+        pop = new org.apache.drill.exec.physical.config.Union((PhysicalOperator[]) inputs.toArray());
+        operatorMap.put(union, pop);
+      }
+      return pop;
+    }
   }
 }

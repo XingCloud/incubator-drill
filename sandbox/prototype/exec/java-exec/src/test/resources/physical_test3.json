@@ -103,9 +103,33 @@
       ]
     },
     {
+              pop: "project",
+              @id: 6,
+              child: 5,
+              exprs: [
+                {
+                  ref: "count",
+                  expr: "count"
+                },
+                {
+                  ref: "user_num",
+                  expr: "user_num"
+                },
+                {
+                  ref: "sum",
+                  expr: "sum"
+                },
+                {
+                  ref: "query_id",
+                  expr: "'1'"
+                }
+
+              ]
+         },
+    {
       pop: "screen",
-      @id: 6,
-      child: 5
+      @id: 7,
+      child: 6
     }
   ]
 }

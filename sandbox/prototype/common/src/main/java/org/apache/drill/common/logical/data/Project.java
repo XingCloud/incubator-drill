@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,14 +17,16 @@
  ******************************************************************************/
 package org.apache.drill.common.logical.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.Iterators;
 import org.apache.drill.common.exceptions.ExpressionParsingException;
 import org.apache.drill.common.expression.PathSegment;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("project")
@@ -35,28 +37,13 @@ public class Project extends SingleInputOperator {
   @JsonCreator
   public Project(@JsonProperty("projections") NamedExpression[] selections) {
     this.selections = selections;
-    if (selections == null || selections.length == 0)
-      throw new ExpressionParsingException(
-        "Project did not provide any projection selections.  At least one projection must be provided.");
+    if(selections == null || selections.length == 0) throw new ExpressionParsingException("Project did not provide any projection selections.  At least one projection must be provided.");
     for (int i = 0; i < selections.length; i++) {
       PathSegment segment = selections[i].getRef().getRootSegment();
       CharSequence path = segment.getNameSegment().getPath();
-      /*
-      Comment by Z J Wu @ 2013-08-12
-      =========================================================================
-      We don't understand that why a root path segment must start with "output"
-      =========================================================================
-
-      if (!segment.isNamed() || !path.equals("output"))
+      if (!segment.isNamed() /*|| !path.equals("output")*/)
         throw new ExpressionParsingException(String.format(
-          "Outputs for projections always have to start with named path of output. First segment was named '%s' or was named [%s]",
-          path, segment.isNamed()));
-      */
-
-      if (!segment.isNamed())
-        throw new ExpressionParsingException(String.format(
-          "Outputs for projections always have to start with named path of output. First segment was named '%s' or was named [%s]",
-          path, segment.isNamed()));
+            "Outputs for projections always have to start with named path of output. First segment was named '%s' or was named [%s]", path, segment.isNamed()));
 
     }
   }
@@ -66,14 +53,14 @@ public class Project extends SingleInputOperator {
     return selections;
   }
 
-  @Override
-  public <T, X, E extends Throwable> T accept(LogicalVisitor<T, X, E> logicalVisitor, X value) throws E {
-    return logicalVisitor.visitProject(this, value);
-  }
+    @Override
+    public <T, X, E extends Throwable> T accept(LogicalVisitor<T, X, E> logicalVisitor, X value) throws E {
+        return logicalVisitor.visitProject(this, value);
+    }
 
-  @Override
-  public Iterator<LogicalOperator> iterator() {
-    return Iterators.singletonIterator(getInput());
-  }
+    @Override
+    public Iterator<LogicalOperator> iterator() {
+        return Iterators.singletonIterator(getInput());
+    }
 
 }
