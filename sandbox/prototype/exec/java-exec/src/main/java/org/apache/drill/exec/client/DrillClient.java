@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.coord.ClusterCoordinator;
@@ -121,10 +123,21 @@ public class DrillClient implements Closeable{
    * @throws RpcException
    */
   public List<QueryResultBatch> runQuery(QueryType type, String plan) throws RpcException {
+    return runQuery(type, plan, Long.MAX_VALUE);
+  }
+  
+  public List<QueryResultBatch> runQuery(QueryType type, String plan, long timeoutMillisec) throws RpcException {
+    return doSubmit(type, plan).getResults(timeoutMillisec);    
+  }
+  
+  public Future<List<QueryResultBatch>> submitQuery(QueryType type, String plan) throws RpcException{
+    return doSubmit(type, plan).future;
+  }
+  
+  private ListHoldingResultsListener doSubmit(QueryType type, String plan) throws RpcException{
     ListHoldingResultsListener listener = new ListHoldingResultsListener();
     client.submitQuery(listener, newBuilder().setResultsMode(STREAM_FULL).setType(type).setPlan(plan).build());
-    return listener.getResults();
-
+    return listener;
   }
   
   private class ListHoldingResultsListener implements UserResultsListener {
@@ -147,8 +160,12 @@ public class DrillClient implements Closeable{
     }
   
     public List<QueryResultBatch> getResults() throws RpcException{
+      return getResults(Long.MAX_VALUE);
+    }
+    
+    public List<QueryResultBatch> getResults(long timeoutMillisec) throws RpcException{
       try{
-        return future.get();
+        return future.get(timeoutMillisec, TimeUnit.MILLISECONDS);
       }catch(Throwable t){
         throw RpcException.mapException(t);
       }
