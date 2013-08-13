@@ -125,11 +125,34 @@ public class DrillClient implements Closeable{
   public List<QueryResultBatch> runQuery(QueryType type, String plan) throws RpcException {
     return runQuery(type, plan, Long.MAX_VALUE);
   }
-  
+
+
+  /**
+   * Submits a Logical plan/physical plan for direct execution, or sql for parsing and execution, and waits for a limited period of time. 
+   * 
+   * invocation to this method blocks for at most timeoutMillisec,
+   * and returns query result if available. 
+   * if wait time outs, throws RpcException wrapping TimeoutException.
+   * In the case of timeout, the server side query is still being processed.
+   * 
+   * @param type the type of plan, SQL or LOGICAL or PHYSICAL
+   * @param plan json for plan, or sql
+   * @param timeoutMillisec timeout, in milliseconds. 
+   * @return query result.
+   * @throws RpcException if anything goes wrong, or timed out. see nested exception for detail.
+   */
   public List<QueryResultBatch> runQuery(QueryType type, String plan, long timeoutMillisec) throws RpcException {
     return doSubmit(type, plan).getResults(timeoutMillisec);    
   }
-  
+
+  /**
+   * Submits a Logical plan/physical plan for direct execution, or sql for parsing and execution. 
+   * Invocation to this method returns immediately after successfully sending requests to drillbit.
+   * @param type the type of plan, SQL or LOGICAL or PHYSICAL
+   * @param plan json for plan, or sql
+   * @return a Future object which can be further queried for execution status or query result.
+   * @throws RpcException
+   */
   public Future<List<QueryResultBatch>> submitQuery(QueryType type, String plan) throws RpcException{
     return doSubmit(type, plan).future;
   }
