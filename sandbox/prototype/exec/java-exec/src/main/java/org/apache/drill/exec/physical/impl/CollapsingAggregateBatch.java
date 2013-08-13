@@ -73,8 +73,11 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
     }
     aggregatingEvaluators = new AggregatingEvaluator[config.getAggregations().length];
     aggNames = new SchemaPath[aggregatingEvaluators.length];
-    carryovers = new BasicEvaluator[config.getCarryovers().length];
-    carryoverNames = new FieldReference[config.getCarryovers().length];
+    if(config.getCarryovers() != null)
+      carryovers = new BasicEvaluator[config.getCarryovers().length];
+    else
+      carryovers = new BasicEvaluator[0] ;
+    carryoverNames = new FieldReference[carryovers.length];
     carryOverTypes = new MajorType[carryovers.length];
 
     for (int i = 0; i < aggregatingEvaluators.length; i++) {

@@ -269,16 +269,18 @@ public class BasicOptimizer extends Optimizer {
     public PhysicalOperator visitUnion(Union union, Object value) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(union);
       if (pop == null) {
-        List<PhysicalOperator> inputs = Lists.newArrayList();
-        for (LogicalOperator lop : union.getInputs()) {
-          PhysicalOperator input = operatorMap.get(lop);
+
+        LogicalOperator logicalOperators[] = union.getInputs() ;
+        PhysicalOperator inputs[] = new PhysicalOperator[logicalOperators.length] ;
+        for (int i = 0 ; i < logicalOperators.length ; i++) {
+          PhysicalOperator input = operatorMap.get(logicalOperators[i]);
           if (input == null) {
-            input = lop.accept(this, value);
-            operatorMap.put(lop, input);
+            input = logicalOperators[i].accept(this, value);
+            operatorMap.put(logicalOperators[i], input);
           }
-          inputs.add(input);
+          inputs[i] = input ;
         }
-        pop = new org.apache.drill.exec.physical.config.Union((PhysicalOperator[]) inputs.toArray());
+        pop = new org.apache.drill.exec.physical.config.Union(inputs);
         operatorMap.put(union, pop);
       }
       return pop;
