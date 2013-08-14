@@ -13,7 +13,6 @@ import org.apache.drill.exec.physical.impl.eval.ConstantValues;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.AggregatingEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
-import org.apache.drill.exec.physical.impl.eval.fn.agg.AggregatingWrapperEvaluator;
 import org.apache.drill.exec.physical.impl.eval.fn.agg.CountDistinctAggregator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
@@ -73,8 +72,11 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
     }
     aggregatingEvaluators = new AggregatingEvaluator[config.getAggregations().length];
     aggNames = new SchemaPath[aggregatingEvaluators.length];
-    carryovers = new BasicEvaluator[config.getCarryovers().length];
-    carryoverNames = new FieldReference[config.getCarryovers().length];
+    if(config.getCarryovers() != null)
+      carryovers = new BasicEvaluator[config.getCarryovers().length];
+    else
+      carryovers = new BasicEvaluator[0] ;
+    carryoverNames = new FieldReference[carryovers.length];
     carryOverTypes = new MajorType[carryovers.length];
 
     for (int i = 0; i < aggregatingEvaluators.length; i++) {
@@ -83,13 +85,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       if (aggregatingEvaluators[i] instanceof CountDistinctAggregator) {
         BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, this);
         ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within);
-      } else if (aggregatingEvaluators[i] instanceof AggregatingWrapperEvaluator) {
-        CountDistinctAggregator countDistinctAggregator =
-          ((AggregatingWrapperEvaluator) aggregatingEvaluators[i]).getCountDistinctAggregator();
-        if (countDistinctAggregator != null) {
-          BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, this);
-          countDistinctAggregator.setWithin(within);
-        }
       }
       aggNames[i] = config.getAggregations()[i].getRef();
     }

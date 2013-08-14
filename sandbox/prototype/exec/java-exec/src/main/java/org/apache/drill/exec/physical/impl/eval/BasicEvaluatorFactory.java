@@ -5,7 +5,6 @@ import org.apache.drill.common.expression.visitors.SimpleExprVisitor;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.AggregatingEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BooleanEvaluator;
-import org.apache.drill.exec.physical.impl.eval.fn.agg.AggregatingWrapperEvaluator;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.vector.BitVector;
 
@@ -30,8 +29,7 @@ public class BasicEvaluatorFactory extends EvaluatorFactory {
     @Override
     public AggregatingEvaluator getAggregateEvaluator(RecordBatch recordBatch, LogicalExpression e) {
         SimpleEvaluatorVistor vistor = new SimpleEvaluatorVistor(recordBatch);
-        BasicEvaluator topEvaluator = e.accept(vistor, null);
-        return new AggregatingWrapperEvaluator(topEvaluator, vistor.getAggregators());
+        return (AggregatingEvaluator) e.accept(vistor, null);
     }
 
 

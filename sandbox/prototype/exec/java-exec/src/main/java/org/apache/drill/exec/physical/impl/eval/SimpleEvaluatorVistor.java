@@ -28,15 +28,10 @@ public class SimpleEvaluatorVistor extends SimpleExprVisitor<BasicEvaluator> {
 
   private RecordBatch recordBatch;
 
-  private List<AggregatingEvaluator> aggregators = new ArrayList<>();
 
   public SimpleEvaluatorVistor(RecordBatch recordBatch) {
     super();
     this.recordBatch = recordBatch;
-  }
-
-  public List<AggregatingEvaluator> getAggregators() {
-    return aggregators;
   }
 
   @Override
@@ -51,15 +46,7 @@ public class SimpleEvaluatorVistor extends SimpleExprVisitor<BasicEvaluator> {
     }
 
     FunctionArguments args = new FunctionArguments(onlyConstants, includesAggregates, evals, call);
-    if (call.getDefinition().isAggregating()) {
-      BasicEvaluator e = FunctionEvaluatorRegistry.getEvaluator(call.getDefinition().getName(), args, recordBatch);
-      aggregators.add((AggregatingEvaluator) e);
-      return e;
-    } else {
-      BasicEvaluator eval = FunctionEvaluatorRegistry.getEvaluator(call.getDefinition().getName(), args, recordBatch);
-      return eval;
-
-    }
+    return FunctionEvaluatorRegistry.getEvaluator(call.getDefinition().getName(), args, recordBatch);
   }
 
 

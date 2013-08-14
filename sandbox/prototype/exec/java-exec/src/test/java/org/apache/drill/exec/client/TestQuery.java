@@ -22,6 +22,7 @@ import com.google.common.io.Files;
 import org.apache.drill.common.util.FileUtils;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.pop.PopUnitTestBase;
+import org.apache.drill.exec.proto.UserProtos;
 import org.apache.drill.exec.proto.UserProtos.QueryType;
 import org.apache.drill.exec.record.RecordBatchLoader;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
@@ -29,6 +30,7 @@ import org.apache.drill.exec.vector.ValueVector;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 
@@ -67,12 +69,16 @@ public class TestQuery extends PopUnitTestBase {
 
       // run query.
       client.connect();
-      List<QueryResultBatch> results = client.runQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
+      Future<List<QueryResultBatch>> results = client.submitQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
 
       // look at records
       RecordBatchLoader batchLoader = new RecordBatchLoader(BufferAllocator.getAllocator(CONFIG));
       int recordCount = 0;
-      for (QueryResultBatch batch : results) {
+      for (QueryResultBatch batch : results.get()) {
+        if(batch.getHeader().getQueryState()== UserProtos.QueryResult.QueryState.FAILED){
+
+          continue;
+        }
         if(!batch.hasData()) continue;
         boolean schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
         boolean firstColumn = true;

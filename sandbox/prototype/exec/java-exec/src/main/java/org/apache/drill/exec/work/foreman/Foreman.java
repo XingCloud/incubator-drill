@@ -97,6 +97,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
     DrillPBError error = ErrorHelper.logAndConvertError(context.getCurrentEndpoint(), message, t, logger);
     QueryResult result = QueryResult //
         .newBuilder() //
+        .setQueryId(context.getQueryId()) //
         .addError(error) //
         .setIsLastChunk(true) //
         .setQueryState(QueryState.FAILED) //

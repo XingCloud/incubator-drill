@@ -17,8 +17,14 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.expression.ExpressionPosition;
+import org.apache.drill.common.expression.FunctionRegistry;
+import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.util.FileUtils;
 import org.apache.drill.exec.client.DrillClient;
 import org.apache.drill.exec.pop.PopUnitTestBase;
@@ -46,7 +52,7 @@ public class TestSimpleFragmentRun extends PopUnitTestBase {
     // run query.
     bit.run();
     client.connect();
-    List<QueryResultBatch> results = client.runQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile("/physical_test4.json"), Charsets.UTF_8));
+    List<QueryResultBatch> results = client.runQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile("/physical_test3.json"), Charsets.UTF_8));
 
     // look at records
     RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());
@@ -100,5 +106,6 @@ public class TestSimpleFragmentRun extends PopUnitTestBase {
     //assertEquals(recordCount, 200);
     }
   }
+
 
 }
