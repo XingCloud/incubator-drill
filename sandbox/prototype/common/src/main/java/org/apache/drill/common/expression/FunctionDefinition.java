@@ -96,6 +96,29 @@ public class FunctionDefinition {
         + ", aggregating=" + aggregating + ", isOperator=" + isOperator + "]";
   }
 
-  
-  
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    FunctionDefinition that = (FunctionDefinition) o;
+
+    if (aggregating != that.aggregating) return false;
+    if (isOperator != that.isOperator) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (outputType != null ? !outputType.equals(that.outputType) : that.outputType != null) return false;
+    if (!Arrays.equals(registeredNames, that.registeredNames)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (registeredNames != null ? Arrays.hashCode(registeredNames) : 0);
+    result = 31 * result + (outputType != null ? outputType.hashCode() : 0);
+    result = 31 * result + (aggregating ? 1 : 0);
+    result = 31 * result + (isOperator ? 1 : 0);
+    return result;
+  }
 }
