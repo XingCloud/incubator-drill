@@ -34,8 +34,8 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestQuery extends PopUnitTestBase {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestQuery.class);
+public class TestQueryPhysical extends PopUnitTestBase {
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestQueryPhysical.class);
 
   @Test
   public void commonQuery() throws  Exception{
@@ -63,13 +63,18 @@ public class TestQuery extends PopUnitTestBase {
   }
 
 
-  public void submitQuery(String testFile) throws Exception {
+  private void submitQuery(String testFile) throws  Exception{
+    submitQuery(testFile,QueryType.PHYSICAL);
+  }
+
+
+  public static void submitQuery(String testFile,QueryType queryType) throws Exception {
     try(
         DrillClient client = new DrillClient();){
 
       // run query.
       client.connect();
-      Future<List<QueryResultBatch>> results = client.submitQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
+      Future<List<QueryResultBatch>> results = client.submitQuery(queryType, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
 
       // look at records
       RecordBatchLoader batchLoader = new RecordBatchLoader(BufferAllocator.getAllocator(CONFIG));

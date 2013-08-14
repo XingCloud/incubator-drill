@@ -3,6 +3,7 @@ package org.apache.drill.exec.store;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.TableInfo;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
@@ -122,7 +123,6 @@ public class MysqlRecordReader implements RecordReader {
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 50);
     }
-
     int recordSetIndex = 0;
     try {
       while (rs.next()) {
@@ -135,8 +135,8 @@ public class MysqlRecordReader implements RecordReader {
       return recordSetIndex;
     } catch (SQLException e) {
       logger.error("Scan mysql failed : " + e.getMessage());
+      throw  new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
     }
-    return 0;
   }
 
   private void setValueCount(int valueCount) {
@@ -155,6 +155,7 @@ public class MysqlRecordReader implements RecordReader {
         result = rs.getObject(i + 1);
       } catch (SQLException e) {
         logger.error("" + e.getMessage());
+        throw new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
       }
       String type = info.fieldSchema.getType();
       if (type.equals("string"))

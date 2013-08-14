@@ -44,7 +44,7 @@ public class JoinBatch extends BaseRecordBatch {
 
   private Connector connector;
 
-  private MaterializedField leftJoinKeyField ;
+  private MaterializedField leftJoinKeyField;
 
 
   public JoinBatch(FragmentContext context, JoinPOP config, RecordBatch leftIncoming, RecordBatch rightIncoming) {
@@ -100,8 +100,15 @@ public class JoinBatch extends BaseRecordBatch {
 
     if (!leftCached) {
       leftCached = true;
-      if (!cacheLeft()) {
-        return IterOutcome.NONE;
+      try {
+        if (!cacheLeft()) {
+          return IterOutcome.NONE;
+        }
+      } catch (Exception e) {
+        leftIncoming.kill();
+        rightIncoming.kill();
+        context.fail(e);
+        return IterOutcome.STOP;
       }
     }
 
@@ -115,13 +122,19 @@ public class JoinBatch extends BaseRecordBatch {
         case OK_NEW_SCHEMA:
           new_schema = true;
         case OK:
-          if (!connector.connect())
-            continue;
-          connector.upstream();
-          if (new_schema) {
-            new_schema = false;
-            setupSchema();
-            return IterOutcome.OK_NEW_SCHEMA;
+          try {
+            if (!connector.connect())
+              continue;
+            connector.upstream();
+            if (new_schema) {
+              new_schema = false;
+              setupSchema();
+              return IterOutcome.OK_NEW_SCHEMA;
+            }
+          } catch (Exception e) {
+            rightIncoming.kill();
+            context.fail(e);
+            return IterOutcome.STOP;
           }
           return o;
       }
@@ -133,7 +146,7 @@ public class JoinBatch extends BaseRecordBatch {
     o = leftIncoming.next();
     while (o != IterOutcome.NONE) {
       ValueVector v = leftEvaluator.eval();
-      leftJoinKeyField = v.getField() ;
+      leftJoinKeyField = v.getField();
       leftJoinKeys.add(TransferHelper.mirrorVector(v));
       leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
       o = leftIncoming.next();
@@ -277,7 +290,7 @@ public class JoinBatch extends BaseRecordBatch {
       ValueVector out;
       Mutator outMutator;
       for (MaterializedField f : leftIncoming.getSchema()) {
-        if(f.equals(leftJoinKeyField)){
+        if (f.equals(leftJoinKeyField)) {
           continue;
         }
         out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());

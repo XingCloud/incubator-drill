@@ -6,6 +6,7 @@ import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.logical.data.NamedExpression;
@@ -304,7 +305,7 @@ public class HBaseRecordReader implements RecordReader {
           hasMore = scanner.next(curRes);
 
         } catch (IOException e) {
-          e.printStackTrace();
+          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage()) ;
         }
         valIndex = 0;
       }

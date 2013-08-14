@@ -1,5 +1,6 @@
 package org.apache.drill.exec.physical.impl.eval;
 
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.RecordBatch;
@@ -28,6 +29,6 @@ public class FieldEvaluator implements BasicEvaluator {
                 return v;
             }
         }
-        return null;
+        throw new DrillRuntimeException("Field not found : " + path);
     }
 }

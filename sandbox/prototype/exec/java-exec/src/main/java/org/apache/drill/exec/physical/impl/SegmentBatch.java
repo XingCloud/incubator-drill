@@ -108,9 +108,15 @@ public class SegmentBatch extends BaseRecordBatch {
       case OK_NEW_SCHEMA:
         isFirst = true;
       case OK:
-        grouping();
-        writeOutput();
-        setupSchema();
+        try {
+          grouping();
+          writeOutput();
+          setupSchema();
+        } catch (Exception e) {
+          incoming.kill();
+          context.fail(e);
+          return IterOutcome.STOP;
+        }
 
     }
     return o;
