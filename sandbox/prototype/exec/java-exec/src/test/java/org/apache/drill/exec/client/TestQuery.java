@@ -30,6 +30,7 @@ import org.apache.drill.exec.vector.ValueVector;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 
@@ -68,12 +69,12 @@ public class TestQuery extends PopUnitTestBase {
 
       // run query.
       client.connect();
-      List<QueryResultBatch> results = client.runQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
+      Future<List<QueryResultBatch>> results = client.submitQuery(QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
 
       // look at records
       RecordBatchLoader batchLoader = new RecordBatchLoader(BufferAllocator.getAllocator(CONFIG));
       int recordCount = 0;
-      for (QueryResultBatch batch : results) {
+      for (QueryResultBatch batch : results.get()) {
         if(batch.getHeader().getQueryState()== UserProtos.QueryResult.QueryState.FAILED){
 
           continue;

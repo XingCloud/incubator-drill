@@ -236,7 +236,6 @@ public class HBaseRecordReader implements RecordReader {
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
-        int batchRecordCount = batchSize;
         valueVectors[i] =
           getVector( sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
         output.addField(valueVectors[i]);
