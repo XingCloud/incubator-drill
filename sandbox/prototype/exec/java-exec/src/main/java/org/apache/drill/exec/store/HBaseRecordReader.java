@@ -2,6 +2,7 @@ package org.apache.drill.exec.store;
 
 import com.sun.jersey.core.util.Base64;
 import com.xingcloud.hbase.util.DFARowKeyParser;
+import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
@@ -75,6 +76,8 @@ public class HBaseRecordReader implements RecordReader {
   private void initConfig() throws Exception {
     startRowKey = parseRkStr(config.getStartRowKey());
     endRowKey = parseRkStr(config.getEndRowKey());
+    if(Arrays.equals(startRowKey,endRowKey))
+      increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
     projections = new ArrayList<>();
@@ -119,9 +122,17 @@ public class HBaseRecordReader implements RecordReader {
       String content = origRk.substring(4);
       result = escape(content);
     } else {
-      result = Base64.decode(origRk);
+      result = ByteUtils.toBytesBinary(origRk);
     }
     return result;
+  }
+
+  private void increaseBytesByOne(byte[] orig){
+    for(int i=orig.length-1;i>=0;i--){
+      orig[i]++;
+      if(orig[i]!=0)
+                 break;
+    }
   }
 
   private static byte[] escape(String constant) {
@@ -236,6 +247,7 @@ public class HBaseRecordReader implements RecordReader {
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
+        int batchRecordCount = batchSize;
         valueVectors[i] =
           getVector( sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
         output.addField(valueVectors[i]);

@@ -76,7 +76,7 @@ public class TestQuery extends PopUnitTestBase {
       int recordCount = 0;
       for (QueryResultBatch batch : results.get()) {
         if(batch.getHeader().getQueryState()== UserProtos.QueryResult.QueryState.FAILED){
-
+          System.out.println(batch.getHeader().getError(0).getMessage());
           continue;
         }
         if(!batch.hasData()) continue;
