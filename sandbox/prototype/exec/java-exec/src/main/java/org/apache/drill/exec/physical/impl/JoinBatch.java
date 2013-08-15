@@ -299,7 +299,7 @@ public class JoinBatch extends BaseRecordBatch {
       recordCount = outRecords.size() + misMatchCount;
       ValueVector out;
       Mutator outMutator;
-      for (MaterializedField f : leftIncoming.getSchema()) {
+      for (MaterializedField f : leftSchema) {
         if (f.equals(leftJoinKeyField)) {
           continue;
         }

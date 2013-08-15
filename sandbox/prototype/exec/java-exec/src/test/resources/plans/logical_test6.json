@@ -26,6 +26,10 @@
             {
               ref: "value",
               expr: "value"
+            },
+            {
+              ref: "event0",
+              expr: "event0"
             }
           ],
           filters: null,
@@ -44,6 +48,10 @@
             {
               ref: "value",
               expr: "value"
+            },
+            {
+              ref: "event0",
+              expr: "event0"
             }
           ],
           filters: null,
@@ -161,7 +169,7 @@
       projections: [
         {
           ref: "query_id",
-          expr: "\"GROUP,age,2013-01-01,2013-01-02,visit.*,{\"ref\":\"wpc\",\"register_time\":{\"$gte\":\"2013-01-01\"}},VF-ALL-0-0,EVENT,event0\""
+          expr: "'2'"
         },
         {
           ref: "dimension",
