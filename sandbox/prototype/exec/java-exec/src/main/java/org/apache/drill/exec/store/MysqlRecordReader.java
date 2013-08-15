@@ -3,6 +3,7 @@ package org.apache.drill.exec.store;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.TableInfo;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
@@ -48,6 +49,7 @@ public class MysqlRecordReader implements RecordReader {
   private Statement stmt = null;
   private ResultSet rs = null;
   private ValueVector[] valueVectors;
+  private OutputMutator output ;
 
   private List<HBaseFieldInfo> projections;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
@@ -71,6 +73,7 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
+    this.output = output ;
     try {
       initConfig();
       initStmtExecutor();
@@ -122,7 +125,6 @@ public class MysqlRecordReader implements RecordReader {
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 50);
     }
-
     int recordSetIndex = 0;
     try {
       while (rs.next()) {
@@ -135,8 +137,8 @@ public class MysqlRecordReader implements RecordReader {
       return recordSetIndex;
     } catch (SQLException e) {
       logger.error("Scan mysql failed : " + e.getMessage());
+      throw  new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
     }
-    return 0;
   }
 
   private void setValueCount(int valueCount) {
@@ -155,6 +157,7 @@ public class MysqlRecordReader implements RecordReader {
         result = rs.getObject(i + 1);
       } catch (SQLException e) {
         logger.error("" + e.getMessage());
+        throw new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
       }
       String type = info.fieldSchema.getType();
       if (type.equals("string"))
@@ -231,6 +234,14 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    for (int i = 0; i < valueVectors.length; i++) {
+      try {
+        output.removeField(valueVectors[i].getField());
+      } catch (SchemaChangeException e) {
+        logger.warn("Failure while trying to remove field.", e);
+      }
+      valueVectors[i].close();
+    }
     if (conn != null) {
       try {
         rs.close();

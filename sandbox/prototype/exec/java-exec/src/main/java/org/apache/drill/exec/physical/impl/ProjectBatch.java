@@ -86,22 +86,29 @@ public class ProjectBatch extends BaseRecordBatch {
         new_schema = true;
         schemaBuilder = BatchSchema.newBuilder();
       case OK:
-        outputVectors.clear();
-        recordCount = incoming.getRecordCount();
-        for (int i = 0; i < evaluators.length; i++) {
-          ValueVector v = padConstant(TransferHelper.transferVector(evaluators[i].eval()));
-          MaterializedField f = MaterializedField.create(new SchemaPath(paths[i], ExpressionPosition.UNKNOWN), v.getField().getType());
-          v.setField(f);
-          outputVectors.add(v);
-          if (new_schema) {
-            schemaBuilder.addField(v.getField());
+        try {
+          outputVectors.clear();
+          recordCount = incoming.getRecordCount();
+          for (int i = 0; i < evaluators.length; i++) {
+            ValueVector v = padConstant(TransferHelper.transferVector(evaluators[i].eval()));
+            MaterializedField f = MaterializedField.create(new SchemaPath(paths[i], ExpressionPosition.UNKNOWN), v.getField().getType());
+            v.setField(f);
+            outputVectors.add(v);
+            if (new_schema) {
+              schemaBuilder.addField(v.getField());
+            }
           }
+          if (new_schema) {
+            batchSchema = schemaBuilder.build();
+            new_schema = false;
+          }
+        } catch (Exception e) {
+          logger.error(e.getMessage());
+          e.printStackTrace();
+          incoming.kill();
+          context.fail(e);
+          return IterOutcome.STOP;
         }
-        if (new_schema) {
-          batchSchema = schemaBuilder.build();
-          new_schema = false;
-        }
-
     }
     return o;
   }

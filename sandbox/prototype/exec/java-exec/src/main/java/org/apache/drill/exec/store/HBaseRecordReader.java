@@ -6,6 +6,7 @@ import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.logical.data.NamedExpression;
@@ -13,6 +14,7 @@ import org.apache.drill.common.types.TypeProtos.DataMode;
 import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
+import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
@@ -54,6 +56,7 @@ public class HBaseRecordReader implements RecordReader {
   private DFARowKeyParser dfaParser;
 
   private List<LogicalExpression> filters;
+  private OutputMutator output ;
 
 
   private List<TableScanner> scanners = new ArrayList<>();
@@ -241,6 +244,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
+    this.output = output ;
     try {
       initConfig();
       initTableScanner();
@@ -304,7 +308,7 @@ public class HBaseRecordReader implements RecordReader {
           hasMore = scanner.next(curRes);
 
         } catch (IOException e) {
-          e.printStackTrace();
+          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage()) ;
         }
         valIndex = 0;
       }
@@ -409,6 +413,14 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    for (int i = 0; i < valueVectors.length; i++) {
+      try {
+        output.removeField(valueVectors[i].getField());
+      } catch (SchemaChangeException e) {
+        logger.warn("Failure while trying to remove field.", e);
+      }
+      valueVectors[i].close();
+    }
     for (TableScanner scanner : scanners) {
       try {
         scanner.close();

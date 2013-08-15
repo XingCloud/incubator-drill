@@ -13,6 +13,8 @@ import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
 import org.apache.drill.exec.vector.ValueVector.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +27,8 @@ import java.util.Map;
  * Time: 10:57 AM
  */
 public class JoinBatch extends BaseRecordBatch {
+
+  final  static  Logger logger = LoggerFactory.getLogger(JoinBatch.class) ;
   private FragmentContext context;
   private JoinPOP config;
   private RecordBatch leftIncoming;
@@ -44,7 +48,7 @@ public class JoinBatch extends BaseRecordBatch {
 
   private Connector connector;
 
-  private MaterializedField leftJoinKeyField ;
+  private MaterializedField leftJoinKeyField;
 
 
   public JoinBatch(FragmentContext context, JoinPOP config, RecordBatch leftIncoming, RecordBatch rightIncoming) {
@@ -100,8 +104,17 @@ public class JoinBatch extends BaseRecordBatch {
 
     if (!leftCached) {
       leftCached = true;
-      if (!cacheLeft()) {
-        return IterOutcome.NONE;
+      try {
+        if (!cacheLeft()) {
+          return IterOutcome.NONE;
+        }
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        e.printStackTrace();
+        leftIncoming.kill();
+        rightIncoming.kill();
+        context.fail(e);
+        return IterOutcome.STOP;
       }
     }
 
@@ -115,13 +128,21 @@ public class JoinBatch extends BaseRecordBatch {
         case OK_NEW_SCHEMA:
           new_schema = true;
         case OK:
-          if (!connector.connect())
-            continue;
-          connector.upstream();
-          if (new_schema) {
-            new_schema = false;
-            setupSchema();
-            return IterOutcome.OK_NEW_SCHEMA;
+          try {
+            if (!connector.connect())
+              continue;
+            connector.upstream();
+            if (new_schema) {
+              new_schema = false;
+              setupSchema();
+              return IterOutcome.OK_NEW_SCHEMA;
+            }
+          } catch (Exception e) {
+            logger.error(e.getMessage());
+            e.printStackTrace();
+            rightIncoming.kill();
+            context.fail(e);
+            return IterOutcome.STOP;
           }
           return o;
       }
@@ -133,7 +154,7 @@ public class JoinBatch extends BaseRecordBatch {
     o = leftIncoming.next();
     while (o != IterOutcome.NONE) {
       ValueVector v = leftEvaluator.eval();
-      leftJoinKeyField = v.getField() ;
+      leftJoinKeyField = v.getField();
       leftJoinKeys.add(TransferHelper.mirrorVector(v));
       leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
       o = leftIncoming.next();
@@ -277,7 +298,7 @@ public class JoinBatch extends BaseRecordBatch {
       ValueVector out;
       Mutator outMutator;
       for (MaterializedField f : leftIncoming.getSchema()) {
-        if(f.equals(leftJoinKeyField)){
+        if (f.equals(leftJoinKeyField)) {
           continue;
         }
         out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());

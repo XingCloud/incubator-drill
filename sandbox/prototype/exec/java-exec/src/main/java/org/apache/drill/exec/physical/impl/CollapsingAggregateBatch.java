@@ -16,6 +16,8 @@ import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.physical.impl.eval.fn.agg.CountDistinctAggregator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.Map;
  * Time: 1:53 PM
  */
 public class CollapsingAggregateBatch extends BaseRecordBatch {
+
+  final  static Logger logger = LoggerFactory.getLogger(CollapsingAggregateBatch.class);
 
   private FragmentContext context;
   private CollapsingAggregatePOP config;
@@ -72,10 +76,10 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
     }
     aggregatingEvaluators = new AggregatingEvaluator[config.getAggregations().length];
     aggNames = new SchemaPath[aggregatingEvaluators.length];
-    if(config.getCarryovers() != null)
+    if (config.getCarryovers() != null)
       carryovers = new BasicEvaluator[config.getCarryovers().length];
     else
-      carryovers = new BasicEvaluator[0] ;
+      carryovers = new BasicEvaluator[0];
     carryoverNames = new FieldReference[carryovers.length];
     carryOverTypes = new MajorType[carryovers.length];
 
@@ -129,33 +133,41 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
     IterOutcome o = incoming.next();
     while (o != IterOutcome.NONE) {
-      consumeCurrent();
-      int groupId = 0;
-      Object[] carryOverValue = null;
-      Long[] aggValues = new Long[aggregatingEvaluators.length];
-      for (int i = 0; i < aggregatingEvaluators.length; i++) {
-        aggValues[i] = ((BigIntVector) aggregatingEvaluators[i].eval()).getAccessor().get(0);
-      }
-
-      if (carryovers.length != 0) {
-        carryOverValue = new Object[carryovers.length];
-        ValueVector v;
-        for (int i = 0; i < carryovers.length; i++) {
-          v = carryovers[i].eval();
-          carryOverValue[i] = v.getAccessor().getObject(0);
-          carryOverTypes[i] = v.getField().getType();
+      try {
+        consumeCurrent();
+        int groupId = 0;
+        Object[] carryOverValue = null;
+        Long[] aggValues = new Long[aggregatingEvaluators.length];
+        for (int i = 0; i < aggregatingEvaluators.length; i++) {
+          aggValues[i] = ((BigIntVector) aggregatingEvaluators[i].eval()).getAccessor().get(0);
         }
-      }
 
-      if (boundaryKey != null) {
-        groupId = ((IntVector) boundaryKey.eval()).getAccessor().get(0);
-      }
+        if (carryovers.length != 0) {
+          carryOverValue = new Object[carryovers.length];
+          ValueVector v;
+          for (int i = 0; i < carryovers.length; i++) {
+            v = carryovers[i].eval();
+            carryOverValue[i] = v.getAccessor().getObject(0);
+            carryOverTypes[i] = v.getField().getType();
+          }
+        }
 
-      mergeAggValues(groupId, aggValues, carryOverValue);
-      o = incoming.next();
+        if (boundaryKey != null) {
+          groupId = ((IntVector) boundaryKey.eval()).getAccessor().get(0);
+        }
+
+        mergeAggValues(groupId, aggValues, carryOverValue);
+        o = incoming.next();
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        e.printStackTrace();
+        incoming.kill();
+        context.fail(e);
+        return IterOutcome.STOP;
+      }
     }
 
-    if(aggValues.isEmpty()){
+    if (aggValues.isEmpty()) {
       return IterOutcome.NONE;
     }
 

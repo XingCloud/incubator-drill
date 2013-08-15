@@ -25,7 +25,7 @@ public class FilterBatch extends BaseRecordBatch {
   private Filter config;
   private RecordBatch incoming;
   private BooleanEvaluator eval;
-  private boolean new_schema = true ;
+  private boolean new_schema = true;
 
 
   public FilterBatch(FragmentContext context, Filter config, RecordBatch incoming) {
@@ -61,42 +61,52 @@ public class FilterBatch extends BaseRecordBatch {
     while (true) {
       IterOutcome o = incoming.next();
       switch (o) {
-        case OK_NEW_SCHEMA:
-          new_schema = true ;
-        case OK:
-          recordCount = 0;
-          outputVectors.clear();
-          BitVector.Accessor bitFilter = eval.eval().getAccessor();
-          for (int i = 0; i < bitFilter.getValueCount(); i++) {
-            if (bitFilter.get(i) == 1) {
-              recordCount++;
-            }
-          }
-          if (recordCount == 0) {
-            continue;
-          }
-          for (ValueVector in : incoming) {
-            ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
-            AllocationHelper.allocate(out, recordCount, 50);
-            ValueVector.Mutator mutator = out.getMutator();
-            ValueVector.Accessor accessor = in.getAccessor();
-            for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
-              if (bitFilter.get(j) == 1) {
-                mutator.setObject(i++, accessor.getObject(j));
-              }
-            }
-            mutator.setValueCount(recordCount);
-            outputVectors.add(out);
-
-          }
-          vh = new VectorHolder(outputVectors);
-          break;
         case NONE:
         case STOP:
         case NOT_YET:
           recordCount = 0;
+          break;
+        case OK_NEW_SCHEMA:
+          new_schema = true;
+        case OK:
+          recordCount = 0;
+          outputVectors.clear();
+          try {
+            BitVector.Accessor bitFilter = eval.eval().getAccessor();
+            for (int i = 0; i < bitFilter.getValueCount(); i++) {
+              if (bitFilter.get(i) == 1) {
+                recordCount++;
+              }
+            }
+            if (recordCount == 0) {
+              continue;
+            }
+            for (ValueVector in : incoming) {
+              ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
+              AllocationHelper.allocate(out, recordCount, 50);
+              ValueVector.Mutator mutator = out.getMutator();
+              ValueVector.Accessor accessor = in.getAccessor();
+              for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
+                if (bitFilter.get(j) == 1) {
+                  mutator.setObject(i++, accessor.getObject(j));
+                }
+              }
+              mutator.setValueCount(recordCount);
+              outputVectors.add(out);
+
+            }
+            vh = new VectorHolder(outputVectors);
+          } catch (Exception e) {
+            logger.error(e.getMessage());
+            e.printStackTrace();
+            incoming.kill();
+            context.fail(e);
+            return IterOutcome.STOP;
+          }
+          break;
+
       }
-      if(new_schema){
+      if (new_schema) {
         new_schema = false;
         return IterOutcome.OK_NEW_SCHEMA;
       }
