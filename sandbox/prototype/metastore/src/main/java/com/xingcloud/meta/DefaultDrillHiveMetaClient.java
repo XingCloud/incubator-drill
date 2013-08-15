@@ -107,21 +107,16 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
 
 
   public static Table getTable(String tableName,List<String> options) throws Exception{
-    if(tableName.contains("-"))
-        tableName=tableName.replaceAll("-","Mns");
-    if(tableName.endsWith("_deu"))
-        tableName="eventTableMeta";
     DefaultDrillHiveMetaClient client= DefaultDrillHiveMetaClient.createClient();
-    String dbName="test_xa";
+    Table table=client.getTable(tableName);
     String regPropTableName;
     if(tableName.startsWith("mysql"))
           regPropTableName="mysql_register_template_prop";
     else
           regPropTableName="register_template_prop_index";
-    Table table=client.getTable(dbName,tableName);
-    if(tableName.contains("property")){
 
-        Table regPropTable=client.getTable(dbName,regPropTableName);
+    if(tableName.contains("property")){
+        Table regPropTable=client.getTable(regPropTableName);
         List<FieldSchema> fieldSchemas=regPropTable.getSd().getCols();
         for(int i=0;i<fieldSchemas.size();i++){
             if(options.contains(fieldSchemas.get(i).getName())){
