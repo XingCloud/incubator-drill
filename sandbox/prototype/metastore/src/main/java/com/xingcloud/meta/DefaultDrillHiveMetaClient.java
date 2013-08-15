@@ -80,6 +80,21 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
     super.createTable(tbl);
   }
 
+  public static Table GetTable(String tableName) throws Exception {
+      return GetTable("test_xa",tableName);
+  }
+
+  public static Table GetTable(String dbName,String tableName) throws Exception{
+      if(tableName.contains("-"))
+          tableName=tableName.replaceAll("-","Mns");
+      if(tableName.endsWith("_deu"))
+          tableName="eventTableMeta";
+      DefaultDrillHiveMetaClient client= DefaultDrillHiveMetaClient.createClient();
+      Table table=client.getTable(dbName,tableName);
+      return table;
+  }
+
+
   public static Table GetTable(String tableName,List<String> options) throws Exception{
     if(tableName.contains("-"))
         tableName=tableName.replaceAll("-","Mns");
