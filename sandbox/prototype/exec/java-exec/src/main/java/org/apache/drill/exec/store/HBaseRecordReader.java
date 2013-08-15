@@ -282,6 +282,7 @@ public class HBaseRecordReader implements RecordReader {
   private ValueVector getVector( String name, MajorType type) {
     if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
     MaterializedField f = MaterializedField.create(new SchemaPath(name, ExpressionPosition.UNKNOWN), type);
+    if(context==null)return TypeHelper.getNewVector(f,new DirectBufferAllocator());
     return TypeHelper.getNewVector(f, context.getAllocator());
   }
 
