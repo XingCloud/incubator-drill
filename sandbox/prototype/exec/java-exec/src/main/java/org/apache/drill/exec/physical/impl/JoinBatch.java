@@ -36,6 +36,7 @@ public class JoinBatch extends BaseRecordBatch {
   private BatchSchema batchSchema;
   private BasicEvaluator leftEvaluator;
   private BasicEvaluator rightEvaluator;
+  private BatchSchema leftSchema ;
 
   private List<List<ValueVector>> leftIncomings;
   private List<ValueVector> leftJoinKeys;
@@ -153,6 +154,7 @@ public class JoinBatch extends BaseRecordBatch {
     IterOutcome o;
     o = leftIncoming.next();
     while (o != IterOutcome.NONE) {
+      leftSchema = leftIncoming.getSchema();
       ValueVector v = leftEvaluator.eval();
       leftJoinKeyField = v.getField();
       leftJoinKeys.add(TransferHelper.mirrorVector(v));
@@ -223,7 +225,7 @@ public class JoinBatch extends BaseRecordBatch {
       ValueVector out;
       Mutator outMutator;
 
-      for (MaterializedField f : leftIncoming.getSchema()) {
+      for (MaterializedField f : leftSchema) {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
