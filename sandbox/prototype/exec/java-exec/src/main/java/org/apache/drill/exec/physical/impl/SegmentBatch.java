@@ -16,6 +16,8 @@ import org.apache.drill.exec.vector.AllocationHelper;
 import org.apache.drill.exec.vector.IntVector;
 import org.apache.drill.exec.vector.TypeHelper;
 import org.apache.drill.exec.vector.ValueVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -26,6 +28,8 @@ import java.util.*;
  * Time: 10:19 AM
  */
 public class SegmentBatch extends BaseRecordBatch {
+
+  final static Logger logger = LoggerFactory.getLogger(SegmentBatch.class);
 
   private SegmentPOP config;
   private FragmentContext context;
@@ -113,6 +117,8 @@ public class SegmentBatch extends BaseRecordBatch {
           writeOutput();
           setupSchema();
         } catch (Exception e) {
+          logger.error(e.getMessage());
+          e.printStackTrace();
           incoming.kill();
           context.fail(e);
           return IterOutcome.STOP;

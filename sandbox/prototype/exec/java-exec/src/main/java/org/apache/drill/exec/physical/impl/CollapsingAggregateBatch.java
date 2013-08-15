@@ -16,6 +16,8 @@ import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.physical.impl.eval.fn.agg.CountDistinctAggregator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.Map;
  * Time: 1:53 PM
  */
 public class CollapsingAggregateBatch extends BaseRecordBatch {
+
+  final  static Logger logger = LoggerFactory.getLogger(CollapsingAggregateBatch.class);
 
   private FragmentContext context;
   private CollapsingAggregatePOP config;
@@ -155,6 +159,8 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
         mergeAggValues(groupId, aggValues, carryOverValue);
         o = incoming.next();
       } catch (Exception e) {
+        logger.error(e.getMessage());
+        e.printStackTrace();
         incoming.kill();
         context.fail(e);
         return IterOutcome.STOP;

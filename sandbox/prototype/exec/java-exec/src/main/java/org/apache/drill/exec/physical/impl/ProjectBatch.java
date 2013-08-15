@@ -103,6 +103,8 @@ public class ProjectBatch extends BaseRecordBatch {
             new_schema = false;
           }
         } catch (Exception e) {
+          logger.error(e.getMessage());
+          e.printStackTrace();
           incoming.kill();
           context.fail(e);
           return IterOutcome.STOP;

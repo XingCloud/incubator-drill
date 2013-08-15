@@ -26,7 +26,12 @@
             {
               ref: "value",
               expr: "value"
+            },
+            {
+              ref: "timestamp",
+              expr: "timestamp"
             }
+
           ],
           filters: null,
           rowkey: {
@@ -44,12 +49,16 @@
             {
               ref: "value",
               expr: "value"
+            },
+            {
+                ref: "timestamp",
+                expr: "timestamp"
             }
           ],
           filters: null,
           rowkey: {
-            end: "20130102visit",
-            start: "20130102visit"
+            end: "20130101visit",
+            start: "20130101visit"
           },
           table: "age_deu"
         }
@@ -63,7 +72,7 @@
       exprs: [
         {
           ref: "dimension",
-          expr: "min5(ts)"
+          expr: "min5(timestamp)"
         }
       ],
       name: "segment"

@@ -13,6 +13,8 @@ import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
 import org.apache.drill.exec.vector.ValueVector.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +27,8 @@ import java.util.Map;
  * Time: 10:57 AM
  */
 public class JoinBatch extends BaseRecordBatch {
+
+  final  static  Logger logger = LoggerFactory.getLogger(JoinBatch.class) ;
   private FragmentContext context;
   private JoinPOP config;
   private RecordBatch leftIncoming;
@@ -105,6 +109,8 @@ public class JoinBatch extends BaseRecordBatch {
           return IterOutcome.NONE;
         }
       } catch (Exception e) {
+        logger.error(e.getMessage());
+        e.printStackTrace();
         leftIncoming.kill();
         rightIncoming.kill();
         context.fail(e);
@@ -132,6 +138,8 @@ public class JoinBatch extends BaseRecordBatch {
               return IterOutcome.OK_NEW_SCHEMA;
             }
           } catch (Exception e) {
+            logger.error(e.getMessage());
+            e.printStackTrace();
             rightIncoming.kill();
             context.fail(e);
             return IterOutcome.STOP;

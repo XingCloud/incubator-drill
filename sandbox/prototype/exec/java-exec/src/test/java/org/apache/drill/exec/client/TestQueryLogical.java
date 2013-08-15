@@ -16,6 +16,6 @@ public class TestQueryLogical extends PopUnitTestBase {
 
   @Test
   public void test1() throws  Exception{
-    submitQuery("/plans/logical_test1.json", QueryType.LOGICAL);
+    submitQuery("/plans/logical_test3.json", QueryType.LOGICAL);
   }
 }
