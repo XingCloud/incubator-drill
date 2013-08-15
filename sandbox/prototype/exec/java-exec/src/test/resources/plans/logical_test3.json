@@ -108,7 +108,7 @@
       projections: [
         {
           ref: "query_id",
-          expr: "\"COMMON,age,2013-01-01,2013-01-02,visit.*,TOTAL_USER,VF-ALL-0-0,MIN5\""
+          expr: "'w'"
         },
         {
           ref: "dimension",
