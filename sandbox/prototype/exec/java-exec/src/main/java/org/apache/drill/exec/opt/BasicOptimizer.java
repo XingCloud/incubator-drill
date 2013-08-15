@@ -160,21 +160,23 @@ public class BasicOptimizer extends Optimizer {
           }
           ObjectMapper mapper = DrillConfig.create().getMapper();
           JsonNode selection = root.getRoot(), projections;
-          String tableName, filter;
+          String tableName, filter = null;
           List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
           List<NamedExpression> projectionList = Lists.newArrayList();
 
-            tableName = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
+
+          tableName = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
+          if (selection.get(SELECTION_KEY_WORD_FILTER) != null)
             filter = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
-            projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
-            for (JsonNode projection : projections) {
-              try {
-                projectionList.add(mapper.readValue(projection.toString(), NamedExpression.class));
-              } catch (IOException e) {
-                throw new OptimizerException("Cannot parse projection : " + projection.toString());
-              }
+          projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
+          for (JsonNode projection : projections) {
+            try {
+              projectionList.add(mapper.readValue(projection.toString(), NamedExpression.class));
+            } catch (IOException e) {
+              throw new OptimizerException("Cannot parse projection : " + projection.toString());
             }
-            readEntries.add(new MysqlScanPOP.MysqlReadEntry(tableName, filter, projectionList));
+          }
+          readEntries.add(new MysqlScanPOP.MysqlReadEntry(tableName, filter, projectionList));
           pop = new MysqlScanPOP(readEntries);
 
         } else {
@@ -199,7 +201,7 @@ public class BasicOptimizer extends Optimizer {
     public PhysicalOperator visitProject(Project project, Object obj) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(project);
       if (pop == null) {
-        pop =  new org.apache.drill.exec.physical.config.Project(Arrays.asList(project.getSelections()),project.getInput().accept(this, obj)) ;
+        pop = new org.apache.drill.exec.physical.config.Project(Arrays.asList(project.getSelections()), project.getInput().accept(this, obj));
         operatorMap.put(project, pop);
       }
       return pop;
@@ -244,8 +246,8 @@ public class BasicOptimizer extends Optimizer {
         LogicalOperator leftLO = join.getLeft();
         LogicalOperator rightLO = join.getRight();
         JoinCondition singleJoinCondition = join.getConditions()[0];
-        PhysicalOperator leftPOP =  leftLO.accept(this, value);
-        PhysicalOperator rightPOP =  rightLO.accept(this, value);
+        PhysicalOperator leftPOP = leftLO.accept(this, value);
+        PhysicalOperator rightPOP = rightLO.accept(this, value);
         Join.JoinType joinType = join.getJointType();
         pop = new JoinPOP(leftPOP, rightPOP, singleJoinCondition, joinType.name());
         operatorMap.put(join, pop);
@@ -269,15 +271,15 @@ public class BasicOptimizer extends Optimizer {
       PhysicalOperator pop = operatorMap.get(union);
       if (pop == null) {
 
-        LogicalOperator logicalOperators[] = union.getInputs() ;
-        PhysicalOperator inputs[] = new PhysicalOperator[logicalOperators.length] ;
-        for (int i = 0 ; i < logicalOperators.length ; i++) {
+        LogicalOperator logicalOperators[] = union.getInputs();
+        PhysicalOperator inputs[] = new PhysicalOperator[logicalOperators.length];
+        for (int i = 0; i < logicalOperators.length; i++) {
           PhysicalOperator input = operatorMap.get(logicalOperators[i]);
           if (input == null) {
             input = logicalOperators[i].accept(this, value);
             operatorMap.put(logicalOperators[i], input);
           }
-          inputs[i] = input ;
+          inputs[i] = input;
         }
         pop = new org.apache.drill.exec.physical.config.Union(inputs);
         operatorMap.put(union, pop);
