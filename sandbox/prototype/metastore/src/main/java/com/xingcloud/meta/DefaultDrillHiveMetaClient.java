@@ -80,18 +80,30 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
     super.createTable(tbl);
   }
 
-  public static Table GetTable(String tableName) throws Exception {
-      return GetTable("test_xa",tableName);
-  }
-
-  public static Table GetTable(String dbName,String tableName) throws Exception{
+  @Override
+  public  Table getTable(String tableName)  {
+        try {
+            return getTable("test_xa", tableName);
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        return null;
+    }
+  @Override
+  public  Table getTable(String dbName,String tableName)  {
       if(tableName.contains("-"))
           tableName=tableName.replaceAll("-","Mns");
       if(tableName.endsWith("_deu"))
           tableName="eventTableMeta";
-      DefaultDrillHiveMetaClient client= DefaultDrillHiveMetaClient.createClient();
-      Table table=client.getTable(dbName,tableName);
-      return table;
+      DefaultDrillHiveMetaClient client= null;
+      try {
+          client = DefaultDrillHiveMetaClient.createClient();
+          Table table=client.getTable(dbName,tableName);
+          return table;
+      } catch (MetaException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+      return null;
   }
 
 
