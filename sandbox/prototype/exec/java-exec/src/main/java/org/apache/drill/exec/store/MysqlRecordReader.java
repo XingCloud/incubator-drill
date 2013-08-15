@@ -49,6 +49,7 @@ public class MysqlRecordReader implements RecordReader {
   private Statement stmt = null;
   private ResultSet rs = null;
   private ValueVector[] valueVectors;
+  private OutputMutator output ;
 
   private List<HBaseFieldInfo> projections;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
@@ -72,6 +73,7 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
+    this.output = output ;
     try {
       initConfig();
       initStmtExecutor();
@@ -232,6 +234,14 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    for (int i = 0; i < valueVectors.length; i++) {
+      try {
+        output.removeField(valueVectors[i].getField());
+      } catch (SchemaChangeException e) {
+        logger.warn("Failure while trying to remove field.", e);
+      }
+      valueVectors[i].close();
+    }
     if (conn != null) {
       try {
         rs.close();

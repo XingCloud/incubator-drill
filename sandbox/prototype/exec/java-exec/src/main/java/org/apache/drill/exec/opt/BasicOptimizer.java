@@ -154,16 +154,16 @@ public class BasicOptimizer extends Optimizer {
           pop = new HbaseScanPOP(entries);
 
         } else if (SE_MYSQL.equals(storageEngine)) {
-          JSONOptions selections = scan.getSelection();
-          if (selections == null) {
+          JSONOptions root = scan.getSelection();
+          if (root == null) {
             throw new OptimizerException("Selection is null");
           }
           ObjectMapper mapper = DrillConfig.create().getMapper();
-          JsonNode root = selections.getRoot(), projections;
+          JsonNode selection = root.getRoot(), projections;
           String tableName, filter;
           List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
           List<NamedExpression> projectionList = Lists.newArrayList();
-          for (JsonNode selection : root) {
+
             tableName = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
             filter = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
             projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
@@ -175,7 +175,6 @@ public class BasicOptimizer extends Optimizer {
               }
             }
             readEntries.add(new MysqlScanPOP.MysqlReadEntry(tableName, filter, projectionList));
-          }
           pop = new MysqlScanPOP(readEntries);
 
         } else {
@@ -200,7 +199,7 @@ public class BasicOptimizer extends Optimizer {
     public PhysicalOperator visitProject(Project project, Object obj) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(project);
       if (pop == null) {
-        pop = project.getInput().accept(this, obj);
+        pop =  new org.apache.drill.exec.physical.config.Project(Arrays.asList(project.getSelections()),project.getInput().accept(this, obj)) ;
         operatorMap.put(project, pop);
       }
       return pop;
@@ -245,8 +244,8 @@ public class BasicOptimizer extends Optimizer {
         LogicalOperator leftLO = join.getLeft();
         LogicalOperator rightLO = join.getRight();
         JoinCondition singleJoinCondition = join.getConditions()[0];
-        PhysicalOperator leftPOP = leftLO.accept(this, value);
-        PhysicalOperator rightPOP = rightLO.accept(this, value);
+        PhysicalOperator leftPOP =  leftLO.accept(this, value);
+        PhysicalOperator rightPOP =  rightLO.accept(this, value);
         Join.JoinType joinType = join.getJointType();
         pop = new JoinPOP(leftPOP, rightPOP, singleJoinCondition, joinType.name());
         operatorMap.put(join, pop);
