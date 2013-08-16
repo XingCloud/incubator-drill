@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class TestCreateMysqlMeta {
     String dbName = "test_xa";
-    String pid="testtable_1000W";
+    String pid="age";
     String hivePid=pid.replaceAll("-","Mns");
     //String tableName = hivePid+"_deu";
     //String userTableName = "user_"+hivePid;

@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
+
+  private static DefaultDrillHiveMetaClient CLIENT=null;
   public DefaultDrillHiveMetaClient(HiveConf conf) throws MetaException {
     super(conf);
   }
@@ -95,7 +97,6 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
           tableName=tableName.replaceAll("-","Mns");
       if(tableName.endsWith("_deu"))
           tableName="eventTableMeta";
-      DefaultDrillHiveMetaClient client= null;
       Table table= null;
           try {
               table = super.getTable(dbName, tableName);
@@ -136,7 +137,15 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
   }
 
   public static DefaultDrillHiveMetaClient createClient() throws MetaException {
-    return new DefaultDrillHiveMetaClient(new HiveConf());
+    if(CLIENT==null)
+        CLIENT=new DefaultDrillHiveMetaClient(new HiveConf());
+    return CLIENT;
   }
+
+  public static void dropClient(){
+      if(CLIENT!=null)
+          CLIENT.close();
+  }
+
 
 }

@@ -18,7 +18,7 @@ import java.util.List;
 public class TestCreateHBaseMeta {
     String pid="age";
     String hivePid=pid.replaceAll("-","Mns");
-    String tableName = hivePid+"_deu";
+    String tableName = "eventTableMeta";
     String dbName = "test_xa";
     String userTableName = "user_"+hivePid;
     String userIndexName = "property_"+hivePid+"_index";
