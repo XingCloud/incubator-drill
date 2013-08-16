@@ -52,13 +52,15 @@ public class Union extends LogicalOperatorBase {
   public void setInputs(LogicalOperator[] inputs){
     if(this.inputs != null){
       for (int i = 0; i < inputs.length; i++) {
-        inputs[i].unregisterSubscriber(this);
+        if(inputs[i] != null)
+          inputs[i].unregisterSubscriber(this);
         
       }
     }
     this.inputs = inputs;
     for (int i = 0; i < inputs.length; i++) {
-      inputs[i].registerAsSubscriber(this);
+      if(inputs[i] != null)
+        inputs[i].registerAsSubscriber(this);
     }
   }
 
