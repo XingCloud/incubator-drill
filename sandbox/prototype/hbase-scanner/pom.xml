@@ -55,7 +55,7 @@
 
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-0.94.6-hadoop-2.0-offline-test</artifactId>
+            <artifactId>hbase-0.94.6-hadoop-2.0</artifactId>
             <version>0.94.6</version>
             <exclusions>
                 <exclusion>
