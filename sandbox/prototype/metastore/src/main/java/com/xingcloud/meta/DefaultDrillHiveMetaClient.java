@@ -95,7 +95,7 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
   public   Table getTable(String dbName,String tableName)  {
       if(tableName.contains("-"))
           tableName=tableName.replaceAll("-","Mns");
-      if(tableName.endsWith("_deu"))
+      if(tableName.startsWith("deu_")|| tableName.endsWith("_deu"))
           tableName="eventTableMeta";
       Table table= null;
           try {

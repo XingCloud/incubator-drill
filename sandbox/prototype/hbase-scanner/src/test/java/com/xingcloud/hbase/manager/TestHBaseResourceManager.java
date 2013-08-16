@@ -30,7 +30,7 @@ public class TestHBaseResourceManager {
     @Test
     public void testHTable() throws IOException {
         Configuration conf= HBaseConfiguration.create();
-        HTable table=HBaseResourceManager.getInstance().getTable("sof-dsk_deu");
+        HTable table=HBaseResourceManager.getInstance().getTable("deu_sof-dsk");
         //HTable table=HBaseResourceManager.getInstance().getTable("property_testtable_100W_index");
         FileSystem fs=FileSystem.get(conf);
         System.out.println(fs.getHomeDirectory());
@@ -41,8 +41,8 @@ public class TestHBaseResourceManager {
         //HTable table=new HTable(conf,"sof-dsk_deu");
         Scan scan=new Scan();
 
-        byte[] srk= Bytes.toBytes("20121106heartbeat.xFFxC7x00'x07xA2");
-        byte[] enk= Bytes.toBytes("20121201visit");
+        byte[] srk= Bytes.toBytes("20121228");
+        byte[] enk= Bytes.toBytes("20121230");
         /*
         byte[] srk;
         byte[] enk;
@@ -74,12 +74,14 @@ public class TestHBaseResourceManager {
         for(Result res: result){
             //System.out.println(res);
             KeyValue[] kvs=res.raw();
+            //recordCount++;
             //System.out.println(kvs.length);
-            /*
+
             for( KeyValue kv: res.raw()){
                 System.out.println(kv);
+                recordCount++;
             }
-            */
+
         }
         long ts2=System.currentTimeMillis();
         System.out.println(ts2-ts1+" ms used. recordCount "+recordCount);
