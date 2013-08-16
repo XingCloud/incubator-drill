@@ -83,7 +83,9 @@ public class Join extends LogicalOperatorBase {
       this.left.unregisterSubscriber(this);      
     }
     this.left = left;
-    this.left.registerAsSubscriber(this);
+    if(this.left != null){
+      this.left.registerAsSubscriber(this);
+    }
   }
 
   public void setRight(LogicalOperator right) {
@@ -91,7 +93,9 @@ public class Join extends LogicalOperatorBase {
       this.right.unregisterSubscriber(this);
     }
     this.right = right;
-    this.right.registerAsSubscriber(this);
+    if(this.right != null){
+      this.right.registerAsSubscriber(this);
+    }
   }
 
   public JoinCondition[] getConditions() {
