@@ -16,13 +16,26 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class TestCreateMysqlMeta {
-    String dbName = "test_xa";
-    String pid="sof-newgdp";
-    String hivePid=pid.replaceAll("-","Mns");
-    //String tableName = hivePid+"_deu";
-    //String userTableName = "user_"+hivePid;
-    String userIndexName = "mysql_property_"+hivePid;
-    String userRegPropName="mysql_register_template_prop";
+
+    @Test
+    public void createMetas() throws TException {
+        String pids[]={"ddt","v9-v9","onepiece","age","sof-dsk","sof-newgdp","web337","xiaomi"};
+        for(int i=6;i<pids.length;i++){
+            createMeta(pids[i]);
+        }
+    }
+
+    public void createMeta(String pid) throws TException {
+        String dbName = "test_xa";
+        String hivePid=pid.replaceAll("-","Mns");
+        //String tableName = hivePid+"_deu";
+        //String userTableName = "user_"+hivePid;
+        String userIndexName = "mysql_property_"+hivePid;
+        String userRegPropName="mysql_register_template_prop";
+        createUserIndexMeta(dbName,userIndexName);
+        createPropMeta(dbName,userRegPropName);
+    }
+
 
     /*
     @Test
@@ -32,26 +45,18 @@ public class TestCreateMysqlMeta {
         Table table = client.getTable(dbName, userTableName);
         printColumns(table);
     }*/
-    @Test
-    public void createUserIndexMeta() throws TException{
+    public void createUserIndexMeta(String dbName,String userIndexName) throws TException{
         CreateMysqlMeta.createUserIndex(dbName,userIndexName);
         DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
         Table table = client.getTable(dbName, userIndexName);
         printColumns(table);
 
     }
-    @Test
-    public void createPropMeta() throws TException{
+    public void createPropMeta(String dbName,String userRegPropName) throws TException{
         CreateMysqlMeta.createPropRegisterTable(dbName,userRegPropName);
         DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
         Table table = client.getTable(dbName, userRegPropName);
         printColumns(table);
-    }
-    @Test
-    public void createMetas() throws TException{
-        //createUserMeta();
-        createUserIndexMeta();
-        createPropMeta();
     }
     private void printColumns(Table table) {
         List<KeyPart> pkSequence = TableInfo.getPrimaryKey(table);
