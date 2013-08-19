@@ -44,7 +44,7 @@ public class SegmentBatch extends BaseRecordBatch {
   private IntVector refVector;
   private SchemaPath[] groupRefs;
   private MajorType[] groupRefsTypes;
-  private ValueVector[] evalValues;
+  private ValueVector[] segmentValues;
   private boolean newSchema = false;
 
   public SegmentBatch(FragmentContext context, SegmentPOP config, RecordBatch incoming) {
@@ -142,7 +142,6 @@ public class SegmentBatch extends BaseRecordBatch {
     ValueVector.Accessor inAccessor;
     ValueVector.Mutator outMutator;
     for (ValueVector in : incoming) {
-
       inAccessor = in.getAccessor();
       out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
       AllocationHelper.allocate(out, recordCount, 50);
@@ -159,29 +158,30 @@ public class SegmentBatch extends BaseRecordBatch {
     for (int i = 0; i < groupByExprsLength; i++) {
       ValueVector v = TypeHelper.getNewVector(MaterializedField.create(groupRefs[i], groupRefsTypes[i]), context.getAllocator());
       AllocationHelper.allocate(v, 1, 50);
-      v.getMutator().setObject(0, evalValues[i].getAccessor().getObject(indexes.get(0)));
+      v.getMutator().setObject(0, segmentValues[i].getAccessor().getObject(indexes.get(0)));
       v.getMutator().setValueCount(1);
       outputVectors.add(v);
     }
     outputVectors.add(refVector);
     if(groups.isEmpty()){
+      clearSegment();
       clearIncoming();
     }
   }
 
   private void grouping() {
-    evalValues = new ValueVector[groupByExprsLength];
+    segmentValues = new ValueVector[groupByExprsLength];
     for (int i = 0; i < groupByExprsLength; i++) {
-      evalValues[i] = evaluators[i].eval();
-      groupRefsTypes[i] = evalValues[i].getField().getType();
+      segmentValues[i] = evaluators[i].eval();
+      groupRefsTypes[i] = segmentValues[i].getField().getType();
     }
     Object[] groupByExprs;
     GroupByExprsValue groupByExprsValue;
-    recordCount = evalValues[0].getAccessor().getValueCount();
+    recordCount = segmentValues[0].getAccessor().getValueCount();
     for (int i = 0; i < recordCount; i++) {
       groupByExprs = new Object[groupByExprsLength];
       for (int j = 0; j < groupByExprsLength; j++) {
-        groupByExprs[j] = evalValues[j].getAccessor().getObject(i);
+        groupByExprs[j] = segmentValues[j].getAccessor().getObject(i);
       }
       groupByExprsValue = new GroupByExprsValue(groupByExprs);
       Integer groupNum = groupInfo.get(groupByExprsValue);
@@ -198,9 +198,6 @@ public class SegmentBatch extends BaseRecordBatch {
         group.add(i);
       }
     }
-    for (int i = 0; i < evalValues.length; i++) {
-      evalValues[i].close();
-    }
   }
 
   @Override
@@ -208,15 +205,18 @@ public class SegmentBatch extends BaseRecordBatch {
     for (ValueVector v : outputVectors) {
       v.close();
     }
+    clearSegment();
+    clearRef();
+  }
 
-    if (evalValues != null) {
-      for (int i = 0; i < evalValues.length; i++) {
-        if (evalValues[i] != null) {
-          evalValues[i].close();
+  private void clearSegment(){
+    if (segmentValues != null) {
+      for (int i = 0; i < segmentValues.length; i++) {
+        if (segmentValues[i] != null) {
+          segmentValues[i].close();
         }
       }
     }
-    clearRef();
   }
 
   private void clearRef() {
