@@ -240,6 +240,9 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
       assert index >= 0;
       int currentOffset = offsetVector.getAccessor().get(index);
       offsetVector.getMutator().set(index + 1, currentOffset + bytes.length);
+      if (data.capacity() < currentOffset + bytes.length) {
+        grow(index ,currentOffset);
+      }
       data.setBytes(currentOffset, bytes);
     }
 
@@ -274,6 +277,17 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
     @Override
     public void setObject(int index,Object obj){
          set(index,(byte[]) obj) ;
+    }
+
+    private void grow(int index,int setOffset) {
+      int setCount = index ;
+      int averageSize =  (int) Math.ceil( (float) setOffset / setCount );
+      int newSize = getValueCapacity() * averageSize;
+      ByteBuf newBuf = allocator.buffer(newSize);
+      data.writerIndex(setOffset);
+      newBuf.setBytes(0, data,setOffset);
+      data.release() ;
+      data = newBuf;
     }
 
     public void transferTo(ValueVector target, boolean needClear) {

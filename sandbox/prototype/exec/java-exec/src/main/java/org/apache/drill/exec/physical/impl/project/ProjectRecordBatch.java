@@ -128,7 +128,7 @@ public class ProjectRecordBatch implements RecordBatch{
     case OK:
       int recordCount = incoming.getRecordCount();
       for(ValueVector v : this.allocationVectors){
-        AllocationHelper.allocate(v, recordCount, 50);
+        AllocationHelper.allocate(v, recordCount, 8);
       }
       projector.projectRecords(recordCount, 0);
       for(ValueVector v : this.outputVectors){

@@ -122,6 +122,7 @@ public class JoinBatch extends BaseRecordBatch {
       IterOutcome o = rightIncoming.next();
       switch (o) {
         case NONE:
+          clearLeft();
         case STOP:
         case NOT_YET:
           return o;
@@ -129,8 +130,10 @@ public class JoinBatch extends BaseRecordBatch {
           new_schema = true;
         case OK:
           try {
-            if (!connector.connect())
+            if (!connector.connect()){
+              clearRight();
               continue;
+            }
             connector.upstream();
             clearRight();
             if (new_schema) {
@@ -252,7 +255,7 @@ public class JoinBatch extends BaseRecordBatch {
       Mutator outMutator;
       for (MaterializedField f : leftSchema) {
         out = TypeHelper.getNewVector(f, context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 50);
+        AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
         for (int i = 0; i < recordCount; i++) {
           int[] indexes = outRecords.get(i);
@@ -263,7 +266,7 @@ public class JoinBatch extends BaseRecordBatch {
       }
       for (MaterializedField f : rightIncoming.getSchema()) {
         out = TypeHelper.getNewVector(f, context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 50);
+        AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
         ValueVector.Accessor accessor = getVector(f, rightVectors).getAccessor();
         for (int i = 0; i < recordCount; i++) {
@@ -326,7 +329,7 @@ public class JoinBatch extends BaseRecordBatch {
           continue;
         }
         out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 50);
+        AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
         for (int i = 0; i < outRecords.size(); i++) {
           int[] indexes = outRecords.get(i);
@@ -337,7 +340,7 @@ public class JoinBatch extends BaseRecordBatch {
       }
       for (MaterializedField f : rightIncoming.getSchema()) {
         out = TypeHelper.getNewVector(f, context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 50);
+        AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
         ValueVector.Accessor accessor = getVector(f, rightVectors).getAccessor();
         for (int i = 0; i < outRecords.size(); i++) {

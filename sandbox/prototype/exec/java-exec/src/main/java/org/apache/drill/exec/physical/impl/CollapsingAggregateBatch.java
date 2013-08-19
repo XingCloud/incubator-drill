@@ -195,7 +195,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
     setupSchema();
     for (MaterializedField f : materializedFieldList) {
       v = TypeHelper.getNewVector(f, context.getAllocator());
-      AllocationHelper.allocate(v, recordCount, 50);
+      AllocationHelper.allocate(v, recordCount, 8);
       outputVectors.add(v);
     }
     int i = 0;

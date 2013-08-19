@@ -123,7 +123,7 @@ public class MysqlRecordReader implements RecordReader {
   @Override
   public int next() {
     for (ValueVector v : valueVectors) {
-      AllocationHelper.allocate(v, batchSize, 50);
+      AllocationHelper.allocate(v, batchSize, 8);
     }
     int recordSetIndex = 0;
     try {

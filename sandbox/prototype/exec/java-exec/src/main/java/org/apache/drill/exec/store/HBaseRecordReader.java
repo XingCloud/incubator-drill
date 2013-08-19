@@ -291,7 +291,7 @@ public class HBaseRecordReader implements RecordReader {
   public int next() {
 
     for (ValueVector v : valueVectors) {
-      AllocationHelper.allocate(v, batchSize, 50);
+      AllocationHelper.allocate(v, batchSize, 8);
     }
 
     int recordSetIndex = 0;

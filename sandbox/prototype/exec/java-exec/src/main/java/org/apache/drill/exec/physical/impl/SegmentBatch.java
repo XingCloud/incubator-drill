@@ -144,7 +144,7 @@ public class SegmentBatch extends BaseRecordBatch {
     for (ValueVector in : incoming) {
       inAccessor = in.getAccessor();
       out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
-      AllocationHelper.allocate(out, recordCount, 50);
+      AllocationHelper.allocate(out, recordCount, 8);
       outMutator = out.getMutator();
       for (int i = 0; i < recordCount; i++) {
         outMutator.setObject(i, inAccessor.getObject(indexes.get(i)));
@@ -157,7 +157,7 @@ public class SegmentBatch extends BaseRecordBatch {
     refVector.getMutator().setValueCount(1);
     for (int i = 0; i < groupByExprsLength; i++) {
       ValueVector v = TypeHelper.getNewVector(MaterializedField.create(groupRefs[i], groupRefsTypes[i]), context.getAllocator());
-      AllocationHelper.allocate(v, 1, 50);
+      AllocationHelper.allocate(v, 1, 8);
       v.getMutator().setObject(0, segmentValues[i].getAccessor().getObject(indexes.get(0)));
       v.getMutator().setValueCount(1);
       outputVectors.add(v);

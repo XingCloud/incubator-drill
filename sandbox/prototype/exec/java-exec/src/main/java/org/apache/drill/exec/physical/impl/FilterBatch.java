@@ -87,7 +87,7 @@ public class FilterBatch extends BaseRecordBatch {
             }
             for (ValueVector in : incoming) {
               ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
-              AllocationHelper.allocate(out, recordCount, 50);
+              AllocationHelper.allocate(out, recordCount, 8);
               ValueVector.Mutator mutator = out.getMutator();
               ValueVector.Accessor accessor = in.getAccessor();
               for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
