@@ -26,6 +26,7 @@ public class FilterBatch extends BaseRecordBatch {
   private RecordBatch incoming;
   private BooleanEvaluator eval;
   private boolean new_schema = true;
+  private BitVector bitVector = null;
 
 
   public FilterBatch(FragmentContext context, Filter config, RecordBatch incoming) {
@@ -52,6 +53,7 @@ public class FilterBatch extends BaseRecordBatch {
 
   @Override
   public void kill() {
+    releaseAssets();
     incoming.kill();
   }
 
@@ -72,13 +74,15 @@ public class FilterBatch extends BaseRecordBatch {
           recordCount = 0;
           outputVectors.clear();
           try {
-            BitVector.Accessor bitFilter = eval.eval().getAccessor();
+            bitVector = eval.eval();
+            BitVector.Accessor bitFilter = bitVector.getAccessor();
             for (int i = 0; i < bitFilter.getValueCount(); i++) {
               if (bitFilter.get(i) == 1) {
                 recordCount++;
               }
             }
             if (recordCount == 0) {
+              clearBits();
               continue;
             }
             for (ValueVector in : incoming) {
@@ -93,13 +97,13 @@ public class FilterBatch extends BaseRecordBatch {
               }
               mutator.setValueCount(recordCount);
               outputVectors.add(out);
-
+              in.close();
             }
+            clearBits();
             vh = new VectorHolder(outputVectors);
           } catch (Exception e) {
             logger.error(e.getMessage());
             e.printStackTrace();
-            incoming.kill();
             context.fail(e);
             return IterOutcome.STOP;
           }
@@ -115,4 +119,18 @@ public class FilterBatch extends BaseRecordBatch {
 
   }
 
+  @Override
+  public void releaseAssets() {
+    for (ValueVector v : outputVectors) {
+      v.close();
+    }
+    clearBits();
+  }
+
+  private void clearBits() {
+    if (bitVector != null) {
+      bitVector.close();
+      bitVector = null;
+    }
+  }
 }

@@ -90,6 +90,7 @@ public class SegmentBatch extends BaseRecordBatch {
 
   @Override
   public void kill() {
+    releaseAssets();
     incoming.kill();
   }
 
@@ -99,6 +100,8 @@ public class SegmentBatch extends BaseRecordBatch {
     if (groups.size() != 0) {
       writeOutput();
       return IterOutcome.OK;
+    } else {
+      clearIncoming();
     }
 
     IterOutcome o = incoming.next();
@@ -119,7 +122,6 @@ public class SegmentBatch extends BaseRecordBatch {
         } catch (Exception e) {
           logger.error(e.getMessage());
           e.printStackTrace();
-          incoming.kill();
           context.fail(e);
           return IterOutcome.STOP;
         }
@@ -140,9 +142,6 @@ public class SegmentBatch extends BaseRecordBatch {
   }
 
   private void writeOutput() {
-    for (ValueVector v : outputVectors) {
-      v.close();
-    }
     outputVectors.clear();
     int groupId = groups.keySet().iterator().next();
     List<Integer> indexes = groups.remove(groupId);
@@ -209,6 +208,38 @@ public class SegmentBatch extends BaseRecordBatch {
         group.add(i);
       }
     }
+    for (int i = 0; i < evalValues.length; i++) {
+      evalValues[i].close();
+    }
+  }
+
+  @Override
+  public void releaseAssets() {
+    for (ValueVector v : outputVectors) {
+      v.close();
+    }
+
+    if (evalValues != null) {
+      for (int i = 0; i < evalValues.length; i++) {
+        if (evalValues[i] != null) {
+          evalValues[i].close();
+        }
+      }
+    }
+    clearRef();
+  }
+
+  private void clearRef() {
+    if (refVector != null) {
+      refVector.close();
+      refVector = null;
+    }
+  }
+
+  private void clearIncoming() {
+    for (ValueVector v : incoming) {
+      v.close();
+    }
   }
 
   class GroupByExprsValue {
@@ -228,10 +259,8 @@ public class SegmentBatch extends BaseRecordBatch {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof GroupByExprsValue)) return false;
-
       GroupByExprsValue that = (GroupByExprsValue) o;
       if (!Arrays.equals(exprValues, that.exprValues)) return false;
-
       return true;
     }
 

@@ -58,4 +58,6 @@ public abstract class BaseRecordBatch implements RecordBatch {
     public int getRecordCount() {
         return recordCount;
     }
+
+    public  abstract  void releaseAssets();
 }

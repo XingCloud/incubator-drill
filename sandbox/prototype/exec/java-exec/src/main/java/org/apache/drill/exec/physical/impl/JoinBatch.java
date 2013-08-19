@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class JoinBatch extends BaseRecordBatch {
 
-  final  static  Logger logger = LoggerFactory.getLogger(JoinBatch.class) ;
+  final static Logger logger = LoggerFactory.getLogger(JoinBatch.class);
   private FragmentContext context;
   private JoinPOP config;
   private RecordBatch leftIncoming;
@@ -36,7 +36,7 @@ public class JoinBatch extends BaseRecordBatch {
   private BatchSchema batchSchema;
   private BasicEvaluator leftEvaluator;
   private BasicEvaluator rightEvaluator;
-  private BatchSchema leftSchema ;
+  private BatchSchema leftSchema;
 
   private List<List<ValueVector>> leftIncomings;
   private List<ValueVector> leftJoinKeys;
@@ -96,6 +96,7 @@ public class JoinBatch extends BaseRecordBatch {
 
   @Override
   public void kill() {
+    releaseAssets();
     leftIncoming.kill();
     rightIncoming.kill();
   }
@@ -112,8 +113,6 @@ public class JoinBatch extends BaseRecordBatch {
       } catch (Exception e) {
         logger.error(e.getMessage());
         e.printStackTrace();
-        leftIncoming.kill();
-        rightIncoming.kill();
         context.fail(e);
         return IterOutcome.STOP;
       }
@@ -133,6 +132,7 @@ public class JoinBatch extends BaseRecordBatch {
             if (!connector.connect())
               continue;
             connector.upstream();
+            clearRight();
             if (new_schema) {
               new_schema = false;
               setupSchema();
@@ -141,7 +141,6 @@ public class JoinBatch extends BaseRecordBatch {
           } catch (Exception e) {
             logger.error(e.getMessage());
             e.printStackTrace();
-            rightIncoming.kill();
             context.fail(e);
             return IterOutcome.STOP;
           }
@@ -157,7 +156,7 @@ public class JoinBatch extends BaseRecordBatch {
       leftSchema = leftIncoming.getSchema();
       ValueVector v = leftEvaluator.eval();
       leftJoinKeyField = v.getField();
-      leftJoinKeys.add(TransferHelper.mirrorVector(v));
+      leftJoinKeys.add(v);
       leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
       o = leftIncoming.next();
     }
@@ -165,7 +164,7 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   private void cacheRight() {
-    rightJoinKey = TransferHelper.mirrorVector(rightEvaluator.eval());
+    rightJoinKey = rightEvaluator.eval();
     rightValueMap.clear();
     ValueVector.Accessor accessor = rightJoinKey.getAccessor();
     for (int i = 0; i < accessor.getValueCount(); i++) {
@@ -179,13 +178,11 @@ public class JoinBatch extends BaseRecordBatch {
         value.add(i);
       }
     }
-
     rightVectors.clear();
     rightVectors.addAll(TransferHelper.transferVectors(rightIncoming));
   }
 
   public void setupSchema() {
-
     SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
     for (ValueVector v : outputVectors) {
       schemaBuilder.addField(v.getField());
@@ -193,6 +190,34 @@ public class JoinBatch extends BaseRecordBatch {
     batchSchema = schemaBuilder.build();
   }
 
+  @Override
+  public void releaseAssets() {
+    clearLeft();
+    clearRight();
+    for (ValueVector v : outputVectors) {
+      v.close();
+    }
+  }
+
+  private void clearLeft() {
+    for (List<ValueVector> vectors : leftIncomings) {
+      for (ValueVector v : vectors) {
+        v.close();
+      }
+    }
+    for (ValueVector v : leftJoinKeys) {
+      v.close();
+    }
+  }
+
+  private void clearRight() {
+    for (ValueVector v : rightVectors) {
+      v.close();
+    }
+    if (rightJoinKey != null) {
+      rightJoinKey.close();
+    }
+  }
 
   public static ValueVector getVector(MaterializedField f, List<ValueVector> vectors) {
     for (ValueVector vector : vectors) {
@@ -209,6 +234,8 @@ public class JoinBatch extends BaseRecordBatch {
     public abstract void upstream();
 
     public abstract boolean connect();
+
+    public abstract void clear();
   }
 
 
@@ -219,18 +246,14 @@ public class JoinBatch extends BaseRecordBatch {
 
     @Override
     public void upstream() {
-
       outputVectors.clear();
       recordCount = outRecords.size();
       ValueVector out;
       Mutator outMutator;
-
       for (MaterializedField f : leftSchema) {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-
-
         for (int i = 0; i < recordCount; i++) {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, getVector(f, leftIncomings.get(indexes[0])).getAccessor().getObject(indexes[1]));
@@ -238,15 +261,11 @@ public class JoinBatch extends BaseRecordBatch {
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
-
       for (MaterializedField f : rightIncoming.getSchema()) {
-
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-
         ValueVector.Accessor accessor = getVector(f, rightVectors).getAccessor();
-
         for (int i = 0; i < recordCount; i++) {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, accessor.getObject(indexes[2]));
@@ -254,7 +273,6 @@ public class JoinBatch extends BaseRecordBatch {
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
-
       outRecords.clear();
     }
 
@@ -274,6 +292,11 @@ public class JoinBatch extends BaseRecordBatch {
       }
       return !outRecords.isEmpty();
     }
+
+    @Override
+    public void clear() {
+
+    }
   }
 
   // right outer join
@@ -285,7 +308,6 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public void upstream() {
       outputVectors.clear();
-
       List<Integer> misMatchIndex = Lists.newArrayList();
       int misMatchCount = 0;
       BitVector.Accessor bitAccessor = rightMarkBits.getAccessor();
@@ -295,8 +317,8 @@ public class JoinBatch extends BaseRecordBatch {
           misMatchCount++;
         }
       }
-
       recordCount = outRecords.size() + misMatchCount;
+      rightMarkBits.close();
       ValueVector out;
       Mutator outMutator;
       for (MaterializedField f : leftSchema) {
@@ -313,21 +335,15 @@ public class JoinBatch extends BaseRecordBatch {
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
-
-
       for (MaterializedField f : rightIncoming.getSchema()) {
-
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 50);
         outMutator = out.getMutator();
-
         ValueVector.Accessor accessor = getVector(f, rightVectors).getAccessor();
-
         for (int i = 0; i < outRecords.size(); i++) {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, accessor.getObject(indexes[2]));
         }
-
         int index = outRecords.size();
         for (int i : misMatchIndex) {
           outMutator.setObject(index++, accessor.getObject(i));
@@ -335,15 +351,12 @@ public class JoinBatch extends BaseRecordBatch {
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
-
       outRecords.clear();
     }
 
     private MaterializedField getMaterializedField(MaterializedField f) {
-
       return MaterializedField.create(new SchemaPath(f.getName(), ExpressionPosition.UNKNOWN)
         , Types.optional(f.getType().getMinorType()));
-
     }
 
     @Override
@@ -352,7 +365,6 @@ public class JoinBatch extends BaseRecordBatch {
       rightMarkBits.allocateNew(rightIncoming.getRecordCount());
       BitVector.Mutator mutator = rightMarkBits.getMutator();
       mutator.setValueCount(rightIncoming.getRecordCount());
-
       for (int i = 0; i < leftJoinKeys.size(); i++) {
         Accessor leftKeyAccessor = leftJoinKeys.get(i).getAccessor();
         for (int j = 0; j < leftKeyAccessor.getValueCount(); j++) {
@@ -365,9 +377,12 @@ public class JoinBatch extends BaseRecordBatch {
           }
         }
       }
-
-
       return true;
+    }
+
+    @Override
+    public void clear() {
+      rightMarkBits.close();
     }
   }
 
@@ -381,6 +396,11 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public boolean connect() {
       return false;
+    }
+
+    @Override
+    public void clear() {
+
     }
   }
 

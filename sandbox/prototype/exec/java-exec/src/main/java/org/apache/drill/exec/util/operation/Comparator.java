@@ -145,6 +145,7 @@ public class Comparator {
           if (b < value) bitMutator.set(i, 1);
       }
     }
+    intVector.close();
     bitMutator.setValueCount(recordCount);
     return bits;
   }

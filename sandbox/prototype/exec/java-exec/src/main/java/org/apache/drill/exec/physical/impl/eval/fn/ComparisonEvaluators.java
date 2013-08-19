@@ -24,12 +24,38 @@ public class ComparisonEvaluators {
     protected final BasicEvaluator left;
     protected final BasicEvaluator right;
 
+    protected ValueVector leftOperator = null ;
+    protected  ValueVector rightOperator = null ;
+
     public ComparisonEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
       this.left = args.getEvaluator(0);
       this.right = args.getEvaluator(1);
 
     }
+
+    @Override
+    public ValueVector eval() {
+      leftOperator = left.eval();
+      rightOperator = right.eval();
+      ValueVector value = doWork() ;
+      clearOperators();
+      return value;
+    }
+
+    public abstract ValueVector doWork() ;
+
+    private void clearOperators(){
+      if(leftOperator != null){
+        leftOperator.close();
+        leftOperator = null ;
+      }
+      if(rightOperator != null){
+        rightOperator.close();
+        rightOperator = null ;
+      }
+    }
+
   }
 
   @FunctionEvaluator("equal")
@@ -39,8 +65,8 @@ public class ComparisonEvaluators {
     }
 
     @Override
-    public ValueVector eval() {
-      return Comparator.Equal(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
+    public ValueVector doWork() {
+      return Comparator.Equal(leftOperator, rightOperator, recordBatch.getContext().getAllocator());
     }
   }
 
@@ -52,8 +78,8 @@ public class ComparisonEvaluators {
     }
 
     @Override
-    public ValueVector eval() {
-      return Comparator.GreaterThan(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
+    public ValueVector doWork() {
+      return Comparator.GreaterThan(leftOperator, rightOperator, recordBatch.getContext().getAllocator());
     }
 
   }
@@ -66,8 +92,8 @@ public class ComparisonEvaluators {
     }
 
     @Override
-    public ValueVector eval() {
-      return Comparator.LessThan(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
+    public ValueVector doWork() {
+      return Comparator.LessThan(leftOperator,rightOperator, recordBatch.getContext().getAllocator());
     }
   }
 
@@ -79,8 +105,8 @@ public class ComparisonEvaluators {
     }
 
     @Override
-    public ValueVector eval() {
-      return Comparator.LessEqual(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
+    public ValueVector doWork() {
+      return Comparator.LessEqual(leftOperator, rightOperator, recordBatch.getContext().getAllocator());
     }
   }
 
@@ -92,8 +118,8 @@ public class ComparisonEvaluators {
     }
 
     @Override
-    public ValueVector eval() {
-      return Comparator.GreaterEqual(left.eval(), right.eval(), recordBatch.getContext().getAllocator());
+    public ValueVector doWork() {
+      return Comparator.GreaterEqual(leftOperator, rightOperator, recordBatch.getContext().getAllocator());
     }
   }
 
@@ -113,24 +139,26 @@ public class ComparisonEvaluators {
 
     @Override
     public ValueVector eval() {
-      BitVector.Accessor leftAccessor = ((BitVector) left.eval()).getAccessor();
-      BitVector.Accessor rightAccessor = ((BitVector) right.eval()).getAccessor();
+      BitVector leftBits = (BitVector) left.eval() ;
+      BitVector rightBits = (BitVector) right.eval();
+      BitVector.Accessor leftAccessor = leftBits.getAccessor();
+      BitVector.Accessor rightAccessor = rightBits.getAccessor();
       if (value == null) {
         value = new BitVector(MaterializedField.create(new SchemaPath("and", ExpressionPosition.UNKNOWN),
           Types.required(
             TypeProtos.MinorType.BIT)),
           recordBatch.getContext().getAllocator());
       }
-
       value.allocateNew(leftAccessor.getValueCount());
       BitVector.Mutator valueMutator = value.getMutator();
       for (int i = 0; i < leftAccessor.getValueCount(); i++) {
-
         if (leftAccessor.get(i) == 1 && rightAccessor.get(i) == 1) {
           valueMutator.set(i, 1);
         }
       }
       valueMutator.setValueCount(leftAccessor.getValueCount());
+      leftBits.close();
+      rightBits.close();
       return value;
     }
   }
