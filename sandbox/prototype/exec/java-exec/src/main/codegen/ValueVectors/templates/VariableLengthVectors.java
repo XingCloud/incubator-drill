@@ -46,7 +46,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   private final UInt${type.width}Vector offsetVector;
   private final Accessor accessor = new Accessor();
   private final Mutator mutator = new Mutator();
-  
+
   public ${minor.class}Vector(MaterializedField field, BufferAllocator allocator) {
     super(field, allocator);
     this.offsetVector = new UInt${type.width}Vector(null, allocator);
@@ -56,28 +56,28 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   int getSizeFromCount(int valueCount) {
     return valueCount * ${type.width};
   }
-  
+
   public int getValueCapacity(){
     return offsetVector.getValueCapacity();
   }
-  
+
   public int getByteCapacity(){
-    return data.capacity(); 
+    return data.capacity();
   }
-  
+
   /**
    * Return the number of bytes contained in the current var len byte vector.
    * @return
    */
   public int getVarByteLength(){
-    return offsetVector.getAccessor().get(valueCount); 
+    return offsetVector.getAccessor().get(valueCount);
   }
 
   @Override
   public int getBufferSize() {
     return offsetVector.getBufferSize()  + getVarByteLength() ;
   }
-  
+
   @Override
   public FieldMetadata getMetadata() {
     return FieldMetadata.newBuilder()
@@ -95,14 +95,14 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
     data.retain();
     return dataBytes;
   }
-  
+
   @Override
   public void load(FieldMetadata metadata, ByteBuf buffer) {
     assert this.field.getDef().equals(metadata.getDef());
     int loaded = load(metadata.getBufferLength(), metadata.getValueCount(), buffer);
     assert metadata.getBufferLength() == loaded;
   }
-  
+
   @Override
   public void clear() {
     super.clear();
@@ -113,11 +113,11 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   public ByteBuf[] getBuffers() {
     return new ByteBuf[]{offsetVector.data, this.data};
   }
-  
+
   public TransferPair getTransferPair(){
     return new TransferImpl();
   }
-  
+
   public void transferTo(${minor.class}Vector target, boolean needClear){
     this.offsetVector.transferTo(target.offsetVector, needClear);
     target.data = data;
@@ -127,38 +127,38 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
       clear();
     }
   }
-  
+
   public void copyValue(int inIndex, int outIndex, ${minor.class}Vector v){
     int start = offsetVector.data.get${(minor.javaType!type.javaType)?cap_first}(inIndex);
     int end =   offsetVector.data.get${(minor.javaType!type.javaType)?cap_first}(inIndex+1);
     int len = end - start;
-    
+
     int outputStart = outIndex == 0 ? 0 : v.offsetVector.data.get${(minor.javaType!type.javaType)?cap_first}(outIndex * ${type.width});
     data.getBytes(start, v.data, outputStart, len);
     v.offsetVector.data.set${(minor.javaType!type.javaType)?cap_first}( (outIndex+1) * ${type.width}, len);
   }
-  
+
   private class TransferImpl implements TransferPair{
     ${minor.class}Vector to;
-    
+
     public TransferImpl(){
       this.to = new ${minor.class}Vector(getField(), allocator);
     }
-    
+
     public ${minor.class}Vector getTo(){
       return to;
     }
-    
+
     public void transfer(){
       transferTo(to, true);
     }
-    
+
     public void mirror(){
       transferTo(to, false);
     }
-    
+
   }
-  
+
   public void allocateNew(int totalBytes, int valueCount) {
     clear();
     assert totalBytes >= 0;
@@ -172,13 +172,13 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   public Accessor getAccessor(){
     return accessor;
   }
-  
+
   public Mutator getMutator() {
     return mutator;
   }
-  
+
   public final class Accessor extends BaseValueVector.BaseAccessor{
-    
+
     public byte[] get(int index) {
       assert index >= 0;
       int startIdx = offsetVector.getAccessor().get(index);
@@ -188,13 +188,13 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
       data.getBytes(startIdx, dst, 0, length);
       return dst;
     }
-    
+
     public void get(int index, ${minor.class}Holder holder){
       holder.start = offsetVector.getAccessor().get(index);
       holder.end = offsetVector.getAccessor().get(index + 1);
       holder.buffer = data;
     }
-    
+
     void get(int index, Nullable${minor.class}Holder holder){
       holder.start = offsetVector.getAccessor().get(index);
       holder.end = offsetVector.getAccessor().get(index + 1);
@@ -208,16 +208,16 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
       assert holder.length >= 0;
       holder.buffer = offsetVector.data;
     }
-    
+
     public Object getObject(int index) {
       return get(index);
     }
-    
+
     public int getValueCount() {
       return valueCount;
     }
   }
-  
+
   /**
    * Mutable${minor.class} implements a vector of variable width values.  Elements in the vector
    * are accessed by position from the logical start of the vector.  A fixed width offsetVector
@@ -241,7 +241,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
       int currentOffset = offsetVector.getAccessor().get(index);
       offsetVector.getMutator().set(index + 1, currentOffset + bytes.length);
       if (data.capacity() < currentOffset + bytes.length) {
-        grow(index ,currentOffset);
+        realloc(index ,currentOffset,bytes.length);
       }
       data.setBytes(currentOffset, bytes);
     }
@@ -260,14 +260,14 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
       offsetVector.getMutator().set(index + 1, currentOffset + length);
       data.setBytes(currentOffset, holder.buffer, holder.start, length);
     }
-    
+
     public void set(int index, ${minor.class}Holder holder){
       int length = holder.end - holder.start;
       int currentOffset = offsetVector.getAccessor().get(index);
       offsetVector.getMutator().set(index + 1, currentOffset + length);
       data.setBytes(currentOffset, holder.buffer, holder.start, length);
     }
-    
+
     public void setValueCount(int valueCount) {
       ${minor.class}Vector.this.valueCount = valueCount;
       data.writerIndex(offsetVector.getAccessor().get(valueCount));
@@ -279,11 +279,22 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
          set(index,(byte[]) obj) ;
     }
 
-    private void grow(int index,int setOffset) {
-      int setCount = index ;
-      int averageSize =  (int) Math.ceil( (float) setOffset / setCount );
-      int newSize = getValueCapacity() * averageSize;
-      ByteBuf newBuf = allocator.buffer(newSize);
+    private int getNewSize(int setCount,int setOffset,int length){
+      int totalLength = 0 ;
+      if(setCount == 0){
+          totalLength = getValueCapacity() * length ;
+      }else{
+          totalLength = getValueCapacity() * ((int) Math.ceil((float) setOffset / setCount) ) ;
+      }
+      return totalLength ;
+
+    }
+
+    private void realloc(int setCount,int setOffset,int length){
+      int newLength = getNewSize(setCount,setOffset,length);
+      ByteBuf newBuf = allocator.buffer(newLength);
+      newBuf.retain();
+      newBuf.readerIndex(0);
       data.writerIndex(setOffset);
       newBuf.setBytes(0, data,setOffset);
       data.release() ;
@@ -305,7 +316,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
       }
     }
   }
-  
+
 }
 
 
