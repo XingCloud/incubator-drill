@@ -45,7 +45,7 @@ public class SegmentBatch extends BaseRecordBatch {
   private SchemaPath[] groupRefs;
   private MajorType[] groupRefsTypes;
   private ValueVector[] evalValues;
-  private boolean isFirst;
+  private boolean newSchema = false;
 
   public SegmentBatch(FragmentContext context, SegmentPOP config, RecordBatch incoming) {
     this.context = context;
@@ -69,7 +69,6 @@ public class SegmentBatch extends BaseRecordBatch {
       groupRefs[i] = new SchemaPath(namedExpressions[i].getRef().getPath(), ExpressionPosition.UNKNOWN);
     }
     groupByExprsLength = evaluators.length;
-
     refVector = new IntVector(MaterializedField.create(new SchemaPath(
       config.getRef().getPath(), ExpressionPosition.UNKNOWN),
       Types.required(MinorType.INT))
@@ -96,24 +95,18 @@ public class SegmentBatch extends BaseRecordBatch {
 
   @Override
   public IterOutcome next() {
-
     if (groups.size() != 0) {
       writeOutput();
       return IterOutcome.OK;
-    } else {
-      clearIncoming();
     }
-
     IterOutcome o = incoming.next();
-
     switch (o) {
       case NONE:
       case STOP:
       case NOT_YET:
         break;
-
       case OK_NEW_SCHEMA:
-        isFirst = true;
+        newSchema = true;
       case OK:
         try {
           grouping();
@@ -125,15 +118,14 @@ public class SegmentBatch extends BaseRecordBatch {
           context.fail(e);
           return IterOutcome.STOP;
         }
-
     }
     return o;
   }
 
   private void setupSchema() {
-    if (!isFirst)
+    if (!newSchema)
       return;
-    isFirst = false;
+    newSchema = false;
     SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
     for (ValueVector v : this) {
       schemaBuilder.addField(v.getField());
@@ -155,18 +147,15 @@ public class SegmentBatch extends BaseRecordBatch {
       out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
       AllocationHelper.allocate(out, recordCount, 50);
       outMutator = out.getMutator();
-
       for (int i = 0; i < recordCount; i++) {
         outMutator.setObject(i, inAccessor.getObject(indexes.get(i)));
       }
       outMutator.setValueCount(recordCount);
       outputVectors.add(out);
     }
-
     refVector.allocateNew(1);
     refVector.getMutator().set(0, groupId);
     refVector.getMutator().setValueCount(1);
-
     for (int i = 0; i < groupByExprsLength; i++) {
       ValueVector v = TypeHelper.getNewVector(MaterializedField.create(groupRefs[i], groupRefsTypes[i]), context.getAllocator());
       AllocationHelper.allocate(v, 1, 50);
@@ -174,8 +163,10 @@ public class SegmentBatch extends BaseRecordBatch {
       v.getMutator().setValueCount(1);
       outputVectors.add(v);
     }
-
     outputVectors.add(refVector);
+    if(groups.isEmpty()){
+      clearIncoming();
+    }
   }
 
   private void grouping() {
@@ -198,7 +189,6 @@ public class SegmentBatch extends BaseRecordBatch {
         groupNum = ++groupTotal;
         groupInfo.put(groupByExprsValue, groupNum);
       }
-
       List<Integer> group = groups.get(groupNum);
       if (group == null) {
         group = new LinkedList<>();
