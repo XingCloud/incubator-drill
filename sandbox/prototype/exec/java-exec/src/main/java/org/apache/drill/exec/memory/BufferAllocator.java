@@ -86,5 +86,8 @@ public abstract class BufferAllocator implements Closeable{
   }
   
   public abstract long getAllocatedMemory();
+
+  // just for test
+  public abstract long free(int size) ;
   
 }
