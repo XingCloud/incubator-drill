@@ -293,7 +293,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
     private void realloc(int setCount,int setOffset,int length){
       int newLength = getNewSize(setCount,setOffset,length);
       ByteBuf newBuf = allocator.buffer(newLength);
-      newBuf.retain();
+      //newBuf.retain();
       newBuf.readerIndex(0);
       data.writerIndex(setOffset);
       newBuf.setBytes(0, data,setOffset);
