@@ -2,7 +2,7 @@
 <configuration>
 	<property>
 		<name>hbase.rootdir</name>
-		<value>hdfs://datanode1:19000/hbase</value>
+		<value>hdfs://65.255.35.141:19000/hbase-web9</value>
 	</property>
 	<property>
 		<name>hbase.cluster.distributed</name>
@@ -10,7 +10,7 @@
 	</property>
 	<property>
 		<name>hbase.zookeeper.quorum</name>
-		<value>datanode1</value>
+		<value>65.255.35.147</value>
     </property>
     <property>
         <name>hbase.zookeeper.property.clientPort</name>

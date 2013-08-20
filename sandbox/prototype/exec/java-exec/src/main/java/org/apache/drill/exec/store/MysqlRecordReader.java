@@ -123,7 +123,7 @@ public class MysqlRecordReader implements RecordReader {
   @Override
   public int next() {
     for (ValueVector v : valueVectors) {
-      AllocationHelper.allocate(v, batchSize, 50);
+      AllocationHelper.allocate(v, batchSize, 8);
     }
     int recordSetIndex = 0;
     try {
@@ -180,7 +180,7 @@ public class MysqlRecordReader implements RecordReader {
   private void initConfig() throws Exception {
     String fields[] = config.getTableName().split("\\.");
     String project = fields[0];
-    String dbName = "fix_" + project;
+    String dbName = "16_" + project;
     String tableName = fields[1];
 
     projections = new ArrayList<>();

@@ -47,6 +47,7 @@ public class SumAggregator implements AggregatingEvaluator {
       sum += accessor.get(i);
     }
     l += sum;
+    bigIntVector.close();
   }
 
 

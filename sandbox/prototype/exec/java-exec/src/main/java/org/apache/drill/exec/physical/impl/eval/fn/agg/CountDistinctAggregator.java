@@ -36,6 +36,7 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   private RecordBatch recordBatch;
   private Map<Integer, Set<Object>> duplicates = new HashMap<>();
   private BigIntVector value;
+  private boolean boundaryNeedClear ;
 
   public CountDistinctAggregator(RecordBatch recordBatch, FunctionArguments args) {
     this.child = args.getOnlyEvaluator();
@@ -47,7 +48,11 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
     ValueVector v = child.eval();
     Object o;
     Set<Object> duplicate;
-    int boundaryKey = ((IntVector) boundary.eval()).getAccessor().get(0);
+    IntVector boundaryVector =  (IntVector) boundary.eval() ;
+    int boundaryKey = boundaryVector.getAccessor().get(0);
+    if(boundaryNeedClear){
+      boundaryVector.close();
+    }
     duplicate = duplicates.get(boundaryKey);
     if (duplicate == null) {
       duplicate = new HashSet<>();
@@ -76,7 +81,8 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
     return value;
   }
 
-  public void setWithin(BasicEvaluator boundary) {
+  public void setWithin(BasicEvaluator boundary,boolean boundaryNeedClear) {
     this.boundary = boundary;
+    this.boundaryNeedClear = boundaryNeedClear ;
   }
 }

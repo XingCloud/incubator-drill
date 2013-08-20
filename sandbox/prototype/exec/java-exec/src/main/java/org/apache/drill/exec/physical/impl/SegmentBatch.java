@@ -44,8 +44,8 @@ public class SegmentBatch extends BaseRecordBatch {
   private IntVector refVector;
   private SchemaPath[] groupRefs;
   private MajorType[] groupRefsTypes;
-  private ValueVector[] evalValues;
-  private boolean isFirst;
+  private ValueVector[] segmentValues;
+  private boolean newSchema = false;
 
   public SegmentBatch(FragmentContext context, SegmentPOP config, RecordBatch incoming) {
     this.context = context;
@@ -69,7 +69,6 @@ public class SegmentBatch extends BaseRecordBatch {
       groupRefs[i] = new SchemaPath(namedExpressions[i].getRef().getPath(), ExpressionPosition.UNKNOWN);
     }
     groupByExprsLength = evaluators.length;
-
     refVector = new IntVector(MaterializedField.create(new SchemaPath(
       config.getRef().getPath(), ExpressionPosition.UNKNOWN),
       Types.required(MinorType.INT))
@@ -90,27 +89,24 @@ public class SegmentBatch extends BaseRecordBatch {
 
   @Override
   public void kill() {
+    releaseAssets();
     incoming.kill();
   }
 
   @Override
   public IterOutcome next() {
-
     if (groups.size() != 0) {
       writeOutput();
       return IterOutcome.OK;
     }
-
     IterOutcome o = incoming.next();
-
     switch (o) {
       case NONE:
       case STOP:
       case NOT_YET:
         break;
-
       case OK_NEW_SCHEMA:
-        isFirst = true;
+        newSchema = true;
       case OK:
         try {
           grouping();
@@ -119,19 +115,17 @@ public class SegmentBatch extends BaseRecordBatch {
         } catch (Exception e) {
           logger.error(e.getMessage());
           e.printStackTrace();
-          incoming.kill();
           context.fail(e);
           return IterOutcome.STOP;
         }
-
     }
     return o;
   }
 
   private void setupSchema() {
-    if (!isFirst)
+    if (!newSchema)
       return;
-    isFirst = false;
+    newSchema = false;
     SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
     for (ValueVector v : this) {
       schemaBuilder.addField(v.getField());
@@ -140,9 +134,6 @@ public class SegmentBatch extends BaseRecordBatch {
   }
 
   private void writeOutput() {
-    for (ValueVector v : outputVectors) {
-      v.close();
-    }
     outputVectors.clear();
     int groupId = groups.keySet().iterator().next();
     List<Integer> indexes = groups.remove(groupId);
@@ -151,47 +142,46 @@ public class SegmentBatch extends BaseRecordBatch {
     ValueVector.Accessor inAccessor;
     ValueVector.Mutator outMutator;
     for (ValueVector in : incoming) {
-
       inAccessor = in.getAccessor();
       out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
-      AllocationHelper.allocate(out, recordCount, 50);
+      AllocationHelper.allocate(out, recordCount, 8);
       outMutator = out.getMutator();
-
       for (int i = 0; i < recordCount; i++) {
         outMutator.setObject(i, inAccessor.getObject(indexes.get(i)));
       }
       outMutator.setValueCount(recordCount);
       outputVectors.add(out);
     }
-
     refVector.allocateNew(1);
     refVector.getMutator().set(0, groupId);
     refVector.getMutator().setValueCount(1);
-
     for (int i = 0; i < groupByExprsLength; i++) {
       ValueVector v = TypeHelper.getNewVector(MaterializedField.create(groupRefs[i], groupRefsTypes[i]), context.getAllocator());
-      AllocationHelper.allocate(v, 1, 50);
-      v.getMutator().setObject(0, evalValues[i].getAccessor().getObject(indexes.get(0)));
+      AllocationHelper.allocate(v, 1, 8);
+      v.getMutator().setObject(0, segmentValues[i].getAccessor().getObject(indexes.get(0)));
       v.getMutator().setValueCount(1);
       outputVectors.add(v);
     }
-
     outputVectors.add(refVector);
+    if(groups.isEmpty()){
+      clearSegment();
+      clearIncoming();
+    }
   }
 
   private void grouping() {
-    evalValues = new ValueVector[groupByExprsLength];
+    segmentValues = new ValueVector[groupByExprsLength];
     for (int i = 0; i < groupByExprsLength; i++) {
-      evalValues[i] = evaluators[i].eval();
-      groupRefsTypes[i] = evalValues[i].getField().getType();
+      segmentValues[i] = evaluators[i].eval();
+      groupRefsTypes[i] = segmentValues[i].getField().getType();
     }
     Object[] groupByExprs;
     GroupByExprsValue groupByExprsValue;
-    recordCount = evalValues[0].getAccessor().getValueCount();
+    recordCount = segmentValues[0].getAccessor().getValueCount();
     for (int i = 0; i < recordCount; i++) {
       groupByExprs = new Object[groupByExprsLength];
       for (int j = 0; j < groupByExprsLength; j++) {
-        groupByExprs[j] = evalValues[j].getAccessor().getObject(i);
+        groupByExprs[j] = segmentValues[j].getAccessor().getObject(i);
       }
       groupByExprsValue = new GroupByExprsValue(groupByExprs);
       Integer groupNum = groupInfo.get(groupByExprsValue);
@@ -199,7 +189,6 @@ public class SegmentBatch extends BaseRecordBatch {
         groupNum = ++groupTotal;
         groupInfo.put(groupByExprsValue, groupNum);
       }
-
       List<Integer> group = groups.get(groupNum);
       if (group == null) {
         group = new LinkedList<>();
@@ -208,6 +197,38 @@ public class SegmentBatch extends BaseRecordBatch {
       } else {
         group.add(i);
       }
+    }
+  }
+
+  @Override
+  public void releaseAssets() {
+    for (ValueVector v : outputVectors) {
+      v.close();
+    }
+    clearSegment();
+    clearRef();
+  }
+
+  private void clearSegment(){
+    if (segmentValues != null) {
+      for (int i = 0; i < segmentValues.length; i++) {
+        if (segmentValues[i] != null) {
+          segmentValues[i].close();
+        }
+      }
+    }
+  }
+
+  private void clearRef() {
+    if (refVector != null) {
+      refVector.close();
+      refVector = null;
+    }
+  }
+
+  private void clearIncoming() {
+    for (ValueVector v : incoming) {
+      v.close();
     }
   }
 
@@ -228,10 +249,8 @@ public class SegmentBatch extends BaseRecordBatch {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof GroupByExprsValue)) return false;
-
       GroupByExprsValue that = (GroupByExprsValue) o;
       if (!Arrays.equals(exprValues, that.exprValues)) return false;
-
       return true;
     }
 

@@ -45,7 +45,8 @@ public class XAEvaluators {
           , recordBatch.getContext().getAllocator());
       }
 
-      BigIntVector.Accessor accessor = ((BigIntVector) child.eval()).getAccessor();
+      BigIntVector bigIntVector =   (BigIntVector) child.eval() ;
+      BigIntVector.Accessor accessor = bigIntVector.getAccessor();
       int recordCount = accessor.getValueCount();
       timeStr.allocateNew(40 * recordCount, recordCount);
       VarCharVector.Mutator mutator = timeStr.getMutator();
@@ -54,6 +55,8 @@ public class XAEvaluators {
       for (int i = 0; i < recordCount; i++) {
         mutator.set(i, getKeyBySpecificPeriod(accessor.get(i), period).getBytes());
       }
+
+      bigIntVector.close();
       mutator.setValueCount(recordCount);
       return timeStr;
 
@@ -128,7 +131,7 @@ public class XAEvaluators {
           mutator.set(i, getDateString(accessor.get(i)).getBytes());
         }
         mutator.setValueCount(recordCount);
-
+        bigIntVector.close();
         return varCharVector;
       }
 
@@ -166,6 +169,7 @@ public class XAEvaluators {
         for (int i = 0; i < recordCount; i++) {
           mutator.set(i, getInnerUidFromSamplingUid(accessor.get(i)));
         }
+        bigIntVector.close();
         mutator.setValueCount(recordCount);
         return intVector;
       }

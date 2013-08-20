@@ -11,6 +11,7 @@ import org.apache.drill.exec.physical.impl.eval.fn.FunctionEvaluator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.vector.BigIntVector;
+import org.apache.drill.exec.vector.ValueVector;
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,7 +37,9 @@ public class CountAggregator implements AggregatingEvaluator {
 
   @Override
   public void addBatch() {
-    l += child.eval().getAccessor().getValueCount();
+    ValueVector v = child.eval() ;
+    l += v.getAccessor().getValueCount();
+    v.close();
   }
 
   @Override

@@ -2,7 +2,7 @@
 <configuration>
 	<property>
 		<name>hbase.rootdir</name>
-		<value>hdfs://65.255.35.141:19000/hbase-web9</value>
+		<value>hdfs://datanode1:19000/hbase</value>
 	</property>
 	<property>
 		<name>hbase.cluster.distributed</name>

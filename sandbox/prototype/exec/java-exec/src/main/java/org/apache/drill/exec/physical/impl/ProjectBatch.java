@@ -70,6 +70,7 @@ public class ProjectBatch extends BaseRecordBatch {
 
   @Override
   public void kill() {
+    releaseAssets();
     incoming.kill();
   }
 
@@ -90,13 +91,16 @@ public class ProjectBatch extends BaseRecordBatch {
           outputVectors.clear();
           recordCount = incoming.getRecordCount();
           for (int i = 0; i < evaluators.length; i++) {
-            ValueVector v = padConstant(TransferHelper.transferVector(evaluators[i].eval()));
+            ValueVector v = padConstant(evaluators[i].eval());
             MaterializedField f = MaterializedField.create(new SchemaPath(paths[i], ExpressionPosition.UNKNOWN), v.getField().getType());
             v.setField(f);
             outputVectors.add(v);
             if (new_schema) {
               schemaBuilder.addField(v.getField());
             }
+          }
+          for(ValueVector v : incoming){
+            v.close();
           }
           if (new_schema) {
             batchSchema = schemaBuilder.build();
@@ -105,7 +109,6 @@ public class ProjectBatch extends BaseRecordBatch {
         } catch (Exception e) {
           logger.error(e.getMessage());
           e.printStackTrace();
-          incoming.kill();
           context.fail(e);
           return IterOutcome.STOP;
         }
@@ -116,15 +119,20 @@ public class ProjectBatch extends BaseRecordBatch {
   private ValueVector padConstant(ValueVector v) {
     if (v.getAccessor().getValueCount() < recordCount) {
       Object constant = v.getAccessor().getObject(0);
-      AllocationHelper.allocate(v, recordCount, 50);
+      AllocationHelper.allocate(v, recordCount, 8);
       ValueVector.Mutator mutator = v.getMutator();
       for (int i = 0; i < recordCount; i++) {
         mutator.setObject(i, constant);
       }
       mutator.setValueCount(recordCount);
     }
-
     return v;
   }
 
+  @Override
+  public void releaseAssets() {
+      for(ValueVector v : outputVectors){
+        v.close();
+      }
+  }
 }

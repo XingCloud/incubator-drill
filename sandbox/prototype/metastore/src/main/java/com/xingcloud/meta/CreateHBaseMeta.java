@@ -24,7 +24,8 @@ public class CreateHBaseMeta {
         Table regPropIndex = TableInfo.newTable();
         regPropIndex.setDbName(dbName);
         regPropIndex.setTableName(tableName);
-        client.dropTable(dbName, tableName);
+        if(client.tableExists(dbName,tableName))
+            client.dropTable(dbName, tableName);
         for(int i=0;i<21;i++){
             if(i<9){
                 FieldSchema field=new FieldSchema(propName[i],"bigint","BINARY:8");
@@ -48,7 +49,8 @@ public class CreateHBaseMeta {
         Table deu = TableInfo.newTable();
         deu.setTableName(table);
         deu.setDbName(dbName);
-        client.dropTable(dbName, table);
+        if(client.tableExists(dbName,table))
+            client.dropTable(dbName, table);
         FieldSchema dateField = new FieldSchema("date", "int", "TEXT:8");
         HBaseFieldInfo.setColumnType(deu, dateField, HBaseFieldInfo.FieldType.rowkey,
                 null, null, HBaseFieldInfo.DataSerType.TEXT, 8);
@@ -106,8 +108,8 @@ public class CreateHBaseMeta {
         Table user = TableInfo.newTable();
         user.setDbName(dbName);
         user.setTableName(table);
-
-        client.dropTable(dbName, table);
+        if(client.tableExists(dbName,table))
+            client.dropTable(dbName, table);
         FieldSchema uidField = new FieldSchema("uid", "int", "BINARY:4");
         HBaseFieldInfo.setColumnType(user, uidField, HBaseFieldInfo.FieldType.rowkey, null, null, HBaseFieldInfo.DataSerType.BINARY, 4);
         FieldSchema ref0Field = new FieldSchema("ref0", "string", "TEXT");
@@ -128,7 +130,8 @@ public class CreateHBaseMeta {
         Table userIndex = TableInfo.newTable();
         userIndex.setDbName(dbName);
         userIndex.setTableName(userIndexName);
-        client.dropTable(dbName, userIndexName);
+        if(client.tableExists(dbName,userIndexName))
+            client.dropTable(dbName, userIndexName);
         FieldSchema propNumber = new FieldSchema("propnumber", Constants.SMALLINT_TYPE_NAME,"BINARY:2");
         HBaseFieldInfo.setColumnType(userIndex, propNumber, HBaseFieldInfo.FieldType.rowkey,
                 null, null, HBaseFieldInfo.DataSerType.BINARY, 2);
