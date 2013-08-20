@@ -122,15 +122,20 @@ public class IterationBuffer {
 
   public void abort(BufferedRecordBatch recordBatch) {
     StackFrameDelegate current = (StackFrameDelegate) recordBatch.current;
-    current.delegate.leave(recordBatch);
     totalIterations--;
-    for (int i = current.currentPos + 1; i < buffer.size(); i++) {
+    int i = current.currentPos < 0 ? 0:current.currentPos;
+    for (; i < buffer.size(); i++) {
       BufferedStackFrameImpl frame = buffer.get(i);
       if (frame.currentIterations == totalIterations) {
         frame.close();
       } else {
         break;
       }
+    }
+    //if all BufferedRecordBatch to this buffer are aborted,
+    //the head should be killed too
+    if(i == buffer.size()){
+      head.kill();
     }
   }
 
