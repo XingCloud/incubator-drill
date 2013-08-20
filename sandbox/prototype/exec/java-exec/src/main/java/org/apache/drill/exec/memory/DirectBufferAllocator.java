@@ -43,8 +43,8 @@ public class DirectBufferAllocator extends BufferAllocator{
   }
 
   @Override
-  public long free(int size) {
-    allocateSize -= size ;
+  public long free(ByteBuf byteBuf) {
+    allocateSize -= byteBuf.capacity() ;
     return allocateSize;
   }
 

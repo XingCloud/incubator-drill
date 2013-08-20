@@ -84,15 +84,8 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       aggregatingEvaluators[i] = evaluatorFactory.
         getAggregateEvaluator(incoming, config.getAggregations()[i].getExpr());
       if (aggregatingEvaluators[i] instanceof CountDistinctAggregator) {
-        boolean boundaryNeedClear = true;
-        BasicEvaluator within;
-        if (boundaryKey != null) {
-          within = boundaryKey;
-          boundaryNeedClear = false;
-        } else {
-          within = new ConstantValues.IntegerScalar(0, this);
-        }
-        ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within, boundaryNeedClear);
+        BasicEvaluator within = boundaryKey == null ? new ConstantValues.IntegerScalar(0, this) : boundaryKey;
+        ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within);
       }
       aggNames[i] = config.getAggregations()[i].getRef();
     }
