@@ -27,7 +27,7 @@ import java.util.List;
 public class TestHBaseAbstractRecordReader {
    @Test
    public void  testAbstractRecordReader(){
-       String eventTable="sof-dsk_deu";
+       String eventTable="age_deu";
        String usrTable="property_sof-dsk_index";
        HbaseScanPOP.HbaseScanEntry eventEntry=getReadEntry(eventTable,"event");
        HBaseRecordReader eventReader=new HBaseRecordReader(null,eventEntry);
@@ -35,7 +35,7 @@ public class TestHBaseAbstractRecordReader {
        HBaseRecordReader userReader=new HBaseRecordReader(null,userEntry);
        List<RecordReader> readerList = new ArrayList<RecordReader>();
        readerList.add(eventReader);
-       readerList.add(userReader);
+       //readerList.add(userReader);
        Iterator<RecordReader> iter = readerList.iterator();
        long startTime = System.currentTimeMillis();
 
@@ -57,12 +57,12 @@ public class TestHBaseAbstractRecordReader {
           ValueVector.Accessor accessor = v.getAccessor();
           if (v instanceof VariableWidthVector) {
             for (int i = 0; i < accessor.getValueCount(); i++) {
-              System.out.print(Bytes.toString((byte[]) accessor.getObject(i)) + " ");
+              //System.out.print(Bytes.toString((byte[]) accessor.getObject(i)) + " ");
               count++;
             }
           } else {
             for (int i = 0; i < accessor.getValueCount(); i++) {
-              System.out.print(accessor.getObject(i) + " ");
+              //System.out.print(accessor.getObject(i) + " ");
               count++;
             }
           }
@@ -120,8 +120,8 @@ public class TestHBaseAbstractRecordReader {
                 entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,filters,projections);
                 return entry;
            case "event":
-               srk= "20130601";
-               enk= "20130602";
+               srk= "20130802'.*.*.*.*.*";
+               enk= "20130802\\xC2\\x8Dw%nu.Heros.Default.Style_0";
                FunctionDefinition funcDef=new BooleanFunctions().getFunctionDefintions()[3];
                List<LogicalExpression> funcArgs=new ArrayList<>();
                funcArgs.add(new SchemaPath("value",ExpressionPosition.UNKNOWN));
@@ -134,7 +134,7 @@ public class TestHBaseAbstractRecordReader {
                projections.add(e1);
                projections.add(e2);
                projections.add(e3);
-               entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,filters,projections);
+               entry=new HbaseScanPOP.HbaseScanEntry(table,srk,enk,null,projections);
                return entry;
 
     }
