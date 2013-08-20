@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class CollapsingAggregateBatch extends BaseRecordBatch {
 
-  final  static Logger logger = LoggerFactory.getLogger(CollapsingAggregateBatch.class);
+  final static Logger logger = LoggerFactory.getLogger(CollapsingAggregateBatch.class);
 
   private FragmentContext context;
   private CollapsingAggregatePOP config;
@@ -84,8 +84,15 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       aggregatingEvaluators[i] = evaluatorFactory.
         getAggregateEvaluator(incoming, config.getAggregations()[i].getExpr());
       if (aggregatingEvaluators[i] instanceof CountDistinctAggregator) {
-        BasicEvaluator within = boundaryKey != null ? boundaryKey : new ConstantValues.IntegerScalar(0, this);
-        ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within);
+        boolean boundaryNeedClear = true;
+        BasicEvaluator within;
+        if (boundaryKey != null) {
+          within = boundaryKey;
+          boundaryNeedClear = false;
+        } else {
+          within = new ConstantValues.IntegerScalar(0, this);
+        }
+        ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within, boundaryNeedClear);
       }
       aggNames[i] = config.getAggregations()[i].getRef();
     }
@@ -133,7 +140,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
         Object[] carryOverValue = null;
         Long[] aggValues = new Long[aggregatingEvaluators.length];
         for (int i = 0; i < aggregatingEvaluators.length; i++) {
-          BigIntVector aggVector = (BigIntVector) aggregatingEvaluators[i].eval() ;
+          BigIntVector aggVector = (BigIntVector) aggregatingEvaluators[i].eval();
           aggValues[i] = aggVector.getAccessor().get(0);
           aggVector.close();
         }
@@ -148,12 +155,12 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
           }
         }
         if (boundaryKey != null) {
-          IntVector boundaryVector = (IntVector) boundaryKey.eval() ;
+          IntVector boundaryVector = (IntVector) boundaryKey.eval();
           groupId = boundaryVector.getAccessor().get(0);
           boundaryVector.close();
         }
         mergeAggValues(groupId, aggValues, carryOverValue);
-        for(ValueVector v : incoming){
+        for (ValueVector v : incoming) {
           v.close();
         }
         o = incoming.next();
@@ -212,9 +219,9 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
   @Override
   public void releaseAssets() {
-     for(ValueVector v : outputVectors){
-       v.close();
-     }
+    for (ValueVector v : outputVectors) {
+      v.close();
+    }
   }
 
   private void mergeAggValues(int groupId, Long[] values, Object[] carryOvers) {

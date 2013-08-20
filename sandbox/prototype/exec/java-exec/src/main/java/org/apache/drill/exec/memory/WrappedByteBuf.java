@@ -758,6 +758,8 @@ public class WrappedByteBuf extends ByteBuf {
     if(refCount == 0){
       logger.debug("Release buffer , size : " + byteBuf.capacity());
       allocator.free(byteBuf.capacity());
+    }else if(refCount < 0){
+      logger.error("Ref count less than zero .");
     }
     return byteBuf.release();
   }
