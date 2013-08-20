@@ -56,7 +56,7 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
     this.valueCount = valueCount;
     int len = getSizeFromCount(valueCount);
     data = buf.slice(0, len);
-    data.retain();
+    //data.retain();
     return len;
   }
 

@@ -32,7 +32,7 @@ public class WrappedByteBuf extends ByteBuf {
   public WrappedByteBuf(ByteBuf byteBuf ,BufferAllocator allocator) {
     this.byteBuf = byteBuf;
     this.allocator = allocator ;
-    this.refCount = 0 ;
+    this.refCount = 1 ;
   }
 
   @Override
