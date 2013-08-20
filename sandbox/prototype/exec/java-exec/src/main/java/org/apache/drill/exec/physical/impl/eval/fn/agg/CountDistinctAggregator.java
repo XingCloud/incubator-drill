@@ -60,6 +60,7 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
         duplicate.add(o);
       }
     }
+    v.close();
   }
 
   @Override
