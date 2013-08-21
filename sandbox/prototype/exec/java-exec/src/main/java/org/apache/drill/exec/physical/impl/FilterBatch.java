@@ -83,6 +83,7 @@ public class FilterBatch extends BaseRecordBatch {
             }
             if (recordCount == 0) {
               clearBits();
+              clearIncoming();
               continue;
             }
             for (ValueVector in : incoming) {
@@ -97,8 +98,8 @@ public class FilterBatch extends BaseRecordBatch {
               }
               mutator.setValueCount(recordCount);
               outputVectors.add(out);
-              in.close();
             }
+            clearIncoming();
             clearBits();
             vh = new VectorHolder(outputVectors);
           } catch (Exception e) {
@@ -125,6 +126,12 @@ public class FilterBatch extends BaseRecordBatch {
       v.close();
     }
     clearBits();
+  }
+
+  private void clearIncoming(){
+    for(ValueVector v : incoming){
+      v.close();
+    }
   }
 
   private void clearBits() {
