@@ -41,7 +41,7 @@ public class TableInfo {
   }
 
     public static List<HBaseFieldInfo> getCols(String tableName,List<String> options) throws Exception {
-        Table table=DefaultDrillHiveMetaClient.getTable(tableName,options);
+        Table table= getTable(tableName, options);
         List<HBaseFieldInfo> colFieldInfoList=new ArrayList<HBaseFieldInfo>();
         for(FieldSchema fieldSchema: table.getSd().getCols()){
             HBaseFieldInfo fieldInfo = HBaseFieldInfo.getColumnType(table, fieldSchema);
@@ -52,7 +52,7 @@ public class TableInfo {
 
     public static List<HBaseFieldInfo> getPrimaryKey(String tableName,List<String> options) throws Exception{
         List<HBaseFieldInfo> colInfos=getCols(tableName,options);
-        Table table=DefaultDrillHiveMetaClient.getTable(tableName,options);
+        Table table= getTable(tableName, options);
         List<KeyPart> pkSequence = TableInfo.getPrimaryKey(table);
         List<HBaseFieldInfo> ret=new ArrayList<HBaseFieldInfo>();
         for(KeyPart kp: pkSequence){
@@ -65,7 +65,7 @@ public class TableInfo {
     }
 
     public static List<KeyPart> getRowKey(String tableName,List<String> options) throws Exception{
-        Table table=DefaultDrillHiveMetaClient.getTable(tableName,options);
+        Table table= getTable(tableName, options);
         List<KeyPart> pkSequence = TableInfo.getPrimaryKey(table);
         return pkSequence;
     }
@@ -121,5 +121,35 @@ public class TableInfo {
 //    table2Params.put("transient_lastDdlTime", "" + System.currentTimeMillis());
     table2.setParameters(table2Params);
     return table2;
+  }
+
+  public static Table getTable(String tableName, List<String> options) throws Exception {
+    DrillHiveMetaClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
+    Table table = client.getTable(tableName);
+    String regPropTableName;
+    if (tableName.startsWith("mysql"))
+      regPropTableName = "mysql_register_template_prop";
+    else
+      regPropTableName = "register_template_prop_index";
+
+    if (tableName.contains("property")) {
+      Table regPropTable = client.getTable(regPropTableName);
+      List<FieldSchema> fieldSchemas = regPropTable.getSd().getCols();
+      for (int i = 0; i < fieldSchemas.size(); i++) {
+        if (options.contains(fieldSchemas.get(i).getName())) {
+          HBaseFieldInfo info = HBaseFieldInfo.getColumnType(regPropTable, fieldSchemas.get(i));
+          String primaryRK = getPrimaryKeyPattern(table);
+          primaryRK += "${" + fieldSchemas.get(i).getName() + "}";
+          table.getSd().addToCols(fieldSchemas.get(i));
+          HBaseFieldInfo
+            .setColumnType(table, fieldSchemas.get(i), info.fieldType, info.cfName, info.cqName, info.serType,
+              info.serLength);
+          setPrimaryKeyPattern(table, primaryRK);
+          break;
+        }
+      }
+
+    }
+    return table;
   }
 }

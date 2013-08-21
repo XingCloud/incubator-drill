@@ -19,8 +19,7 @@ public class CreateMysqlMeta {
                 "first_pay_time","register_time","last_login_time","last_pay_time",
                 "nation","geoip","identifier","platform","language","version",
                 "ref","ref0","ref1","ref2","ref3","ref4"};
-        HiveConf conf = new HiveConf();
-        DefaultDrillHiveMetaClient client = new DefaultDrillHiveMetaClient(conf);
+        DrillHiveMetaClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table regPropIndex = TableInfo.newTable();
         regPropIndex.setDbName(dbName);
         regPropIndex.setTableName(tableName);
@@ -44,8 +43,7 @@ public class CreateMysqlMeta {
     }
 
     public static void createDEUTable(String dbName,String table) throws TException {
-        HiveConf conf = new HiveConf();
-        DefaultDrillHiveMetaClient client = new DefaultDrillHiveMetaClient(conf);
+        DrillHiveMetaClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table deu = TableInfo.newTable();
         deu.setTableName(table);
         deu.setDbName(dbName);
@@ -103,8 +101,7 @@ public class CreateMysqlMeta {
     }
 
     public  static void createUserTable(String dbName,String table) throws TException {
-        HiveConf conf = new HiveConf();
-        DefaultDrillHiveMetaClient client = new DefaultDrillHiveMetaClient(conf);
+        DrillHiveMetaClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table user = TableInfo.newTable();
         user.setDbName(dbName);
         user.setTableName(table);
@@ -125,8 +122,7 @@ public class CreateMysqlMeta {
     }
 
     public static void createUserIndex(String dbName,String userIndexName) throws TException {
-        HiveConf conf = new HiveConf();
-        DefaultDrillHiveMetaClient client = new DefaultDrillHiveMetaClient(conf);
+        DrillHiveMetaClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table userIndex = TableInfo.newTable();
         userIndex.setDbName(dbName);
         userIndex.setTableName(userIndexName);

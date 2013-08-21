@@ -20,9 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
-
-  private static DefaultDrillHiveMetaClient CLIENT = null;
+public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient implements DrillHiveMetaClient{
 
   public DefaultDrillHiveMetaClient(HiveConf conf) throws MetaException {
     super(conf);
@@ -108,46 +106,5 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
     }
     return table;
   }
-
-  public static Table getTable(String tableName, List<String> options) throws Exception {
-    DefaultDrillHiveMetaClient client = DefaultDrillHiveMetaClient.createClient();
-    Table table = client.getTable(tableName);
-    String regPropTableName;
-    if (tableName.startsWith("mysql"))
-      regPropTableName = "mysql_register_template_prop";
-    else
-      regPropTableName = "register_template_prop_index";
-
-    if (tableName.contains("property")) {
-      Table regPropTable = client.getTable(regPropTableName);
-      List<FieldSchema> fieldSchemas = regPropTable.getSd().getCols();
-      for (int i = 0; i < fieldSchemas.size(); i++) {
-        if (options.contains(fieldSchemas.get(i).getName())) {
-          HBaseFieldInfo info = HBaseFieldInfo.getColumnType(regPropTable, fieldSchemas.get(i));
-          String primaryRK = TableInfo.getPrimaryKeyPattern(table);
-          primaryRK += "${" + fieldSchemas.get(i).getName() + "}";
-          table.getSd().addToCols(fieldSchemas.get(i));
-          HBaseFieldInfo
-            .setColumnType(table, fieldSchemas.get(i), info.fieldType, info.cfName, info.cqName, info.serType,
-                           info.serLength);
-          TableInfo.setPrimaryKeyPattern(table, primaryRK);
-          break;
-        }
-      }
-
-    }
-    return table;
-  }
-
-  public static DefaultDrillHiveMetaClient createClient() throws MetaException {
-    if (CLIENT == null)
-      CLIENT = new DefaultDrillHiveMetaClient(new HiveConf());
-    return CLIENT;
-  }
-
-  public static void dropClient() {
-    if (CLIENT != null)
-      CLIENT.close();
-  }
-
+  
 }

@@ -1,7 +1,5 @@
 package com.xingcloud.meta;
 
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-
 import java.lang.reflect.*;
 
 public class ProxyMetaClientFactory {
@@ -13,8 +11,8 @@ public class ProxyMetaClientFactory {
 
   public ProxyMetaClientFactory() {
     try{
-      proxyClass = Proxy.getProxyClass(IMetaStoreClient.class.getClassLoader(),
-        new Class[]{IMetaStoreClient.class});
+      proxyClass = Proxy.getProxyClass(DrillHiveMetaClient.class.getClassLoader(),
+        new Class[]{DrillHiveMetaClient.class});
       constructor = proxyClass.getConstructor(new Class[]{InvocationHandler.class});
     }catch (Exception e){
       throw new IllegalArgumentException("error initializing proxy!", e); 
@@ -25,9 +23,9 @@ public class ProxyMetaClientFactory {
     return instance;
   }
 
-  public IMetaStoreClient newProxiedPooledClient(){
+  public DrillHiveMetaClient newProxiedPooledClient(){
     try {
-      return (IMetaStoreClient) constructor.newInstance(new MHandler());
+      return (DrillHiveMetaClient) constructor.newInstance(new MHandler());
     } catch (Exception e) {
       throw new IllegalArgumentException("creating instance error!", e);
     }

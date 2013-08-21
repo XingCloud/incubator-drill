@@ -26,21 +26,21 @@ public class TestCreateHBaseMeta {
     @Test
     public void createEventMeta() throws TException {
         CreateHBaseMeta.createDEUTable(dbName, tableName);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
+        DrillHiveMetaClient client= ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table table = client.getTable(dbName, tableName);
         printColumns(table);
     }
     @Test
     public void createUserMeta() throws TException{
         CreateHBaseMeta.createUserTable(dbName,userTableName);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
+        DrillHiveMetaClient client=ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table table = client.getTable(dbName, userTableName);
         printColumns(table);
     }
     @Test
     public void createUserIndexMeta() throws TException{
         CreateHBaseMeta.createUserIndex(dbName,userIndexName);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
+        DrillHiveMetaClient client=ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table table = client.getTable(dbName, userIndexName);
         printColumns(table);
 
@@ -48,7 +48,7 @@ public class TestCreateHBaseMeta {
     @Test
     public void createPropMeta() throws TException{
         CreateHBaseMeta.createPropRegisterTable(dbName,userRegPropName);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
+        DrillHiveMetaClient client=ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table table = client.getTable(dbName, userRegPropName);
         printColumns(table);
     }
