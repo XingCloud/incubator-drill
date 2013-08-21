@@ -2,6 +2,8 @@ package com.xingcloud.xa.meta;
 
 import com.xingcloud.meta.DefaultDrillHiveMetaClient;
 import com.xingcloud.meta.MetaClientPool;
+import com.xingcloud.meta.ProxyMetaClientFactory;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 import org.junit.Test;
@@ -83,4 +85,32 @@ public class TestConcurrentGetTable {
     }
 
   }
+  
+  @Test
+  public void testGetProxiedTable() throws TException, InterruptedException, ExecutionException {
+    int times = 20;
+    final String table = "age_deu";
+    final IMetaStoreClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
+    Callable<Table> c = new Callable<Table>() {
+      @Override
+      public Table call() throws Exception {
+        return client.getTable("test_xa", "age_deu");
+      }
+    };
+
+    ExecutorService es = Executors.newFixedThreadPool(3);
+    List<Future<Table>> futureList = new ArrayList<>(times);
+    Future<Table> future;
+    for (int i = 0; i < times; i++) {
+      future = es.submit(c);
+      futureList.add(future);
+    }
+
+    for (Future<Table> f : futureList) {
+      System.out.println(f.get());
+    }
+
+  }
+  
+  
 }
