@@ -1,5 +1,8 @@
 package org.apache.drill.exec.physical.impl.eval.fn.agg;
 
+import com.clearspring.analytics.stream.cardinality.HyperLogLog;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos;
@@ -14,8 +17,6 @@ import org.apache.drill.exec.vector.BigIntVector;
 import org.apache.drill.exec.vector.IntVector;
 import org.apache.drill.exec.vector.ValueVector;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +35,7 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   private BasicEvaluator child;
   private BasicEvaluator boundary;
   private RecordBatch recordBatch;
-  private Map<Integer, Set<Object>> duplicates = new HashMap<>();
+  private Map<Integer, DistinctCounter> distinctCounters = Maps.newConcurrentMap();
   private BigIntVector value;
 
   public CountDistinctAggregator(RecordBatch recordBatch, FunctionArguments args) {
@@ -45,23 +46,20 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   @Override
   public void addBatch() {
     ValueVector v = child.eval();
-    Object o;
-    Set<Object> duplicate;
-    IntVector boundaryVector =  (IntVector) boundary.eval() ;
+    DistinctCounter distinctCounter;
+    IntVector boundaryVector = (IntVector) boundary.eval();
     int boundaryKey = boundaryVector.getAccessor().get(0);
     boundaryVector.close();
-    duplicate = duplicates.get(boundaryKey);
-    if (duplicate == null) {
-      duplicate = new HashSet<>();
-      duplicates.put(boundaryKey, duplicate);
+    distinctCounter = distinctCounters.get(boundaryKey);
+    if (distinctCounter == null) {
+      distinctCounter = getDefaultDistinctCounter();
+      distinctCounters.put(boundaryKey, distinctCounter);
+    } else if (distinctCounter.needUpgrade()) {
+      distinctCounter = getHyperDistinctCounter((SetCounter) distinctCounter);
+      distinctCounters.put(boundaryKey, distinctCounter);
     }
-    for (int i = 0; i < v.getAccessor().getValueCount(); i++) {
-      o = v.getAccessor().getObject(i);
-      if (!duplicate.contains(o)) {
-        l++;
-        duplicate.add(o);
-      }
-    }
+    distinctCounter.add(v);
+    l = distinctCounter.gap();
     v.close();
   }
 
@@ -81,5 +79,83 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
 
   public void setWithin(BasicEvaluator boundary) {
     this.boundary = boundary;
+  }
+
+
+  private DistinctCounter getDefaultDistinctCounter() {
+    return new SetCounter();
+  }
+
+  private DistinctCounter getHyperDistinctCounter() {
+    return new HyperCounter();
+  }
+
+  private DistinctCounter getHyperDistinctCounter(SetCounter setCounter) {
+    return new HyperCounter(setCounter);
+  }
+
+  abstract class DistinctCounter {
+    long previous;
+    long current;
+
+    public abstract void add(ValueVector v);
+
+    public long size() {
+      return current;
+    }
+
+    public long gap() {
+      return current - previous;
+    }
+
+    public boolean needUpgrade() {
+      return false;
+    }
+  }
+
+  class SetCounter extends DistinctCounter {
+    Set<Object> set = Sets.newHashSet();
+
+    @Override
+    public void add(ValueVector v) {
+      ValueVector.Accessor a = v.getAccessor();
+      for (int i = 0; i < a.getValueCount(); i++) {
+        set.add(a.getObject(i));
+      }
+      previous = current;
+      current = set.size();
+    }
+
+    @Override
+    public boolean needUpgrade() {
+      if (current > 8 * 1024) {
+        return true;
+      }
+      return false;
+    }
+  }
+
+  class HyperCounter extends DistinctCounter {
+    HyperLogLog hyperLogLog = new HyperLogLog(16);
+
+    public HyperCounter() {}
+
+    public HyperCounter(SetCounter setCounter) {
+      for (Object o : setCounter.set) {
+        hyperLogLog.offer(o);
+      }
+      previous = setCounter.previous;
+      current = setCounter.current;
+    }
+
+    @Override
+    public void add(ValueVector v) {
+      ValueVector.Accessor a = v.getAccessor();
+      for (int i = 0; i < a.getValueCount(); i++) {
+        hyperLogLog.offer(a.getObject(i));
+      }
+      previous = current;
+      current = hyperLogLog.cardinality();
+    }
   }
 }
