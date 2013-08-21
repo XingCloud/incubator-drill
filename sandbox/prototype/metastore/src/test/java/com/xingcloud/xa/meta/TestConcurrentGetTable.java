@@ -1,7 +1,6 @@
 package com.xingcloud.xa.meta;
 
 import com.xingcloud.meta.DefaultDrillHiveMetaClient;
-import com.xingcloud.meta.DefaultDrillHiveMetaClient2;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 import org.junit.Test;
@@ -23,13 +22,12 @@ public class TestConcurrentGetTable {
   public void testGetTable() throws TException, InterruptedException, ExecutionException {
     int times = 20;
     final String table = "age_deu";
-
+    final DefaultDrillHiveMetaClient client = DefaultDrillHiveMetaClient.createClient();
     Callable<Table> c = new Callable<Table>() {
       @Override
       public Table call() throws Exception {
 //        DefaultDrillHiveMetaClient2 client2 = DefaultDrillHiveMetaClient2.getInstance();
 //        return client2.getTable("test_xa", table);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
         return client.getTable("test_xa", table);
       }
     };
