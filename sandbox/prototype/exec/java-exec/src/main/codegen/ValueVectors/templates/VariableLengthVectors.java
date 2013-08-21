@@ -279,14 +279,8 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
     }
 
     private int getNewSize(int setCount,int setOffset,int length){
-      int totalLength = 0 ;
-      if(setCount == 0){
-          totalLength = getValueCapacity() * length ;
-      }else{
-          totalLength = getValueCapacity() * ((int) Math.ceil((float) setOffset / setCount) ) ;
-      }
-      return totalLength ;
-
+      int averageSize = (int) Math.ceil((setOffset + length + 1) / (setCount + 1.0) ) ;
+      return getValueCapacity() * averageSize ;
     }
 
     private void realloc(int setCount,int setOffset,int length){

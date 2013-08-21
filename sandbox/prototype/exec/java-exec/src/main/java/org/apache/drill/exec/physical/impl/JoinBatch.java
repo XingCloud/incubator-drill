@@ -335,6 +335,9 @@ public class JoinBatch extends BaseRecordBatch {
           int[] indexes = outRecords.get(i);
           outMutator.setObject(i, getVector(f, leftIncomings.get(indexes[0])).getAccessor().getObject(indexes[1]));
         }
+        for(int i = outRecords.size() ; i < recordCount ; i++){
+          outMutator.setObject(i,null);
+        }
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
