@@ -35,7 +35,7 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   private BasicEvaluator child;
   private BasicEvaluator boundary;
   private RecordBatch recordBatch;
-  private Map<Integer, DistinctCounter> distinctCounters = Maps.newConcurrentMap();
+  private Map<Integer, DistinctCounter> distinctCounters = Maps.newHashMap();
   private BigIntVector value;
 
   public CountDistinctAggregator(RecordBatch recordBatch, FunctionArguments args) {

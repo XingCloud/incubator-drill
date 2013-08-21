@@ -257,9 +257,15 @@ public class JoinBatch extends BaseRecordBatch {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
+        ValueVector.Accessor current = null  ;
+        int cursor = -1 ;
         for (int i = 0; i < recordCount; i++) {
           int[] indexes = outRecords.get(i);
-          outMutator.setObject(i, getVector(f, leftIncomings.get(indexes[0])).getAccessor().getObject(indexes[1]));
+          if(indexes[0] != cursor){
+            cursor = indexes[0] ;
+            current = getVector(f, leftIncomings.get(indexes[0])).getAccessor() ;
+          }
+          outMutator.setObject(i, current.getObject(indexes[1]));
         }
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
@@ -331,9 +337,15 @@ public class JoinBatch extends BaseRecordBatch {
         out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
+        ValueVector.Accessor current = null ;
+        int cursor = -1 ;
         for (int i = 0; i < outRecords.size(); i++) {
           int[] indexes = outRecords.get(i);
-          outMutator.setObject(i, getVector(f, leftIncomings.get(indexes[0])).getAccessor().getObject(indexes[1]));
+          if(indexes[0] != cursor){
+            cursor = indexes[0] ;
+            current = getVector(f, leftIncomings.get(indexes[0])).getAccessor() ;
+          }
+          outMutator.setObject(i, current.getObject(indexes[1]));
         }
         for(int i = outRecords.size() ; i < recordCount ; i++){
           outMutator.setObject(i,null);
