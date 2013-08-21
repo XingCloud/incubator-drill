@@ -1,13 +1,9 @@
 package com.xingcloud.meta;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.SkewedInfo;
@@ -20,29 +16,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
+public class DefaultDrillHiveMetaClient2 {
+  public static final String DEFAULT_DB_NAME = "test_xa";
+  private static DefaultDrillHiveMetaClient2 instance;
 
-  private static DefaultDrillHiveMetaClient CLIENT = null;
-
-  public DefaultDrillHiveMetaClient(HiveConf conf) throws MetaException {
-    super(conf);
+  private DefaultDrillHiveMetaClient2() throws MetaException {
+    hiveMetaStoreClient = new HiveMetaStoreClient(new HiveConf());
   }
 
-  public DefaultDrillHiveMetaClient(HiveConf conf, HiveMetaHookLoader hookLoader) throws MetaException {
-    super(conf, hookLoader);
+  public static synchronized DefaultDrillHiveMetaClient2 getInstance() throws MetaException {
+    if (instance == null) {
+      instance = new DefaultDrillHiveMetaClient2();
+    }
+    return instance;
   }
 
-  /**
-   * make life easier when creating tables
-   *
-   * @param tbl
-   * @throws AlreadyExistsException
-   * @throws InvalidObjectException
-   * @throws MetaException
-   * @throws NoSuchObjectException
-   * @throws TException
-   */
-  @Override
+  private HiveMetaStoreClient hiveMetaStoreClient;
+
   public void createTable(Table tbl) throws TException {
     StorageDescriptor sd = tbl.getSd();
     if (sd.getSkewedInfo() == null) {
@@ -81,37 +71,24 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
     if (tbl.getTableType() == null) {
       tbl.setTableType("EXTERNAL_TABLE");
     }
-    super.createTable(tbl);
+    hiveMetaStoreClient.createTable(tbl);
   }
 
-  @Override
-  public Table getTable(String tableName) {
-    try {
-      return getTable("test_xa", tableName);
-    } catch (Exception e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    return null;
+  public Table getTable(String tableName) throws TException {
+    return getTable(DEFAULT_DB_NAME, tableName);
   }
 
-  @Override
-  public Table getTable(String dbName, String tableName) {
+  public Table getTable(String dbName, String tableName) throws TException {
+//    return null;
     if (tableName.contains("-"))
       tableName = tableName.replaceAll("-", "Mns");
     if (tableName.startsWith("deu_") || tableName.endsWith("_deu"))
       tableName = "eventTableMeta";
-    Table table = null;
-    try {
-      table = super.getTable(dbName, tableName);
-    } catch (TException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    return table;
+    return hiveMetaStoreClient.getTable(dbName, tableName);
   }
 
-  public static Table getTable(String tableName, List<String> options) throws Exception {
-    DefaultDrillHiveMetaClient client = DefaultDrillHiveMetaClient.createClient();
-    Table table = client.getTable(tableName);
+  public Table getTable(String tableName, List<String> options) throws TException {
+    Table table = getTable(tableName);
     String regPropTableName;
     if (tableName.startsWith("mysql"))
       regPropTableName = "mysql_register_template_prop";
@@ -119,7 +96,7 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
       regPropTableName = "register_template_prop_index";
 
     if (tableName.contains("property")) {
-      Table regPropTable = client.getTable(regPropTableName);
+      Table regPropTable = getTable(regPropTableName);
       List<FieldSchema> fieldSchemas = regPropTable.getSd().getCols();
       for (int i = 0; i < fieldSchemas.size(); i++) {
         if (options.contains(fieldSchemas.get(i).getName())) {
@@ -137,17 +114,6 @@ public class DefaultDrillHiveMetaClient extends HiveMetaStoreClient {
 
     }
     return table;
-  }
-
-  public static DefaultDrillHiveMetaClient createClient() throws MetaException {
-    if (CLIENT == null)
-      CLIENT = new DefaultDrillHiveMetaClient(new HiveConf());
-    return CLIENT;
-  }
-
-  public static void dropClient() {
-    if (CLIENT != null)
-      CLIENT.close();
   }
 
 }
