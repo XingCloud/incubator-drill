@@ -38,53 +38,62 @@ public class TestQueryPhysical extends PopUnitTestBase {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestQueryPhysical.class);
 
   @Test
-  public void commonQuery() throws  Exception{
-     submitQuery("/physical_test1.json");
+  public void commonQuery() throws Exception {
+    submitQuery("/physical_test1.json");
   }
 
   @Test
-  public void groupByEvent() throws Exception{
+  public void groupByEvent() throws Exception {
     submitQuery("/physical_test2.json");
   }
 
   @Test
-  public void groupByUser() throws Exception{
+  public void groupByUser() throws Exception {
     submitQuery("/physical_test3.json");
   }
 
   @Test
-  public void filterAndProject() throws Exception{
+  public void filterAndProject() throws Exception {
     submitQuery("/physical_test4.json");
   }
 
   @Test
-  public void uion() throws Exception{
+  public void uion() throws Exception {
     submitQuery("/physical_test5.json");
   }
 
 
-  private void submitQuery(String testFile) throws  Exception{
-    submitQuery(testFile,QueryType.PHYSICAL);
+  private void submitQuery(String testFile) throws Exception {
+    submitQuery(testFile, QueryType.PHYSICAL);
   }
 
 
-  public static void submitQuery(String testFile,QueryType queryType) throws Exception {
-    try(
-        DrillClient client = new DrillClient();){
-
+  public static void submitQuery(String testFile, QueryType queryType) throws Exception {
+    try (
+      DrillClient client = new DrillClient();) {
+         client.connect();
       // run query.
-      client.connect();
-      Future<List<QueryResultBatch>> results = client.submitQuery(queryType, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
+      List<QueryResultBatch> results = null;
+      while (true) {
+        try {
+          results = client.runQuery(queryType, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
+          break;
+        } catch (Exception e) {
+          e.printStackTrace();
+          Thread.sleep(3000);
+          client.connect();
+        }
+      }
 
       // look at records
       RecordBatchLoader batchLoader = new RecordBatchLoader(BufferAllocator.getAllocator(CONFIG));
       int recordCount = 0;
-      for (QueryResultBatch batch : results.get()) {
-        if(batch.getHeader().getQueryState()== UserProtos.QueryResult.QueryState.FAILED){
+      for (QueryResultBatch batch : results) {
+        if (batch.getHeader().getQueryState() == UserProtos.QueryResult.QueryState.FAILED) {
           System.out.println(batch.getHeader().getError(0).getMessage());
           continue;
         }
-        if(!batch.hasData()) continue;
+        if (!batch.hasData()) continue;
         boolean schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
         boolean firstColumn = true;
 
@@ -117,14 +126,13 @@ public class TestQueryPhysical extends PopUnitTestBase {
               System.out.print("\t");
             }
             Object obj = value.getAccessor().getObject(i);
-            if(obj instanceof  byte[]) {
-              obj = new String((byte[]) obj) ;
+            if (obj instanceof byte[]) {
+              obj = new String((byte[]) obj);
             }
             System.out.print(obj);
           }
-          if(!first) System.out.println();
+          if (!first) System.out.println();
         }
-
 
 
       }

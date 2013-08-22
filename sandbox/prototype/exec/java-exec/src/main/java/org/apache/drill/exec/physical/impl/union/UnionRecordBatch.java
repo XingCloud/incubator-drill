@@ -50,7 +50,7 @@ public class UnionRecordBatch implements RecordBatch {
 
   @Override
   public BatchSchema getSchema() {
-    Preconditions.checkNotNull(outSchema);
+    //Preconditions.checkNotNull(outSchema);
     return outSchema;
   }
 
