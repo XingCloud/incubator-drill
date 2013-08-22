@@ -47,14 +47,14 @@ public class TestCreateMysqlMeta {
     }*/
     public void createUserIndexMeta(String dbName,String userIndexName) throws TException{
         CreateMysqlMeta.createUserIndex(dbName,userIndexName);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
+        DrillHiveMetaClient client=ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table table = client.getTable(dbName, userIndexName);
         printColumns(table);
 
     }
     public void createPropMeta(String dbName,String userRegPropName) throws TException{
         CreateMysqlMeta.createPropRegisterTable(dbName,userRegPropName);
-        DefaultDrillHiveMetaClient client=DefaultDrillHiveMetaClient.createClient();
+        DrillHiveMetaClient client=ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table table = client.getTable(dbName, userRegPropName);
         printColumns(table);
     }
