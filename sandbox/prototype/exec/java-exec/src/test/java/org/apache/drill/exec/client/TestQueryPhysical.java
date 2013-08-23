@@ -25,6 +25,7 @@ import org.apache.drill.exec.pop.PopUnitTestBase;
 import org.apache.drill.exec.proto.UserProtos;
 import org.apache.drill.exec.proto.UserProtos.QueryType;
 import org.apache.drill.exec.record.RecordBatchLoader;
+import org.apache.drill.exec.rpc.ChannelClosedException;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.vector.ValueVector;
 import org.junit.Test;
@@ -71,7 +72,7 @@ public class TestQueryPhysical extends PopUnitTestBase {
   public static void submitQuery(String testFile, QueryType queryType) throws Exception {
     try (
       DrillClient client = new DrillClient();) {
-         client.connect();
+      client.connect();
       // run query.
       List<QueryResultBatch> results = null;
       while (true) {
@@ -79,9 +80,13 @@ public class TestQueryPhysical extends PopUnitTestBase {
           results = client.runQuery(queryType, Files.toString(FileUtils.getResourceAsFile(testFile), Charsets.UTF_8));
           break;
         } catch (Exception e) {
-          e.printStackTrace();
           Thread.sleep(3000);
-          client.connect();
+          if (e instanceof ChannelClosedException) {
+            e.printStackTrace();
+            while (!client.reconnect()) {
+              Thread.sleep(3000);
+            }
+          }
         }
       }
 
