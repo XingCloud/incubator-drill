@@ -105,40 +105,35 @@ public class BasicOptimizer extends Optimizer {
           if (selections == null) {
             throw new OptimizerException("Selection is null");
           }
-
           ObjectMapper mapper = DrillConfig.create().getMapper();
           JsonNode root = selections.getRoot(), filters, projections, rowkey;
           String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
           int selectionSize = root.size();
-
           HbaseScanPOP.HbaseScanEntry entry;
           List<HbaseScanEntry> entries = new ArrayList<>(selectionSize);
-          List<LogicalExpression> filterList;
+          List<LogicalExpression> filterList = Lists.newArrayList();
           LogicalExpression le;
           List<NamedExpression> projectionList;
           NamedExpression ne;
-
           for (JsonNode selection : root) {
             table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
             rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
             rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-
             filters = selection.get(SELECTION_KEY_WORD_FILTERS);
-
-            filterList = new ArrayList<>(filters.size());
-            for (JsonNode filterNode : filters) {
-              filterString = filterNode.textValue();
-              try {
-                le = LogicalExpressionParser.parse(filterString);
-              } catch (RecognitionException e) {
-                throw new OptimizerException("Cannot parse filter - " + filterString);
+            if (filters == null) {
+              for (JsonNode filterNode : filters) {
+                filterString = filterNode.textValue();
+                try {
+                  le = LogicalExpressionParser.parse(filterString);
+                } catch (RecognitionException e) {
+                  throw new OptimizerException("Cannot parse filter - " + filterString);
+                }
+                filterList.add(le);
               }
-              filterList.add(le);
             }
             projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
             projectionList = new ArrayList<>(projections.size());
-
             for (JsonNode projectionNode : projections) {
               projectionString = projectionNode.toString();
               try {
@@ -152,7 +147,6 @@ public class BasicOptimizer extends Optimizer {
             entries.add(entry);
           }
           pop = new HbaseScanPOP(entries);
-
         } else if (SE_MYSQL.equals(storageEngine)) {
           JSONOptions root = scan.getSelection();
           if (root == null) {
@@ -163,8 +157,6 @@ public class BasicOptimizer extends Optimizer {
           String tableName, filter = null;
           List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
           List<NamedExpression> projectionList = Lists.newArrayList();
-
-
           tableName = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
           if (selection.get(SELECTION_KEY_WORD_FILTER) != null)
             filter = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
@@ -185,7 +177,6 @@ public class BasicOptimizer extends Optimizer {
         operatorMap.put(scan, pop);
       }
       return pop;
-
     }
 
     @Override
