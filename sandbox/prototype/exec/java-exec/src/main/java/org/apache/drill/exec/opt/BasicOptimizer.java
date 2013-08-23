@@ -121,7 +121,7 @@ public class BasicOptimizer extends Optimizer {
             rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
             rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
             filters = selection.get(SELECTION_KEY_WORD_FILTERS);
-            if (filters == null) {
+            if (filters != null) {
               for (JsonNode filterNode : filters) {
                 filterString = filterNode.textValue();
                 try {
