@@ -1,6 +1,7 @@
 package org.apache.drill.exec.physical.impl;
 
 import com.beust.jcommander.internal.Lists;
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.google.common.collect.Maps;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
@@ -40,9 +41,9 @@ public class JoinBatch extends BaseRecordBatch {
   private BatchSchema leftSchema;
 
   private List<List<ValueVector>> leftIncomings;
-  private ValueVector leftJoinKey ;
-  private ValueVector rightJoinKey;
-  private Map<Object,int[]> leftValueMap = Maps.newHashMap() ;
+  private IntVector leftJoinKey ;
+  private IntVector rightJoinKey;
+  private IntObjectOpenHashMap<int[]> leftValueMap = new IntObjectOpenHashMap<>() ;
   private boolean leftCached = false;
   private boolean new_schema = true;
 
@@ -157,13 +158,13 @@ public class JoinBatch extends BaseRecordBatch {
     o = leftIncoming.next();
     while (o != IterOutcome.NONE) {
       leftSchema = leftIncoming.getSchema();
-      leftJoinKey = leftEvaluator.eval();
+      leftJoinKey = (IntVector)leftEvaluator.eval();
       leftJoinKeyField = leftJoinKey.getField();
       leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
-      ValueVector.Accessor accessor = leftJoinKey.getAccessor() ;
+      IntVector.Accessor accessor = leftJoinKey.getAccessor() ;
       int index = leftIncomings.size() - 1 ;
       for(int i = 0 ; i < accessor.getValueCount() ; i ++){
-        leftValueMap.put(accessor.getObject(i),new int[]{index,i}) ;
+        leftValueMap.put(accessor.get(i),new int[]{index,i}) ;
       }
       leftJoinKey.close();
       o = leftIncoming.next();
@@ -172,7 +173,7 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   private void cacheRight() {
-    rightJoinKey = rightEvaluator.eval();
+    rightJoinKey = (IntVector) rightEvaluator.eval();
     rightVectors.clear();
     rightVectors.addAll(TransferHelper.transferVectors(rightIncoming));
   }
@@ -280,10 +281,9 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public boolean connect() {
       cacheRight();
-      ValueVector.Accessor accessor = rightJoinKey.getAccessor() ;
-
+      IntVector.Accessor accessor = rightJoinKey.getAccessor() ;
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        int[] index = leftValueMap.get(accessor.getObject(i)) ;
+        int[] index = leftValueMap.get(accessor.get(i)) ;
         if(index != null){
           outRecords.add(new int[]{index[0],index[1],i});
         }
@@ -373,9 +373,9 @@ public class JoinBatch extends BaseRecordBatch {
       BitVector.Mutator mutator = rightMarkBits.getMutator();
       mutator.setValueCount(rightIncoming.getRecordCount());
 
-      ValueVector.Accessor accessor = rightJoinKey.getAccessor();
+      IntVector.Accessor accessor = rightJoinKey.getAccessor();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        int[] index = leftValueMap.get(accessor.getObject(i));
+        int[] index = leftValueMap.get(accessor.get(i));
         if (index != null) {
           outRecords.add(new int[]{index[0], index[1], i});
           mutator.set(i, 1);
