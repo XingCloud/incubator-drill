@@ -1,8 +1,9 @@
 package org.apache.drill.exec.physical.impl.eval.fn.agg;
 
+import com.carrotsearch.hppc.ObjectOpenHashSet;
+import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.clearspring.analytics.stream.cardinality.HyperLogLog;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos;
@@ -18,7 +19,6 @@ import org.apache.drill.exec.vector.IntVector;
 import org.apache.drill.exec.vector.ValueVector;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -114,7 +114,7 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   }
 
   class SetCounter extends DistinctCounter {
-    Set<Object> set = Sets.newHashSet();
+    ObjectOpenHashSet<Object> set = new ObjectOpenHashSet<>();
 
     @Override
     public void add(ValueVector v) {
@@ -141,8 +141,8 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
     public HyperCounter() {}
 
     public HyperCounter(SetCounter setCounter) {
-      for (Object o : setCounter.set) {
-        hyperLogLog.offer(o);
+      for (ObjectCursor<Object> o : setCounter.set) {
+        hyperLogLog.offer(o.value);
       }
       previous = setCounter.previous;
       current = setCounter.current;
