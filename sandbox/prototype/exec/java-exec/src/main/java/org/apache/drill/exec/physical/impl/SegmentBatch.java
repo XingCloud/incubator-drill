@@ -187,8 +187,10 @@ public class SegmentBatch extends BaseRecordBatch {
         groupByExprs[j] = segmentValues[j].getAccessor().getObject(i);
       }
       groupByExprsValue = new GroupByExprsValue(groupByExprs);
-      Integer groupNum = groupInfo.get(groupByExprsValue);
-      if (groupNum == null) {
+      int groupNum ;
+      if(groupInfo.containsKey(groupByExprsValue)){
+        groupNum = groupInfo.lget();
+      }else{
         groupNum = ++groupTotal;
         groupInfo.put(groupByExprsValue, groupNum);
       }

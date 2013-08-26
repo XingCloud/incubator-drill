@@ -283,8 +283,8 @@ public class JoinBatch extends BaseRecordBatch {
       cacheRight();
       IntVector.Accessor accessor = rightJoinKey.getAccessor() ;
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        int[] index = leftValueMap.get(accessor.get(i)) ;
-        if(index != null){
+        if(leftValueMap.containsKey(accessor.get(i))){
+          int[] index = leftValueMap.lget();
           outRecords.add(new int[]{index[0],index[1],i});
         }
       }
@@ -375,8 +375,8 @@ public class JoinBatch extends BaseRecordBatch {
 
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        int[] index = leftValueMap.get(accessor.get(i));
-        if (index != null) {
+        if(leftValueMap.containsKey(accessor.get(i))){
+          int[] index = leftValueMap.lget() ;
           outRecords.add(new int[]{index[0], index[1], i});
           mutator.set(i, 1);
         }

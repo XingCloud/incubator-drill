@@ -119,11 +119,6 @@
             <version>1.0.5-M3</version>
         </dependency>
         <dependency>
-            <groupId>com.carrotsearch</groupId>
-            <artifactId>hppc</artifactId>
-            <version>0.4.2</version>
-        </dependency>
-        <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>4.0.3.Final</version>
