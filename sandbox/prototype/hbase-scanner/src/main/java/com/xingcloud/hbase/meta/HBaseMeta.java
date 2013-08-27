@@ -6,9 +6,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Created with IntelliJ IDEA.
- * User: yangbo
- * Date: 7/2/13
- * Time: 9:47 PM
+ * User: Wang Yufei
+ * Date: 13-3-1
+ * Time: 下午3:55
  * To change this template use File | Settings | File Templates.
  */
 public class HBaseMeta {
@@ -35,7 +35,7 @@ public class HBaseMeta {
         LOG.info("Table path: " + path.toString());
         return path.toString();
     }
+
+
+
 }
-
-
-

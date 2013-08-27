@@ -1,5 +1,6 @@
 package com.xingcloud.hbase.util;
 
+import com.xingcloud.hbase.filter.UidRangeFilter;
 import com.xingcloud.hbase.filter.XARowKeyFilter;
 import com.xingcloud.mongodb.MongoDBOperation;
 import com.xingcloud.xa.uidmapping.UidMappingUtil;

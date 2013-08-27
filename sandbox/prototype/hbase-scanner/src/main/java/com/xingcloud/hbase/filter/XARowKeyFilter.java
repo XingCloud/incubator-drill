@@ -1,6 +1,7 @@
 package com.xingcloud.hbase.filter;
 
 import com.xingcloud.hbase.util.HBaseEventUtils;
+import com.xingcloud.xa.uidmapping.UidMappingUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
@@ -20,7 +21,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class XARowKeyFilter extends FilterBase {
-    private static Log LOG = LogFactory.getLog(XARowKeyFilter.class);
+    private static Log LOG = LogFactory.getLog(UidRangeFilter.class);
 
     private byte[] startUidOfBytes5;
     private byte[] endUidOfBytes5;
