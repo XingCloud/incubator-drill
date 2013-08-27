@@ -55,7 +55,8 @@ public class HBaseRecordReader implements RecordReader {
 
   private DFARowKeyParser dfaParser;
 
-  private List<HbaseScanPOP.FilterEntry> filters;
+  //private List<HbaseScanPOP.FilterEntry> filters;
+  private List<LogicalExpression> filters;
   private OutputMutator output ;
 
 
@@ -77,8 +78,14 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = parseRkStr(config.getStartRowKey());
-    endRowKey = parseRkStr(config.getEndRowKey());
+     boolean test=true;
+     if(!test){
+        startRowKey = parseRkStr(config.getStartRowKey());
+        endRowKey = parseRkStr(config.getEndRowKey());
+     }else {
+        startRowKey=appendBytes(parseRkStr(config.getStartRowKey()),produceTail(true));
+        endRowKey=appendBytes(parseRkStr(config.getEndRowKey()),produceTail(false));
+     }
     if(Arrays.equals(startRowKey,endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
@@ -119,6 +126,28 @@ public class HBaseRecordReader implements RecordReader {
   /*
      parse Rk in physical_test: "test"+propId("03")+day("20121201")+[type("str"/"num")+val("en"/"123")]
     */
+
+  private byte[] appendBytes(byte[] orig,byte[] tail){
+     byte[] result=new byte[orig.length+tail.length];
+     for(int i=0;i<result.length;i++){
+         if(i<orig.length)
+             result[i]=orig[i];
+         else
+             result[i]=tail[i-orig.length];
+     }
+     return result;
+  }
+  private byte[] produceTail(boolean start){
+      byte[] result=new byte[6];
+      result[0]=-1;
+      for(int i=1;i<result.length;i++){
+          if(start)
+              result[i]=0;
+          else
+              result[i]=-1;
+      }
+      return result;
+  }
   private byte[] parseRkStr(String origRk) {
     byte[] result;
     if (origRk.startsWith("test")) {
@@ -163,8 +192,9 @@ public class HBaseRecordReader implements RecordReader {
     long startVersion = Long.MIN_VALUE;
     long stopVersion = Long.MAX_VALUE;
     if (filters != null) {
-      for (HbaseScanPOP.FilterEntry entry : filters) {
-        for(LogicalExpression e: entry.getFilterExpressions())
+      //for (HbaseScanPOP.FilterEntry entry : filters) {
+      //  for(LogicalExpression e: entry.getFilterExpressions())
+        for(LogicalExpression e: filters)
         {
           if (e instanceof FunctionCall) {
             FunctionCall c = (FunctionCall) e;
@@ -234,7 +264,7 @@ public class HBaseRecordReader implements RecordReader {
 
           }
         }
-      }
+      //}
     }
     TableScanner scanner;
     if (startVersion == Long.MIN_VALUE && stopVersion == Long.MAX_VALUE)

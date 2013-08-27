@@ -78,12 +78,12 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         private String tableName;
         private String startRowKey;
         private String endRowKey;
-        private List<FilterEntry> filters;
+        private List<LogicalExpression> filters;
         private List<NamedExpression>   projections;
 
         @JsonCreator
         public HbaseScanEntry(@JsonProperty("table") String tableName, @JsonProperty("startRowKey") String startRowKey,
-                              @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<FilterEntry> filters,
+                              @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<LogicalExpression> filters,
                               @JsonProperty("projections") List<NamedExpression> projections){
             this.tableName=tableName;
             this.startRowKey=startRowKey;
@@ -113,7 +113,7 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             return endRowKey;
         }
 
-        public List<FilterEntry> getFilters() {
+        public List<LogicalExpression> getFilters() {
             return filters;
         }
 
