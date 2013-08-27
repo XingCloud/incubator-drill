@@ -29,16 +29,16 @@ public class TestHBaseRecordReader {
    public void  readEventTable(){
        String startKey = System.getProperty("hbase.start");
        if(startKey==null)
-           startKey="20130802'";
+           startKey="20130101visit.22find.hp.";
        System.out.println("startKey = " + startKey);
        String stopKey=System.getProperty("hbase.stop");
        if(stopKey==null)
-           stopKey="20130802visiu";
+           stopKey="20130101visit.";
        System.out.println("stopKey = "+stopKey);
 
        String eventTable=System.getProperty("hbase.table");
        if(eventTable==null)
-           eventTable="age_deu";
+           eventTable="sof-dsk_deu";
        System.out.println("eventTable "+eventTable);
        HbaseScanPOP.HbaseScanEntry eventEntry=getReadEntry(eventTable, startKey, stopKey, "event");
 
@@ -135,7 +135,7 @@ public class TestHBaseRecordReader {
                 projections.add(ue1);
                 projections.add(ue2);
                 projections.add(ue3);
-                entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,filters,projections);
+                entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,null,projections);
                 return entry;
            case "event":
                FunctionDefinition funcDef=new BooleanFunctions().getFunctionDefintions()[3];

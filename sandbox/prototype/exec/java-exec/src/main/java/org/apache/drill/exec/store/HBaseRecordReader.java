@@ -1,6 +1,5 @@
 package org.apache.drill.exec.store;
 
-import com.sun.jersey.core.util.Base64;
 import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
@@ -15,7 +14,6 @@ import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.exception.SchemaChangeException;
-import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
@@ -25,7 +23,6 @@ import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
-import org.apache.hadoop.hbase.regionserver.TableScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.ByteArrayOutputStream;
@@ -78,8 +75,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = parseRkStr(config.getStartRowKey());
-    endRowKey = parseRkStr(config.getEndRowKey());
+    startRowKey=appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
+    endRowKey=appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
     if(Arrays.equals(startRowKey,endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
@@ -127,6 +124,29 @@ public class HBaseRecordReader implements RecordReader {
       result = escape(content);
     } else {
       result = ByteUtils.toBytesBinary(origRk);
+    }
+    return result;
+  }
+
+  private byte[] appendBytes(byte[] orig, byte[] tail) {
+    byte[] result = new byte[orig.length + tail.length];
+    for (int i = 0; i < result.length; i++) {
+      if (i < orig.length)
+        result[i] = orig[i];
+      else
+        result[i] = tail[i - orig.length];
+    }
+    return result;
+  }
+
+  private byte[] produceTail(boolean start) {
+    byte[] result = new byte[6];
+    result[0] = -1;
+    for (int i = 1; i < result.length; i++) {
+      if (start)
+        result[i] = 0;
+      else
+        result[i] = -1;
     }
     return result;
   }

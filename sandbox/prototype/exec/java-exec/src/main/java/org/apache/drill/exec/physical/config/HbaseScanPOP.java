@@ -3,6 +3,7 @@ package org.apache.drill.exec.physical.config;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.physical.EndpointAffinity;
@@ -49,6 +50,28 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
     @Override
     public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
         return this;
+    }
+
+    public static class FilterEntry{
+
+
+        private FieldReference filterType;
+        private List<LogicalExpression> filterExpressions;
+        @JsonCreator
+        public FilterEntry(@JsonProperty("type")FieldReference filterType,
+                           @JsonProperty("exprs")List<LogicalExpression> filterExpressions) {
+            this.filterType = filterType;
+            this.filterExpressions = filterExpressions;
+        }
+        public FieldReference getFilterType() {
+            return filterType;
+        }
+
+        public List<LogicalExpression> getFilterExpressions() {
+            return filterExpressions;
+        }
+
+
     }
 
     public static class HbaseScanEntry implements ReadEntry {

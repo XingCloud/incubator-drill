@@ -2,35 +2,54 @@ package org.apache.drill.exec.opt;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
-import static org.apache.drill.common.util.Selections.*;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTERS;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
 
 import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
-import org.antlr.runtime.RecognitionException;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
-import org.apache.drill.common.expression.LogicalExpressionParser;
 import org.apache.drill.common.logical.LogicalPlan;
-import org.apache.drill.common.logical.data.*;
+import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
+import org.apache.drill.common.logical.data.Join;
+import org.apache.drill.common.logical.data.JoinCondition;
+import org.apache.drill.common.logical.data.LogicalOperator;
+import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.logical.data.Project;
+import org.apache.drill.common.logical.data.Scan;
+import org.apache.drill.common.logical.data.SinkOperator;
+import org.apache.drill.common.logical.data.Store;
 import org.apache.drill.common.logical.data.Union;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.config.*;
+import org.apache.drill.exec.physical.config.CollapsingAggregatePOP;
+import org.apache.drill.exec.physical.config.HbaseScanPOP;
+import org.apache.drill.exec.physical.config.JoinPOP;
+import org.apache.drill.exec.physical.config.MysqlScanPOP;
+import org.apache.drill.exec.physical.config.Screen;
+import org.apache.drill.exec.physical.config.SegmentPOP;
 
 import java.io.IOException;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA. User: jaltekruse Date: 6/11/13 Time: 5:32 PM To change this template use File | Settings
@@ -40,7 +59,6 @@ public class BasicOptimizer extends Optimizer {
 
   private DrillConfig config;
   private QueryContext context;
-
 
   public BasicOptimizer(DrillConfig config, QueryContext context) {
     this.config = config;
@@ -96,8 +114,8 @@ public class BasicOptimizer extends Optimizer {
     @Override
     public PhysicalOperator visitScan(Scan scan, Object obj) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(scan);
+      ObjectMapper mapper = context.getConfig().getMapper();
       if (pop == null) {
-
 
         String storageEngine = scan.getStorageEngine();
         if (SE_HBASE.equals(storageEngine)) {
@@ -105,13 +123,12 @@ public class BasicOptimizer extends Optimizer {
           if (selections == null) {
             throw new OptimizerException("Selection is null");
           }
-          ObjectMapper mapper = config.getMapper();
           JsonNode root = selections.getRoot(), filters, projections, rowkey;
-          String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
+          String table, rowkeyStart, rowkeyEnd, projectionString, filterType, filterString;
           int selectionSize = root.size();
           HbaseScanPOP.HbaseScanEntry entry;
           List<HbaseScanEntry> entries = new ArrayList<>(selectionSize);
-          List<LogicalExpression> filterList = Lists.newArrayList();
+          List<LogicalExpression> filterList = null;
           LogicalExpression le;
           List<NamedExpression> projectionList;
           NamedExpression ne;
@@ -122,15 +139,20 @@ public class BasicOptimizer extends Optimizer {
             rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
             filters = selection.get(SELECTION_KEY_WORD_FILTERS);
             if (filters != null) {
+              filterList = Lists.newArrayList();
               for (JsonNode filterNode : filters) {
-                filterString = filterNode.textValue();
-                try {
-                  le =  context.getConfig().getMapper().readValue(filterNode.traverse(),LogicalExpression.class) ;
-                  //le = LogicalExpressionParser.parse(filterString);
-                } catch (Exception e) {
-                  throw new OptimizerException("Cannot parse filter - " + filterString);
+                filterType = filterNode.get("type").textValue();
+                if ("ROWKEY".equals(filterType)) {
+                  JsonNode includes = filterNode.get("includes");
+                  for (JsonNode include : includes) {
+                    try {
+                      le = mapper.readValue(include.traverse(), LogicalExpression.class);
+                    } catch (Exception e) {
+                      throw new OptimizerException("Cannot parse filter - " + include.textValue());
+                    }
+                    filterList.add(le);
+                  }
                 }
-                filterList.add(le);
               }
             }
             projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
@@ -153,7 +175,6 @@ public class BasicOptimizer extends Optimizer {
           if (root == null) {
             throw new OptimizerException("Selection is null");
           }
-          ObjectMapper mapper = config.getMapper();
           JsonNode selection = root.getRoot(), projections;
           String tableName, filter = null;
           List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
@@ -193,7 +214,8 @@ public class BasicOptimizer extends Optimizer {
     public PhysicalOperator visitProject(Project project, Object obj) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(project);
       if (pop == null) {
-        pop = new org.apache.drill.exec.physical.config.Project(Arrays.asList(project.getSelections()), project.getInput().accept(this, obj));
+        pop = new org.apache.drill.exec.physical.config.Project(Arrays.asList(project.getSelections()),
+                                                                project.getInput().accept(this, obj));
         operatorMap.put(project, pop);
       }
       return pop;
@@ -210,8 +232,7 @@ public class BasicOptimizer extends Optimizer {
         FieldReference[] carryovers = collapsingAggregate.getCarryovers();
         NamedExpression[] aggregations = collapsingAggregate.getAggregations();
         System.out.println(next);
-        pop = new CollapsingAggregatePOP(next.accept(this, value), within, target,
-          carryovers, aggregations);
+        pop = new CollapsingAggregatePOP(next.accept(this, value), within, target, carryovers, aggregations);
         operatorMap.put(collapsingAggregate, pop);
       }
       return pop;
@@ -223,16 +244,15 @@ public class BasicOptimizer extends Optimizer {
       if (pop == null) {
         LogicalOperator lo = filter.iterator().next();
         LogicalExpression le = filter.getExpr();
-        pop = new org.apache.drill.exec.physical.config.Filter(
-          lo.accept(this, value), le, 0.5f);
+        pop = new org.apache.drill.exec.physical.config.Filter(lo.accept(this, value), le, 0.5f);
         operatorMap.put(filter, pop);
       }
       return pop;
     }
 
-
     @Override
-    public PhysicalOperator visitJoin(org.apache.drill.common.logical.data.Join join, Object value) throws OptimizerException {
+    public PhysicalOperator visitJoin(org.apache.drill.common.logical.data.Join join, Object value) throws
+      OptimizerException {
       PhysicalOperator pop = operatorMap.get(join);
       if (pop == null) {
         LogicalOperator leftLO = join.getLeft();
@@ -248,7 +268,8 @@ public class BasicOptimizer extends Optimizer {
     }
 
     @Override
-    public PhysicalOperator visitSegment(org.apache.drill.common.logical.data.Segment segment, Object value) throws OptimizerException {
+    public PhysicalOperator visitSegment(org.apache.drill.common.logical.data.Segment segment, Object value) throws
+      OptimizerException {
       PhysicalOperator pop = operatorMap.get(segment);
       if (pop == null) {
         LogicalOperator next = segment.iterator().next();
