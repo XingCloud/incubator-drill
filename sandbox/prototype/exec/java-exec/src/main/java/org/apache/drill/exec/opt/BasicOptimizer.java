@@ -98,7 +98,7 @@ public class BasicOptimizer extends Optimizer {
       PhysicalOperator pop = operatorMap.get(scan);
       if (pop == null) {
 
-
+        //todo UnionedScan
         String storageEngine = scan.getStorageEngine();
         if (SE_HBASE.equals(storageEngine)) {
           JSONOptions selections = scan.getSelection();
