@@ -199,7 +199,7 @@ public class IterationBuffer {
       }
     }
 
-    private void close() {
+    public void close() {
       //clear self
       this.selectionVector2 = null;
       this.selectionVector4 = null;

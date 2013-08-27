@@ -33,7 +33,7 @@ public interface LogicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
     //public RETURN visitExchange(Exchange exchange, EXTRA value) throws EXCEP;
     public RETURN visitScan(Scan scan, EXTRA value) throws EXCEP;
     public RETURN visitUnionedScan(UnionedScan scan, EXTRA value) throws EXCEP;
-    public RETURN visitUnionedScanSplit(UnionedScanSplit scan, EXTRA value) throws EXCEP;
+    public RETURN visitUnionedScanSplit(UnionedScanSplit scanSplit, EXTRA value) throws EXCEP;
     public RETURN visitStore(Store store, EXTRA value) throws EXCEP;
     public RETURN visitCollapsingAggregate(CollapsingAggregate collapsingAggregate, EXTRA value) throws EXCEP;
 
