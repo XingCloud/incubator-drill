@@ -15,13 +15,11 @@ import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
-import org.antlr.runtime.RecognitionException;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
-import org.apache.drill.common.expression.LogicalExpressionParser;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
@@ -116,6 +114,7 @@ public class BasicOptimizer extends Optimizer {
     @Override
     public PhysicalOperator visitScan(Scan scan, Object obj) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(scan);
+      ObjectMapper mapper = context.getConfig().getMapper();
       if (pop == null) {
 
         String storageEngine = scan.getStorageEngine();
@@ -124,13 +123,12 @@ public class BasicOptimizer extends Optimizer {
           if (selections == null) {
             throw new OptimizerException("Selection is null");
           }
-          ObjectMapper mapper = config.getMapper();
           JsonNode root = selections.getRoot(), filters, projections, rowkey;
-          String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
+          String table, rowkeyStart, rowkeyEnd, projectionString, filterType, filterString;
           int selectionSize = root.size();
           HbaseScanPOP.HbaseScanEntry entry;
           List<HbaseScanEntry> entries = new ArrayList<>(selectionSize);
-          List<LogicalExpression> filterList = Lists.newArrayList();
+          List<LogicalExpression> filterList = null;
           LogicalExpression le;
           List<NamedExpression> projectionList;
           NamedExpression ne;
@@ -141,15 +139,20 @@ public class BasicOptimizer extends Optimizer {
             rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
             filters = selection.get(SELECTION_KEY_WORD_FILTERS);
             if (filters != null) {
+              filterList = Lists.newArrayList();
               for (JsonNode filterNode : filters) {
-                filterString = filterNode.textValue();
-                try {
-                  le =  context.getConfig().getMapper().readValue(filterNode.traverse(),LogicalExpression.class) ;
-                  //le = LogicalExpressionParser.parse(filterString);
-                } catch (Exception e) {
-                  throw new OptimizerException("Cannot parse filter - " + filterString);
+                filterType = filterNode.get("type").textValue();
+                if ("ROWKEY".equals(filterType)) {
+                  JsonNode includes = filterNode.get("includes");
+                  for (JsonNode include : includes) {
+                    try {
+                      le = mapper.readValue(include.traverse(), LogicalExpression.class);
+                    } catch (Exception e) {
+                      throw new OptimizerException("Cannot parse filter - " + include.textValue());
+                    }
+                    filterList.add(le);
+                  }
                 }
-                filterList.add(le);
               }
             }
             projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
@@ -172,7 +175,6 @@ public class BasicOptimizer extends Optimizer {
           if (root == null) {
             throw new OptimizerException("Selection is null");
           }
-          ObjectMapper mapper = config.getMapper();
           JsonNode selection = root.getRoot(), projections;
           String tableName, filter = null;
           List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
