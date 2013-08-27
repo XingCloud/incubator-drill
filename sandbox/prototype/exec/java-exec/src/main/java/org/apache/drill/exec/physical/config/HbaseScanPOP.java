@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.physical.EndpointAffinity;
 import org.apache.drill.exec.physical.OperatorCost;
@@ -55,7 +56,7 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
     public static class FilterEntry{
 
 
-        private FieldReference filterType;
+        private SchemaPath filterType;
         private List<LogicalExpression> filterExpressions;
         @JsonCreator
         public FilterEntry(@JsonProperty("type")FieldReference filterType,
@@ -63,7 +64,7 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             this.filterType = filterType;
             this.filterExpressions = filterExpressions;
         }
-        public FieldReference getFilterType() {
+        public SchemaPath getFilterType() {
             return filterType;
         }
 

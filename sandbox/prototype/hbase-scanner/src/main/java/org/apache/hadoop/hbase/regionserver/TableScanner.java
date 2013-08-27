@@ -31,7 +31,6 @@ public class TableScanner implements XAScanner {
     private byte[] endRowKey;
     private String tableName;
     private Filter filter;
-    private List<Filter> filterList;
 
     private List<DataScanner> scanners;
 
@@ -51,20 +50,18 @@ public class TableScanner implements XAScanner {
         this(startRowKey, endRowKey, tableName, null, isFileOnly, isMemOnly);
     }
 
-    public TableScanner(byte[] startRowKey,byte[] endRowKey,String tableName,List<Filter> filterList,
+    public TableScanner(byte[] startRowKey,byte[] endRowKey,String tableName,Filter filter,
                         boolean isFileOnly,boolean isMemOnly){
-        this(startRowKey, endRowKey, tableName, filterList, isFileOnly, isMemOnly,Long.MIN_VALUE,Long.MAX_VALUE);
+        this(startRowKey, endRowKey, tableName, filter, isFileOnly, isMemOnly,Long.MIN_VALUE,Long.MAX_VALUE);
     }
-    public TableScanner(byte[] startRowKey,byte[] endRowKey,String tableName,List<Filter> filterList,
+    public TableScanner(byte[] startRowKey,byte[] endRowKey,String tableName,Filter filter,
                         boolean isFileOnly,boolean isMemOnly,long startVersion,long stopVersion){
         this.isFileOnly = isFileOnly;
         this.isMemOnly = isMemOnly;
         this.startRowKey = startRowKey;
         this.endRowKey = endRowKey;
         this.tableName = tableName;
-        if(filterList!=null&&filterList.size()!=0)
-            this.filterList = filterList;
-        else this.filterList=null;
+        this.filter=filter;
         if(startVersion!=Long.MIN_VALUE)this.startTimeStamp=startVersion;
         if(stopVersion!=Long.MAX_VALUE)this.stopTimeStamp=stopVersion;
         try {
@@ -98,10 +95,10 @@ public class TableScanner implements XAScanner {
             //memScan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
             //if (filter != null)
             //    memScan.setFilter(filter);
-            if(filterList!=null)
+            if(filter!=null)
             {
-                FilterList filterList1=new FilterList(filterList);
-                memScan.setFilter(filterList1);
+
+                memScan.setFilter(filter);
             }
             MemstoreScanner memstoreScanner = new MemstoreScanner(table, memScan);
             scanners.add(memstoreScanner);
