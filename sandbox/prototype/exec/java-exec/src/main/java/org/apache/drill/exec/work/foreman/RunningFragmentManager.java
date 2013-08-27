@@ -35,6 +35,7 @@ import org.apache.drill.exec.proto.ExecProtos.FragmentStatus;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus.FragmentState;
 import org.apache.drill.exec.proto.ExecProtos.PlanFragment;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
+import org.apache.drill.exec.proto.UserBitShared;
 import org.apache.drill.exec.proto.UserProtos.QueryResult;
 import org.apache.drill.exec.proto.UserProtos.QueryResult.QueryState;
 import org.apache.drill.exec.rpc.RpcException;
@@ -61,6 +62,7 @@ class RunningFragmentManager implements FragmentStatusListener{
   private ForemanManagerListener foreman;
   private AtomicInteger remainingFragmentCount;
   private FragmentRunner rootRunner;
+  private volatile UserBitShared.QueryId queryId;
   
   public RunningFragmentManager(ForemanManagerListener foreman, TunnelManager tun) {
     super();
@@ -73,6 +75,7 @@ class RunningFragmentManager implements FragmentStatusListener{
   public void runFragments(WorkerBee bee, PlanFragment rootFragment, FragmentRoot rootOperator, UserClientConnection rootClient, List<PlanFragment> leafFragments) throws ExecutionSetupException{
     remainingFragmentCount.set(leafFragments.size()+1);
 
+    queryId = rootFragment.getHandle().getQueryId() ;
     // set up the root fragment first so we'll have incoming buffers available.
     {
       IncomingBuffers buffers = new IncomingBuffers(rootOperator);
@@ -138,7 +141,7 @@ class RunningFragmentManager implements FragmentStatusListener{
     updateStatus(status);
     int remaining = remainingFragmentCount.decrementAndGet();
     if(remaining == 0){
-      QueryResult result = QueryResult.newBuilder().setQueryState(QueryState.COMPLETED).build();
+      QueryResult result = QueryResult.newBuilder().setQueryState(QueryState.COMPLETED).setQueryId(queryId).build();
       foreman.cleanupAndSendResult(result);
     }
   }
@@ -146,7 +149,7 @@ class RunningFragmentManager implements FragmentStatusListener{
   private void fail(FragmentStatus status){
     updateStatus(status);
     stopQuery();
-    QueryResult result = QueryResult.newBuilder().setQueryState(QueryState.FAILED).build();
+    QueryResult result = QueryResult.newBuilder().setQueryState(QueryState.FAILED).setQueryId(queryId).build();
     foreman.cleanupAndSendResult(result);
   }
  

@@ -135,25 +135,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.drill</groupId>
-            <artifactId>hbase-scanner</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>log4j-over-slf4j</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.drill</groupId>
             <artifactId>metastore</artifactId>
             <exclusions>
                 <exclusion>
@@ -200,6 +181,16 @@
             <groupId>com.carrotsearch</groupId>
             <artifactId>hppc</artifactId>
             <version>0.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xingcloud.xa</groupId>
+            <artifactId>dbutil</artifactId>
+            <version>1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xingcloud.xa</groupId>
+            <artifactId>direct-scanner</artifactId>
+            <version>1.0</version>
         </dependency>
     </dependencies>
     <build>

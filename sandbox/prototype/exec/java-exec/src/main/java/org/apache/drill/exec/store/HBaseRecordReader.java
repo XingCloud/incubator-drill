@@ -24,6 +24,7 @@ import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.regionserver.TableScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -59,12 +60,12 @@ public class HBaseRecordReader implements RecordReader {
   private OutputMutator output ;
 
 
-  private List<TableScanner> scanners = new ArrayList<>();
+  private List<DirectScanner> scanners = new ArrayList<>();
   private int currentScannerIndex = 0;
   private List<KeyValue> curRes = new ArrayList<KeyValue>();
   private int valIndex = -1;
   private boolean hasMore;
-  private int batchSize = 1024 * 4;
+  private int batchSize = 1024 * 16;
   private ValueVector[] valueVectors;
   private boolean init = false;
 
@@ -159,7 +160,7 @@ public class HBaseRecordReader implements RecordReader {
   private void initTableScanner() {
 
     scanners = new ArrayList<>();
-    List<Filter> filtersList = new ArrayList<>();
+    FilterList filterList = new FilterList();
     long startVersion = Long.MIN_VALUE;
     long stopVersion = Long.MAX_VALUE;
     if (filters != null) {
@@ -198,7 +199,7 @@ public class HBaseRecordReader implements RecordReader {
                 op,
                 new BinaryComparator(Bytes.toBytes(rightField.getLong()))
               );
-              filtersList.add(valueFilter);
+              filterList.addFilter(valueFilter);
               break;
             case cversion:
               switch (op) {
@@ -218,14 +219,14 @@ public class HBaseRecordReader implements RecordReader {
                   List<Long> timestamps = new ArrayList<>();
                   timestamps.add(rightField.getLong());
                   Filter timeStampsFilter = new TimestampsFilter(timestamps);
-                  filtersList.add(timeStampsFilter);
+                  filterList.addFilter(timeStampsFilter);
                   break;
               }
               break;
             case cqname:
               Filter qualifierFilter =
                 new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
-              filtersList.add(qualifierFilter);
+              filterList.addFilter(qualifierFilter);
             default:
               break;
           }
@@ -233,12 +234,13 @@ public class HBaseRecordReader implements RecordReader {
         }
       }
     }
-    TableScanner scanner;
-    if (startVersion == Long.MIN_VALUE && stopVersion == Long.MAX_VALUE)
-      scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false);
-    else
-      scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false, startVersion, stopVersion);
+    DirectScanner scanner;
+    try{
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     scanners.add(scanner);
+    }catch (Exception e){
+
+    }
   }
 
 
@@ -300,7 +302,7 @@ public class HBaseRecordReader implements RecordReader {
         setValueCount(recordSetIndex);
         return recordSetIndex;
       }
-      TableScanner scanner = scanners.get(currentScannerIndex);
+      DirectScanner scanner = scanners.get(currentScannerIndex);
       if (valIndex == -1) {
         if (scanner == null) {
           return 0;
@@ -422,7 +424,7 @@ public class HBaseRecordReader implements RecordReader {
       }
       valueVectors[i].close();
     }
-    for (TableScanner scanner : scanners) {
+    for (DirectScanner scanner : scanners) {
       try {
         scanner.close();
       } catch (Exception e) {
