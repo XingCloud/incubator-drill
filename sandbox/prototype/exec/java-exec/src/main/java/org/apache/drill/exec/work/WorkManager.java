@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.drill.exec.cache.DistributedCache;
 import org.apache.drill.exec.coord.ClusterCoordinator;
+import org.apache.drill.exec.expr.fn.FunctionImplementationRegistry;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.ExecProtos.FragmentHandle;
 import org.apache.drill.exec.proto.UserBitShared.QueryId;
@@ -65,6 +66,7 @@ public class WorkManager implements Closeable{
   private final WorkerBee bee;
   private Executor executor = Executors.newFixedThreadPool(4, new NamedThreadFactory("Working Thread - "));
   private final EventThread eventThread;
+  private final FunctionImplementationRegistry functionImpRegistry ;
   
   public WorkManager(BootStrapContext context){
     this.bee = new WorkerBee();
@@ -72,6 +74,7 @@ public class WorkManager implements Closeable{
     this.bitComWorker = new BitComHandlerImpl(bee);
     this.userWorker = new UserWorker(bee);
     this.eventThread = new EventThread();
+    this.functionImpRegistry =  new FunctionImplementationRegistry(context.getConfig());
     
   }
   
@@ -133,6 +136,12 @@ public class WorkManager implements Closeable{
     public DrillbitContext getContext() {
       return dContext;
     }
+
+    public FunctionImplementationRegistry getFunctionImpRegistry(){
+      return functionImpRegistry;
+    }
+
+
 
   }
 

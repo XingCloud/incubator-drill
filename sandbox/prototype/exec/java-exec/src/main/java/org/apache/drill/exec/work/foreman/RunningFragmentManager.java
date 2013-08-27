@@ -77,7 +77,7 @@ class RunningFragmentManager implements FragmentStatusListener{
     {
       IncomingBuffers buffers = new IncomingBuffers(rootOperator);
       
-      FragmentContext rootContext = new FragmentContext(bee.getContext(), rootFragment.getHandle(), rootClient, buffers, new FunctionImplementationRegistry(bee.getContext().getConfig()));
+      FragmentContext rootContext = new FragmentContext(bee.getContext(), rootFragment.getHandle(), rootClient, buffers, bee.getFunctionImpRegistry());
       RootExec rootExec = ImplCreator.getExec(rootContext, rootOperator);
       // add fragment to local node.
       map.put(rootFragment.getHandle(), new FragmentData(rootFragment.getHandle(), null, true));
