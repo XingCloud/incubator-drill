@@ -30,7 +30,7 @@ public interface RecordReader {
    *          mutating the set of schema values for that particular record.
    * @throws ExecutionSetupException
    */
-  public abstract void setup(OutputMutator output) throws ExecutionSetupException;
+  public abstract void setup(OutputMutator output) throws Exception;
 
   /**
    * Increment record reader forward, writing into the provided output batch.  

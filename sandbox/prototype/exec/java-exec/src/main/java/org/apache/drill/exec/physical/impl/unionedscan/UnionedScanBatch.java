@@ -87,7 +87,7 @@ public class UnionedScanBatch implements RecordBatch {
     if(scanSplit.currentIndex == currentEntry){
       return reader.outputVectors();
     }else{
-      return buffer.get(scanSplit.currentIndex).get(scanSplit.currentOutput).valueVectorIterator();      
+        return buffer.get(scanSplit.currentIndex).get(scanSplit.currentOutput).valueVectorIterator();
     }
   }
 
