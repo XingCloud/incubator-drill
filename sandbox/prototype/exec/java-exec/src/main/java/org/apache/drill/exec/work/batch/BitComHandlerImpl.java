@@ -114,7 +114,7 @@ public class BitComHandlerImpl implements BitComHandler {
   @Override
   public void startNewRemoteFragment(PlanFragment fragment){
     logger.debug("Received remote fragment start instruction", fragment);
-    FragmentContext context = new FragmentContext(bee.getContext(), fragment.getHandle(), null, null,new FunctionImplementationRegistry(bee.getContext().getConfig()));
+    FragmentContext context = new FragmentContext(bee.getContext(), fragment.getHandle(), null, null,bee.getFunctionImpRegistry());
     BitTunnel tunnel = bee.getContext().getBitCom().getTunnel(fragment.getForeman());
     RemotingFragmentRunnerListener listener = new RemotingFragmentRunnerListener(context, tunnel);
     try{
@@ -166,7 +166,7 @@ public class BitComHandlerImpl implements BitComHandler {
         return Acks.FAIL;
       }
 
-      IncomingFragmentHandler newHandler = new RemoteFragmentHandler(fragment, bee.getContext(), bee.getContext().getBitCom().getTunnel(fragment.getForeman()));
+      IncomingFragmentHandler newHandler = new RemoteFragmentHandler(fragment, bee.getContext(), bee.getContext().getBitCom().getTunnel(fragment.getForeman()),bee.getFunctionImpRegistry());
       
       // since their could be a race condition on the check, we'll use putIfAbsent so we don't have two competing handlers.
       handler = handlers.putIfAbsent(fragment.getHandle(), newHandler);

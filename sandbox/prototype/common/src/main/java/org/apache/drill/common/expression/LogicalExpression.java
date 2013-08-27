@@ -54,10 +54,12 @@ public interface LogicalExpression {
 
   public static class De extends StdDeserializer<LogicalExpression> {
     DrillConfig config;
+    FunctionRegistry functionRegistry ;
 
     public De(DrillConfig config) {
       super(LogicalExpression.class);
       this.config = config;
+      this.functionRegistry = new FunctionRegistry(config);
     }
 
     @Override
@@ -76,7 +78,7 @@ public interface LogicalExpression {
         //TODO: move functionregistry and error collector to injectables.
         //ctxt.findInjectableValue(valueId, forProperty, beanInstance)
 
-        parser.setRegistry(new FunctionRegistry(config));
+        parser.setRegistry(functionRegistry);
         parse_return ret = parser.parse();
 
         // ret.e.resolveAndValidate(expr, errorCollector);

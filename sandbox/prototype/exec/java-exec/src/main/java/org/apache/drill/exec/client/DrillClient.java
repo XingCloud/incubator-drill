@@ -106,6 +106,25 @@ public class DrillClient implements Closeable{
     }
   }
 
+  public boolean reconnect()  {
+    Collection<DrillbitEndpoint> endpoints = clusterCoordinator.getAvailableEndpoints() ;
+    if(endpoints.isEmpty()){
+      return  false ;
+    }
+    DrillbitEndpoint endpoint = endpoints.iterator().next() ;
+    try{
+      logger.debug("Reconnection to server{}:{}", endpoint.getAddress(),endpoint.getUserPort());
+      FutureHandler f = new FutureHandler() ;
+      this.client.connect(f,endpoint);
+      f.checkedGet();
+      return true ;
+    }catch (Exception e){
+      logger.error("Reconnection to server{}:{} failed.",endpoint.getAddress(),endpoint.getUserPort());
+      e.printStackTrace();
+      return  false;
+    }
+  }
+
   /**
    * Closes this client's connection to the server
    *

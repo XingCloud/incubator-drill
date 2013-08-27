@@ -95,11 +95,6 @@
             <version>1.30</version>
         </dependency>
         <dependency>
-            <groupId>com.clearspring.analytics</groupId>
-            <artifactId>stream</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.netflix.curator</groupId>
             <artifactId>curator-x-discovery</artifactId>
             <version>1.1.9</version>
@@ -122,11 +117,6 @@
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
             <version>1.0.5-M3</version>
-        </dependency>
-        <dependency>
-            <groupId>com.carrotsearch</groupId>
-            <artifactId>hppc</artifactId>
-            <version>0.4.2</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
@@ -201,8 +191,17 @@
             <artifactId>c3p0</artifactId>
             <version>0.9.1.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.clearspring.analytics</groupId>
+            <artifactId>stream</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+            <version>0.5.2</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

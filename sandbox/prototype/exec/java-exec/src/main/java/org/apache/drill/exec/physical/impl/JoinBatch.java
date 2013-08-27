@@ -1,6 +1,8 @@
 package org.apache.drill.exec.physical.impl;
 
 import com.beust.jcommander.internal.Lists;
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
+import com.google.common.collect.Maps;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.JoinCondition;
@@ -39,9 +41,9 @@ public class JoinBatch extends BaseRecordBatch {
   private BatchSchema leftSchema;
 
   private List<List<ValueVector>> leftIncomings;
-  private List<ValueVector> leftJoinKeys;
-  private ValueVector rightJoinKey;
-  private Map<Object, List<Integer>> rightValueMap = new HashMap<>();
+  private IntVector leftJoinKey ;
+  private IntVector rightJoinKey;
+  private IntObjectOpenHashMap<int[]> leftValueMap = new IntObjectOpenHashMap<>() ;
   private boolean leftCached = false;
   private boolean new_schema = true;
 
@@ -58,7 +60,6 @@ public class JoinBatch extends BaseRecordBatch {
     this.leftIncoming = leftIncoming;
     this.rightIncoming = rightIncoming;
     this.leftIncomings = Lists.newArrayList();
-    this.leftJoinKeys = Lists.newArrayList();
     this.rightVectors = Lists.newArrayList();
 
     switch (config.getType()) {
@@ -157,30 +158,22 @@ public class JoinBatch extends BaseRecordBatch {
     o = leftIncoming.next();
     while (o != IterOutcome.NONE) {
       leftSchema = leftIncoming.getSchema();
-      ValueVector v = leftEvaluator.eval();
-      leftJoinKeyField = v.getField();
-      leftJoinKeys.add(v);
+      leftJoinKey = (IntVector)leftEvaluator.eval();
+      leftJoinKeyField = leftJoinKey.getField();
       leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
+      IntVector.Accessor accessor = leftJoinKey.getAccessor() ;
+      int index = leftIncomings.size() - 1 ;
+      for(int i = 0 ; i < accessor.getValueCount() ; i ++){
+        leftValueMap.put(accessor.get(i),new int[]{index,i}) ;
+      }
+      leftJoinKey.close();
       o = leftIncoming.next();
     }
     return !leftIncomings.isEmpty();
   }
 
   private void cacheRight() {
-    rightJoinKey = rightEvaluator.eval();
-    rightValueMap.clear();
-    ValueVector.Accessor accessor = rightJoinKey.getAccessor();
-    for (int i = 0; i < accessor.getValueCount(); i++) {
-      Object key = accessor.getObject(i);
-      List<Integer> value = rightValueMap.get(key);
-      if (value == null) {
-        value = Lists.newArrayList();
-        value.add(i);
-        rightValueMap.put(key, value);
-      } else {
-        value.add(i);
-      }
-    }
+    rightJoinKey = (IntVector) rightEvaluator.eval();
     rightVectors.clear();
     rightVectors.addAll(TransferHelper.transferVectors(rightIncoming));
   }
@@ -208,8 +201,8 @@ public class JoinBatch extends BaseRecordBatch {
         v.close();
       }
     }
-    for (ValueVector v : leftJoinKeys) {
-      v.close();
+    if(leftJoinKey != null){
+      leftJoinKey.close();
     }
   }
 
@@ -288,15 +281,11 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public boolean connect() {
       cacheRight();
-      for (int i = 0; i < leftJoinKeys.size(); i++) {
-        Accessor leftKeyAccessor = leftJoinKeys.get(i).getAccessor();
-        for (int j = 0; j < leftKeyAccessor.getValueCount(); j++) {
-          List<Integer> indexs = rightValueMap.get(leftKeyAccessor.getObject(j));
-          if (indexs != null) {
-            for (int k : indexs) {
-              outRecords.add(new int[]{i, j, k});
-            }
-          }
+      IntVector.Accessor accessor = rightJoinKey.getAccessor() ;
+      for (int i = 0; i < accessor.getValueCount(); i++) {
+        if(leftValueMap.containsKey(accessor.get(i))){
+          int[] index = leftValueMap.lget();
+          outRecords.add(new int[]{index[0],index[1],i});
         }
       }
       return !outRecords.isEmpty();
@@ -383,16 +372,13 @@ public class JoinBatch extends BaseRecordBatch {
       rightMarkBits.allocateNew(rightIncoming.getRecordCount());
       BitVector.Mutator mutator = rightMarkBits.getMutator();
       mutator.setValueCount(rightIncoming.getRecordCount());
-      for (int i = 0; i < leftJoinKeys.size(); i++) {
-        Accessor leftKeyAccessor = leftJoinKeys.get(i).getAccessor();
-        for (int j = 0; j < leftKeyAccessor.getValueCount(); j++) {
-          List<Integer> indexs = rightValueMap.get(leftKeyAccessor.getObject(j));
-          if (indexs != null) {
-            for (int k : indexs) {
-              outRecords.add(new int[]{i, j, k});
-              mutator.set(k, 1);
-            }
-          }
+
+      IntVector.Accessor accessor = rightJoinKey.getAccessor();
+      for (int i = 0; i < accessor.getValueCount(); i++) {
+        if(leftValueMap.containsKey(accessor.get(i))){
+          int[] index = leftValueMap.lget() ;
+          outRecords.add(new int[]{index[0], index[1], i});
+          mutator.set(i, 1);
         }
       }
       return true;

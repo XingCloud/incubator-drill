@@ -1,5 +1,8 @@
 package org.apache.drill.exec.physical.impl;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
+import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.NamedExpression;
@@ -39,8 +42,8 @@ public class SegmentBatch extends BaseRecordBatch {
   private int groupTotal;
   private int groupByExprsLength;
 
-  private Map<Integer, List<Integer>> groups;
-  private Map<GroupByExprsValue, Integer> groupInfo;
+  private IntObjectOpenHashMap<IntArrayList> groups;
+  private ObjectIntOpenHashMap<GroupByExprsValue> groupInfo;
   private IntVector refVector;
   private SchemaPath[] groupRefs;
   private MajorType[] groupRefsTypes;
@@ -51,8 +54,8 @@ public class SegmentBatch extends BaseRecordBatch {
     this.context = context;
     this.config = config;
     this.incoming = incoming;
-    this.groupInfo = new HashMap<>();
-    this.groups = new HashMap<>();
+    this.groupInfo = new ObjectIntOpenHashMap<>();
+    this.groups = new IntObjectOpenHashMap<>();
     this.groupTotal = 0;
     setupEvals();
   }
@@ -135,8 +138,8 @@ public class SegmentBatch extends BaseRecordBatch {
 
   private void writeOutput() {
     outputVectors.clear();
-    int groupId = groups.keySet().iterator().next();
-    List<Integer> indexes = groups.remove(groupId);
+    int groupId = groups.keys().iterator().next().value  ;
+    IntArrayList indexes = groups.remove(groupId);
     recordCount = indexes.size();
     ValueVector out;
     ValueVector.Accessor inAccessor;
@@ -184,14 +187,16 @@ public class SegmentBatch extends BaseRecordBatch {
         groupByExprs[j] = segmentValues[j].getAccessor().getObject(i);
       }
       groupByExprsValue = new GroupByExprsValue(groupByExprs);
-      Integer groupNum = groupInfo.get(groupByExprsValue);
-      if (groupNum == null) {
+      int groupNum ;
+      if(groupInfo.containsKey(groupByExprsValue)){
+        groupNum = groupInfo.lget();
+      }else{
         groupNum = ++groupTotal;
         groupInfo.put(groupByExprsValue, groupNum);
       }
-      List<Integer> group = groups.get(groupNum);
+      IntArrayList group = groups.get(groupNum);
       if (group == null) {
-        group = new LinkedList<>();
+        group = new IntArrayList();
         group.add(i);
         groups.put(groupNum, group);
       } else {
