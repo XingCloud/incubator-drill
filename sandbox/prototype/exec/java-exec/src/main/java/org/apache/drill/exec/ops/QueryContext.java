@@ -19,6 +19,7 @@ package org.apache.drill.exec.ops;
 
 import java.util.Collection;
 
+import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.cache.DistributedCache;
 import org.apache.drill.exec.planner.PhysicalPlanReader;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -60,5 +61,9 @@ public class QueryContext {
   
   public BitCom getBitCom(){
     return drillbitContext.getBitCom();
+  }
+
+  public DrillConfig getConfig(){
+    return drillbitContext.getConfig();
   }
 }

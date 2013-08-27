@@ -52,12 +52,12 @@ public class RemoteFragmentHandler implements IncomingFragmentHandler {
   private final FragmentContext context;
   private final PhysicalPlanReader reader;
   
-  public RemoteFragmentHandler(PlanFragment fragment, DrillbitContext context, BitTunnel foremanTunnel) throws FragmentSetupException{
+  public RemoteFragmentHandler(PlanFragment fragment, DrillbitContext context, BitTunnel foremanTunnel,FunctionImplementationRegistry functionImplRegistry) throws FragmentSetupException{
     try{
       this.fragment = fragment;
       this.root = context.getPlanReader().readFragmentOperator(fragment.getFragmentJson());
       this.buffers = new IncomingBuffers(root);
-      this.context = new FragmentContext(context, fragment.getHandle(), null, buffers, new FunctionImplementationRegistry(context.getConfig()));
+      this.context = new FragmentContext(context, fragment.getHandle(), null, buffers, functionImplRegistry);
       this.runnerListener = new RemotingFragmentRunnerListener(this.context, foremanTunnel);
       this.reader = context.getPlanReader();
       

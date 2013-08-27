@@ -223,7 +223,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
   }
 
   private PhysicalPlan convert(LogicalPlan plan) {
-    return new BasicOptimizer(DrillConfig.create(), context).optimize(new BasicOptimizer.BasicOptimizationContext(), plan);
+    return new BasicOptimizer(context.getConfig(), context).optimize(new BasicOptimizer.BasicOptimizationContext(), plan);
   }
 
   public QueryResult getResult(UserClientConnection connection, RequestResults req) {

@@ -124,7 +124,7 @@ public class BasicOptimizer extends Optimizer {
           if (selections == null) {
             throw new OptimizerException("Selection is null");
           }
-          ObjectMapper mapper = DrillConfig.create().getMapper();
+          ObjectMapper mapper = config.getMapper();
           JsonNode root = selections.getRoot(), filters, projections, rowkey;
           String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
           int selectionSize = root.size();
@@ -144,8 +144,9 @@ public class BasicOptimizer extends Optimizer {
               for (JsonNode filterNode : filters) {
                 filterString = filterNode.textValue();
                 try {
-                  le = LogicalExpressionParser.parse(filterString);
-                } catch (RecognitionException e) {
+                  le =  context.getConfig().getMapper().readValue(filterNode.traverse(),LogicalExpression.class) ;
+                  //le = LogicalExpressionParser.parse(filterString);
+                } catch (Exception e) {
                   throw new OptimizerException("Cannot parse filter - " + filterString);
                 }
                 filterList.add(le);
@@ -171,7 +172,7 @@ public class BasicOptimizer extends Optimizer {
           if (root == null) {
             throw new OptimizerException("Selection is null");
           }
-          ObjectMapper mapper = DrillConfig.create().getMapper();
+          ObjectMapper mapper = config.getMapper();
           JsonNode selection = root.getRoot(), projections;
           String tableName, filter = null;
           List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
