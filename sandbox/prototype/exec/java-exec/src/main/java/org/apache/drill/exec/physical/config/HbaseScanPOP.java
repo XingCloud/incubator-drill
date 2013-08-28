@@ -53,18 +53,18 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         return this;
     }
 
-    public static class FilterEntry{
+    public static class RowkeyFilterEntry {
 
 
         private SchemaPath filterType;
         private List<LogicalExpression> filterExpressions;
         @JsonCreator
-        public FilterEntry(@JsonProperty("type")FieldReference filterType,
-                           @JsonProperty("exprs")List<LogicalExpression> filterExpressions) {
+        public RowkeyFilterEntry(@JsonProperty("type") FieldReference filterType,
+                                 @JsonProperty("exprs") List<LogicalExpression> filterExpressions) {
             this.filterType = filterType;
             this.filterExpressions = filterExpressions;
         }
-      
+
         public SchemaPath getFilterType() {
             return filterType;
         }
@@ -80,12 +80,12 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         private String tableName;
         private String startRowKey;
         private String endRowKey;
-        private List<FilterEntry> filters;
+        private List<RowkeyFilterEntry> filters;
         private List<NamedExpression>   projections;
 
         @JsonCreator
         public HbaseScanEntry(@JsonProperty("table") String tableName, @JsonProperty("startRowKey") String startRowKey,
-                              @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<FilterEntry> filters,
+                              @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<RowkeyFilterEntry> filters,
                               @JsonProperty("projections") List<NamedExpression> projections){
             this.tableName=tableName;
             this.startRowKey=startRowKey;
@@ -115,7 +115,7 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             return endRowKey;
         }
 
-        public List<FilterEntry> getFilters() {
+        public List<RowkeyFilterEntry> getFilters() {
             return filters;
         }
 

@@ -1,6 +1,5 @@
 package org.apache.drill.exec.physical.impl.unionedscan;
 
-import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
@@ -20,15 +19,10 @@ import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
-import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.HbaseScanPOP;
-import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.store.HBaseRecordReader;
-import org.apache.drill.exec.store.RecordReader;
 import org.apache.drill.exec.vector.AllocationHelper;
 import org.apache.drill.exec.vector.TypeHelper;
-import org.apache.drill.exec.vector.ValueVector;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.regionserver.TableScanner;
@@ -48,7 +42,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private byte[] startRowKey;
   private byte[] endRowKey;
   private String tableName;
-  private List<List<HbaseScanPOP.FilterEntry>> entryFilters;
+  private List<List<HbaseScanPOP.RowkeyFilterEntry>> entryFilters;
 
 
   private int entryIndex;
@@ -121,9 +115,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       long startVersion=Long.MIN_VALUE;
       long stopVersion=Long.MAX_VALUE;
       List<String> patterns=null;
-      for(List<HbaseScanPOP.FilterEntry> filters: entryFilters){
+      for(List<HbaseScanPOP.RowkeyFilterEntry> filters: entryFilters){
         if (filters != null) {
-          for (HbaseScanPOP.FilterEntry entry : filters) {
+          for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
               SchemaPath type=entry.getFilterType();
               switch (type.getPath().toString()){
                   case "XARowKeyPatternFilter":

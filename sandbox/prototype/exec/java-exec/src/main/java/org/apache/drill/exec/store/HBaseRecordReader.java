@@ -54,7 +54,7 @@ public class HBaseRecordReader implements RecordReader {
 
   private DFARowKeyParser dfaParser;
 
-  private List<HbaseScanPOP.FilterEntry> filters;
+  private List<HbaseScanPOP.RowkeyFilterEntry> filters;
   private OutputMutator output ;
 
 
@@ -186,7 +186,7 @@ public class HBaseRecordReader implements RecordReader {
     long startVersion = Long.MIN_VALUE;
     long stopVersion = Long.MAX_VALUE;
     if (filters != null) {
-      for (HbaseScanPOP.FilterEntry entry : filters) {
+      for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         SchemaPath type = entry.getFilterType();
         switch (type.getPath().toString()) {
           case "XARowKeyPatternFilter":
@@ -285,7 +285,7 @@ public class HBaseRecordReader implements RecordReader {
     long startVersion = Long.MIN_VALUE;
     long stopVersion = Long.MAX_VALUE;
     if (filters != null) {
-      for (HbaseScanPOP.FilterEntry entry : filters) {
+      for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         SchemaPath type=entry.getFilterType();
         switch (type.getPath().toString()){
             case "XARowKeyPatternFilter":
