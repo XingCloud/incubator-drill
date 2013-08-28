@@ -275,6 +275,7 @@ public class HBaseRecordReader implements RecordReader {
     }
       DirectScanner scanner;
       try {
+
         //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
           scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
 
