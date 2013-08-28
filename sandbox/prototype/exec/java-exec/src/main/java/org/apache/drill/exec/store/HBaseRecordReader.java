@@ -5,6 +5,7 @@ import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
@@ -53,8 +54,8 @@ public class HBaseRecordReader implements RecordReader {
 
   private DFARowKeyParser dfaParser;
 
-  private List<LogicalExpression> filters;
-  private OutputMutator output;
+  private List<HbaseScanPOP.RowkeyFilterEntry> filters;
+  private OutputMutator output ;
 
 
   private List<DirectScanner> scanners = new ArrayList<>();
@@ -75,9 +76,9 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
-    endRowKey = appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
-    if (Arrays.equals(startRowKey, endRowKey))
+    startRowKey=appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
+    endRowKey=appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
+    if(Arrays.equals(startRowKey,endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
@@ -117,7 +118,7 @@ public class HBaseRecordReader implements RecordReader {
   /*
      parse Rk in physical_test: "test"+propId("03")+day("20121201")+[type("str"/"num")+val("en"/"123")]
     */
-  private byte[] parseRkStr(String origRk) {
+  public static byte[] parseRkStr(String origRk) {
     byte[] result;
     if (origRk.startsWith("test")) {
       String content = origRk.substring(4);
@@ -151,15 +152,15 @@ public class HBaseRecordReader implements RecordReader {
     return result;
   }
 
-  private void increaseBytesByOne(byte[] orig) {
-    for (int i = orig.length - 1; i >= 0; i--) {
+  public static void increaseBytesByOne(byte[] orig){
+    for(int i=orig.length-1;i>=0;i--){
       orig[i]++;
-      if (orig[i] != 0)
-        break;
+      if(orig[i]!=0)
+                 break;
     }
   }
 
-  private static byte[] escape(String constant) {
+  public static byte[] escape(String constant) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     for (int i = 0; i < constant.length(); i++) {
       char c = constant.charAt(i);
@@ -177,93 +178,119 @@ public class HBaseRecordReader implements RecordReader {
   }
 
 
-  private void initTableScanner() throws  IOException{
+  private void initTableScanner() {
 
     scanners = new ArrayList<>();
+//<<<<<<< HEAD
     FilterList filterList = new FilterList();
     long startVersion = Long.MIN_VALUE;
     long stopVersion = Long.MAX_VALUE;
     if (filters != null) {
-      for (LogicalExpression e : filters) {
-        if (e instanceof FunctionCall) {
-          FunctionCall c = (FunctionCall) e;
-          Iterator iter = ((FunctionCall) e).iterator();
-          SchemaPath leftField = (SchemaPath) iter.next();
-          ValueExpressions.LongExpression rightField = (ValueExpressions.LongExpression) iter.next();
-          HBaseFieldInfo info = fieldInfoMap.get(leftField.getPath());
-          CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
-          switch (c.getDefinition().getName()) {
-            case "greater than":
-              op = CompareFilter.CompareOp.GREATER;
-              break;
-            case "less than":
-              op = CompareFilter.CompareOp.LESS;
-              break;
-            case "equal":
-              op = CompareFilter.CompareOp.EQUAL;
-              break;
-            case "greater than or equal to":
-              op = CompareFilter.CompareOp.GREATER_OR_EQUAL;
-              break;
-            case "less than or equal to":
-              op = CompareFilter.CompareOp.LESS_OR_EQUAL;
-              break;
-          }
-          switch (info.fieldType) {
-            case cellvalue:
-              String cfName = info.cfName;
-              String cqName = info.cqName;
-              SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
-                Bytes.toBytes(cfName),
-                Bytes.toBytes(cqName),
-                op,
-                new BinaryComparator(Bytes.toBytes(rightField.getLong()))
-              );
-              filterList.addFilter(valueFilter);
-              break;
-            case cversion:
-              switch (op) {
-                case GREATER:
-                  startVersion = rightField.getLong() + 1;
-                  break;
-                case GREATER_OR_EQUAL:
-                  startVersion = rightField.getLong();
-                  break;
-                case LESS:
-                  stopVersion = rightField.getLong();
-                  break;
-                case LESS_OR_EQUAL:
-                  stopVersion = rightField.getLong() + 1;
-                  break;
-                case EQUAL:
-                  List<Long> timestamps = new ArrayList<>();
-                  timestamps.add(rightField.getLong());
-                  Filter timeStampsFilter = new TimestampsFilter(timestamps);
-                  filterList.addFilter(timeStampsFilter);
-                  break;
-              }
-              break;
-            case cqname:
-              Filter qualifierFilter =
-                new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
-              filterList.addFilter(qualifierFilter);
-            default:
-              break;
-          }
+      for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
+        SchemaPath type = entry.getFilterType();
+        switch (type.getPath().toString()) {
+          case "XARowKeyPatternFilter":
+            List<String> patterns = new ArrayList<>();
+            for (LogicalExpression e : entry.getFilterExpressions()) {
+              patterns.add(((SchemaPath) e).getPath().toString());
+            }
+            XARowKeyPatternFilter xaFilter = new XARowKeyPatternFilter(patterns);
+            filterList.addFilter(xaFilter);
+            break;
+          case "HbaseFilter":
+            for (LogicalExpression e : entry.getFilterExpressions()) {
+              if (e instanceof FunctionCall) {
+                FunctionCall c = (FunctionCall) e;
+                Iterator iter = ((FunctionCall) e).iterator();
+                SchemaPath leftField = (SchemaPath) iter.next();
+                ValueExpressions.LongExpression rightField = (ValueExpressions.LongExpression) iter.next();
+                HBaseFieldInfo info = fieldInfoMap.get(leftField.getPath());
+                CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
+                switch (c.getDefinition().getName()) {
+                  case "greater than":
+                    op = CompareFilter.CompareOp.GREATER;
+                    break;
+                  case "less than":
+                    op = CompareFilter.CompareOp.LESS;
+                    break;
+                  case "equal":
+                    op = CompareFilter.CompareOp.EQUAL;
+                    break;
+                  case "greater than or equal to":
+                    op = CompareFilter.CompareOp.GREATER_OR_EQUAL;
+                    break;
+                  case "less than or equal to":
+                    op = CompareFilter.CompareOp.LESS_OR_EQUAL;
+                    break;
+                }
+                switch (info.fieldType) {
+                  case cellvalue:
+                    String cfName = info.cfName;
+                    String cqName = info.cqName;
+                    SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
+                      Bytes.toBytes(cfName),
+                      Bytes.toBytes(cqName),
+                      op,
+                      new BinaryComparator(Bytes.toBytes(rightField.getLong()))
+                    );
+                    filterList.addFilter(valueFilter);
+                    break;
+                  case cversion:
+                    switch (op) {
+                      case GREATER:
+                        startVersion = rightField.getLong() + 1;
+                        break;
+                      case GREATER_OR_EQUAL:
+                        startVersion = rightField.getLong();
+                        break;
+                      case LESS:
+                        stopVersion = rightField.getLong();
+                        break;
+                      case LESS_OR_EQUAL:
+                        stopVersion = rightField.getLong() + 1;
+                        break;
+                      case EQUAL:
+                        List<Long> timestamps = new ArrayList<>();
+                        timestamps.add(rightField.getLong());
+                        Filter timeStampsFilter = new TimestampsFilter(timestamps);
+                        filterList.addFilter(timeStampsFilter);
+                        break;
+                    }
+                    break;
+                  case cqname:
+                    Filter qualifierFilter =
+                      new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
+                    filterList.addFilter(qualifierFilter);
+                  default:
+                    break;
+                }
 
+              }
+            }
+            break;
+          default:
+            throw new IllegalArgumentException("unsupported filter type:"+type);
         }
       }
     }
-    DirectScanner scanner;
-    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-    scanners.add(scanner);
+      DirectScanner scanner;
+      try {
 
-  }
+        //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+          scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
+
+          scanners.add(scanner);
+      } catch (Exception e) {
+
+      }
+}
+
+
 
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
-    this.output = output;
+    this.output = output ;
     try {
       initConfig();
       initTableScanner();
@@ -272,7 +299,7 @@ public class HBaseRecordReader implements RecordReader {
         MajorType type = getMajorType(projections.get(i));
         int batchRecordCount = batchSize;
         valueVectors[i] =
-          getVector(sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
+          getVector( sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
         output.addField(valueVectors[i]);
         output.setNewSchema();
       }
@@ -281,7 +308,7 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  private MajorType getMajorType(HBaseFieldInfo info) {
+  public static MajorType getMajorType(HBaseFieldInfo info) {
     String type = info.fieldSchema.getType();
     switch (type) {
       case "int":
@@ -298,10 +325,10 @@ public class HBaseRecordReader implements RecordReader {
     return null;
   }
 
-  private ValueVector getVector(String name, MajorType type) {
+  private ValueVector getVector( String name, MajorType type) {
     if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
     MaterializedField f = MaterializedField.create(new SchemaPath(name, ExpressionPosition.UNKNOWN), type);
-    if (context == null) return TypeHelper.getNewVector(f, new DirectBufferAllocator());
+    if(context==null)return TypeHelper.getNewVector(f,new DirectBufferAllocator());
     return TypeHelper.getNewVector(f, context.getAllocator());
   }
 
@@ -328,7 +355,7 @@ public class HBaseRecordReader implements RecordReader {
           hasMore = scanner.next(curRes);
 
         } catch (IOException e) {
-          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage());
+          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage()) ;
         }
         valIndex = 0;
       }
@@ -402,7 +429,7 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option, Map<String, Object> rkObjectMap) {
+  public static Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option, Map<String, Object> rkObjectMap) {
     String fieldName = option.fieldSchema.getName();
     if (option.fieldType == HBaseFieldInfo.FieldType.rowkey) {
       if (!rkObjectMap.containsKey(fieldName))

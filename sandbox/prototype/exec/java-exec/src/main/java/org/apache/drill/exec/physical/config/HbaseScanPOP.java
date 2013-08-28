@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.physical.EndpointAffinity;
 import org.apache.drill.exec.physical.OperatorCost;
@@ -52,18 +53,19 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         return this;
     }
 
-    public static class FilterEntry{
+    public static class RowkeyFilterEntry {
 
 
-        private FieldReference filterType;
+        private SchemaPath filterType;
         private List<LogicalExpression> filterExpressions;
         @JsonCreator
-        public FilterEntry(@JsonProperty("type")FieldReference filterType,
-                           @JsonProperty("exprs")List<LogicalExpression> filterExpressions) {
+        public RowkeyFilterEntry(@JsonProperty("type") FieldReference filterType,
+                                 @JsonProperty("exprs") List<LogicalExpression> filterExpressions) {
             this.filterType = filterType;
             this.filterExpressions = filterExpressions;
         }
-        public FieldReference getFilterType() {
+
+        public SchemaPath getFilterType() {
             return filterType;
         }
 
@@ -78,12 +80,12 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         private String tableName;
         private String startRowKey;
         private String endRowKey;
-        private List<LogicalExpression> filters;
+        private List<RowkeyFilterEntry> filters;
         private List<NamedExpression>   projections;
 
         @JsonCreator
         public HbaseScanEntry(@JsonProperty("table") String tableName, @JsonProperty("startRowKey") String startRowKey,
-                              @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<LogicalExpression> filters,
+                              @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<RowkeyFilterEntry> filters,
                               @JsonProperty("projections") List<NamedExpression> projections){
             this.tableName=tableName;
             this.startRowKey=startRowKey;
@@ -113,7 +115,7 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             return endRowKey;
         }
 
-        public List<LogicalExpression> getFilters() {
+        public List<RowkeyFilterEntry> getFilters() {
             return filters;
         }
 

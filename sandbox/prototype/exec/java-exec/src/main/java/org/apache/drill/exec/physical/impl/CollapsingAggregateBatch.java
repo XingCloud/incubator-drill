@@ -126,7 +126,12 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       return IterOutcome.NONE;
     }
     IterOutcome o = incoming.next();
-    while (o != IterOutcome.NONE) {
+    while (true) {
+      if(o == IterOutcome.NONE)
+        break;
+      else if(o == IterOutcome.STOP){
+        return  o ;
+      }
       try {
         consumeCurrent();
         int groupId = 0;

@@ -104,7 +104,7 @@ public interface RecordBatch extends Iterable<ValueVector> {
    *
    * @return An IterOutcome describing the result of the iteration.
    */
-  public IterOutcome next();
+  public IterOutcome next() ;
 
   /**
    * Get a writable version of this batch. Takes over owernship of existing buffers.

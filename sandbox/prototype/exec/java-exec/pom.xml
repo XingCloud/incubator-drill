@@ -205,6 +205,16 @@
             <groupId>com.xingcloud.xa</groupId>
             <artifactId>dbutil</artifactId>
             <version>1.4</version>
+          <exclusions>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging-api</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
     </dependencies>
     <build>
