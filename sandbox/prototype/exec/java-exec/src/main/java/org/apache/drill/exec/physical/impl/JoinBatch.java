@@ -108,7 +108,15 @@ public class JoinBatch extends BaseRecordBatch {
     if (!leftCached) {
       leftCached = true;
       try {
-        if (!cacheLeft()) {
+        while(true){
+          IterOutcome o = leftIncoming.next() ;
+          if(o == IterOutcome.STOP)
+            return  o ;
+          if(o == IterOutcome.NONE)
+            break;
+          cacheLeft();
+        }
+        if (leftIncomings.isEmpty()) {
           return IterOutcome.NONE;
         }
       } catch (Exception e) {
@@ -153,23 +161,17 @@ public class JoinBatch extends BaseRecordBatch {
     }
   }
 
-  private boolean cacheLeft() {
-    IterOutcome o;
-    o = leftIncoming.next();
-    while (o != IterOutcome.NONE) {
-      leftSchema = leftIncoming.getSchema();
-      leftJoinKey = (IntVector)leftEvaluator.eval();
-      leftJoinKeyField = leftJoinKey.getField();
-      leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
-      IntVector.Accessor accessor = leftJoinKey.getAccessor() ;
-      int index = leftIncomings.size() - 1 ;
-      for(int i = 0 ; i < accessor.getValueCount() ; i ++){
-        leftValueMap.put(accessor.get(i),new int[]{index,i}) ;
-      }
-      leftJoinKey.close();
-      o = leftIncoming.next();
+  private void cacheLeft() {
+    leftSchema = leftIncoming.getSchema();
+    leftJoinKey = (IntVector) leftEvaluator.eval();
+    leftJoinKeyField = leftJoinKey.getField();
+    leftIncomings.add(TransferHelper.transferVectors(leftIncoming));
+    IntVector.Accessor accessor = leftJoinKey.getAccessor();
+    int index = leftIncomings.size() - 1;
+    for (int i = 0; i < accessor.getValueCount(); i++) {
+      leftValueMap.put(accessor.get(i), new int[]{index, i});
     }
-    return !leftIncomings.isEmpty();
+    leftJoinKey.close();
   }
 
   private void cacheRight() {

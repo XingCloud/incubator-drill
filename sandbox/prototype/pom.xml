@@ -275,6 +275,16 @@
             <artifactId>de.huxhorn.lilith.logback.appender.multiplex-classic</artifactId>
             <version>0.9.43</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>protobuf-java</artifactId>
+                    <groupId>com.google.protobuf</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>de.huxhorn.lilith.data.logging.protobuf</artifactId>
+                    <groupId>de.huxhorn.lilith</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 
