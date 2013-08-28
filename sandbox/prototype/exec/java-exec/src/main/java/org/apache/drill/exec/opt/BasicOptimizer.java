@@ -15,13 +15,12 @@ import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
-import org.antlr.runtime.RecognitionException;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
-import org.apache.drill.common.expression.LogicalExpressionParser;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
@@ -140,15 +139,16 @@ public class BasicOptimizer extends Optimizer {
       //TODO where is ref?
       ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
       JsonNode root = selections.getRoot(), filters, projections, rowkey;
-      String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
+      String table, rowkeyStart, rowkeyEnd, projectionString, filterString, filterType;
       int selectionSize = root.size();
       HbaseScanPOP.HbaseScanEntry entry;
-      List<LogicalExpression> filterList = Lists.newArrayList();
+      List<LogicalExpression> filterList;
       LogicalExpression le;
       List<NamedExpression> projectionList;
       NamedExpression ne;
       List<HbaseScanPOP.RowkeyFilterEntry> filterEntries;
-      HbaseScanPOP.RowkeyFilterEntry filterEntry;
+      HbaseScanPOP.RowkeyFilterEntry rowkeyFilterEntry;
+      FieldReference filterTypeFR;
       for (JsonNode selection : root) {
         // Table name
         table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
@@ -160,16 +160,28 @@ public class BasicOptimizer extends Optimizer {
 
         // Filters
         filters = selection.get(SELECTION_KEY_WORD_FILTERS);
-        filterEntries = new ArrayList<>(filters.size());
         if (filters != null) {
+          filterEntries = new ArrayList<>(filters.size());
           for (JsonNode filterNode : filters) {
-            filterString = filterNode.textValue();
-            try {
-              le = LogicalExpressionParser.parse(filterString);
-            } catch (RecognitionException e) {
-              throw new OptimizerException("Cannot parse filter - " + filterString);
+            filterType = filterNode.get("type").textValue();
+            if ("ROWKEY".equals(filterType)) {
+              JsonNode includes = filterNode.get("includes");
+              if (includes == null || includes.size() == 0) {
+                throw new OptimizerException("Rowkey filter must have at least one include.");
+              }
+              filterList = new ArrayList<>(includes.size());
+              for (JsonNode include : includes) {
+                try {
+                  le = mapper.readValue(include.traverse(), LogicalExpression.class);
+                } catch (Exception e) {
+                  throw new OptimizerException("Cannot parse filter - " + include.textValue());
+                }
+                filterList.add(le);
+              }
+              filterTypeFR = new FieldReference("XARowKeyPatternFilter", ExpressionPosition.UNKNOWN);
+              rowkeyFilterEntry = new HbaseScanPOP.RowkeyFilterEntry(filterTypeFR, filterList);
+              filterEntries.add(rowkeyFilterEntry);
             }
-            filterList.add(le);
           }
         } else {
           filterEntries = null;
@@ -187,7 +199,6 @@ public class BasicOptimizer extends Optimizer {
           }
           projectionList.add(ne);
         }
-        //todo
         entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterEntries, projectionList);
         entries.add(entry);
       }
