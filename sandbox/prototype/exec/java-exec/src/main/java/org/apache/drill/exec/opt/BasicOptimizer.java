@@ -94,58 +94,95 @@ public class BasicOptimizer extends Optimizer {
     Map<LogicalOperator, PhysicalOperator> operatorMap = Maps.newHashMap();
 
     @Override
+    public PhysicalOperator visitUnionedScan(UnionedScan scan, Object value) throws OptimizerException {
+      PhysicalOperator pop = operatorMap.get(scan);
+      if (pop == null) {
+        JSONOptions[] selections = scan.getSelections();
+        FieldReference[] refs = scan.getOutputReferences();
+        if (selections == null) {
+          throw new OptimizerException("Selection is null");
+        }
+        List<HbaseScanEntry> entries = new ArrayList<>();
+        for (int i = 0; i < selections.length; i++) {
+          JSONOptions selection = selections[i];
+          FieldReference ref = refs[i];
+          createHbaseScanEntry(selection, ref, entries);
+        }
+        pop = new UnionedScanPOP(entries);
+        operatorMap.put(scan, pop);
+      }
+      return pop;
+    }
+    
+    
+    private void createHbaseScanEntry(JSONOptions selections, FieldReference ref, List<HbaseScanEntry> entries) throws OptimizerException {
+        //TODO DrillConfig becomes singleton
+      //TODO where is ref?
+        ObjectMapper mapper = DrillConfig.create().getMapper();
+        JsonNode root = selections.getRoot(), filters, projections, rowkey;
+        String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
+        int selectionSize = root.size();
+        HbaseScanPOP.HbaseScanEntry entry;
+        List<LogicalExpression> filterList = Lists.newArrayList();
+        LogicalExpression le;
+        List<NamedExpression> projectionList;
+        NamedExpression ne;
+        for (JsonNode selection : root) {
+          table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
+          rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
+          rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
+          rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
+          filters = selection.get(SELECTION_KEY_WORD_FILTERS);
+          if (filters != null) {
+            for (JsonNode filterNode : filters) {
+              filterString = filterNode.textValue();
+              try {
+                le = LogicalExpressionParser.parse(filterString);
+              } catch (RecognitionException e) {
+                throw new OptimizerException("Cannot parse filter - " + filterString);
+              }
+              filterList.add(le);
+            }
+          }
+          projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
+          projectionList = new ArrayList<>(projections.size());
+          for (JsonNode projectionNode : projections) {
+            projectionString = projectionNode.toString();
+            try {
+              ne = mapper.readValue(projectionString, NamedExpression.class);
+            } catch (IOException e) {
+              throw new OptimizerException("Cannot parse projection - " + projectionString);
+            }
+            projectionList.add(ne);
+          }
+          entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterList, projectionList);
+          entries.add(entry);
+        }
+    }
+
+    @Override
+    public PhysicalOperator visitUnionedScanSplit(UnionedScanSplit scanSplit, Object value) throws OptimizerException {
+      PhysicalOperator pop = operatorMap.get(scanSplit);
+      if(pop == null){
+        pop = new UnionedScanSplitPOP(scanSplit.getInput().accept(this, value), scanSplit.getEntries());
+        operatorMap.put(scanSplit, pop);
+      }
+      return pop;
+    }
+
+    @Override
     public PhysicalOperator visitScan(Scan scan, Object obj) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(scan);
       if (pop == null) {
 
-        //todo UnionedScan
         String storageEngine = scan.getStorageEngine();
         if (SE_HBASE.equals(storageEngine)) {
           JSONOptions selections = scan.getSelection();
           if (selections == null) {
             throw new OptimizerException("Selection is null");
           }
-          ObjectMapper mapper = DrillConfig.create().getMapper();
-          JsonNode root = selections.getRoot(), filters, projections, rowkey;
-          String table, rowkeyStart, rowkeyEnd, projectionString, filterString;
-          int selectionSize = root.size();
-          HbaseScanPOP.HbaseScanEntry entry;
-          List<HbaseScanEntry> entries = new ArrayList<>(selectionSize);
-          List<LogicalExpression> filterList = Lists.newArrayList();
-          LogicalExpression le;
-          List<NamedExpression> projectionList;
-          NamedExpression ne;
-          for (JsonNode selection : root) {
-            table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
-            rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
-            rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
-            rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-            filters = selection.get(SELECTION_KEY_WORD_FILTERS);
-            if (filters != null) {
-              for (JsonNode filterNode : filters) {
-                filterString = filterNode.textValue();
-                try {
-                  le = LogicalExpressionParser.parse(filterString);
-                } catch (RecognitionException e) {
-                  throw new OptimizerException("Cannot parse filter - " + filterString);
-                }
-                filterList.add(le);
-              }
-            }
-            projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
-            projectionList = new ArrayList<>(projections.size());
-            for (JsonNode projectionNode : projections) {
-              projectionString = projectionNode.toString();
-              try {
-                ne = mapper.readValue(projectionString, NamedExpression.class);
-              } catch (IOException e) {
-                throw new OptimizerException("Cannot parse projection - " + projectionString);
-              }
-              projectionList.add(ne);
-            }
-            entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterList, projectionList);
-            entries.add(entry);
-          }
+          List<HbaseScanEntry> entries = new ArrayList<>(selections.getRoot().size());
+          createHbaseScanEntry(selections, scan.getOutputReference(), entries);
           pop = new HbaseScanPOP(entries);
         } else if (SE_MYSQL.equals(storageEngine)) {
           JSONOptions root = scan.getSelection();

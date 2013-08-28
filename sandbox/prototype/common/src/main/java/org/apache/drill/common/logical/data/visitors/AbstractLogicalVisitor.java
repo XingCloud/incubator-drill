@@ -38,8 +38,8 @@ public abstract class AbstractLogicalVisitor<T, X, E extends Throwable> implemen
   }
 
   @Override
-  public T visitUnionedScanSplit(UnionedScanSplit scan, X value) throws E {
-    return visitOp(scan, value);
+  public T visitUnionedScanSplit(UnionedScanSplit scanSplit, X value) throws E {
+    return visitOp(scanSplit, value);
   }
 
   @Override

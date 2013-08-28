@@ -1,5 +1,6 @@
 package org.apache.drill.exec.physical.impl.unionedscan;
 
+
 import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
@@ -29,6 +30,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.*;
+
 
 public class MultiEntryHBaseRecordReader implements RecordReader {
     static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HBaseRecordReader.class);
@@ -213,6 +215,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       else
           scanner = new TableScanner(startRowKey, endRowKey, tableName, filterList, false, false, startVersion, stopVersion);
       scanners.add(scanner);
+
   }
 
     

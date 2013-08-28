@@ -11,6 +11,8 @@ import java.util.Iterator;
 @JsonTypeName("unioned-scan-split")
 public class UnionedScanSplit extends SingleInputOperator {
 
+  //表示这个split依次需要UnionedScan的哪几个entry的扫描结果作为输出。
+  //entry的顺序即输出的顺序。
   private int[] entries;
 
   @JsonCreator
