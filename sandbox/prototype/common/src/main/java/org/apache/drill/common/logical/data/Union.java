@@ -45,6 +45,7 @@ public class Union extends LogicalOperatorBase {
     this.distinct = distinct == null ? false : distinct;
   }
 
+  @JsonProperty("inputs")
   public LogicalOperator[] getInputs() {
     return inputs;
   }

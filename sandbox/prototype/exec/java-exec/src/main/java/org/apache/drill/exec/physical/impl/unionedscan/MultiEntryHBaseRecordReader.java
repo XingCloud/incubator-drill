@@ -49,7 +49,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private ValueVector entryIndexVector;
   private List<NamedExpression> projections;
   private List<NamedExpression[]> entryProjections;
-  private List<HBaseFieldInfo[]> entryProjFieldInfos;
+  private List<HBaseFieldInfo[]> entryProjFieldInfos = new ArrayList<>();
   private Map<String,HBaseFieldInfo> fieldInfoMap;
   private ValueVector[] valueVectors;
   private OutputMutator outputMutator;
@@ -240,6 +240,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setupEntry(int index)  {
       HBaseFieldInfo[] infos=entryProjFieldInfos.get(index);
+    valueVectors = new ValueVector[infos.length];
       for(int j=0;j<infos.length;j++){
           TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
           valueVectors[index] =

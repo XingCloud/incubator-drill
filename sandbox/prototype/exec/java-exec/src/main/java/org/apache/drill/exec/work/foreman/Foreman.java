@@ -162,6 +162,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
       PhysicalPlan physicalPlan = convert(logicalPlan);
       runPhysicalPlan(physicalPlan);
     } catch (IOException e) {
+      e.printStackTrace();
       fail("Failure while parsing logical plan.", e);
     }
   }

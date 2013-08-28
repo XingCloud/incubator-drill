@@ -27,7 +27,8 @@ public class UnionedScanBatch implements RecordBatch {
   private final List<HbaseScanPOP.HbaseScanEntry> originalEntries;
   private List<HbaseScanPOP.HbaseScanEntry> sortedEntries;
   int[] original2sorted;
-
+  private List<UnionedScanSplitBatch> splits = new ArrayList<>();
+  private boolean splitsChecked = false;
   private FragmentContext context;
   /*
    * 已经缓存的结果。
@@ -63,6 +64,10 @@ public class UnionedScanBatch implements RecordBatch {
     initReader();
   }
 
+  /**
+   * 保证所有entry的startKey, endKey范围没有重叠的；
+   * @throws ExecutionSetupException
+   */
   private void checkEntryOverlap() throws ExecutionSetupException {
     for (int i = 0; i < sortedEntries.size(); i++) {
       HbaseScanPOP.HbaseScanEntry scanEntry = sortedEntries.get(i);
@@ -103,7 +108,9 @@ public class UnionedScanBatch implements RecordBatch {
   }
 
   public RecordBatch createSplitBatch(FragmentContext context, UnionedScanSplitPOP config) {
-    return new UnionedScanSplitBatch(context, config);
+    UnionedScanSplitBatch split = new UnionedScanSplitBatch(context, config);
+    splits.add(split);
+    return split;
   }
   
   private void schemaChanged() {
@@ -411,6 +418,9 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public IterOutcome next() {
+      if(!splitsChecked){
+        checkSplits();
+      }
       while (true) {
         //first next() to decide scanMode
         if (scanMode == null) {
@@ -521,6 +531,30 @@ public class UnionedScanBatch implements RecordBatch {
       }
     }
     
+  }
+
+  /**
+   * 检查：所有的split的entry之间，没有重叠；所有的split的entry加起来，没有遗漏
+   */
+  private void checkSplits() {
+    HashSet<Integer> entrySet = new HashSet<>();
+    for (int i = 0; i < splits.size(); i++) {
+      UnionedScanSplitBatch splitBatch = splits.get(i);
+      int[] es = splitBatch.pop.getEntries();
+      for (int j = 0; j < es.length; j++) {
+        int e = es[j];
+        if(entrySet.contains(e)){
+          throw new IllegalStateException("entry: "+e+" duplicated in splits!");
+        }
+        entrySet.add(e);
+      }
+    }
+    for (int i = 0; i < sortedEntries.size(); i++) {
+      if(!entrySet.contains(i)){
+        throw new IllegalStateException("entry: "+i+" belongs to no split!");
+      }
+    }
+    splitsChecked = true;
   }
 
   private int getEntryMark() {
