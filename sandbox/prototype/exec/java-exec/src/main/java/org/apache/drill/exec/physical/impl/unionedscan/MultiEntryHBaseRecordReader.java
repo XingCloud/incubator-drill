@@ -247,10 +247,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setupEntry(int index)  {
       HBaseFieldInfo[] infos=entryProjFieldInfos.get(index);
-    valueVectors = new ValueVector[infos.length];
+      valueVectors = new ValueVector[infos.length];
       for(int j=0;j<infos.length;j++){
           TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
-          valueVectors[index] =
+          valueVectors[j] =
                   getVector(infos[j].fieldSchema.getName(),type);
           try {
               outputMutator.addField(valueVectors[index]);
