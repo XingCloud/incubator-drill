@@ -214,7 +214,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       }
 
       try {
-          scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+          //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+          scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
+
           scanners.add(scanner);
       } catch (IOException e) {
           e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
