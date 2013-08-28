@@ -31,14 +31,14 @@ public interface RecordReader {
    *          mutating the set of schema values for that particular record.
    * @throws ExecutionSetupException
    */
-  public abstract void setup(OutputMutator output) throws Exception;
+  public abstract void setup(OutputMutator output) throws ExecutionSetupException;
 
   /**
    * Increment record reader forward, writing into the provided output batch.  
    * 
    * @return The number of additional records added to the output.
    */
-  public abstract int next() throws SchemaChangeException;
+  public abstract int next() ;
 
   public abstract void cleanup();
 
