@@ -229,7 +229,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       }
       initTableScanner();
       entryIndexVector=
-              getVector("selectionEntryId", Types.required(TypeProtos.MinorType.INT));
+              getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
       setupEntry(entryIndex);
   }
 
