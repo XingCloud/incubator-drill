@@ -1,11 +1,11 @@
 package org.apache.drill.exec.store;
 
-import com.sun.jersey.core.util.Base64;
 import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
@@ -15,7 +15,6 @@ import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.exception.SchemaChangeException;
-import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
@@ -24,7 +23,7 @@ import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
-import org.apache.hadoop.hbase.regionserver.TableScanner;
+import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.ByteArrayOutputStream;
@@ -55,17 +54,16 @@ public class HBaseRecordReader implements RecordReader {
 
   private DFARowKeyParser dfaParser;
 
-  //private List<HbaseScanPOP.FilterEntry> filters;
-  private List<LogicalExpression> filters;
+  private List<HbaseScanPOP.RowkeyFilterEntry> filters;
   private OutputMutator output ;
 
 
-  private List<TableScanner> scanners = new ArrayList<>();
+  private List<DirectScanner> scanners = new ArrayList<>();
   private int currentScannerIndex = 0;
   private List<KeyValue> curRes = new ArrayList<KeyValue>();
   private int valIndex = -1;
   private boolean hasMore;
-  private int batchSize = 1024 * 4;
+  private int batchSize = 1024 * 16;
   private ValueVector[] valueVectors;
   private boolean init = false;
 
@@ -78,14 +76,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-     boolean test=true;
-     if(!test){
-        startRowKey = parseRkStr(config.getStartRowKey());
-        endRowKey = parseRkStr(config.getEndRowKey());
-     }else {
-        startRowKey=appendBytes(parseRkStr(config.getStartRowKey()),produceTail(true));
-        endRowKey=appendBytes(parseRkStr(config.getEndRowKey()),produceTail(false));
-     }
+    startRowKey=appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
+    endRowKey=appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
     if(Arrays.equals(startRowKey,endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
@@ -126,29 +118,7 @@ public class HBaseRecordReader implements RecordReader {
   /*
      parse Rk in physical_test: "test"+propId("03")+day("20121201")+[type("str"/"num")+val("en"/"123")]
     */
-
-  private byte[] appendBytes(byte[] orig,byte[] tail){
-     byte[] result=new byte[orig.length+tail.length];
-     for(int i=0;i<result.length;i++){
-         if(i<orig.length)
-             result[i]=orig[i];
-         else
-             result[i]=tail[i-orig.length];
-     }
-     return result;
-  }
-  private byte[] produceTail(boolean start){
-      byte[] result=new byte[6];
-      result[0]=-1;
-      for(int i=1;i<result.length;i++){
-          if(start)
-              result[i]=0;
-          else
-              result[i]=-1;
-      }
-      return result;
-  }
-  private byte[] parseRkStr(String origRk) {
+  public static byte[] parseRkStr(String origRk) {
     byte[] result;
     if (origRk.startsWith("test")) {
       String content = origRk.substring(4);
@@ -159,7 +129,30 @@ public class HBaseRecordReader implements RecordReader {
     return result;
   }
 
-  private void increaseBytesByOne(byte[] orig){
+  private byte[] appendBytes(byte[] orig, byte[] tail) {
+    byte[] result = new byte[orig.length + tail.length];
+    for (int i = 0; i < result.length; i++) {
+      if (i < orig.length)
+        result[i] = orig[i];
+      else
+        result[i] = tail[i - orig.length];
+    }
+    return result;
+  }
+
+  private byte[] produceTail(boolean start) {
+    byte[] result = new byte[6];
+    result[0] = -1;
+    for (int i = 1; i < result.length; i++) {
+      if (start)
+        result[i] = 0;
+      else
+        result[i] = -1;
+    }
+    return result;
+  }
+
+  public static void increaseBytesByOne(byte[] orig){
     for(int i=orig.length-1;i>=0;i--){
       orig[i]++;
       if(orig[i]!=0)
@@ -167,7 +160,7 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  private static byte[] escape(String constant) {
+  public static byte[] escape(String constant) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     for (int i = 0; i < constant.length(); i++) {
       char c = constant.charAt(i);
@@ -188,90 +181,209 @@ public class HBaseRecordReader implements RecordReader {
   private void initTableScanner() {
 
     scanners = new ArrayList<>();
-    List<Filter> filtersList = new ArrayList<>();
+//<<<<<<< HEAD
+    FilterList filterList = new FilterList();
     long startVersion = Long.MIN_VALUE;
     long stopVersion = Long.MAX_VALUE;
     if (filters != null) {
-      //for (HbaseScanPOP.FilterEntry entry : filters) {
-      //  for(LogicalExpression e: entry.getFilterExpressions())
-        for(LogicalExpression e: filters)
-        {
-          if (e instanceof FunctionCall) {
-            FunctionCall c = (FunctionCall) e;
-            Iterator iter = ((FunctionCall) e).iterator();
-            SchemaPath leftField = (SchemaPath) iter.next();
-            ValueExpressions.LongExpression rightField = (ValueExpressions.LongExpression) iter.next();
-            HBaseFieldInfo info = fieldInfoMap.get(leftField.getPath());
-            CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
-            switch (c.getDefinition().getName()) {
-                case "greater than":
+      for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
+        SchemaPath type = entry.getFilterType();
+        switch (type.getPath().toString()) {
+          case "XARowKeyPatternFilter":
+            List<String> patterns = new ArrayList<>();
+            for (LogicalExpression e : entry.getFilterExpressions()) {
+              patterns.add(((SchemaPath) e).getPath().toString());
+            }
+            XARowKeyPatternFilter xaFilter = new XARowKeyPatternFilter(patterns);
+            filterList.addFilter(xaFilter);
+            break;
+          case "HbaseFilter":
+            for (LogicalExpression e : entry.getFilterExpressions()) {
+              if (e instanceof FunctionCall) {
+                FunctionCall c = (FunctionCall) e;
+                Iterator iter = ((FunctionCall) e).iterator();
+                SchemaPath leftField = (SchemaPath) iter.next();
+                ValueExpressions.LongExpression rightField = (ValueExpressions.LongExpression) iter.next();
+                HBaseFieldInfo info = fieldInfoMap.get(leftField.getPath());
+                CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
+                switch (c.getDefinition().getName()) {
+                  case "greater than":
                     op = CompareFilter.CompareOp.GREATER;
                     break;
-                case "less than":
+                  case "less than":
                     op = CompareFilter.CompareOp.LESS;
                     break;
-                case "equal":
+                  case "equal":
                     op = CompareFilter.CompareOp.EQUAL;
                     break;
-                case "greater than or equal to":
+                  case "greater than or equal to":
                     op = CompareFilter.CompareOp.GREATER_OR_EQUAL;
                     break;
-                case "less than or equal to":
+                  case "less than or equal to":
                     op = CompareFilter.CompareOp.LESS_OR_EQUAL;
                     break;
-            }
-            switch (info.fieldType) {
-                case cellvalue:
+                }
+                switch (info.fieldType) {
+                  case cellvalue:
                     String cfName = info.cfName;
                     String cqName = info.cqName;
                     SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
-                        Bytes.toBytes(cfName),
-                        Bytes.toBytes(cqName),
-                        op,
-                        new BinaryComparator(Bytes.toBytes(rightField.getLong()))
+                      Bytes.toBytes(cfName),
+                      Bytes.toBytes(cqName),
+                      op,
+                      new BinaryComparator(Bytes.toBytes(rightField.getLong()))
                     );
-                    filtersList.add(valueFilter);
+                    filterList.addFilter(valueFilter);
                     break;
-                case cversion:
+                  case cversion:
                     switch (op) {
-                        case GREATER:
-                            startVersion = rightField.getLong() + 1;
-                            break;
-                        case GREATER_OR_EQUAL:
-                            startVersion = rightField.getLong();
-                            break;
-                        case LESS:
-                            stopVersion = rightField.getLong();
-                            break;
-                        case LESS_OR_EQUAL:
-                            stopVersion = rightField.getLong() + 1;
-                            break;
-                        case EQUAL:
-                            List<Long> timestamps = new ArrayList<>();
-                            timestamps.add(rightField.getLong());
-                            Filter timeStampsFilter = new TimestampsFilter(timestamps);
-                            filtersList.add(timeStampsFilter);
-                            break;
+                      case GREATER:
+                        startVersion = rightField.getLong() + 1;
+                        break;
+                      case GREATER_OR_EQUAL:
+                        startVersion = rightField.getLong();
+                        break;
+                      case LESS:
+                        stopVersion = rightField.getLong();
+                        break;
+                      case LESS_OR_EQUAL:
+                        stopVersion = rightField.getLong() + 1;
+                        break;
+                      case EQUAL:
+                        List<Long> timestamps = new ArrayList<>();
+                        timestamps.add(rightField.getLong());
+                        Filter timeStampsFilter = new TimestampsFilter(timestamps);
+                        filterList.addFilter(timeStampsFilter);
+                        break;
                     }
                     break;
-                case cqname:
+                  case cqname:
                     Filter qualifierFilter =
-                    new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
-                    filtersList.add(qualifierFilter);
-                default:
+                      new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
+                    filterList.addFilter(qualifierFilter);
+                  default:
                     break;
-            }
+                }
 
-          }
+              }
+            }
+            break;
+          default:
+            throw new IllegalArgumentException("unsupported filter type:"+type);
         }
-      //}
-    }
-    TableScanner scanner;
-    if (startVersion == Long.MIN_VALUE && stopVersion == Long.MAX_VALUE)
-      scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false);
-    else
-      scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false, startVersion, stopVersion);
+      }
+      DirectScanner scanner;
+      try {
+        scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+        scanners.add(scanner);
+      } catch (Exception e) {
+
+      }
+        /*
+=======
+    FilterList filtersList = new FilterList();
+    long startVersion = Long.MIN_VALUE;
+    long stopVersion = Long.MAX_VALUE;
+    if (filters != null) {
+      for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
+        SchemaPath type=entry.getFilterType();
+        switch (type.getPath().toString()){
+            case "XARowKeyPatternFilter":
+                 List<String> patterns=new ArrayList<>();
+                 for(LogicalExpression e: entry.getFilterExpressions()){
+                     patterns.add(((SchemaPath)e).getPath().toString());
+                 }
+                 XARowKeyPatternFilter xaFilter=new XARowKeyPatternFilter(patterns);
+                 filtersList.addFilter(xaFilter);
+                 break;
+            case "HbaseFilter":
+                for(LogicalExpression e: entry.getFilterExpressions())
+                {
+                    if (e instanceof FunctionCall) {
+                        FunctionCall c = (FunctionCall) e;
+                        Iterator iter = ((FunctionCall) e).iterator();
+                        SchemaPath leftField = (SchemaPath) iter.next();
+                        ValueExpressions.LongExpression rightField = (ValueExpressions.LongExpression) iter.next();
+                        HBaseFieldInfo info = fieldInfoMap.get(leftField.getPath());
+                        CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
+                        switch (c.getDefinition().getName()) {
+                            case "greater than":
+                                op = CompareFilter.CompareOp.GREATER;
+                                break;
+                            case "less than":
+                                op = CompareFilter.CompareOp.LESS;
+                                break;
+                            case "equal":
+                                op = CompareFilter.CompareOp.EQUAL;
+                                break;
+                            case "greater than or equal to":
+                                op = CompareFilter.CompareOp.GREATER_OR_EQUAL;
+                                break;
+                            case "less than or equal to":
+                                op = CompareFilter.CompareOp.LESS_OR_EQUAL;
+                                break;
+                        }
+                        switch (info.fieldType) {
+                            case cellvalue:
+                                String cfName = info.cfName;
+                                String cqName = info.cqName;
+                                SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
+                                        Bytes.toBytes(cfName),
+                                        Bytes.toBytes(cqName),
+                                        op,
+                                        new BinaryComparator(Bytes.toBytes(rightField.getLong()))
+                                );
+                                filtersList.addFilter(valueFilter);
+                                break;
+                            case cversion:
+                                switch (op) {
+                                    case GREATER:
+                                        startVersion = rightField.getLong() + 1;
+                                        break;
+                                    case GREATER_OR_EQUAL:
+                                        startVersion = rightField.getLong();
+                                        break;
+                                    case LESS:
+                                        stopVersion = rightField.getLong();
+                                        break;
+                                    case LESS_OR_EQUAL:
+                                        stopVersion = rightField.getLong() + 1;
+                                        break;
+                                    case EQUAL:
+                                        List<Long> timestamps = new ArrayList<>();
+                                        timestamps.add(rightField.getLong());
+                                        Filter timeStampsFilter = new TimestampsFilter(timestamps);
+                                        filtersList.addFilter(timeStampsFilter);
+                                        break;
+                                }
+                                break;
+                            case cqname:
+                                Filter qualifierFilter =
+                                        new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
+                                filtersList.addFilter(qualifierFilter);
+                            default:
+                                break;
+                            }
+
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    DirectScanner scanner;
+    
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filtersList, false, false);
     scanners.add(scanner);
+
+       if (startVersion == Long.MIN_VALUE && stopVersion == Long.MAX_VALUE)
+          scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false);
+       else
+         scanner = new TableScanner(startRowKey, endRowKey, tableName, filtersList, false, false, startVersion, stopVersion);
+         scanners.add(scanner);
+         =========i26
+         */
+  }
   }
 
 
@@ -295,7 +407,7 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  private MajorType getMajorType(HBaseFieldInfo info) {
+  public static MajorType getMajorType(HBaseFieldInfo info) {
     String type = info.fieldSchema.getType();
     switch (type) {
       case "int":
@@ -333,7 +445,7 @@ public class HBaseRecordReader implements RecordReader {
         setValueCount(recordSetIndex);
         return recordSetIndex;
       }
-      TableScanner scanner = scanners.get(currentScannerIndex);
+      DirectScanner scanner = scanners.get(currentScannerIndex);
       if (valIndex == -1) {
         if (scanner == null) {
           return 0;
@@ -416,7 +528,7 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  public Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option, Map<String, Object> rkObjectMap) {
+  public static Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option, Map<String, Object> rkObjectMap) {
     String fieldName = option.fieldSchema.getName();
     if (option.fieldType == HBaseFieldInfo.FieldType.rowkey) {
       if (!rkObjectMap.containsKey(fieldName))
@@ -455,7 +567,7 @@ public class HBaseRecordReader implements RecordReader {
       }
       valueVectors[i].close();
     }
-    for (TableScanner scanner : scanners) {
+    for (DirectScanner scanner : scanners) {
       try {
         scanner.close();
       } catch (Exception e) {

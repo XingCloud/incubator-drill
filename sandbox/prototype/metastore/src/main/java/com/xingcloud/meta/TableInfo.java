@@ -136,7 +136,7 @@ public class TableInfo {
       Table regPropTable = client.getTable(regPropTableName);
       List<FieldSchema> fieldSchemas = regPropTable.getSd().getCols();
       for (int i = 0; i < fieldSchemas.size(); i++) {
-        if (options.contains(fieldSchemas.get(i).getName())) {
+        if (options!=null&&options.contains(fieldSchemas.get(i).getName())) {
           HBaseFieldInfo info = HBaseFieldInfo.getColumnType(regPropTable, fieldSchemas.get(i));
           String primaryRK = getPrimaryKeyPattern(table);
           primaryRK += "${" + fieldSchemas.get(i).getName() + "}";

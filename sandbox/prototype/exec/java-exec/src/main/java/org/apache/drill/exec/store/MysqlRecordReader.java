@@ -1,8 +1,9 @@
 package org.apache.drill.exec.store;
 
+import com.google.common.collect.Maps;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import com.xingcloud.meta.HBaseFieldInfo;
-import com.xingcloud.meta.TableInfo;
+import com.xingcloud.mysql.MySql_16seqid;
+import com.xingcloud.mysql.UserProp;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
@@ -12,22 +13,19 @@ import org.apache.drill.common.types.TypeProtos.DataMode;
 import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
-import org.apache.drill.common.util.FileUtils;
 import org.apache.drill.exec.exception.SchemaChangeException;
-import org.apache.drill.exec.memory.BufferAllocator;
-import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.MysqlScanPOP.MysqlReadEntry;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +39,6 @@ public class MysqlRecordReader implements RecordReader {
 
   static ComboPooledDataSource cpds = null;
   static Logger logger = LoggerFactory.getLogger(MysqlRecordReader.class);
-
   private FragmentContext context;
   private MysqlReadEntry config;
   private String sql;
@@ -49,13 +46,10 @@ public class MysqlRecordReader implements RecordReader {
   private Statement stmt = null;
   private ResultSet rs = null;
   private ValueVector[] valueVectors;
-  private OutputMutator output ;
-
-  private List<HBaseFieldInfo> projections;
-  private Map<String, HBaseFieldInfo> fieldInfoMap;
-
-
-  private final int batchSize = 1024;
+  private OutputMutator output;
+  private Map<String, UserProp> propMap = Maps.newHashMap();
+  private List<Pair<String, String>> projections;
+  private final int batchSize = 16 * 1024;
 
   public static synchronized Connection getConnection() throws Exception {
     if (cpds == null) {
@@ -73,14 +67,14 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
-    this.output = output ;
+    this.output = output;
     try {
       initConfig();
       initStmtExecutor();
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
-        MajorType type = getMajorType(projections.get(i));
-        String field = projections.get(i).fieldSchema.getName();
+        MajorType type = getMajorType(projections.get(i).getSecond());
+        String field = projections.get(i).getFirst();
         if (field.equals("uid")) {
           type = Types.required(MinorType.INT);
         }
@@ -96,25 +90,21 @@ public class MysqlRecordReader implements RecordReader {
     }
   }
 
-  private MajorType getMajorType(HBaseFieldInfo info) {
-    String type = info.fieldSchema.getType();
-    switch (type) {
-      case "int":
-        return Types.required(MinorType.INT);
-      case "tinyint":
-        return Types.required(MinorType.UINT1);
-      case "string":
-        return Types.required(MinorType.VARCHAR);
-      case "bigint":
-        return Types.required(MinorType.BIGINT);
-      case "smallint":
-        return Types.required(MinorType.SMALLINT);
+  private MajorType getMajorType(String propertyName) {
+    UserProp userProp = propMap.get(propertyName);
+    if (userProp != null) {
+      switch (userProp.getPropType()) {
+        case sql_bigint:
+        case sql_datetime:
+          return Types.required(MinorType.BIGINT);
+        case sql_string:
+          return Types.required(MinorType.VARCHAR);
+      }
     }
     return null;
   }
 
   private ValueVector getVector(String field, MajorType type) {
-
     if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
     MaterializedField f = MaterializedField.create(new SchemaPath(field, ExpressionPosition.UNKNOWN), type);
     return TypeHelper.getNewVector(f, context.getAllocator());
@@ -137,7 +127,7 @@ public class MysqlRecordReader implements RecordReader {
       return recordSetIndex;
     } catch (SQLException e) {
       logger.error("Scan mysql failed : " + e.getMessage());
-      throw  new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
+      throw new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
     }
   }
 
@@ -150,7 +140,6 @@ public class MysqlRecordReader implements RecordReader {
   public boolean setValues(ResultSet rs, ValueVector[] valueVectors, int index) {
     boolean next = true;
     for (int i = 0; i < projections.size(); i++) {
-      HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
       Object result = null;
       try {
@@ -159,65 +148,44 @@ public class MysqlRecordReader implements RecordReader {
         logger.error("" + e.getMessage());
         throw new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
       }
-      String type = info.fieldSchema.getType();
-      if (type.equals("string"))
+      if (valueVector instanceof VarCharVector)
         result = Bytes.toBytes((String) result);
-
       // TODO
-      if (projections.get(i).fieldSchema.getName().equals("uid")) {
+      if (projections.get(i).getSecond().equals("uid")) {
         result = getInnerUidFromSamplingUid((Long) result);
       }
-
       valueVector.getMutator().setObject(index, result);
-      if (valueVector.getValueCapacity() - index == 1) {
+      if (batchSize - index == 1) {
         next = false;
       }
     }
-
     return next;
   }
 
   private void initConfig() throws Exception {
     String fields[] = config.getTableName().split("\\.");
     String project = fields[0];
+    List<UserProp> propList = MySql_16seqid.getInstance().getUserProps(project) ;
+    for(UserProp userProp : propList){
+      propMap.put(userProp.getPropName(),userProp);
+    }
     String dbName = "16_" + project;
     String tableName = fields[1];
-
     projections = new ArrayList<>();
-    fieldInfoMap = new HashMap<>();
-    List<NamedExpression> logProjection = config.getProjections();
-    List<String> options = new ArrayList<>();
-    for (int i = 0; i < logProjection.size(); i++) {
-      options.add((String) ((SchemaPath) logProjection.get(i).getRef()).getPath());
-    }
-
-    List<HBaseFieldInfo> cols = TableInfo.getCols("mysql_property_" + project, options);
-    for (HBaseFieldInfo col : cols) {
-      fieldInfoMap.put(col.fieldSchema.getName(), col);
-    }
-
     String selection = "SELECT ";
     boolean isFirst = true;
-
-    for (NamedExpression e : logProjection) {
+    for (NamedExpression e : config.getProjections()) {
       String ref = (String) e.getRef().getPath();
       String name = (String) ((SchemaPath) e.getExpr()).getPath();
+      projections.add(new Pair<>(ref, name));
       if (isFirst) {
         isFirst = false;
       } else {
         selection += ",";
       }
       selection += name + " as " + ref;
-
-      if (!fieldInfoMap.containsKey(ref)) {
-        logger.debug("wrong field " + ref + " hbase table has no this field");
-      } else {
-        projections.add(fieldInfoMap.get(ref));
-      }
     }
-
     selection += " FROM `" + dbName + "`.`" + tableName + "`";
-
     String filter = config.getFilter();
     if (filter != null && !filter.equals("")) {
       selection += " WHERE " + filter;

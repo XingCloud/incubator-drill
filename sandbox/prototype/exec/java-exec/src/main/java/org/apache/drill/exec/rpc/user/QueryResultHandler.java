@@ -54,23 +54,38 @@ public class QueryResultHandler {
     final QueryResult result = RpcBus.get(pBody, QueryResult.PARSER);
     final QueryResultBatch batch = new QueryResultBatch(result, dBody);
     UserResultsListener l = resultsListener.get(result.getQueryId());
+
+    boolean failed = batch.getHeader().getQueryState() == QueryResult.QueryState.FAILED;
     // logger.debug("For QueryId [{}], retrieved result listener {}", result.getQueryId(), l);
-    if (l != null) {
-      // logger.debug("Results listener available, using existing.");
-      l.resultArrived(batch);
-      if (result.getIsLastChunk()) {
-        resultsListener.remove(result.getQueryId(), l);
-      }
-    } else {
-      logger.debug("Results listener not available, creating a buffering listener.");
-      // manage race condition where we start getting results before we receive the queryid back.
+    if (l == null) {
       BufferingListener bl = new BufferingListener();
       l = resultsListener.putIfAbsent(result.getQueryId(), bl);
-      if (l != null) {
-        l.resultArrived(batch);
-      } else {
-        bl.resultArrived(batch);
+      // if we had a succesful insert, use that reference.  Otherwise, just throw away the new bufering listener.
+      if (l == null) l = bl;
+      if (result.getQueryId().toString().equals("")) {
+        failAll();
       }
+    }
+
+    if(failed){
+      l.submissionFailed(new RpcException("Remote failure while running query." + batch.getHeader().getErrorList()));
+      resultsListener.remove(result.getQueryId(), l);
+    }else{
+      l.resultArrived(batch);
+    }
+
+    if (
+      (failed || result.getIsLastChunk())
+        &&
+        (!(l instanceof BufferingListener) || ((BufferingListener)l).output != null)
+      ) {
+      resultsListener.remove(result.getQueryId(), l);
+    }
+  }
+
+  private void failAll() {
+    for (UserResultsListener l : resultsListener.values()) {
+      l.submissionFailed(new RpcException("Received result without QueryId"));
     }
   }
 

@@ -27,6 +27,8 @@ import org.apache.drill.exec.physical.impl.filter.BufferedBatchCreator;
 import org.apache.drill.exec.physical.impl.project.ProjectBatchCreator;
 import org.apache.drill.exec.physical.impl.svremover.SVRemoverCreator;
 import org.apache.drill.exec.physical.impl.union.UnionBatchCreator;
+import org.apache.drill.exec.physical.impl.unionedscan.UnionedScanBatchCreator;
+import org.apache.drill.exec.physical.impl.unionedscan.UnionedScanSplitBatchCreator;
 import org.apache.drill.exec.record.RecordBatch;
 
 import java.util.Arrays;
@@ -47,6 +49,8 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   private BatchCreator<JoinPOP> jc = new BufferedBatchCreator<JoinPOP>(new JoinBatchCreator());
   private BatchCreator<CollapsingAggregatePOP> cac = new BufferedBatchCreator<CollapsingAggregatePOP>(new CollaspsAggreBatchCreator());
   private BatchCreator<Union> uc = new BufferedBatchCreator<Union>(new UnionBatchCreator());
+  private BatchCreator<UnionedScanSplitPOP> splitc = new BufferedBatchCreator<UnionedScanSplitPOP>(new UnionedScanSplitBatchCreator());
+  private UnionedScanBatchCreator unionedScanc = new UnionedScanBatchCreator();
 
   private BatchCreator<Scan> sbc = new BufferedBatchCreator<Scan>(new ScanBatchCreator());
 
@@ -67,11 +71,23 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   public RecordBatch visitScan(Scan scan, FragmentContext context) throws ExecutionSetupException {
     Preconditions.checkNotNull(scan);
     Preconditions.checkNotNull(context);
-    if (scan.getIterationBuffer() == null)
-      return sbc.getBatch(context, scan, getChildren(scan, context));
-    return sbc.getBatch(context,scan,null);
+    if(scan instanceof UnionedScanPOP){
+      return unionedScanc.getBatch(context, (UnionedScanPOP) scan, null);
+    }else{
+      if (scan.getIterationBuffer() == null)
+        return sbc.getBatch(context, scan, getChildren(scan, context));
+      return sbc.getBatch(context,scan,null);
+    }
   }
 
+  @Override
+  public RecordBatch visitUnionedScanSplit(UnionedScanSplitPOP scan, FragmentContext context) throws ExecutionSetupException {
+    if(scan.getIterationBuffer() == null){
+    return splitc.getBatch(context, scan, getChildren(scan, context));
+    }else{
+      return splitc.getBatch(context, scan, null);
+    }
+  }
 
   @Override
   public RecordBatch visitOp(PhysicalOperator op, FragmentContext context) throws ExecutionSetupException {
@@ -148,6 +164,6 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   public RecordBatch visitJoin(JoinPOP op, FragmentContext value) throws ExecutionSetupException {
     if (op.getIterationBuffer() == null)
       return jc.getBatch(value, op, getChildren(op, value));
-    return jc.getBatch(value,op,null);
+    return jc.getBatch(value, op, null);
   }
 }

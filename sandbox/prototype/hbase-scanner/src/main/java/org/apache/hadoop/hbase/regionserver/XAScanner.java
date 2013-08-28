@@ -7,9 +7,9 @@ import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
- * User: yangbo
- * Date: 7/2/13
- * Time: 8:55 PM
+ * User: Wang Yufei
+ * Date: 13-3-7
+ * Time: 下午5:39
  * To change this template use File | Settings | File Templates.
  */
 public interface XAScanner {

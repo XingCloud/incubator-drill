@@ -17,24 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.common.logical.data.visitors;
 
-import org.apache.drill.common.logical.data.CollapsingAggregate;
-import org.apache.drill.common.logical.data.Constant;
-import org.apache.drill.common.logical.data.Distinct;
-import org.apache.drill.common.logical.data.Filter;
-import org.apache.drill.common.logical.data.Flatten;
-import org.apache.drill.common.logical.data.Join;
-import org.apache.drill.common.logical.data.Limit;
-import org.apache.drill.common.logical.data.LogicalOperator;
-import org.apache.drill.common.logical.data.Order;
-import org.apache.drill.common.logical.data.Project;
-import org.apache.drill.common.logical.data.RunningAggregate;
-import org.apache.drill.common.logical.data.Scan;
-import org.apache.drill.common.logical.data.Segment;
-import org.apache.drill.common.logical.data.Sequence;
-import org.apache.drill.common.logical.data.Store;
-import org.apache.drill.common.logical.data.Transform;
-import org.apache.drill.common.logical.data.Union;
-import org.apache.drill.common.logical.data.WindowFrame;
+import org.apache.drill.common.logical.data.*;
 
 public abstract class AbstractLogicalVisitor<T, X, E extends Throwable> implements LogicalVisitor<T, X, E> {
 
@@ -47,6 +30,16 @@ public abstract class AbstractLogicalVisitor<T, X, E extends Throwable> implemen
   @Override
   public T visitScan(Scan scan, X value) throws E {
     return visitOp(scan, value);
+  }
+
+  @Override
+  public T visitUnionedScan(UnionedScan scan, X value) throws E {
+    return visitOp(scan, value);
+  }
+
+  @Override
+  public T visitUnionedScanSplit(UnionedScanSplit scanSplit, X value) throws E {
+    return visitOp(scanSplit, value);
   }
 
   @Override
