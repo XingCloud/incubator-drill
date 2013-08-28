@@ -25,7 +25,7 @@ import org.apache.drill.exec.vector.AllocationHelper;
 import org.apache.drill.exec.vector.TypeHelper;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
-import org.apache.hadoop.hbase.regionserver.TableScanner;
+import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private boolean newEntry=false;
 
-  private List<TableScanner> scanners;
+  private List<DirectScanner> scanners;
   private int currentScannerIndex=0;
   private int valIndex=-1;
   private boolean hasMore;
@@ -70,7 +70,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
 
 
-    public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
+  public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
       this.context=context;
       this.entries=config;
   }
@@ -109,7 +109,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
   }
 
-  private void initTableScanner() {
+  private void initDirectScanner() {
       this.scanners=new ArrayList<>();
       FilterList filterList=new FilterList();
       long startVersion=Long.MIN_VALUE;
@@ -205,18 +205,21 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
               }
           }
       }
-      TableScanner scanner;
+      DirectScanner scanner;
 
       if(patterns!=null)
       {
           XARowKeyPatternFilter xaFilter=new XARowKeyPatternFilter(patterns);
           filterList.addFilter(xaFilter);
       }
-      if (startVersion == Long.MIN_VALUE && stopVersion == Long.MAX_VALUE)
-          scanner = new TableScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-      else
-          scanner = new TableScanner(startRowKey, endRowKey, tableName, filterList, false, false, startVersion, stopVersion);
-      scanners.add(scanner);
+
+      try {
+          scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+          scanners.add(scanner);
+      } catch (IOException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+
 
   }
 
@@ -229,7 +232,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       } catch (Exception e) {
           e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
-      initTableScanner();
+      initDirectScanner();
       entryIndexVector=
               getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
       setupEntry(entryIndex);
@@ -306,7 +309,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
               setValueCount(recordSetIndex);
               return recordSetIndex;
           }
-          TableScanner scanner = scanners.get(currentScannerIndex);
+          DirectScanner scanner = scanners.get(currentScannerIndex);
           if (valIndex == -1) {
               if (scanner == null) {
                   return 0;
@@ -430,7 +433,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
             }
             valueVectors[i].close();
         }
-        for (TableScanner scanner : scanners) {
+        for (DirectScanner scanner : scanners) {
             try {
                 scanner.close();
             } catch (Exception e) {
