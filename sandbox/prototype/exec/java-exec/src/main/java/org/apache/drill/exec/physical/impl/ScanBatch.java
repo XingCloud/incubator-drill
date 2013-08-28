@@ -56,7 +56,7 @@ public class ScanBatch implements RecordBatch {
   private RecordReader currentReader;
   private final Mutator mutator = new Mutator();
 
-  public ScanBatch(FragmentContext context, Iterator<RecordReader> readers) throws ExecutionSetupException {
+  public ScanBatch(FragmentContext context, Iterator<RecordReader> readers) throws Exception {
     this.context = context;
     this.readers = readers;
     if (!readers.hasNext())
@@ -97,7 +97,7 @@ public class ScanBatch implements RecordBatch {
   }
 
   @Override
-  public IterOutcome next() {
+  public IterOutcome next() throws Exception {
     while ((recordCount = currentReader.next()) == 0) {
       try {
         if (!readers.hasNext()) {

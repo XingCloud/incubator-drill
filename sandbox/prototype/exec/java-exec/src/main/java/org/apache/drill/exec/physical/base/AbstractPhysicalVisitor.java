@@ -63,6 +63,11 @@ public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> impleme
   }
 
   @Override
+  public T visitUnionedScanSplit(UnionedScanSplitPOP scan, X value) throws E {
+    return visitOp(scan, value);
+  }
+
+  @Override
   public T visitStore(Store store, X value) throws E{
     return visitOp(store, value);
   }

@@ -18,6 +18,7 @@
 package org.apache.drill.exec.store;
 
 import org.apache.drill.common.exceptions.ExecutionSetupException;
+import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 
 public interface RecordReader {
@@ -30,14 +31,14 @@ public interface RecordReader {
    *          mutating the set of schema values for that particular record.
    * @throws ExecutionSetupException
    */
-  public abstract void setup(OutputMutator output) throws ExecutionSetupException;
+  public abstract void setup(OutputMutator output) throws Exception;
 
   /**
    * Increment record reader forward, writing into the provided output batch.  
    * 
    * @return The number of additional records added to the output.
    */
-  public abstract int next();
+  public abstract int next() throws SchemaChangeException;
 
   public abstract void cleanup();
 

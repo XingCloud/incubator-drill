@@ -138,6 +138,17 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.xingcloud.xa.hbase</groupId>
+            <artifactId>filter</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>com.xingcloud</groupId>
             <artifactId>hashutil</artifactId>
             <version>1.0.0</version>
