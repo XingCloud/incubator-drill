@@ -5,7 +5,9 @@ import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
+import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.FunctionCall;
 import org.apache.drill.common.expression.LogicalExpression;
@@ -114,7 +116,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
   }
 
-  private void initDirectScanner() {
+  private void initDirectScanner() throws IOException{
     this.scanners = new ArrayList<>();
     FilterList filterList = new FilterList();
     long startVersion = Long.MIN_VALUE;
@@ -209,93 +211,45 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    DirectScanner scanner;
-
-      try {
-          //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-          scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
-
-          scanners.add(scanner);
-      } catch (IOException e) {
-          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
-
-
-    try {
-//      scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-      scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
-      scanners.add(scanner);
-    } catch (IOException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-
+    scanners.add(new DirectScanner(startRowKey, endRowKey, tableName, null, false, false));
   }
 
   @Override
-  public void setup(OutputMutator output) {
+  public void setup(OutputMutator output) throws ExecutionSetupException {
     this.outputMutator = output;
     try {
       initConfig();
-    } catch (Exception e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    initDirectScanner();
-    entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
-    try {
+      initDirectScanner();
+      entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
       setupEntry(entryIndex);
-    } catch (SchemaChangeException e) {
-      logger.info("entry setup failed!", e);
-      throw new IllegalStateException(e);
+    } catch (Exception e) {
+      throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
     }
   }
 
   private void setupEntry(int index) throws SchemaChangeException {
       HBaseFieldInfo[] infos=entryProjFieldInfos.get(index);
-    if(valueVectors != null){
-      for (int i = 0; i < valueVectors.length; i++) {
-        ValueVector vector = valueVectors[i];
-        outputMutator.removeField(vector.getField());
-        vector.clear();
-      }
-    }
       valueVectors = new ValueVector[infos.length];
       for(int j=0;j<infos.length;j++){
           TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
-          valueVectors[j] =
-                  getVector(infos[j].fieldSchema.getName(),type);
-          try {
-              outputMutator.addField(valueVectors[j]);
-          } catch (SchemaChangeException e) {
-              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-          }
-
+          valueVectors[j] = getVector(infos[j].fieldSchema.getName(),type);
+          outputMutator.addField(valueVectors[index]);
       }
-    
-    try {
       outputMutator.addField(entryIndexVector);
       outputMutator.setNewSchema();
-    } catch (SchemaChangeException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
   }
 
-  private void releaseEntry() {
-    for (int i = 0; i < valueVectors.length; i++) {
-      //valueVectors[i].close();
-      try {
-        outputMutator.removeField(valueVectors[i].getField());
-      } catch (SchemaChangeException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
-      valueVectors[i].close();
-    }
-    //entryIndexVector.close();
+  private void realeaseEntry() {
     try {
+      for (int i = 0; i < valueVectors.length; i++) {
+        outputMutator.removeField(valueVectors[i].getField());
+        valueVectors[i].close();
+      }
       outputMutator.removeField(entryIndexVector.getField());
-    } catch (SchemaChangeException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      entryIndexVector.close();
+    } catch (Exception e) {
+
     }
-    entryIndexVector.close();
   }
 
   private ValueVector getVector(String name, TypeProtos.MajorType type) {
@@ -310,7 +264,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   @Override
   public int next() {
     if (newEntry) {
-      releaseEntry();
+      realeaseEntry();
       try {
         setupEntry(entryIndex);
       } catch (SchemaChangeException e) {
@@ -322,9 +276,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 8);
     }
-
     AllocationHelper.allocate(entryIndexVector, batchSize, 4);
-
     int recordSetIndex = 0;
     int nextEntryIndex;
     while (true) {
@@ -449,21 +401,16 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    for (int i = 0; i < valueVectors.length; i++) {
-      try {
+    try {
+      for (int i = 0; i < valueVectors.length; i++) {
         outputMutator.removeField(valueVectors[i].getField());
-      } catch (SchemaChangeException e) {
-        logger.warn("Failure while trying to remove field:"+valueVectors[i].getField(), e);
-        throw new IllegalStateException(e);
+        valueVectors[i].close();
       }
-      valueVectors[i].close();
-    }
-    for (DirectScanner scanner : scanners) {
-      try {
+      for (DirectScanner scanner : scanners) {
         scanner.close();
-      } catch (Exception e) {
-        logger.error("Scanners close failed : " + e.getMessage());
       }
+    } catch (SchemaChangeException | IOException e) {
+      e.printStackTrace();
     }
   }
 }
