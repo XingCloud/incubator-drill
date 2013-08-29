@@ -544,7 +544,6 @@ public class UnionedScanBatch implements RecordBatch {
     @Override
     public Iterator<ValueVector> iterator() {
       logger.debug("iterating vectors on mode:{}", scanMode);
-      logger.debug("TRACE STACK:", new NullPointerException());
       switch(scanMode){
         case direct:
           if(logger.isDebugEnabled()){
@@ -711,16 +710,4 @@ public class UnionedScanBatch implements RecordBatch {
      throw new UnsupportedOperationException("UnionedScanBatch should not be called like other batches");
    }
 
-  public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
-    IntVector v = new IntVector(null, BufferAllocator.getAllocator(DrillConfig.create()));
-    Field dataField = v.getClass().getSuperclass().getDeclaredField("data");
-    dataField.setAccessible(true);
-    v.clear();
-    v.allocateNew(16);
-    Object data = dataField.get(v);
-    System.out.println("data = " + data);
-    v.clear();
-    data = dataField.get(v);
-    System.out.println("data = " + data);    
-  }
 }
