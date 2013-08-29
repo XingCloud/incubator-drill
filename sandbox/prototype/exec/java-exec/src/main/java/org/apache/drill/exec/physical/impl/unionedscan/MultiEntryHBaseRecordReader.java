@@ -406,6 +406,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         outputMutator.removeField(valueVectors[i].getField());
         valueVectors[i].close();
       }
+      outputMutator.removeField(entryIndexVector.getField());
+      entryIndexVector.close();
       for (DirectScanner scanner : scanners) {
         scanner.close();
       }
