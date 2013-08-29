@@ -6,6 +6,8 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.util.FileUtils;
 import org.apache.drill.exec.client.DrillClient;
+import org.apache.drill.exec.client.TestQueryLogical;
+import org.apache.drill.exec.client.TestQueryPhysical;
 import org.apache.drill.exec.proto.UserProtos;
 import org.apache.drill.exec.record.RecordBatchLoader;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
@@ -22,7 +24,7 @@ public class TestParseUnionedScanLP {
   private static DrillConfig CONFIG = null;
   static final Logger logger = LoggerFactory.getLogger(TestParseUnionedScanLP.class);
   @Test
-  public void testParse() throws Exception{
+  public void testLocalExec() throws Exception{
     CONFIG = DrillConfig.create();    
     try(RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet(); 
         Drillbit bit = new Drillbit(CONFIG, serviceSet);
@@ -85,4 +87,10 @@ public class TestParseUnionedScanLP {
     //assertEquals(recordCount, 200);
     }    
   }
+  
+  @Test
+  public void testRemoteExec() throws Exception{
+    TestQueryPhysical.submitQuery("/unionedscan/test1.json", UserProtos.QueryType.LOGICAL);
+  }
+  
 }

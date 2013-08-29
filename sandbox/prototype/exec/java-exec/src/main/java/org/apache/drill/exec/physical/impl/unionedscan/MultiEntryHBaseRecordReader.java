@@ -72,7 +72,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private int currentScannerIndex = 0;
   private int valIndex = -1;
   private boolean hasMore;
-  private List<KeyValue> curRes;
+  private List<KeyValue> curRes = new ArrayList<>();
   private List<KeyPart> primaryRowKeyParts;
   private DFARowKeyParser dfaParser;
 
@@ -242,11 +242,23 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     initDirectScanner();
     entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
-    setupEntry(entryIndex);
+    try {
+      setupEntry(entryIndex);
+    } catch (SchemaChangeException e) {
+      logger.info("entry setup failed!", e);
+      throw new IllegalStateException(e);
+    }
   }
 
-  private void setupEntry(int index)  {
+  private void setupEntry(int index) throws SchemaChangeException {
       HBaseFieldInfo[] infos=entryProjFieldInfos.get(index);
+    if(valueVectors != null){
+      for (int i = 0; i < valueVectors.length; i++) {
+        ValueVector vector = valueVectors[i];
+        outputMutator.removeField(vector.getField());
+        vector.clear();
+      }
+    }
       valueVectors = new ValueVector[infos.length];
       for(int j=0;j<infos.length;j++){
           TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
@@ -254,7 +266,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                   getVector(infos[j].fieldSchema.getName(),type);
           try {
               outputMutator.addField(valueVectors[index]);
-              outputMutator.setNewSchema();
           } catch (SchemaChangeException e) {
               e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
           }
@@ -263,6 +274,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     
     try {
       outputMutator.addField(entryIndexVector);
+      outputMutator.setNewSchema();
     } catch (SchemaChangeException e) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
@@ -300,7 +312,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   public int next() {
     if (newEntry) {
       realeaseEntry();
-      setupEntry(entryIndex);
+      try {
+        setupEntry(entryIndex);
+      } catch (SchemaChangeException e) {
+        throw new IllegalArgumentException(e);
+      }
       newEntry = false;
     }
 

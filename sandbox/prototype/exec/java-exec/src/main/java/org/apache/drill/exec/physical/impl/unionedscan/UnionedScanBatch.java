@@ -2,9 +2,11 @@ package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.exception.SchemaChangeException;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.config.UnionedScanSplitPOP;
@@ -13,10 +15,12 @@ import org.apache.drill.exec.physical.impl.VectorHolder;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
+import org.apache.drill.exec.vector.IntVector;
 import org.apache.drill.exec.vector.ValueVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class UnionedScanBatch implements RecordBatch {
@@ -129,6 +133,7 @@ public class UnionedScanBatch implements RecordBatch {
     }
     try{
       recordCount = reader.next();
+      logger.debug("reader.next():{}", recordCount);
     }catch(Exception e){
       logger.info("Reader.next() failed", e);
       releaseReaderAssets();
@@ -183,6 +188,7 @@ public class UnionedScanBatch implements RecordBatch {
    * 如果超过了指定的entry，则返回false。
    */
   boolean forwardReader2Before(int sortedEntry) {
+    logger.debug("forwardReader2Before({})",sortedEntry);
     if(sortedEntry >= sortedEntries.size()){
       throw new IndexOutOfBoundsException("want to forward to the "+sortedEntry+"'th entry, but only have "+sortedEntries.size());
     }
@@ -229,6 +235,7 @@ public class UnionedScanBatch implements RecordBatch {
   }
 
   private void doCache(RecordBatch.IterOutcome outcome, List<CachedFrame> cache) {
+    logger.debug("caching results for entry {} ...", readerCurrentEntry);
     int outRecordCount = recordCount;
     ArrayList<ValueVector> cachedVectors = new ArrayList<>();
     for (ValueVector v : vectors) {
@@ -424,6 +431,7 @@ public class UnionedScanBatch implements RecordBatch {
     public IterOutcome next() {
       if(!splitsChecked){
         checkSplits();
+        splitsChecked = true;
       }
       while (true) {
         //first next() to decide scanMode
@@ -431,6 +439,10 @@ public class UnionedScanBatch implements RecordBatch {
           initScanMode();
         }
         if(scanMode == null){
+          if(currentEntryIndex == pop.getEntries().length){
+            //完成
+            return IterOutcome.NONE;
+          }
           //初始化scanMode失败
           throw new IllegalStateException("scanMode initialization failed!");
         }
@@ -450,6 +462,12 @@ public class UnionedScanBatch implements RecordBatch {
                   continue;
                 }
                 //还在这个entry范围内
+                if(logger.isDebugEnabled()){
+                  for (int i = 0; i < vectors.size(); i++) {
+                    ValueVector vector = vectors.get(i);
+                    logger.debug("vector on direct mode's next():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));                    
+                  }
+                }
                 return outcome;
             }
             break;
@@ -525,8 +543,26 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public Iterator<ValueVector> iterator() {
+      logger.debug("iterating vectors on mode:{}", scanMode);
+      logger.debug("TRACE STACK:", new NullPointerException());
       switch(scanMode){
         case direct:
+          if(logger.isDebugEnabled()){
+            for(Iterator<ValueVector> it = vectors.iterator();it.hasNext();){
+              ValueVector vector = it.next();
+              logger.debug("vector on direct mode's iterator():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));
+              try {
+                Field dataField = vector.getClass().getSuperclass().getDeclaredField("data");
+                dataField.setAccessible(true);
+                Object data = dataField.get(vector);
+                logger.debug("data:{}",data.getClass());
+              } catch (NoSuchFieldException e) {
+                e.printStackTrace();  //e:
+              } catch (IllegalAccessException e) {
+                e.printStackTrace();  //e:
+              }
+            }
+          }
           return vectors.iterator();
         case cached:
           return currentCachedData.getVectors().iterator();
@@ -619,6 +655,7 @@ public class UnionedScanBatch implements RecordBatch {
         markScanNext();              
       }            
     }
+    logger.debug("checkReaderOutputIntoNextEntry():{}", intoNext);
     return intoNext;
   }
 
@@ -674,4 +711,16 @@ public class UnionedScanBatch implements RecordBatch {
      throw new UnsupportedOperationException("UnionedScanBatch should not be called like other batches");
    }
 
+  public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
+    IntVector v = new IntVector(null, BufferAllocator.getAllocator(DrillConfig.create()));
+    Field dataField = v.getClass().getSuperclass().getDeclaredField("data");
+    dataField.setAccessible(true);
+    v.clear();
+    v.allocateNew(16);
+    Object data = dataField.get(v);
+    System.out.println("data = " + data);
+    v.clear();
+    data = dataField.get(v);
+    System.out.println("data = " + data);    
+  }
 }
