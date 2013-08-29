@@ -5,7 +5,6 @@ import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
-import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
@@ -46,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MultiEntryHBaseRecordReader implements RecordReader {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HBaseRecordReader.class);
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MultiEntryHBaseRecordReader.class);
   private HbaseScanPOP.HbaseScanEntry[] entries;
 
   private FragmentContext context;
@@ -61,7 +60,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private List<NamedExpression[]> entryProjections;
   private List<HBaseFieldInfo[]> entryProjFieldInfos = new ArrayList<>();
   private Map<String, HBaseFieldInfo> fieldInfoMap;
-  private ValueVector[] valueVectors;
+  private List<ValueVector> valueVectors;
   private OutputMutator outputMutator;
   private boolean parseRk = false;
   private boolean init = false;
@@ -229,27 +228,34 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setupEntry(int index) throws SchemaChangeException {
       HBaseFieldInfo[] infos=entryProjFieldInfos.get(index);
-      valueVectors = new ValueVector[infos.length];
+      valueVectors = new ArrayList<>(infos.length);
       for(int j=0;j<infos.length;j++){
           TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
-          valueVectors[j] = getVector(infos[j].fieldSchema.getName(),type);
-          outputMutator.addField(valueVectors[j]);
+          ValueVector v = getVector(infos[j].fieldSchema.getName(), type);
+          valueVectors.add(v);
+          outputMutator.addField(v);
       }
       outputMutator.addField(entryIndexVector);
       outputMutator.setNewSchema();
   }
 
-  private void realeaseEntry() {
-    try {
-      for (int i = 0; i < valueVectors.length; i++) {
-        outputMutator.removeField(valueVectors[i].getField());
-        valueVectors[i].close();
-      }
-      outputMutator.removeField(entryIndexVector.getField());
-      entryIndexVector.close();
-    } catch (Exception e) {
-
+  private void releaseEntry() {
+    for (int i = 0; i < valueVectors.size(); i++) {
+      ValueVector v = valueVectors.get(i);
+      cleanupVector(v);
     }
+    valueVectors.clear();
+    cleanupVector(entryIndexVector);
+  }
+
+  private void cleanupVector(ValueVector v) {
+    logger.debug("removing {}",v.getField());
+    try {
+      outputMutator.removeField(v.getField());
+    } catch (SchemaChangeException e) {
+      logger.info("closing vectors failed", e);
+    }
+    v.close();
   }
 
   private ValueVector getVector(String name, TypeProtos.MajorType type) {
@@ -264,7 +270,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   @Override
   public int next() {
     if (newEntry) {
-      realeaseEntry();
+      releaseEntry();
       try {
         setupEntry(entryIndex);
       } catch (SchemaChangeException e) {
@@ -371,7 +377,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   }
 
-  public boolean setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
+  public boolean setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {
     boolean next = true;
     Map<String, Object> rkObjectMap = new HashMap<>();
     if (parseRk)
@@ -379,7 +385,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     HBaseFieldInfo[] infos = entryProjFieldInfos.get(entryIndex);
     for (int i = 0; i < infos.length; i++) {
       HBaseFieldInfo info = infos[i];
-      ValueVector valueVector = valueVectors[i];
+      ValueVector valueVector = valueVectors.get(i);
       Object result = HBaseRecordReader.getValFromKeyValue(kv, info, rkObjectMap);
       String type = info.fieldSchema.getType();
       if (type.equals("string"))
@@ -393,26 +399,23 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void setValueCount(int valueCount) {
-    for (int i = 0; i < valueVectors.length; i++) {
-      valueVectors[i].getMutator().setValueCount(valueCount);
+    for (int i = 0; i < valueVectors.size(); i++) {
+      ValueVector v = valueVectors.get(i);
+      v.getMutator().setValueCount(valueCount);
     }
     entryIndexVector.getMutator().setValueCount(valueCount);
   }
 
   @Override
   public void cleanup() {
-    try {
-      for (int i = 0; i < valueVectors.length; i++) {
-        outputMutator.removeField(valueVectors[i].getField());
-        valueVectors[i].close();
-      }
-      outputMutator.removeField(entryIndexVector.getField());
-      entryIndexVector.close();
-      for (DirectScanner scanner : scanners) {
+    for (DirectScanner scanner : scanners) {
+      try {
         scanner.close();
+      } catch (IOException e) {
+        logger.info("closing scanner failed", e);
       }
-    } catch (SchemaChangeException | IOException e) {
-      e.printStackTrace();
     }
+    releaseEntry();
   }
+
 }

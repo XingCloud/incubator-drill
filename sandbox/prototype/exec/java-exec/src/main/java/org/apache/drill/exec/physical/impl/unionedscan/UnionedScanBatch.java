@@ -2,11 +2,9 @@ package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.exception.SchemaChangeException;
-import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.config.UnionedScanSplitPOP;
@@ -15,7 +13,6 @@ import org.apache.drill.exec.physical.impl.VectorHolder;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
-import org.apache.drill.exec.vector.IntVector;
 import org.apache.drill.exec.vector.ValueVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +23,13 @@ import java.util.*;
 public class UnionedScanBatch implements RecordBatch {
 
   public static final Logger logger = LoggerFactory.getLogger(UnionedScanBatch.class);
+
+  /**
+   * 这一个Vector，在MultiEntry reader 和 UnionedScan 之间使用。
+   * 所以UnionedScan往上，schema和vectors都屏蔽掉这一列。
+   */
   public static final String UNION_MARKER_VECTOR_NAME = "unioned_scan_entry_id";
+  
   /**
    * entry id 就是entry在original entries 里面的序号。
    * 将original Entry 重新排序，形成真正的entry
@@ -239,9 +242,13 @@ public class UnionedScanBatch implements RecordBatch {
     int outRecordCount = recordCount;
     ArrayList<ValueVector> cachedVectors = new ArrayList<>();
     for (ValueVector v : vectors) {
-      TransferPair tp = v.getTransferPair();
-      cachedVectors.add(tp.getTo());
-      tp.transfer();
+      if(v.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
+        v.clear();
+      }else{
+        TransferPair tp = v.getTransferPair();
+        cachedVectors.add(tp.getTo());
+        tp.transfer();
+      }
     }
 
 
@@ -267,13 +274,17 @@ public class UnionedScanBatch implements RecordBatch {
       if (vector == null) throw new SchemaChangeException("Failure attempting to remove an unknown field.");
       vectors.remove(vector);
       vector.close();
-      builder.removeField(vector.getField());
+      if(!vector.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
+        builder.removeField(vector.getField());
+      }
     }
 
     public void addField(ValueVector vector) {
       vectors.add(vector);
       fieldVectorMap.put(vector.getField(), vector);
-      builder.addField(vector.getField());
+      if(!vector.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
+        builder.addField(vector.getField());
+      }
     }
 
     @Override
@@ -463,8 +474,9 @@ public class UnionedScanBatch implements RecordBatch {
                 }
                 //还在这个entry范围内
                 if(logger.isDebugEnabled()){
-                  for (int i = 0; i < vectors.size(); i++) {
-                    ValueVector vector = vectors.get(i);
+                  Iterator<ValueVector> it;
+                  for (it = passEntryID(vectors.iterator()); it.hasNext();) {
+                    ValueVector vector = it.next();
                     logger.debug("vector on direct mode's next():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));                    
                   }
                 }
@@ -516,13 +528,13 @@ public class UnionedScanBatch implements RecordBatch {
       int sortedEntry = original2sorted[entryID];
       if(sortedEntry > readerCurrentEntry){
         //null, 还没扫到这个entry
-        if (forwardReader2Before(sortedEntry)) {
-          // 成功扫完之前的entry。
-          // 如果直接进入了之后的entry，则进入cached模式，
-          // 否则进入direct模式
+        forwardReader2Before(sortedEntry);
+        if(readerCurrentEntry == sortedEntry){
+          scanMode = ScanMode.direct;
+        }else if(readerCurrentEntry > sortedEntry){
           scanMode = ScanMode.direct;
         }else{
-          scanMode = ScanMode.cached;
+          throw new IllegalStateException("cannot forward to the "+sortedEntry+"'n entry!");
         }
       }else if(sortedEntry < readerCurrentEntry){
           this.scanMode = ScanMode.cached;
@@ -548,7 +560,7 @@ public class UnionedScanBatch implements RecordBatch {
         case direct:
           if(logger.isDebugEnabled()){
             ValueVector previous = null;
-            for(Iterator<ValueVector> it = vectors.iterator();it.hasNext();){
+            for(Iterator<ValueVector> it = passEntryID(vectors.iterator());it.hasNext();){
               ValueVector vector = it.next();
               if(vector == previous){
                 logger.warn("previous vector same as this!{}", vector.getField());
@@ -567,7 +579,7 @@ public class UnionedScanBatch implements RecordBatch {
               }
             }
           }
-          return vectors.iterator();
+          return passEntryID(vectors.iterator());
         case cached:
           return currentCachedData.getVectors().iterator();
         default:
@@ -575,6 +587,53 @@ public class UnionedScanBatch implements RecordBatch {
       }
     }
     
+  }
+
+  private Iterator<ValueVector> passEntryID(Iterator<ValueVector> iterator) {
+    return new PassEntryID(iterator);
+  }
+  
+  static class PassEntryID implements Iterator<ValueVector>{
+
+    Iterator<ValueVector> incoming;
+
+    ValueVector nextV;
+    
+    PassEntryID(Iterator<ValueVector> incoming) {
+      this.incoming = incoming;
+      nextNoEntryID();
+    }
+
+    private void nextNoEntryID() {
+      if(incoming.hasNext()){
+        nextV = incoming.next();
+        while(nextV.getField().getName().equals(UNION_MARKER_VECTOR_NAME)&& incoming.hasNext()){
+          nextV = incoming.next();
+        }
+        if(nextV.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
+          nextV = null;
+        }
+      }else{
+        nextV = null;
+      }
+    }
+
+    @Override
+    public boolean hasNext() {
+      return nextV != null;
+    }
+
+    @Override
+    public ValueVector next() {
+      ValueVector tmp = nextV;
+      nextNoEntryID();
+      return tmp;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("cannot remove !");
+    }
   }
 
   /**
@@ -614,21 +673,17 @@ public class UnionedScanBatch implements RecordBatch {
    * 清除ValueVector和schema中，内部使用的表示哪个entry的标记valuevector
    */
   private void removeEntryMark() {
-    //preserve schemaChanged state
-    boolean previousSC = schemaChanged;
     for(ValueVector v:vectors){
       if(v.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
         try {
-          mutator.removeField(v.getField());
-          mutator.setNewSchema();
+          v.clear();
           break;
-        } catch (SchemaChangeException e) {
+        } catch (Exception e) {
           logger.warn("removeEntryMark failed", e);
           throw new IllegalArgumentException("cannot find union marker vector!");
         }
       }
     }
-    schemaChanged = previousSC;
   }
 
   /**
@@ -647,6 +702,10 @@ public class UnionedScanBatch implements RecordBatch {
    */
   private boolean checkReaderOutputIntoNextEntry() {
     int scanningEntry = getEntryMark();
+    logger.debug("entry mark for this output:{}", scanningEntry);
+    if(scanningEntry == -1){
+      throw new IllegalStateException("cannot find entry mark!");
+    }
     removeEntryMark();
     boolean intoNext = false;
     if(scanningEntry > readerCurrentEntry){
