@@ -282,8 +282,6 @@ public class HBaseRecordReader implements RecordReader {
 
   }
 
-}
-
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
