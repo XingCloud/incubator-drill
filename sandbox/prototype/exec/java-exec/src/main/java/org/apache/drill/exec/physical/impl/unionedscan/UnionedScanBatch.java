@@ -14,11 +14,14 @@ import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
 import org.apache.drill.exec.vector.ValueVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class UnionedScanBatch implements RecordBatch {
 
+  public static final Logger logger = LoggerFactory.getLogger(UnionedScanBatch.class);
   public static final String UNION_MARKER_VECTOR_NAME = "unioned_scan_entry_id";
   /**
    * entry id 就是entry在original entries 里面的序号。
@@ -127,6 +130,7 @@ public class UnionedScanBatch implements RecordBatch {
     try{
       recordCount = reader.next();
     }catch(Exception e){
+      logger.info("Reader.next() failed", e);
       releaseReaderAssets();
       return IterOutcome.STOP;
     }
@@ -579,7 +583,7 @@ public class UnionedScanBatch implements RecordBatch {
           mutator.setNewSchema();
           break;
         } catch (SchemaChangeException e) {
-          e.printStackTrace();
+          logger.warn("removeEntryMark failed", e);
           throw new IllegalArgumentException("cannot find union marker vector!");
         }
       }
