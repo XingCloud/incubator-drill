@@ -547,8 +547,13 @@ public class UnionedScanBatch implements RecordBatch {
       switch(scanMode){
         case direct:
           if(logger.isDebugEnabled()){
+            ValueVector previous = null;
             for(Iterator<ValueVector> it = vectors.iterator();it.hasNext();){
               ValueVector vector = it.next();
+              if(vector == previous){
+                logger.warn("previous vector same as this!{}", vector.getField());
+              }
+              previous = vector;
               logger.debug("vector on direct mode's iterator():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));
               try {
                 Field dataField = vector.getClass().getSuperclass().getDeclaredField("data");
