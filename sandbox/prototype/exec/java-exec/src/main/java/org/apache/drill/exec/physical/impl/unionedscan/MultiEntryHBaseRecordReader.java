@@ -5,7 +5,6 @@ import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
-import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.FunctionCall;
@@ -265,7 +264,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           valueVectors[j] =
                   getVector(infos[j].fieldSchema.getName(),type);
           try {
-              outputMutator.addField(valueVectors[index]);
+              outputMutator.addField(valueVectors[j]);
           } catch (SchemaChangeException e) {
               e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
           }
@@ -280,7 +279,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
   }
 
-  private void realeaseEntry() {
+  private void releaseEntry() {
     for (int i = 0; i < valueVectors.length; i++) {
       //valueVectors[i].close();
       try {
@@ -311,7 +310,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   @Override
   public int next() {
     if (newEntry) {
-      realeaseEntry();
+      releaseEntry();
       try {
         setupEntry(entryIndex);
       } catch (SchemaChangeException e) {
@@ -454,7 +453,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       try {
         outputMutator.removeField(valueVectors[i].getField());
       } catch (SchemaChangeException e) {
-        logger.warn("Failure while trying to remove field.", e);
+        logger.warn("Failure while trying to remove field:"+valueVectors[i].getField(), e);
+        throw new IllegalStateException(e);
       }
       valueVectors[i].close();
     }
