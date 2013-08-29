@@ -55,7 +55,7 @@ public class HBaseRecordReader implements RecordReader {
   private DFARowKeyParser dfaParser;
 
   private List<HbaseScanPOP.RowkeyFilterEntry> filters;
-  private OutputMutator output ;
+  private OutputMutator output;
 
 
   private List<DirectScanner> scanners = new ArrayList<>();
@@ -76,9 +76,9 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey=appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
-    endRowKey=appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
-    if(Arrays.equals(startRowKey,endRowKey))
+    startRowKey = appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
+    endRowKey = appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
+    if (Arrays.equals(startRowKey, endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
@@ -152,11 +152,11 @@ public class HBaseRecordReader implements RecordReader {
     return result;
   }
 
-  public static void increaseBytesByOne(byte[] orig){
-    for(int i=orig.length-1;i>=0;i--){
+  public static void increaseBytesByOne(byte[] orig) {
+    for (int i = orig.length - 1; i >= 0; i--) {
       orig[i]++;
-      if(orig[i]!=0)
-                 break;
+      if (orig[i] != 0)
+        break;
     }
   }
 
@@ -178,7 +178,7 @@ public class HBaseRecordReader implements RecordReader {
   }
 
 
-  private void initTableScanner() {
+  private void initTableScanner() throws IOException{
 
     scanners = new ArrayList<>();
 //<<<<<<< HEAD
@@ -269,28 +269,25 @@ public class HBaseRecordReader implements RecordReader {
             }
             break;
           default:
-            throw new IllegalArgumentException("unsupported filter type:"+type);
+            throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
     }
-      DirectScanner scanner;
-      try {
+    DirectScanner scanner;
 
-        //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-          scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
+    //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
 
-          scanners.add(scanner);
-      } catch (Exception e) {
+    scanners.add(scanner);
 
-      }
+  }
+
 }
-
-
 
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
-    this.output = output ;
+    this.output = output;
     try {
       initConfig();
       initTableScanner();
@@ -299,7 +296,7 @@ public class HBaseRecordReader implements RecordReader {
         MajorType type = getMajorType(projections.get(i));
         int batchRecordCount = batchSize;
         valueVectors[i] =
-          getVector( sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
+          getVector(sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
         output.addField(valueVectors[i]);
         output.setNewSchema();
       }
@@ -325,10 +322,10 @@ public class HBaseRecordReader implements RecordReader {
     return null;
   }
 
-  private ValueVector getVector( String name, MajorType type) {
+  private ValueVector getVector(String name, MajorType type) {
     if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
     MaterializedField f = MaterializedField.create(new SchemaPath(name, ExpressionPosition.UNKNOWN), type);
-    if(context==null)return TypeHelper.getNewVector(f,new DirectBufferAllocator());
+    if (context == null) return TypeHelper.getNewVector(f, new DirectBufferAllocator());
     return TypeHelper.getNewVector(f, context.getAllocator());
   }
 
@@ -355,7 +352,7 @@ public class HBaseRecordReader implements RecordReader {
           hasMore = scanner.next(curRes);
 
         } catch (IOException e) {
-          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage()) ;
+          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage());
         }
         valIndex = 0;
       }

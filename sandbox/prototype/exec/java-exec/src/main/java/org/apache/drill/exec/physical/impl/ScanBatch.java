@@ -98,8 +98,11 @@ public class ScanBatch implements RecordBatch {
 
   @Override
   public IterOutcome next()  {
-    while ((recordCount = currentReader.next()) == 0) {
+    while (true) {
       try {
+        recordCount = currentReader.next() ;
+        if(recordCount != 0)
+          break;
         if (!readers.hasNext()) {
           currentReader.cleanup();
           releaseAssets();
