@@ -4,9 +4,11 @@ import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTERS;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER_TYPE;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_INCLUDES;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
@@ -163,9 +165,9 @@ public class BasicOptimizer extends Optimizer {
         if (filters != null) {
           filterEntries = new ArrayList<>(filters.size());
           for (JsonNode filterNode : filters) {
-            filterType = filterNode.get("type").textValue();
+            filterType = filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE).textValue();
             if ("ROWKEY".equals(filterType)) {
-              JsonNode includes = filterNode.get("includes");
+              JsonNode includes = filterNode.get(SELECTION_KEY_WORD_ROWKEY_INCLUDES);
               if (includes == null || includes.size() == 0) {
                 throw new OptimizerException("Rowkey filter must have at least one include.");
               }
