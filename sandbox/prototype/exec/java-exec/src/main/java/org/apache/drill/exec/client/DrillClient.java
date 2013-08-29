@@ -35,15 +35,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.drill.common.config.DrillConfig;
+import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.coord.ClusterCoordinator;
 import org.apache.drill.exec.coord.ZKClusterCoordinator;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.proto.UserProtos.QueryType;
+import org.apache.drill.exec.rpc.*;
 import org.apache.drill.exec.rpc.BasicClientWithConnection.ServerConnection;
-import org.apache.drill.exec.rpc.DrillRpcFuture;
-import org.apache.drill.exec.rpc.NamedThreadFactory;
-import org.apache.drill.exec.rpc.RpcConnectionHandler;
-import org.apache.drill.exec.rpc.RpcException;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.rpc.user.UserClient;
 import org.apache.drill.exec.rpc.user.UserResultsListener;
@@ -56,10 +54,13 @@ import com.google.common.util.concurrent.SettableFuture;
  */
 public class DrillClient implements Closeable{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillClient.class);
-  
+
   DrillConfig config;
   private UserClient client;
   private ClusterCoordinator clusterCoordinator;
+  private int reconnectTimes;
+  private int reconnectDelay;
+
 
   public DrillClient() {
     this(DrillConfig.create());
@@ -72,13 +73,15 @@ public class DrillClient implements Closeable{
   public DrillClient(DrillConfig config) {
     this(config, null);
   }
-  
+
   public DrillClient(DrillConfig config, ClusterCoordinator coordinator){
     this.config = config;
     this.clusterCoordinator = coordinator;
+    this.reconnectTimes = config.getInt(ExecConstants.BIT_RETRY_TIMES);
+    this.reconnectDelay = config.getInt(ExecConstants.BIT_RETRY_DELAY);
   }
-  
-  
+
+
   /**
    * Connects the client to a Drillbit server
    *
@@ -89,7 +92,7 @@ public class DrillClient implements Closeable{
       this.clusterCoordinator = new ZKClusterCoordinator(this.config);
       this.clusterCoordinator.start(10000);
     }
-    
+
     Collection<DrillbitEndpoint> endpoints = clusterCoordinator.getAvailableEndpoints();
     checkState(!endpoints.isEmpty(), "No DrillbitEndpoint can be found");
     // just use the first endpoint for now
@@ -106,23 +109,35 @@ public class DrillClient implements Closeable{
     }
   }
 
-  public boolean reconnect()  {
-    Collection<DrillbitEndpoint> endpoints = clusterCoordinator.getAvailableEndpoints() ;
-    if(endpoints.isEmpty()){
-      return  false ;
+  public synchronized boolean  reconnect() {
+    if(client.isActive()){
+      return true;
     }
-    DrillbitEndpoint endpoint = endpoints.iterator().next() ;
-    try{
-      logger.debug("Reconnection to server{}:{}", endpoint.getAddress(),endpoint.getUserPort());
-      FutureHandler f = new FutureHandler() ;
-      this.client.connect(f,endpoint);
-      f.checkedGet();
-      return true ;
-    }catch (Exception e){
-      logger.error("Reconnection to server{}:{} failed.",endpoint.getAddress(),endpoint.getUserPort());
-      e.printStackTrace();
-      return  false;
+    int retry = reconnectTimes;
+    while (retry > 0) {
+      retry--;
+      try {
+        Thread.sleep(this.reconnectDelay);
+      } catch (Exception e) {
+        // do nothing
+      }
+      Collection<DrillbitEndpoint> endpoints = clusterCoordinator.getAvailableEndpoints();
+      if (endpoints.isEmpty()) {
+        continue;
+      }
+      DrillbitEndpoint endpoint = endpoints.iterator().next();
+      try {
+        FutureHandler f = new FutureHandler();
+        client.close();
+        this.client.connect(f, endpoint);
+        f.checkedGet();
+        logger.debug("Reconnection to server{}:{} success", endpoint.getAddress(), endpoint.getUserPort());
+        return true;
+      } catch (Exception e) {
+        logger.error("Reconnection to server{}:{} failed.", endpoint.getAddress(), endpoint.getUserPort());
+      }
     }
+    return false;
   }
 
   /**
@@ -147,25 +162,25 @@ public class DrillClient implements Closeable{
 
 
   /**
-   * Submits a Logical plan/physical plan for direct execution, or sql for parsing and execution, and waits for a limited period of time. 
-   * 
+   * Submits a Logical plan/physical plan for direct execution, or sql for parsing and execution, and waits for a limited period of time.
+   *
    * invocation to this method blocks for at most timeoutMillisec,
-   * and returns query result if available. 
+   * and returns query result if available.
    * if wait time outs, throws RpcException wrapping TimeoutException.
    * In the case of timeout, the server side query is still being processed.
-   * 
+   *
    * @param type the type of plan, SQL or LOGICAL or PHYSICAL
    * @param plan json for plan, or sql
-   * @param timeoutMillisec timeout, in milliseconds. 
+   * @param timeoutMillisec timeout, in milliseconds.
    * @return query result.
    * @throws RpcException if anything goes wrong, or timed out. see nested exception for detail.
    */
   public List<QueryResultBatch> runQuery(QueryType type, String plan, long timeoutMillisec) throws RpcException {
-    return doSubmit(type, plan).getResults(timeoutMillisec);    
+    return doSubmit(type, plan).getResults(timeoutMillisec);
   }
 
   /**
-   * Submits a Logical plan/physical plan for direct execution, or sql for parsing and execution. 
+   * Submits a Logical plan/physical plan for direct execution, or sql for parsing and execution.
    * Invocation to this method returns immediately after successfully sending requests to drillbit.
    * @param type the type of plan, SQL or LOGICAL or PHYSICAL
    * @param plan json for plan, or sql
@@ -175,19 +190,22 @@ public class DrillClient implements Closeable{
   public Future<List<QueryResultBatch>> submitQuery(QueryType type, String plan) throws RpcException{
     return doSubmit(type, plan).future;
   }
-  
+
   private ListHoldingResultsListener doSubmit(QueryType type, String plan) throws RpcException{
     ListHoldingResultsListener listener = new ListHoldingResultsListener();
     client.submitQuery(listener, newBuilder().setResultsMode(STREAM_FULL).setType(type).setPlan(plan).build());
     return listener;
   }
-  
+
   private class ListHoldingResultsListener implements UserResultsListener {
     private Vector<QueryResultBatch> results = new Vector<QueryResultBatch>();
     private SettableFuture<List<QueryResultBatch>> future = SettableFuture.create();
-    
+
     @Override
     public void submissionFailed(RpcException ex) {
+      if(ex instanceof ChannelClosedException){
+        reconnect();
+      }
       logger.debug("Submission failed.", ex);
       future.setException(ex);
     }
@@ -200,11 +218,11 @@ public class DrillClient implements Closeable{
         future.set(results);
       }
     }
-  
+
     public List<QueryResultBatch> getResults() throws RpcException{
       return getResults(Long.MAX_VALUE);
     }
-    
+
     public List<QueryResultBatch> getResults(long timeoutMillisec) throws RpcException{
       try{
         return future.get(timeoutMillisec, TimeUnit.MILLISECONDS);
@@ -213,7 +231,7 @@ public class DrillClient implements Closeable{
       }
     }
   }
-  
+
   private class FutureHandler extends AbstractCheckedFuture<Void, RpcException> implements RpcConnectionHandler<ServerConnection>, DrillRpcFuture<Void>{
 
     protected FutureHandler() {
@@ -233,7 +251,7 @@ public class DrillClient implements Closeable{
     private SettableFuture<Void> getInner(){
       return (SettableFuture<Void>) delegate();
     }
-    
+
     @Override
     protected RpcException mapException(Exception e) {
       return RpcException.mapException(e);
@@ -243,7 +261,7 @@ public class DrillClient implements Closeable{
     public ByteBuf getBuffer() {
       return null;
     }
-    
+
   }
 
 }

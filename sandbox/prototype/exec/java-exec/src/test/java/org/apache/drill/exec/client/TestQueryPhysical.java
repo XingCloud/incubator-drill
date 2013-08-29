@@ -83,11 +83,9 @@ public class TestQueryPhysical extends PopUnitTestBase {
           Thread.sleep(3000);
           if (e instanceof ChannelClosedException) {
             e.printStackTrace();
-            while (!client.reconnect()) {
-              Thread.sleep(3000);
-            }
           }
         }
+
       }
 
       // look at records
