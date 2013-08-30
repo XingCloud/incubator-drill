@@ -39,6 +39,7 @@ import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.coord.ClusterCoordinator;
 import org.apache.drill.exec.coord.ZKClusterCoordinator;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
+import org.apache.drill.exec.proto.UserProtos;
 import org.apache.drill.exec.proto.UserProtos.QueryType;
 import org.apache.drill.exec.rpc.*;
 import org.apache.drill.exec.rpc.BasicClientWithConnection.ServerConnection;
@@ -192,22 +193,41 @@ public class DrillClient implements Closeable{
   }
 
   private ListHoldingResultsListener doSubmit(QueryType type, String plan) throws RpcException{
-    ListHoldingResultsListener listener = new ListHoldingResultsListener();
-    client.submitQuery(listener, newBuilder().setResultsMode(STREAM_FULL).setType(type).setPlan(plan).build());
+    UserProtos.RunQuery query = newBuilder().setResultsMode(STREAM_FULL).setType(type).setPlan(plan).build();
+    ListHoldingResultsListener listener = new ListHoldingResultsListener(query);
+    client.submitQuery(listener, query);
     return listener;
   }
 
   private class ListHoldingResultsListener implements UserResultsListener {
+    private final UserProtos.RunQuery query;
     private Vector<QueryResultBatch> results = new Vector<QueryResultBatch>();
     private SettableFuture<List<QueryResultBatch>> future = SettableFuture.create();
+
+    public ListHoldingResultsListener(UserProtos.RunQuery query) {
+      this.query = query;
+    }
+
 
     @Override
     public void submissionFailed(RpcException ex) {
       if(ex instanceof ChannelClosedException){
-        reconnect();
+        if(reconnect()){
+          try {
+            client.submitQuery(this, query);
+          } catch (RpcException e) {
+            fail(e);
+          }
+        }else{
+          //reconnect failed
+          fail(ex);
+        }
       }
-      logger.debug("Submission failed.", ex);
-      future.setException(ex);
+    }
+
+    private void fail(Exception e) {
+      logger.debug("Submission failed.", e);
+      future.setException(e);
     }
 
     @Override
