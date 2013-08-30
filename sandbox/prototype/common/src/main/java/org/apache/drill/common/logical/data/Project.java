@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("project")
@@ -40,7 +41,7 @@ public class Project extends SingleInputOperator {
     for (int i = 0; i < selections.length; i++) {
       PathSegment segment = selections[i].getRef().getRootSegment();
       CharSequence path = segment.getNameSegment().getPath();
-      if (!segment.isNamed() || !path.equals("output"))
+      if (!segment.isNamed() /*|| !path.equals("output")*/)
         throw new ExpressionParsingException(String.format(
             "Outputs for projections always have to start with named path of output. First segment was named '%s' or was named [%s]", path, segment.isNamed()));
 
@@ -61,6 +62,5 @@ public class Project extends SingleInputOperator {
     public Iterator<LogicalOperator> iterator() {
         return Iterators.singletonIterator(getInput());
     }
-
 
 }

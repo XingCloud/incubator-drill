@@ -76,5 +76,24 @@ public class FunctionCall extends LogicalExpressionBase implements Iterable<Logi
   }
 
   
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    FunctionCall that = (FunctionCall) o;
+
+    if (args != null ? !args.equals(that.args) : that.args != null) return false;
+    if (func != null ? !func.equals(that.func) : that.func != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = func != null ? func.hashCode() : 0;
+    result = 31 * result + (args != null ? args.hashCode() : 0);
+    return result;
+  }
   
 }

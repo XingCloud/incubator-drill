@@ -1,12 +1,17 @@
 {
    head: {
+<<<<<<< HEAD
       type: "APACHE_DRILL_LOGICAL",
+=======
+      type: "apache_drill_logical_plan",
+>>>>>>> origin/master
       version: "1",
       generator: {
          type: "manual",
          info: "na"
       }
    },
+<<<<<<< HEAD
    storage:{
        "queue" : {
            "type" : "queue",
@@ -23,6 +28,27 @@
            "type" : "console"
        }
    },
+=======
+   storage:[
+       {
+         type:"console",
+         name:"console"
+       },
+       {
+         type:"fs",
+         name:"fs1",
+         root:"file:///"
+       },
+       {
+         type:"classpath",
+         name:"cp"
+       },
+       {
+         type: "queue",
+         name: "queue"
+       }
+   ],
+>>>>>>> origin/master
    query: [
       {
          @id: 1,

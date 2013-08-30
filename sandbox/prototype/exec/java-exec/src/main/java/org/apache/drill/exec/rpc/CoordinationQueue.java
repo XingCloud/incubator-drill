@@ -78,10 +78,18 @@ public class CoordinationQueue {
 
     @Override
     public void operationComplete(ChannelFuture future) throws Exception {
+      
       connection.releasePermit();
-      if(!future.isSuccess()){
-        removeFromMap(coordinationId);
-        future.get();
+
+      if (!future.isSuccess()) {
+        RpcOutcome<?> rpc = removeFromMap(coordinationId);
+        RpcException e = null;
+        if (future.channel().isActive()) {
+          e = new RpcException("Future failed .");
+        } else {
+          e = new ChannelClosedException();
+        }
+        rpc.setException(e);
       }
     }
 

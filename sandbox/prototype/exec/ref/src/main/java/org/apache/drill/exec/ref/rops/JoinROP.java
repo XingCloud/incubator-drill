@@ -205,10 +205,9 @@ public class JoinROP extends ROPBase<Join> {
                                 factory.getBasicEvaluator(bufferObj.pointer, condition.getLeft()).eval(), condition.getRelationship());
                     }
                 });
-
-                if (curIdx >= bufferLength) {
-                   curIdx = 0;
-                }
+              if (curIdx >= bufferLength) {
+                curIdx = 0;
+              }
 
                 if (option.isPresent()) {
                     setOutputRecord(rightPointer, bufferObj.pointer);

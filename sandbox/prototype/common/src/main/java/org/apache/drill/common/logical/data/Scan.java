@@ -44,7 +44,8 @@ public class Scan extends SourceOperator{
   public String getStorageEngine() {
     return storageEngine;
   }
-
+  
+  @JsonProperty("selection")
   public JSONOptions getSelection() {
     return selection;
   }

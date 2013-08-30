@@ -23,6 +23,7 @@ import org.apache.drill.common.expression.PathSegment;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.expression.ValueExpressions.CollisionBehavior;
 import org.apache.drill.exec.ref.rops.DataWriter;
+import org.apache.drill.exec.ref.rops.ProxySimpleRecord;
 import org.apache.drill.exec.ref.values.ContainerValue;
 import org.apache.drill.exec.ref.values.DataValue;
 import org.apache.drill.exec.ref.values.SimpleMapValue;
@@ -96,7 +97,7 @@ public class UnbackedRecord implements RecordPointer {
         if (r instanceof UnbackedRecord) {
             this.root = ((UnbackedRecord) r).root.copy();
         } else {
-            throw new UnsupportedOperationException(String.format("Unable to copy from a record of type %s to an UnbackedRecord.", r.getClass().getCanonicalName()));
+          copyFrom(((ProxySimpleRecord)r).getRecord());
         }
     }
 

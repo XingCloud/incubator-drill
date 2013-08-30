@@ -17,7 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.store.parquet;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,9 +24,9 @@ import java.util.Collection;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.ReadEntry;
 import org.apache.drill.exec.physical.ReadEntryWithPath;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -39,14 +38,10 @@ import org.apache.drill.exec.store.mock.MockStorageEngine;
 import com.google.common.collect.ListMultimap;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
 
 import parquet.format.converter.ParquetMetadataConverter;
 import parquet.hadoop.CodecFactoryExposer;
-import parquet.hadoop.ParquetFileReader;
-import parquet.hadoop.metadata.BlockMetaData;
-import parquet.hadoop.metadata.ColumnChunkMetaData;
 import parquet.hadoop.metadata.ParquetMetadata;
 
 public class ParquetStorageEngine extends AbstractStorageEngine{
@@ -94,7 +89,7 @@ public class ParquetStorageEngine extends AbstractStorageEngine{
   }
 
   @Override
-  public ParquetGroupScan getPhysicalScan(Scan scan) throws IOException {
+  public ParquetGroupScan getPhysicalScan(Scan scan, QueryContext context) throws IOException {
 
     ArrayList<ReadEntryWithPath> readEntries = scan.getSelection().getListWith(new ObjectMapper(),
         new TypeReference<ArrayList<ReadEntryWithPath>>() {});

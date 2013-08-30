@@ -11,8 +11,8 @@
       javaType: "byte",
       boxedType: "Byte",
       minor: [
-        { class: "TinyInt", valueHolder: "IntHolder"},
-        { class: "UInt1", valueHolder: "UInt1Holder"}
+        { class: "TinyInt",classType: "Byte", valueHolder: "IntHolder" },
+        { class: "UInt1" ,classType: "Byte", valueHolder: "UInt1Holder" }
       ]
     },
     {
@@ -21,7 +21,7 @@
       javaType: "char",
       boxedType: "Character",
       minor: [
-        { class: "UInt2", valueHolder: "UInt2Holder"}
+        { class: "UInt2" ,classType: "Character", valueHolder: "UInt2Holder" }
       ]
     },    {
       major: "Fixed",
@@ -29,7 +29,7 @@
       javaType: "short",
       boxedType: "Short",
       minor: [
-        { class: "SmallInt", valueHolder: "Int2Holder"},
+        { class: "SmallInt" ,classType: "Short", valueHolder: "Int2Holder" },
       ]
     },
     {
@@ -38,10 +38,10 @@
       javaType: "int",
       boxedType: "Integer",
       minor: [
-        { class: "Int", valueHolder: "IntHolder" },
-        { class: "UInt4", valueHolder: "UInt4Holder" },
-        { class: "Float4", javaType: "float" },
-        <#-- 
+        { class: "Int" ,classType: "Integer", valueHolder: "IntHolder" },
+        { class: "UInt4" ,classType: "Integer", valueHolder: "UInt4Holder" },
+        { class: "Float4", javaType: "float" ,classType: "Float" },
+        <#--
         { class: "Decimal4", maxPrecisionDigits: 8, scale: 4, javaType: "float"},
         { class: "Date" }
         -->
@@ -53,46 +53,19 @@
       javaType: "long",
       boxedType: "Long",
       minor: [
-        { class: "BigInt" },
-        { class: "UInt8" },
-        { class: "Float8", javaType: "double" , boxedType: "Double"},
-        <#-- 
-        { class: "Decimal8", maxPrecisionDigits: 18, scale: 4, javaType: "double", boxedType: "Double"},
-        { class: "Money", maxPrecisionDigits: 2, scale: 1, }, 
-        { class: "Time" },
-        { class: "TimeStamp" },
-        { class: "DateTime" }
-        -->
+        { class: "BigInt" ,classType: "Long" },
+        { class: "UInt8" ,classType: "Long" },
+        { class: "Float8", javaType: "double" ,classType: "Double" , boxedType: "Double"},
       ]
     },
-    <#--
-    {
-      major: "Fixed",
-      width: 12,
-      javaType: "ByteBuf",
-      minor: [
-        { class: "Decimal12", maxPrecisionDigits: 28, scale: 5},
-        { class: "TimeTZ" },
-        { class: "Interval" }
-      ]
-    },
-    {
-      major: "Fixed",
-      width: 16,
-      javaType: "ByteBuf",
-      minor: [
-        { class: "Decimal16", maxPrecisionDigits: 37, scale: 6}
-      ]
-    },
-    -->
     {
       major: "VarLen",
       width: 4,
       javaType: "int",
       minor: [
-        { class: "VarBinary" },
-        { class: "VarChar" }
-        { class: "Var16Char" }
+        { class: "VarBinary" ,classType: "byte[]"},
+        { class: "VarChar" ,classType: "byte[]"}
+        { class: "Var16Char" ,classType: "byte[]"}
       ]
     },
     {
@@ -100,7 +73,7 @@
       width: 1,
       javaType: "int",
       minor: [
-        { class: "Bit" }
+        { class: "Bit" ,classType:"Integer"}
       ]
     }
   ]

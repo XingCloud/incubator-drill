@@ -17,8 +17,6 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.impl;
 
-import io.netty.buffer.ByteBuf;
-
 import java.util.List;
 
 import org.apache.drill.exec.ops.FragmentContext;
@@ -105,10 +103,10 @@ public class ScreenCreator implements RootCreator<Screen>{
           connection.sendResult(listener, batch);
 
         }else{
+          
           QueryWritableBatch batch = materializer.convertNext(true);
           connection.sendResult(listener, batch);
         }
-
         return false;
       }
       case OK_NEW_SCHEMA:

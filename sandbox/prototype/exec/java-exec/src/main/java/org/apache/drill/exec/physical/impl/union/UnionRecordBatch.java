@@ -5,6 +5,15 @@ import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.Union;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.selection.SelectionVector2;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.physical.config.Union;
+import org.apache.drill.exec.physical.impl.VectorHolder;
+import org.apache.drill.exec.record.*;
+import org.apache.drill.exec.record.selection.SelectionVector2;
+import org.apache.drill.exec.record.selection.SelectionVector4;
 import org.apache.drill.exec.vector.ValueVector;
 
 import java.util.ArrayList;
@@ -15,9 +24,10 @@ public class UnionRecordBatch extends AbstractRecordBatch<Union> {
 
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UnionRecordBatch.class);
 
-  private final List<RecordBatch> incoming;
+  private List<RecordBatch> incoming;
   private SelectionVector2 sv;
   private Iterator<RecordBatch> incomingIterator = null;
+
   private RecordBatch current = null;
   private ArrayList<TransferPair> transfers;
   private int outRecordCount;
@@ -30,14 +40,13 @@ public class UnionRecordBatch extends AbstractRecordBatch<Union> {
     sv = null;
   }
 
-
   @Override
   public int getRecordCount() {
     return outRecordCount;
   }
 
   @Override
-  public void kill() {
+  public void kill() {//todo 
     if(current != null){
       current.kill();
       current = null;
@@ -46,7 +55,7 @@ public class UnionRecordBatch extends AbstractRecordBatch<Union> {
       incomingIterator.next().kill();
     }
   }
-
+  
   @Override
   protected void killIncoming() {
     for (int i = 0; i < incoming.size(); i++) {
@@ -55,13 +64,11 @@ public class UnionRecordBatch extends AbstractRecordBatch<Union> {
     }
   }
 
-
   @Override
   public SelectionVector2 getSelectionVector2() {
     return sv;
   }
 
-  @Override
   public IterOutcome next() {
     if (current == null) { // end of iteration
       return IterOutcome.NONE;
@@ -106,7 +113,6 @@ public class UnionRecordBatch extends AbstractRecordBatch<Union> {
       ValueVector.Mutator m = vw.getValueVector().getMutator();
       m.setValueCount(outRecordCount);
     }
-
   }
 
   private void setupSchema() {

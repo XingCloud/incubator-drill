@@ -36,6 +36,7 @@ import org.apache.drill.exec.proto.ExecProtos.FragmentStatus.FragmentState;
 import org.apache.drill.exec.proto.ExecProtos.PlanFragment;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
 import org.apache.drill.exec.proto.UserBitShared.QueryId;
+import org.apache.drill.exec.proto.UserBitShared;
 import org.apache.drill.exec.proto.UserProtos.QueryResult;
 import org.apache.drill.exec.proto.UserProtos.QueryResult.QueryState;
 import org.apache.drill.exec.rpc.RpcException;
@@ -63,7 +64,7 @@ class RunningFragmentManager implements FragmentStatusListener{
   private AtomicInteger remainingFragmentCount;
   private FragmentRunner rootRunner;
   private volatile QueryId queryId;
-  
+
   public RunningFragmentManager(ForemanManagerListener foreman, TunnelManager tun) {
     super();
     this.foreman = foreman;
@@ -76,11 +77,12 @@ class RunningFragmentManager implements FragmentStatusListener{
     remainingFragmentCount.set(leafFragments.size()+1);
     queryId = rootFragment.getHandle().getQueryId();
 
+    queryId = rootFragment.getHandle().getQueryId() ;
     // set up the root fragment first so we'll have incoming buffers available.
     {
       IncomingBuffers buffers = new IncomingBuffers(rootOperator);
       
-      FragmentContext rootContext = new FragmentContext(bee.getContext(), rootFragment.getHandle(), rootClient, buffers, new FunctionImplementationRegistry(bee.getContext().getConfig()));
+      FragmentContext rootContext = new FragmentContext(bee.getContext(), rootFragment.getHandle(), rootClient, buffers, bee.getFunctionImpRegistry());
       RootExec rootExec = ImplCreator.getExec(rootContext, rootOperator);
       // add fragment to local node.
       map.put(rootFragment.getHandle(), new FragmentData(rootFragment.getHandle(), null, true));

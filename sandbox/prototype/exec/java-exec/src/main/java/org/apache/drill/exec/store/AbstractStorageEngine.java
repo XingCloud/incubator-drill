@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.ReadEntry;
 import org.apache.drill.exec.physical.base.AbstractGroupScan;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -54,7 +55,7 @@ public abstract class AbstractStorageEngine implements StorageEngine{
   }
 
   @Override
-  public AbstractGroupScan getPhysicalScan(Scan scan) throws IOException {
+  public AbstractGroupScan getPhysicalScan(Scan scan, QueryContext context) throws IOException {
     throw new UnsupportedOperationException();
   }
 

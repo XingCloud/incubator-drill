@@ -47,13 +47,40 @@ public interface OutputTypeDeterminer {
     public MajorType getOutputType(List<LogicalExpression> expressions) {
       return outputType;
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FixedType fixedType = (FixedType) o;
+
+      if (outputType != null ? !outputType.equals(fixedType.outputType) : fixedType.outputType != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return outputType != null ? outputType.hashCode() : 0;
+    }
   }
   
   public static class SameAsFirstInput implements OutputTypeDeterminer{
     @Override
     public MajorType getOutputType(List<LogicalExpression> expressions) {
       return expressions.get(0).getMajorType();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      //all SameAsFirstInput objects are the same
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
     }
   }
   
@@ -66,6 +93,17 @@ public interface OutputTypeDeterminer {
         }
       }
       return expressions.get(0).getMajorType();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      //all SameAsFirstInput objects are the same
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
     }
   }
   

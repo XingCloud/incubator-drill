@@ -15,13 +15,9 @@
 		</encoder>
 	</appender>
 
-	<logger name="org.apache.drill" additivity="false">
-		<level value="debug" />
-		<appender-ref ref="SOCKET" />
-	</logger>
 
 	<root>
-		<level value="error" />
+		<level value="INFO" />
 		<appender-ref ref="STDOUT" />
 	</root>
 

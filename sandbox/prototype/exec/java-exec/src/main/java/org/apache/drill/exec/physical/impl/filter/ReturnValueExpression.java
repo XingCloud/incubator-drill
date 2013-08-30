@@ -37,11 +37,28 @@ public class ReturnValueExpression implements LogicalExpression{
   public ExpressionPosition getPosition() {
     return ExpressionPosition.UNKNOWN;
   }
-  
+
   @Override
   public Iterator<LogicalExpression> iterator() {
     return Iterators.singletonIterator(child);
   }
 
   
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ReturnValueExpression that = (ReturnValueExpression) o;
+
+    if (child != null ? !child.equals(that.child) : that.child != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return child != null ? child.hashCode() : 0;
+  }
+
 }

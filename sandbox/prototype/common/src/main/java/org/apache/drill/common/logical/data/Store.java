@@ -66,6 +66,4 @@ public class Store extends SinkOperator{
         return Iterators.singletonIterator(getInput());
     }
 
-
-
 }

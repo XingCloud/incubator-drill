@@ -91,9 +91,12 @@ public class ScanBatch implements RecordBatch {
   }
 
   @Override
-  public IterOutcome next() {
-    while ((recordCount = currentReader.next()) == 0) {
+  public IterOutcome next()  {
+    while (true) {
       try {
+        recordCount = currentReader.next() ;
+        if(recordCount != 0)
+          break;
         if (!readers.hasNext()) {
           currentReader.cleanup();
           releaseAssets();
@@ -102,7 +105,7 @@ public class ScanBatch implements RecordBatch {
         currentReader.cleanup();
         currentReader = readers.next();
         currentReader.setup(mutator);
-      } catch (ExecutionSetupException e) {
+      } catch (Exception e) {
         this.context.fail(e);
         releaseAssets();
         return IterOutcome.STOP;

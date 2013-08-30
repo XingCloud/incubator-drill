@@ -10,12 +10,7 @@ import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.proto.SchemaDefProtos.FieldDef;
 import org.apache.drill.exec.record.MaterializedField;
-import org.apache.drill.exec.vector.BitVector;
-import org.apache.drill.exec.vector.NullableFloat4Vector;
-import org.apache.drill.exec.vector.NullableUInt4Vector;
-import org.apache.drill.exec.vector.NullableVarCharVector;
-import org.apache.drill.exec.vector.TypeHelper;
-import org.apache.drill.exec.vector.UInt4Vector;
+import org.apache.drill.exec.vector.*;
 import org.junit.Test;
 
 public class TestValueVector {
@@ -292,6 +287,71 @@ public class TestValueVector {
 
     // Ensure unallocated space returns 0
     assertEquals(0, v.getAccessor().get(3));
+  }
+
+
+  @Test
+  public void testVarCharVector(){
+    MajorType.Builder typeBuilder = MajorType.newBuilder();
+    FieldDef.Builder defBuilder = FieldDef.newBuilder();
+    typeBuilder
+      .setMinorType(MinorType.VARCHAR)
+      .setMode(DataMode.REQUIRED)
+      .setWidth(4);
+    defBuilder
+      .setMajorType(typeBuilder.build());
+    MaterializedField field = MaterializedField.create(defBuilder.build());
+
+    // Create a new value vector for 1024 integers
+    VarCharVector v = new VarCharVector(field, allocator);
+    VarCharVector.Mutator m = v.getMutator();
+    v.allocateNew(5,5);
+
+    for(int i = 0 ; i < 5 ; i ++){
+      m.set(i,String.format("drill-str%d",i).getBytes());
+    }
+    VarCharVector.Accessor accessor = v.getAccessor() ;
+
+    assertEquals ("drill-str0",new String(accessor.get(0)));
+    assertEquals ("drill-str1",new String(accessor.get(1)));
+    assertEquals ("drill-str2",new String(accessor.get(2)));
+    assertEquals ("drill-str3",new String(accessor.get(3)));
+    assertEquals ("drill-str4",new String(accessor.get(4)));
+  }
+
+
+  @Test
+  public void testNullableVarCharVector(){
+    MajorType.Builder typeBuilder = MajorType.newBuilder();
+    FieldDef.Builder defBuilder = FieldDef.newBuilder();
+    typeBuilder
+      .setMinorType(MinorType.VARCHAR)
+      .setMode(DataMode.OPTIONAL)
+      .setWidth(4);
+    defBuilder
+      .setMajorType(typeBuilder.build());
+    MaterializedField field = MaterializedField.create(defBuilder.build());
+
+    NullableVarCharVector v = new NullableVarCharVector(field,allocator);
+    NullableVarCharVector.Mutator m = v.getMutator();
+    NullableVarCharVector.Accessor a = v.getAccessor() ;
+    v.allocateNew(10,5);
+    m.setObject(0, "0".getBytes());
+    m.setObject(1,null);
+    m.setObject(2,null);
+    m.setObject(3,null);
+    m.setObject(4,"1234689434423".getBytes());
+    m.setValueCount(5);
+
+    assertEquals(5,a.getValueCount());
+    assertEquals("0",new String( (byte[])a.getObject(0)));
+    assertEquals(null,a.getObject(1));
+    assertEquals(null,a.getObject(2));
+    assertEquals(null,a.getObject(3));
+    assertEquals("1234689434423",new String((byte[])a.getObject(4)));
+
+
+
   }
 
 }

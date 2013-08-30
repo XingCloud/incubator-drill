@@ -39,27 +39,31 @@ public class TestSimpleUnion {
       bitContext.getAllocator(); result = BufferAllocator.getAllocator(c);
     }};
     
+//    runPlan(bitContext, connection, "/union/test1.json", 150);
+    runPlan(bitContext, connection, "/union/test2_dag.json", 300);
     
+  }
+
+  private void runPlan(DrillbitContext bitContext, UserServer.UserClientConnection connection, String path, int expected) throws Throwable {
     PhysicalPlanReader reader = new PhysicalPlanReader(c, c.getMapper(), CoordinationProtos.DrillbitEndpoint.getDefaultInstance());
-    PhysicalPlan plan = reader.readPhysicalPlan(Files.toString(FileUtils.getResourceAsFile("/union/test1.json"), Charsets.UTF_8));
+    PhysicalPlan plan = reader.readPhysicalPlan(Files.toString(FileUtils.getResourceAsFile(path), Charsets.UTF_8));
     FunctionImplementationRegistry registry = new FunctionImplementationRegistry(c);
     FragmentContext context = new FragmentContext(bitContext, ExecProtos.FragmentHandle.getDefaultInstance(), connection, null, registry);
     SimpleRootExec exec = new SimpleRootExec(ImplCreator.getExec(context, (FragmentRoot) plan.getSortedOperators(false).iterator().next()));
     
-    int[] counts = new int[]{100,50};
-    int i=0;
+
+    int i=0, sum=0;
     while(exec.next()){
-      System.out.println("iteration count:" + exec.getRecordCount());
-      assertEquals(counts[i++], exec.getRecordCount());
+      System.out.println("iteration["+(i++)+"]:" + exec.getRecordCount());
+      sum+=exec.getRecordCount();
     }
-    
+    assertEquals(expected, sum);    
     if(context.getFailureCause() != null){
       throw context.getFailureCause();
     }
-    assertTrue(!context.isFailed());
-    
+    assertTrue(!context.isFailed());  
   }
-  
+
   @After
   public void tearDown() throws Exception{
     // pause to get logger to catch up.

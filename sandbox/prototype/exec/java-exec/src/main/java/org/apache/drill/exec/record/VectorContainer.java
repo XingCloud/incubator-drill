@@ -29,6 +29,11 @@ public class VectorContainer implements Iterable<VectorWrapper<?>> {
       add(vArr);
     }
   }
+  
+  public VectorContainer(List<VectorWrapper<?>> vectors) {
+    addCollection(vectors);
+  }
+  
 
   public void addHyperList(List<ValueVector> vectors) {
     schema = null;
@@ -58,10 +63,14 @@ public class VectorContainer implements Iterable<VectorWrapper<?>> {
     wrappers.add(wrapper.cloneAndTransfer());
   }
 
-  public void addCollection(Iterable<ValueVector> vectors) {
+  public void addCollection(Iterable<?> vectors) {
     schema = null;
-    for (ValueVector vv : vectors) {
-      wrappers.add(SimpleVectorWrapper.create(vv));
+    for (Object vv : vectors) {
+      if(vv instanceof ValueVector){
+        wrappers.add(SimpleVectorWrapper.create((ValueVector) vv));
+      }else if(vv instanceof VectorWrapper){
+        wrappers.add((VectorWrapper<?>) vv);
+      }
     }
   }
 

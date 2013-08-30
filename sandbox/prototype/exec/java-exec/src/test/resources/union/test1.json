@@ -9,7 +9,11 @@
 	graph:[
         {
             @id:1,
+<<<<<<< HEAD
             pop:"mock-sub-scan",
+=======
+            pop:"mock-scan",
+>>>>>>> i20
             url: "http://apache.org",
             entries:[
             	{records: 100, types: [
@@ -21,7 +25,11 @@
         },
         {
             @id:2,
+<<<<<<< HEAD
             pop:"mock-sub-scan",
+=======
+            pop:"mock-scan",
+>>>>>>> i20
             url: "http://apache.org",
             entries:[
             	{records: 100, types: [

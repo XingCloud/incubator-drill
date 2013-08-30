@@ -106,6 +106,31 @@ public class ProjectRecordBatch extends AbstractSingleRecordBatch<Project>{
       throw new SchemaChangeException("Failure while attempting to load generated class", e);
     }
   }
+  /*
+  private MaterializedField getMaterializedField(FieldReference reference, LogicalExpression expr){
+    return new MaterializedField(getFieldDef(reference, expr.getMajorType()));
+  }
+
+  private FieldDef getFieldDef(SchemaPath path, MajorType type){
+    return FieldDef //
+        .newBuilder() //
+        .addAllName(getNameParts(path.getRootSegment())) //
+        .setMajorType(type) //
+        .build();
+  }
   
-  
+  private List<NamePart> getNameParts(PathSegment seg){
+    List<NamePart> parts = Lists.newArrayList();
+    while(seg != null){
+      if(seg.isArray()){
+        parts.add(NamePart.newBuilder().setType(Type.ARRAY).build());
+      }else{
+        parts.add(NamePart.newBuilder().setType(Type.NAME).setName(seg.getNameSegment().getPath().toString()).build());
+      }
+      seg = seg.getChild();
+    }
+    return parts;
+  }
+  */
+
 }

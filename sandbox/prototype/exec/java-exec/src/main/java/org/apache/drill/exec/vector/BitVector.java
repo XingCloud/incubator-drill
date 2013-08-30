@@ -35,7 +35,7 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
   }
 
   private int getSizeFromCount(int valueCount) {
-    return (int) Math.ceil((float)valueCount / 8.0);
+    return (valueCount % 8) == 0 ? (valueCount / 8) : ((valueCount / 8) + 1);
   }
 
   /**
@@ -102,12 +102,13 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
     return new TransferImpl(getField().clone(ref));
   }
 
-
-  public void transferTo(BitVector target) {
+  public void transferTo(BitVector target, boolean needClear){
     target.data = data;
     target.data.retain();
     target.valueCount = valueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
 
   private class TransferImpl implements TransferPair {
@@ -121,8 +122,13 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
       return to;
     }
 
-    public void transfer() {
-      transferTo(to);
+    public void transfer(){
+      transferTo(to, true);
+    }
+
+    @Override
+    public void mirror() {
+      transferTo(to, false);
     }
 
     @Override
@@ -154,6 +160,7 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
       return new Boolean(get(index) != 0);
     }
 
+
     public final int getValueCount() {
       return valueCount;
     }
@@ -180,7 +187,7 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
 
     /**
      * Set the bit at the given index to the specified value.
-     * 
+     *
      * @param index
      *          position of the bit to set
      * @param value
@@ -227,5 +234,13 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
       }
     }
 
+    @Override
+    public void setObject(int index, Object obj) {
+      set(index, (Integer) obj);
+    }
+      
+    public void transferTo(ValueVector target, boolean needClear) {
+      BitVector.this.transferTo((BitVector)target, needClear);
+    }
   }
 }

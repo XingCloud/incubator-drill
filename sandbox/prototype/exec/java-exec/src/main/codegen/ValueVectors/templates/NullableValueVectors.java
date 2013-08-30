@@ -64,6 +64,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
   @Override
   public ByteBuf[] getBuffers() {
     ByteBuf[] buffers = ObjectArrays.concat(bits.getBuffers(), values.getBuffers(), ByteBuf.class);
+    //immars:todo need clear()?
     clear();
     return buffers;
   }
@@ -106,6 +107,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
     
     // remove bits part of buffer.
     buf = buf.slice(loaded, buf.capacity() - loaded);
+    dataBytes -= loaded ;
     loaded += values.load(dataBytes, valueCount, buf);
     return loaded;
   }
@@ -113,7 +115,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
   @Override
   public void load(FieldMetadata metadata, ByteBuf buffer) {
     assert this.field.getDef().equals(metadata.getDef());
-    int loaded = load(metadata.getVarByteLength(), metadata.getValueCount(), buffer);
+    int loaded = load(metadata.getBufferLength(), metadata.getValueCount(), buffer);
     assert metadata.getBufferLength() == loaded;
   }
   
@@ -169,11 +171,13 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
   }
 
   
-  public void transferTo(Nullable${minor.class}Vector target){
-    bits.transferTo(target.bits);
-    values.transferTo(target.values);
+  public void transferTo(Nullable${minor.class}Vector target, boolean needClear){
+    bits.transferTo(target.bits, needClear);
+    values.transferTo(target.values, needClear);
     target.valueCount = valueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
   
   private class TransferImpl implements TransferPair{
@@ -188,7 +192,11 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
     }
     
     public void transfer(){
-      transferTo(to);
+      transferTo(to, true);
+    }
+    
+    public void mirror(){
+      transferTo(to, false);
     }
     
     @Override
@@ -279,8 +287,18 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
      */
     public void set(int index, <#if type.major == "VarLen">byte[]<#elseif (type.width < 4)>int<#else>${minor.javaType!type.javaType}</#if> value) {
       setCount++;
+      <#if type.major == "VarLen">
+      if(value == null){
+        values.getMutator().set(index,new byte[0]);
+      }else{
+        bits.getMutator().set(index, 1);
+        values.getMutator().set(index, value);
+      }
+      <#else>
       bits.getMutator().set(index, 1);
       values.getMutator().set(index, value);
+      </#if>
+
     }
     
     public void setSkipNull(int index, ${minor.class}Holder holder){
@@ -332,6 +350,22 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
     
     public void reset(){
       setCount = 0;
+    }
+
+    public void setObject(int index,Object obj){
+      <#if type.major == "VarLen">
+        set(index, (${minor.classType}) obj) ;
+      <#else>
+        if(obj != null){
+          set(index, (${minor.classType}) obj) ;
+        }
+      </#if>
+
+    }
+
+
+    public void transferTo(ValueVector target, boolean needClear) {
+      Nullable${minor.class}Vector.this.transferTo((Nullable${minor.class}Vector)target, needClear);
     }
     
   }

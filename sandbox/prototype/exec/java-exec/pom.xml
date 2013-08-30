@@ -10,7 +10,25 @@
   </parent>
   <artifactId>java-exec</artifactId>
   <name>java-exec</name>
-
+  
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>warn</checksumPolicy>
+      </releases>
+      <id>xamavenrepo</id>
+      <name>xamavenrepo</name>
+      <url>http://xamavenrepo:8044/archiva/repository/internal</url>
+      <layout>default</layout>
+    </repository>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+  </repositories>
+  
   <dependencies>
     <dependency>
       <groupId>org.ow2.asm</groupId>
@@ -153,6 +171,81 @@
       <artifactId>jetty-util</artifactId>
       <version>6.1.26</version>
     </dependency>
+      
+    <dependency>
+      <groupId>org.apache.drill</groupId>
+      <artifactId>hbase-scanner</artifactId>
+      <exclusions>
+          <exclusion>
+              <artifactId>log4j-over-slf4j</artifactId>
+              <groupId>org.slf4j</groupId>
+          </exclusion>
+          <exclusion>
+              <artifactId>log4j</artifactId>
+              <groupId>log4j</groupId>
+          </exclusion>
+          <exclusion>
+              <artifactId>slf4j-log4j12</artifactId>
+              <groupId>org.slf4j</groupId>
+          </exclusion>
+      </exclusions>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.drill</groupId>
+      <artifactId>metastore</artifactId>
+      <exclusions>
+          <exclusion>
+              <artifactId>log4j-over-slf4j</artifactId>
+              <groupId>org.slf4j</groupId>
+          </exclusion>
+          <exclusion>
+              <artifactId>log4j</artifactId>
+              <groupId>log4j</groupId>
+          </exclusion>
+          <exclusion>
+              <artifactId>slf4j-log4j12</artifactId>
+              <groupId>org.slf4j</groupId>
+          </exclusion>
+      </exclusions>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+      
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.25</version>
+    </dependency>
+    <dependency>
+      <groupId>c3p0</groupId>
+      <artifactId>c3p0</artifactId>
+      <version>0.9.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.carrotsearch</groupId>
+      <artifactId>hppc</artifactId>
+      <version>0.5.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.xingcloud.xa</groupId>
+      <artifactId>dbutil</artifactId>
+      <version>1.4</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging-api</artifactId>
+        </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.clearspring.analytics</groupId>
+      <artifactId>stream</artifactId>
+      <version>2.3.0</version>
+    </dependency>  
   </dependencies>
 
   <profiles>
@@ -282,11 +375,13 @@
           </execution>
         </executions>
       </plugin>
-        <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.1</version>
-                <executions>
+      
+      <plugin>
+
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>2.1</version>
+          <executions>
                   <execution>
                     <phase>package</phase>
                     <goals>
@@ -333,7 +428,4 @@
       <!-- </plugin> -->
     </plugins>
   </build>
-
-
-
 </project>

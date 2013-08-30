@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.drill.common.logical.data.Scan;
+import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.base.AbstractGroupScan;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.store.AbstractStorageEngine;
@@ -38,7 +39,7 @@ public class MockStorageEngine extends AbstractStorageEngine {
   }
 
   @Override
-  public AbstractGroupScan getPhysicalScan(Scan scan) throws IOException {
+  public AbstractGroupScan getPhysicalScan(Scan scan, QueryContext context) throws IOException {
 
     ArrayList<MockScanEntry> readEntries = scan.getSelection().getListWith(new ObjectMapper(),
         new TypeReference<ArrayList<MockScanEntry>>() {

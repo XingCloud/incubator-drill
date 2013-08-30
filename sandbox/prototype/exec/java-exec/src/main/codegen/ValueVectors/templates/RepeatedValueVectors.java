@@ -74,12 +74,14 @@ import com.google.common.collect.ObjectArrays;
     return new TransferImpl(getField().clone(ref));
   }
   
-  public void transferTo(Repeated${minor.class}Vector target){
-    offsets.transferTo(target.offsets);
-    values.transferTo(target.values);
+  public void transferTo(Repeated${minor.class}Vector target, boolean needClear){
+    offsets.transferTo(target.offsets, needClear);
+    values.transferTo(target.values, needClear);
     target.parentValueCount = parentValueCount;
     target.childValueCount = childValueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
   
   private class TransferImpl implements TransferPair{
@@ -94,12 +96,15 @@ import com.google.common.collect.ObjectArrays;
     }
     
     public void transfer(){
-      transferTo(to);
+      transferTo(to, true);
     }
     
     @Override
     public void copyValue(int fromIndex, int toIndex) {
       to.copyFrom(fromIndex, toIndex, Repeated${minor.class}Vector.this);
+    }
+    public void mirror(){
+      transferTo(to, false);
     }
   }
   
@@ -334,7 +339,15 @@ import com.google.common.collect.ObjectArrays;
     public void reset(){
       
     }
+
+    public void setObject(int index,Object obj){
+
+    }
     
+    public void transferTo(ValueVector target, boolean needClear) {
+      Repeated${minor.class}Vector.this.transferTo((Repeated${minor.class}Vector)target, needClear);
+    }
+
   }
 }
 </#list>

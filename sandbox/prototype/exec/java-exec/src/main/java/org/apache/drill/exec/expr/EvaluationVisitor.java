@@ -28,6 +28,7 @@ import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JVar;
+import org.apache.drill.exec.vector.TypeHelper;
 
 public class EvaluationVisitor {
 

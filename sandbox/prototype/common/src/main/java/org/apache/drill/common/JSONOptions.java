@@ -18,6 +18,7 @@
 package org.apache.drill.common;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 @JsonSerialize(using = Se.class)
 @JsonDeserialize(using = De.class)
-public class JSONOptions {
+public class JSONOptions{
   
   final static Logger logger = LoggerFactory.getLogger(JSONOptions.class);
   
@@ -114,5 +115,22 @@ public class JSONOptions {
       jgen.writeTree(value.root);
     }
 
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JSONOptions that = (JSONOptions) o;
+
+    if (root != null ? !root.equals(that.root) : that.root != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return root != null ? root.hashCode() : 0;
   }
 }

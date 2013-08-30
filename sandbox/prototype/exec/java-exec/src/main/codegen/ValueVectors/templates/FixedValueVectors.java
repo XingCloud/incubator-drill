@@ -100,11 +100,13 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements F
     return new TransferImpl(getField().clone(ref));
   }
   
-  public void transferTo(${minor.class}Vector target){
+  public void transferTo(${minor.class}Vector target, boolean needClear){
     target.data = data;
     target.data.retain();
     target.valueCount = valueCount;
-    clear();
+    if(needClear){
+      clear();
+    }
   }
   
   private class TransferImpl implements TransferPair{
@@ -119,7 +121,11 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements F
     }
     
     public void transfer(){
-      transferTo(to);
+      transferTo(to, true);
+    }
+    
+    public void mirror(){
+      transferTo(to, false);
     }
     
     @Override
@@ -288,6 +294,16 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements F
      data.writerIndex(${type.width} * valueCount);
    }
 
+
+   public void setObject(int index,Object obj){
+      set(index, (${minor.classType}) obj) ;
+   }
+
+   
+       
+   public void transferTo(ValueVector target, boolean needClear) {
+     ${minor.class}Vector.this.transferTo((${minor.class}Vector)target, needClear);
+   }
 
 
 

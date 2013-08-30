@@ -1,10 +1,8 @@
 package org.apache.drill.exec.ref.rops;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
-
+import com.google.common.collect.ArrayListMultimap;
 import org.apache.drill.common.expression.FieldReference;
-import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.common.logical.data.Segment;
 import org.apache.drill.exec.ref.RecordIterator;
 import org.apache.drill.exec.ref.RecordPointer;
@@ -13,7 +11,8 @@ import org.apache.drill.exec.ref.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.ref.values.DataValueSet;
 import org.apache.drill.exec.ref.values.ScalarValues;
 
-import com.google.common.collect.ArrayListMultimap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 public class SegmentROP extends AbstractBlockingOperator<Segment> {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SegmentROP.class);
@@ -29,14 +28,14 @@ public class SegmentROP extends AbstractBlockingOperator<Segment> {
 
   @Override
   protected void setupEvals(EvaluatorFactory builder) {
-    LogicalExpression[] groupings = config.getExprs();
+    NamedExpression[] groupings = config.getExprs();
     outputSegmentKey = config.getName();
     map  = ArrayListMultimap.create();
     
     BasicEvaluator[] evals = new BasicEvaluator[groupings.length];
     
     for(int i = 0; i < groupings.length; i++){
-      evals[i] = builder.getBasicEvaluator(record, groupings[i]);
+      evals[i] = builder.getBasicEvaluator(record, groupings[i].getExpr());
     }
     
     staging = new DataValueSet(evals);

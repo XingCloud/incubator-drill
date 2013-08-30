@@ -23,11 +23,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.Iterators;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("union")
 public class Union extends LogicalOperatorBase {
-  private final LogicalOperator[] inputs;
+  private LogicalOperator[] inputs;
   private final boolean distinct;
 
 //  @JsonCreator
@@ -44,8 +45,24 @@ public class Union extends LogicalOperatorBase {
     this.distinct = distinct == null ? false : distinct;
   }
 
+  @JsonProperty("inputs")
   public LogicalOperator[] getInputs() {
     return inputs;
+  }
+  
+  public void setInputs(LogicalOperator[] inputs){
+    if(this.inputs != null){
+      for (int i = 0; i < inputs.length; i++) {
+        if(inputs[i] != null)
+          inputs[i].unregisterSubscriber(this);
+        
+      }
+    }
+    this.inputs = inputs;
+    for (int i = 0; i < inputs.length; i++) {
+      if(inputs[i] != null)
+        inputs[i].registerAsSubscriber(this);
+    }
   }
 
   public boolean isDistinct() {
@@ -61,8 +78,4 @@ public class Union extends LogicalOperatorBase {
     public Iterator<LogicalOperator> iterator() {
         return Iterators.forArray(inputs);
     }
-
-
-
-
 }

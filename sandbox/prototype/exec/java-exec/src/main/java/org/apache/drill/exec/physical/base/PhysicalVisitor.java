@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,8 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.base;
 
-import org.apache.drill.exec.physical.config.Filter;
-import org.apache.drill.exec.physical.config.HashPartitionSender;
-import org.apache.drill.exec.physical.config.HashToRandomExchange;
-import org.apache.drill.exec.physical.config.MergeJoinPOP;
-import org.apache.drill.exec.physical.config.Project;
-import org.apache.drill.exec.physical.config.RandomReceiver;
-import org.apache.drill.exec.physical.config.RangeSender;
-import org.apache.drill.exec.physical.config.Screen;
-import org.apache.drill.exec.physical.config.SingleSender;
-import org.apache.drill.exec.physical.config.Sort;
-import org.apache.drill.exec.physical.config.StreamingAggregate;
-import org.apache.drill.exec.physical.config.Union;
-import org.apache.drill.exec.physical.config.UnionExchange;
+import org.apache.drill.common.logical.data.UnionedScan;
+import org.apache.drill.exec.physical.config.*;
 
 /**
  * Visitor class designed to traversal of a operator tree.  Basis for a number of operator manipulations including fragmentation and materialization.
@@ -39,11 +28,12 @@ import org.apache.drill.exec.physical.config.UnionExchange;
  */
 public interface PhysicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PhysicalVisitor.class);
-  
-  
+
+
   public RETURN visitExchange(Exchange exchange, EXTRA value) throws EXCEP;
   public RETURN visitGroupScan(GroupScan groupScan, EXTRA value) throws EXCEP;
   public RETURN visitSubScan(SubScan subScan, EXTRA value) throws EXCEP;
+  public RETURN visitUnionedScanSplit(UnionedScanSplitPOP scan, EXTRA value) throws EXCEP;
   public RETURN visitStore(Store store, EXTRA value) throws EXCEP;
 
   public RETURN visitFilter(Filter filter, EXTRA value) throws EXCEP;
@@ -55,8 +45,8 @@ public interface PhysicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
   public RETURN visitReceiver(Receiver receiver, EXTRA value) throws EXCEP;
   public RETURN visitStreamingAggregate(StreamingAggregate agg, EXTRA value) throws EXCEP;
   public RETURN visitOp(PhysicalOperator op, EXTRA value) throws EXCEP;
-  
-  
+
+
   public RETURN visitHashPartitionSender(HashPartitionSender op, EXTRA value) throws EXCEP;
   public RETURN visitRandomReceiver(RandomReceiver op, EXTRA value) throws EXCEP;
   public RETURN visitHashPartitionSender(HashToRandomExchange op, EXTRA value) throws EXCEP;
@@ -64,4 +54,8 @@ public interface PhysicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
   public RETURN visitScreen(Screen op, EXTRA value) throws EXCEP;
   public RETURN visitSingleSender(SingleSender op, EXTRA value) throws EXCEP;
   public RETURN visitUnionExchange(UnionExchange op, EXTRA value) throws EXCEP;
+
+  public RETURN visitCollapsingAggregate(CollapsingAggregatePOP op, EXTRA value) throws EXCEP;
+  public RETURN visitSegment(SegmentPOP op,EXTRA value) throws EXCEP;
+  public RETURN visitJoin(JoinPOP op,EXTRA value) throws EXCEP;
 }

@@ -17,10 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.exec.work.foreman;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.List;
-
+import com.google.common.collect.Lists;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.logical.LogicalPlan;
@@ -30,11 +27,7 @@ import org.apache.drill.exec.opt.BasicOptimizer;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.impl.materialize.QueryWritableBatch;
-import org.apache.drill.exec.planner.fragment.Fragment;
-import org.apache.drill.exec.planner.fragment.MakeFragmentsVisitor;
-import org.apache.drill.exec.planner.fragment.PlanningSet;
-import org.apache.drill.exec.planner.fragment.SimpleParallelizer;
-import org.apache.drill.exec.planner.fragment.StatsCollector;
+import org.apache.drill.exec.planner.fragment.*;
 import org.apache.drill.exec.proto.ExecProtos.PlanFragment;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
 import org.apache.drill.exec.proto.UserBitShared.DrillPBError;
@@ -53,6 +46,9 @@ import org.apache.drill.exec.work.WorkManager.WorkerBee;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Foreman manages all queries where this is the driving/root node.
@@ -103,6 +99,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
     DrillPBError error = ErrorHelper.logAndConvertError(context.getCurrentEndpoint(), message, t, logger);
     QueryResult result = QueryResult //
         .newBuilder() //
+        .setQueryId(context.getQueryId()) //
         .addError(error) //
         .setIsLastChunk(true) //
         .setQueryState(QueryState.FAILED) //
@@ -165,11 +162,12 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
   private void parseAndRunLogicalPlan(String json) {
     try {
       LogicalPlan logicalPlan = context.getPlanReader().readLogicalPlan(json);
-      logger.debug("Logical {}", logicalPlan.unparse(DrillConfig.create()));
+      logger.debug("Logical {}", logicalPlan.unparse(context.getConfig()));
       PhysicalPlan physicalPlan = convert(logicalPlan);
       //logger.debug("Physical {}", new ObjectMapper().writeValueAsString(physicalPlan));
       runPhysicalPlan(physicalPlan);
     } catch (IOException e) {
+      e.printStackTrace();
       fail("Failure while parsing logical plan.", e);
     }
   }
@@ -222,6 +220,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
 
     
     } catch (ExecutionSetupException | RpcException e) {
+        e.printStackTrace();
       fail("Failure while setting up query.", e);
     }
 
@@ -232,7 +231,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
   }
 
   private PhysicalPlan convert(LogicalPlan plan) {
-    return new BasicOptimizer(DrillConfig.create(), context).optimize(new BasicOptimizer.BasicOptimizationContext(), plan);
+    return new BasicOptimizer(context.getConfig(), context).optimize(new BasicOptimizer.BasicOptimizationContext(), plan);
   }
 
   public QueryResult getResult(UserClientConnection connection, RequestResults req) {

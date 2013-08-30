@@ -28,11 +28,13 @@ public class DirectBufferAllocator extends BufferAllocator {
 
   public DirectBufferAllocator() {
   }
+  private int allocateSize  = 0 ;
 
   @Override
   public ByteBuf buffer(int size) {
     // TODO: wrap it
-    return buffer.directBuffer(size);
+    allocateSize += size ;
+    return new WrappedByteBuf(buffer.directBuffer(size),this);
   }
 
   @Override
@@ -42,8 +44,14 @@ public class DirectBufferAllocator extends BufferAllocator {
   }
 
   @Override
+  public long free(ByteBuf byteBuf) {
+    allocateSize -= byteBuf.capacity() ;
+    return allocateSize;
+  }
+
+  @Override
   public long getAllocatedMemory() {
-    return 0;
+    return allocateSize;
   }
 
   @Override
@@ -59,6 +67,9 @@ public class DirectBufferAllocator extends BufferAllocator {
 
   @Override
   public void close() {
+    if(allocateSize != 0){
+      logger.debug("Memory leak exists . " + allocateSize + " allocated bytes not released .");
+    }
     // TODO: collect all buffers and release them away using a weak hashmap so we don't impact pool work
   }
 

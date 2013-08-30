@@ -19,6 +19,7 @@ package org.apache.drill.common.logical;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @JsonPropertyOrder({ "head", "storage", "query" })
-public class LogicalPlan {
+public class LogicalPlan implements Serializable{
   static final Logger logger = LoggerFactory.getLogger(LogicalPlan.class);
 
   private final PlanProperties properties;

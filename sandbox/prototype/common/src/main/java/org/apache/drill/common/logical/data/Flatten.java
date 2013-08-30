@@ -62,8 +62,5 @@ public class Flatten extends SingleInputOperator{
     public Iterator<LogicalOperator> iterator() {
         return Iterators.singletonIterator(getInput());
     }
-  
-  
 
-	
 }

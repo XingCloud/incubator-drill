@@ -94,7 +94,10 @@ public interface ValueVector extends Closeable {
    * @param buffer The buffer that contains the ValueVector.
    */
   public void load(FieldMetadata metadata, ByteBuf buffer);
-  
+
+
+  public void setField(MaterializedField field);
+
   /**
    * Get the metadata for this field.  Used in serialization
    * @return FieldMetadata for this field.
@@ -140,5 +143,10 @@ public interface ValueVector extends Closeable {
     public void reset();
 
     public void generateTestData();
+
+    public void setObject(int index,Object obj);
+
+    public void transferTo(ValueVector target, boolean needClear);
+
   }
 }

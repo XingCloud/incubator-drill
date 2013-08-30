@@ -4,7 +4,11 @@
 }
 {
     "lastName": "Jones",
+<<<<<<< HEAD
     "deptId": 33
+=======
+    "deptId": 39
+>>>>>>> origin/master
 }
 {
     "lastName": "Steinberg",
@@ -19,6 +23,10 @@
     "deptId": 34
 }
 {
+<<<<<<< HEAD
     "deptId": null,
+=======
+    "deptId": 35,
+>>>>>>> origin/master
     "lastName": "John"
 }

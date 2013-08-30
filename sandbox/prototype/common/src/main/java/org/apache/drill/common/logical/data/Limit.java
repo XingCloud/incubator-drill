@@ -56,5 +56,4 @@ public class Limit extends SingleInputOperator{
         return Iterators.singletonIterator(getInput());
     }
 
-
 }

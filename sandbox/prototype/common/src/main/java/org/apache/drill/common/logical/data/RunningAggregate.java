@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("runningaggregate")
@@ -57,7 +58,5 @@ public class RunningAggregate extends SingleInputOperator{
     public Iterator<LogicalOperator> iterator() {
         return Iterators.singletonIterator(getInput());
     }
-
-
 
 }

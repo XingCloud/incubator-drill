@@ -17,6 +17,7 @@
  ******************************************************************************/
 package org.apache.drill.exec.physical.base;
 
+
 /**
  * An operator which specifically is a lowest level leaf node of a query plan across all possible fragments. Currently, the only operator that is a Leaf
  * node are GroupScan nodes. Ultimately this could include use of Cache scans and other types of atypical data production systems.

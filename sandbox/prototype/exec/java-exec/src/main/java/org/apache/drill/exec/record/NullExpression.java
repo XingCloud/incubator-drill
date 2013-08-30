@@ -38,5 +38,15 @@ public class NullExpression implements LogicalExpression{
     return Iterators.emptyIterator();
   }
   
-  
+  public boolean equals(Object o) {
+    if(o != null){
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return t != null ? t.hashCode() : 0;
+  }
 }

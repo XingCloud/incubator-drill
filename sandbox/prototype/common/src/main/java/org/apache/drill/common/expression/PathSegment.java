@@ -19,7 +19,7 @@ package org.apache.drill.common.expression;
 
 import org.apache.drill.common.expression.ValueExpressions.CollisionBehavior;
 
-
+import java.io.Serializable;
 
 public abstract class PathSegment{
 

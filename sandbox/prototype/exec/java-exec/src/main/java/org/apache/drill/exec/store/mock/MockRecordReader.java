@@ -72,7 +72,7 @@ public class MockRecordReader implements RecordReader {
       this.output = output;
       int estimateRowSize = getEstimatedRecordSize(config.getTypes());
       valueVectors = new ValueVector[config.getTypes().length];
-      batchRecordCount = 250000 / estimateRowSize;
+      batchRecordCount = 1024;
 
       for (int i = 0; i < config.getTypes().length; i++) {
         valueVectors[i] = getVector(config.getTypes()[i].getName(), config.getTypes()[i].getMajorType(), batchRecordCount);

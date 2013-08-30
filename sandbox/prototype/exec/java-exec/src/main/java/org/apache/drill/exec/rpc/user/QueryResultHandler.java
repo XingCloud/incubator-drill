@@ -55,8 +55,9 @@ public class QueryResultHandler {
     final QueryResult result = RpcBus.get(pBody, QueryResult.PARSER);
     final QueryResultBatch batch = new QueryResultBatch(result, dBody);
     UserResultsListener l = resultsListener.get(result.getQueryId());
-    
+
     boolean failed = batch.getHeader().getQueryState() == QueryState.FAILED;
+
     // logger.debug("For QueryId [{}], retrieved result listener {}", result.getQueryId(), l);
     if (l == null) {
       BufferingListener bl = new BufferingListener();
@@ -67,7 +68,7 @@ public class QueryResultHandler {
         failAll();
       }
     }
-      
+
     if(failed){
       l.submissionFailed(new RpcException("Remote failure while running query." + batch.getHeader().getErrorList()));
       resultsListener.remove(result.getQueryId(), l);
@@ -82,7 +83,6 @@ public class QueryResultHandler {
         ) {
       resultsListener.remove(result.getQueryId(), l);
     }
-
 
   }
 

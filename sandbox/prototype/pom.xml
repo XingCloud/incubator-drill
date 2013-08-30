@@ -46,6 +46,17 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>warn</checksumPolicy>
+      </releases>
+      <id>xamavenrepo</id>
+      <name>xamavenrepo</name>
+      <url>http://xamavenrepo:8044/archiva/repository/internal</url>
+      <layout>default</layout>
+    </repository>
   </repositories>
 
 

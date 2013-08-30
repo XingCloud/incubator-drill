@@ -26,17 +26,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonTypeName("join")
 public class Join extends LogicalOperatorBase {
-  private final LogicalOperator left;
-  private final LogicalOperator right;
+  private LogicalOperator left;
+  private LogicalOperator right;
   private final JoinType type;
   private final JoinCondition[] conditions;
 
   public static enum JoinType{
-    LEFT, INNER, OUTER;
+    LEFT, INNER, OUTER,RIGHT;
     
     public static JoinType resolve(String val){
       for(JoinType jt : JoinType.values()){
@@ -45,7 +46,7 @@ public class Join extends LogicalOperatorBase {
       throw new ExpressionParsingException(String.format("Unable to determine join type for value '%s'.", val));
     }
   }
-  
+
   @JsonCreator
   public Join(@JsonProperty("left") LogicalOperator left, @JsonProperty("right") LogicalOperator right, @JsonProperty("conditions") JoinCondition[] conditions, @JsonProperty("type") String type) {
     super();
@@ -57,6 +58,17 @@ public class Join extends LogicalOperatorBase {
     this.type = JoinType.resolve(type);
 
   }
+  
+  public Join( LogicalOperator left,  LogicalOperator right,  JoinCondition[] conditions, JoinType type) {
+    super();
+    this.conditions = conditions;
+    this.left = left;
+    this.right = right;
+    left.registerAsSubscriber(this);
+    right.registerAsSubscriber(this);
+    this.type = type;
+
+  }
 
   public LogicalOperator getLeft() {
     return left;
@@ -64,6 +76,26 @@ public class Join extends LogicalOperatorBase {
 
   public LogicalOperator getRight() {
     return right;
+  }
+
+  public void setLeft(LogicalOperator left) {
+    if(this.left != null){
+      this.left.unregisterSubscriber(this);      
+    }
+    this.left = left;
+    if(this.left != null){
+      this.left.registerAsSubscriber(this);
+    }
+  }
+
+  public void setRight(LogicalOperator right) {
+    if(this.right != null){
+      this.right.unregisterSubscriber(this);
+    }
+    this.right = right;
+    if(this.right != null){
+      this.right.registerAsSubscriber(this);
+    }
   }
 
   public JoinCondition[] getConditions() {
@@ -88,4 +120,5 @@ public class Join extends LogicalOperatorBase {
     public Iterator<LogicalOperator> iterator() {
         return Iterators.forArray(getLeft(), getRight());
     }
+
 }
