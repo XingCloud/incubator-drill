@@ -219,7 +219,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     try {
       initConfig();
       initDirectScanner();
-      entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
       setupEntry(entryIndex);
     } catch (Exception e) {
       throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
@@ -235,6 +234,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           valueVectors.add(v);
           outputMutator.addField(v);
       }
+      entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));    
       outputMutator.addField(entryIndexVector);
       outputMutator.setNewSchema();
   }
@@ -245,7 +245,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       cleanupVector(v);
     }
     valueVectors.clear();
-    cleanupVector(entryIndexVector);
+    if(entryIndexVector != null){
+      cleanupVector(entryIndexVector);
+      entryIndexVector = null;
+    }
   }
 
   private void cleanupVector(ValueVector v) {

@@ -154,6 +154,16 @@ public class UnionedScanBatch implements RecordBatch {
     }    
   }
 
+  /**
+   * 如果reader读完之前，还有entry没被扫到，则所有entry都加入一个IterOutcome.NONE的缓存
+   * @param outcome
+   */
+  private void finishRemainingEntries(IterOutcome outcome) {
+    for(;readerCurrentEntry<sortedEntries.size();markScanNext()){
+      getCacheFor(readerCurrentEntry).add(new CachedFrame(null,0,null, outcome, context));
+    }
+  }
+
   private void releaseReaderAssets() {
     reader.cleanup();
   }
@@ -223,6 +233,8 @@ public class UnionedScanBatch implements RecordBatch {
             0, null,outcome, context);
           cache = getCacheFor(readerCurrentEntry);
           cache.add(frame);
+          markScanNext();
+          finishRemainingEntries(outcome);          
           return false;
       }//switch
     }
@@ -463,6 +475,8 @@ public class UnionedScanBatch implements RecordBatch {
             switch (outcome) {
               case NONE:
               case STOP:
+                markScanNext();
+                finishRemainingEntries(outcome);                
                 return outcome;
               case OK:
               case OK_NEW_SCHEMA:
