@@ -82,8 +82,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    this.startRowKey = HBaseRecordReader.parseRkStr(entries[0].getStartRowKey());
-    this.endRowKey = HBaseRecordReader.parseRkStr(entries[entries.length - 1].getEndRowKey());
+    this.startRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[0].getStartRowKey()), produceTail(true));
+    this.endRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[entries.length - 1].getEndRowKey()), produceTail(false));
     this.tableName = entries[0].getTableName();
     this.entryFilters = new ArrayList<>();
     this.entryIndex = 0;
@@ -370,11 +370,34 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     for (i = entryIndex; i < entries.length; i++) {
       byte[] currentSrk = ByteUtils.toBytesBinary(entries[i].getStartRowKey());
       byte[] currentEnk = ByteUtils.toBytesBinary(entries[i].getEndRowKey());
-      if (Bytes.compareTo(rk, currentSrk) > 0 && Bytes.compareTo(rk, currentEnk) < 0)
+      if (Bytes.compareTo(rk, currentSrk) >= 0 && Bytes.compareTo(rk, currentEnk) <= 0)
         return i;
     }
     return entryIndex;
 
+  }
+
+  private byte[] appendBytes(byte[] orig, byte[] tail) {
+    byte[] result = new byte[orig.length + tail.length];
+    for (int i = 0; i < result.length; i++) {
+      if (i < orig.length)
+        result[i] = orig[i];
+      else
+        result[i] = tail[i - orig.length];
+    }
+    return result;
+  }
+
+  private byte[] produceTail(boolean start) {
+    byte[] result = new byte[6];
+    result[0] = -1;
+    for (int i = 1; i < result.length; i++) {
+      if (start)
+        result[i] = 0;
+      else
+        result[i] = -1;
+    }
+    return result;
   }
 
   public boolean setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {

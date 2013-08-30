@@ -139,7 +139,7 @@ public class UnionedScanBatch implements RecordBatch {
       logger.debug("reader.next():{}", recordCount);
     }catch(Exception e){
       logger.info("Reader.next() failed", e);
-      releaseReaderAssets();
+      //releaseReaderAssets();
       return IterOutcome.STOP;
     }
     if(recordCount == 0){
@@ -223,7 +223,7 @@ public class UnionedScanBatch implements RecordBatch {
             0, null,outcome, context);
           cache = getCacheFor(readerCurrentEntry);
           cache.add(frame);
-          break;
+          return false;
       }//switch
     }
   }
