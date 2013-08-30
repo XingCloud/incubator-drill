@@ -528,7 +528,7 @@ public class UnionedScanBatch implements RecordBatch {
       int sortedEntry = original2sorted[entryID];
       if(sortedEntry > readerCurrentEntry){
         //null, 还没扫到这个entry
-        if(forwardReader2Before(sortedEntry)){
+        if(!forwardReader2Before(sortedEntry)){
           scanMode = ScanMode.direct;
           return;
         }
