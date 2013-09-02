@@ -42,6 +42,7 @@ enum MinorType {
 //    MSGPACK2 = 35;   //  msgpack encoded complex type. (up to 2^16 in length)
 //    MSGPACK4 = 36;   //  msgpack encoded complex type. (up to 2^32 in length)
     NULL = 37; // a value of unknown type (e.g. a missing reference).
+    VARBIGINT=38;
     
 }
 

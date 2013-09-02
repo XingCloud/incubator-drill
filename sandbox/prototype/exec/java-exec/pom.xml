@@ -216,6 +216,12 @@
             </exclusion>
           </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.xingcloud.xa</groupId>
+            <artifactId>Int64Encoding</artifactId>
+            <version>1.0</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
