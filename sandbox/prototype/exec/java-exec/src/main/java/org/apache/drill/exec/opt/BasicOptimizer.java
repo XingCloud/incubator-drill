@@ -117,7 +117,6 @@ public class BasicOptimizer extends Optimizer{
     public PhysicalOperator visitScan(Scan scan, Object obj) throws OptimizerException {
       PhysicalOperator pop = operatorMap.get(scan);
       if (pop == null) {
-        //immars todo Storage Engine Implementation
         StorageEngineConfig config = logicalPlan.getStorageEngineConfig(scan.getStorageEngine());
         if (config == null)
           throw new OptimizerException(String.format("Logical plan referenced the storage engine config %s but the logical plan didn't have that available as a config.", scan.getStorageEngine()));

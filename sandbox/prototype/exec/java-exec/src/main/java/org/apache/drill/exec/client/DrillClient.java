@@ -58,7 +58,7 @@ public class DrillClient implements Closeable{
 
   DrillConfig config;
   private UserClient client;
-  private volatile boolean connected = false;//immars todo 有什么用？
+  private volatile boolean connected = false;
   
   private final DirectBufferAllocator allocator = new DirectBufferAllocator();
   
@@ -121,7 +121,7 @@ public class DrillClient implements Closeable{
     }
   }
 
-  public DirectBufferAllocator getAllocator() {//immars todo where to use?
+  public DirectBufferAllocator getAllocator() {
     return allocator;
   }
   

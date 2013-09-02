@@ -10,6 +10,7 @@ import org.apache.drill.exec.client.TestQueryLogical;
 import org.apache.drill.exec.client.TestQueryPhysical;
 import org.apache.drill.exec.proto.UserProtos;
 import org.apache.drill.exec.record.RecordBatchLoader;
+import org.apache.drill.exec.record.VectorWrapper;
 import org.apache.drill.exec.rpc.user.QueryResultBatch;
 import org.apache.drill.exec.server.Drillbit;
 import org.apache.drill.exec.server.RemoteServiceSet;
@@ -46,7 +47,7 @@ public class TestParseUnionedScanLP {
       // print headers.
       if (schemaChanged) {
         System.out.println("\n\n========NEW SCHEMA=========\n\n");
-        for (ValueVector value : batchLoader) {
+        for (VectorWrapper<?> value : batchLoader) {
 
           if (firstColumn) {
             firstColumn = false;
@@ -65,13 +66,13 @@ public class TestParseUnionedScanLP {
       for (int i = 0; i < batchLoader.getRecordCount(); i++) {
         boolean first = true;
         recordCount++;
-        for (ValueVector value : batchLoader) {
+        for (VectorWrapper<?> value : batchLoader) {
           if (first) {
             first = false;
           } else {
             System.out.print("\t");
           }
-          Object obj = value.getAccessor().getObject(i);
+          Object obj = value.getValueVector().getAccessor().getObject(i);
           if(obj instanceof  byte[]) {
             obj = new String((byte[]) obj) ;
           }

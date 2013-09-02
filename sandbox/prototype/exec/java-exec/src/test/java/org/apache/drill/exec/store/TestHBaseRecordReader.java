@@ -8,6 +8,7 @@ import org.apache.drill.common.logical.data.NamedExpression;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.record.RecordBatch;
+import org.apache.drill.exec.record.VectorWrapper;
 import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.VariableWidthVector;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -93,9 +94,9 @@ public class TestHBaseRecordReader {
               System.out.println(recordCount + ": " + batch.getRecordCount() + " costs " + (ts2 - ts1) + "ms");
               ts1 = ts2;
 
-              for (ValueVector v : batch) {
+              for (VectorWrapper<?> v : batch) {
                   System.out.print(v.getField().getName() + ": ");
-                  ValueVector.Accessor accessor = v.getAccessor();
+                  ValueVector.Accessor accessor = v.getValueVector().getAccessor();
                   if (v instanceof VariableWidthVector) {
                       for (int i = 0; i < accessor.getValueCount(); i++) {
                           //System.out.print(Bytes.toString((byte[]) accessor.getObject(i)) + " ");
