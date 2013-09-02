@@ -48,62 +48,68 @@ public class TestLocalQuery extends PopUnitTestBase {
     public void physicalTest5() throws Exception {
         runNoExchangeFragment("/physical_test5.json");
     }
-        private  void runNoExchangeFragment(String test) throws Exception {
-        try(RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
-            Drillbit bit = new Drillbit(CONFIG, serviceSet);
-            DrillClient client = new DrillClient(CONFIG, serviceSet.getCoordinator());){
 
-            // run query.
-            bit.run();
-            client.connect();
-            List<QueryResultBatch> results = client.runQuery(UserProtos.QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(test), Charsets.UTF_8));
-
-            // look at records
-            RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());
-            int recordCount = 0;
-            for (QueryResultBatch batch : results) {
-                if(!batch.hasData()) continue;
-                boolean schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
-                boolean firstColumn = true;
-
-                // print headers.
-                if (schemaChanged) {
-                    System.out.println("\n\n========NEW SCHEMA=========\n\n");
-                    for (ValueVector value : batchLoader) {
-
-                        if (firstColumn) {
-                            firstColumn = false;
-                        } else {
-                            System.out.print("\t");
-                        }
-                        System.out.print(value.getField().getName());
-                        System.out.print("[");
-                        System.out.print(value.getField().getType().getMinorType());
-                        System.out.print("]");
-                    }
-                    System.out.println();
-                }
-                for (int i = 0; i < batchLoader.getRecordCount(); i++) {
-                    boolean first = true;
-                    recordCount++;
-                    for (ValueVector value : batchLoader) {
-                        if (first) {
-                            first = false;
-                        } else {
-                            System.out.print("\t");
-                        }
-                        Object obj = value.getAccessor().getObject(i);
-                        if(obj instanceof  byte[]) {
-                            obj = new String((byte[]) obj) ;
-                        }
-                        System.out.print(obj);
-                    }
-                    if(!first) System.out.println();
-                }
-            }
-            logger.debug("Received results {}", results);
-            //assertEquals(recordCount, 200);
-        }
+    @Test
+    public void physicalMockTest() throws Exception {
+      runNoExchangeFragment("/physical_mock_test1.json");
     }
+
+    private  void runNoExchangeFragment(String test) throws Exception {
+    try(RemoteServiceSet serviceSet = RemoteServiceSet.getLocalServiceSet();
+        Drillbit bit = new Drillbit(CONFIG, serviceSet);
+        DrillClient client = new DrillClient(CONFIG, serviceSet.getCoordinator());){
+
+        // run query.
+        bit.run();
+        client.connect();
+        List<QueryResultBatch> results = client.runQuery(UserProtos.QueryType.PHYSICAL, Files.toString(FileUtils.getResourceAsFile(test), Charsets.UTF_8));
+
+        // look at records
+        RecordBatchLoader batchLoader = new RecordBatchLoader(bit.getContext().getAllocator());
+        int recordCount = 0;
+        for (QueryResultBatch batch : results) {
+            if(!batch.hasData()) continue;
+            boolean schemaChanged = batchLoader.load(batch.getHeader().getDef(), batch.getData());
+            boolean firstColumn = true;
+
+            // print headers.
+            if (schemaChanged) {
+                System.out.println("\n\n========NEW SCHEMA=========\n\n");
+                for (ValueVector value : batchLoader) {
+
+                    if (firstColumn) {
+                        firstColumn = false;
+                    } else {
+                        System.out.print("\t");
+                    }
+                    System.out.print(value.getField().getName());
+                    System.out.print("[");
+                    System.out.print(value.getField().getType().getMinorType());
+                    System.out.print("]");
+                }
+                System.out.println();
+            }
+            for (int i = 0; i < batchLoader.getRecordCount(); i++) {
+                boolean first = true;
+                recordCount++;
+                for (ValueVector value : batchLoader) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        System.out.print("\t");
+                    }
+                    Object obj = value.getAccessor().getObject(i);
+                    if(obj instanceof  byte[]) {
+                        obj = new String((byte[]) obj) ;
+                    }
+                    System.out.print(obj);
+                }
+                if(!first) System.out.println();
+            }
+        }
+        logger.debug("Received results {}", results);
+        //assertEquals(recordCount, 200);
+    }
+}
 
 }

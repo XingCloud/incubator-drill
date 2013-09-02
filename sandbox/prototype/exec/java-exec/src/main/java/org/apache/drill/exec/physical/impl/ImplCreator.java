@@ -51,7 +51,6 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   private BatchCreator<Union> uc = new BufferedBatchCreator<Union>(new UnionBatchCreator());
   private BatchCreator<UnionedScanSplitPOP> splitc = new BufferedBatchCreator<UnionedScanSplitPOP>(new UnionedScanSplitBatchCreator());
   private UnionedScanBatchCreator unionedScanc = new UnionedScanBatchCreator();
-
   private BatchCreator<Scan> sbc = new BufferedBatchCreator<Scan>(new ScanBatchCreator());
 
 
