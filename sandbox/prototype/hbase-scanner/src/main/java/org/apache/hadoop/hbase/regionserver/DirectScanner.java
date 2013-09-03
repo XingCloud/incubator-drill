@@ -1,6 +1,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import com.xingcloud.hbase.manager.HBaseResourceManager;
+import com.xingcloud.xa.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
@@ -118,6 +119,7 @@ public class DirectScanner implements XAScanner {
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
     boolean done = false;
+    Set<Long> uids = new HashSet<>();
     try {
       do {
         results.clear();
@@ -126,6 +128,8 @@ public class DirectScanner implements XAScanner {
           if (counter % 1000 == 0 || !done) {
             LOG.info(Bytes.toString(kv.getRow()));
           }
+          long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(kv.getRow());
+          uids.add(uid);
           counter++;
         }
 
@@ -142,5 +146,7 @@ public class DirectScanner implements XAScanner {
       }
     }
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
+    LOG.info("Uids number: "+uids.size());
+    System.out.println("Uids number: "+uids.size());
   }
 }
