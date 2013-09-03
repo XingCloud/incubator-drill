@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import java.util.Map;
 public class MultiEntryHBaseRecordReader implements RecordReader {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MultiEntryHBaseRecordReader.class);
   private HbaseScanPOP.HbaseScanEntry[] entries;
+  private Pair<byte[],byte[]>[] entryKeys ;
 
   private FragmentContext context;
   private byte[] startRowKey;
@@ -84,6 +86,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.startRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[0].getStartRowKey()), produceTail(true));
     this.endRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[entries.length - 1].getEndRowKey()), produceTail(false));
     this.tableName = entries[0].getTableName();
+    this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
     this.entryIndex = 0;
     this.projections = new ArrayList<>();
@@ -95,6 +98,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       fieldInfoMap.put(col.fieldSchema.getName(), col);
     }
     for (int i = 0; i < entries.length; i++) {
+      entryKeys[i] = new Pair<>(ByteUtils.toBytesBinary(entries[i].getStartRowKey()),ByteUtils.toBytesBinary(entries[i].getEndRowKey())) ;
       this.entryFilters.add(entries[i].getFilters());
       List<NamedExpression> exprs = entries[i].getProjections();
       NamedExpression[] exprArr = new NamedExpression[exprs.size()];
@@ -283,14 +287,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           int readerEntry = getEntryIndex(curRes.get(valIndex));
           if(readerEntry != currentEntry){
             newEntry = true ;
-            return endNext(recordSetIndex + 1);
+            return endNext(recordSetIndex + 1, currentEntry, readerEntry);
           }
           int length = splitKeyValues(curRes, valIndex, batchSize - recordSetIndex - 1);
           setValues(curRes, valIndex, length, recordSetIndex);
           recordSetIndex += length;
           if (length + valIndex != curRes.size() - 1) {
             valIndex ++ ;
-            return endNext(recordSetIndex + 1);
+            return endNext(recordSetIndex + 1,currentEntry,currentEntry);
           } else {
             valIndex = 0;
             curRes.clear();
@@ -298,7 +302,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
         if (!scanner.next(curRes)) {
           valIndex = 0 ;
-          return endNext(recordSetIndex + 1);
+          return endNext(recordSetIndex + 1,currentEntry,currentEntry);
         }
       }
     } catch (Exception e) {
@@ -307,9 +311,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
   }
 
-  private int endNext(int valueCount){
+  private int endNext(int valueCount,int entryIndex,int nextEntry ){
     setValueCount(valueCount);
-    entryIndexVector.getMutator().setObject(0,currentEntry);
+    entryIndexVector.getMutator().setObject(0,entryIndex);
+    currentEntry = nextEntry;
     return valueCount;
   }
 
@@ -342,13 +347,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     byte[] rk = kv.getRow();
     int i;
     for (i = entryIndex; i < entries.length; i++) {
-      byte[] currentSrk = ByteUtils.toBytesBinary(entries[i].getStartRowKey());
-      byte[] currentEnk = ByteUtils.toBytesBinary(entries[i].getEndRowKey());
-      if (Bytes.compareTo(rk, currentSrk) >= 0 && Bytes.compareTo(rk, currentEnk) <= 0)
+      if (Bytes.compareTo(rk, entryKeys[i].getFirst()) >= 0 && Bytes.compareTo(rk, entryKeys[i].getSecond()) <= 0)
         return i;
     }
     return entryIndex;
-
   }
 
   public static byte[] appendBytes(byte[] orig, byte[] tail) {
