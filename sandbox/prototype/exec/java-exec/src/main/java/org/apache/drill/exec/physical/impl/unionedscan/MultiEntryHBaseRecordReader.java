@@ -56,7 +56,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private String tableName;
   private List<List<HbaseScanPOP.RowkeyFilterEntry>> entryFilters;
 
-  private int entryIndex;
   private ValueVector entryIndexVector;
   private List<NamedExpression> projections;
   private List<NamedExpression[]> entryProjections;
@@ -75,7 +74,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private List<KeyPart> primaryRowKeyParts;
   private DFARowKeyParser dfaParser;
 
-  private int currentEntry;
+  private int currentEntry = 0;
 
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
@@ -88,7 +87,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
-    this.entryIndex = 0;
     this.projections = new ArrayList<>();
     this.entryProjections = new ArrayList<>();
     this.fieldInfoMap = new HashMap<>();
@@ -221,7 +219,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     try {
       initConfig();
       initDirectScanner();
-      setupEntry(entryIndex);
+      setupEntry(currentEntry);
     } catch (Exception e) {
       e.printStackTrace();
       throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
@@ -277,7 +275,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     try {
       if (newEntry) {
         releaseEntry();
-        setupEntry(entryIndex);
+        setupEntry(currentEntry);
         newEntry = false;
       }
       allocateNew();
@@ -346,11 +344,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private int getEntryIndex(KeyValue kv) {
     byte[] rk = kv.getRow();
     int i;
-    for (i = entryIndex; i < entries.length; i++) {
+    for (i = currentEntry; i < entries.length; i++) {
       if (Bytes.compareTo(rk, entryKeys[i].getFirst()) >= 0 && Bytes.compareTo(rk, entryKeys[i].getSecond()) <= 0)
         return i;
     }
-    return entryIndex;
+    return currentEntry;
   }
 
   public static byte[] appendBytes(byte[] orig, byte[] tail) {
@@ -385,7 +383,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     Map<String, Object> rkObjectMap = new HashMap<>();
     if (parseRk)
       rkObjectMap = dfaParser.parse(kv.getRow());
-    HBaseFieldInfo[] infos = entryProjFieldInfos.get(entryIndex);
+    HBaseFieldInfo[] infos = entryProjFieldInfos.get(currentEntry);
     for (int i = 0; i < infos.length; i++) {
       HBaseFieldInfo info = infos[i];
       ValueVector valueVector = valueVectors.get(i);
