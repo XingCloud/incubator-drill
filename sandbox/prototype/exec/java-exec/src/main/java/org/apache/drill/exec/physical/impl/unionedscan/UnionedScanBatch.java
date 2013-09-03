@@ -248,7 +248,6 @@ public class UnionedScanBatch implements RecordBatch {
   }
 
   private void doCache(RecordBatch.IterOutcome outcome, List<CachedFrame> cache) {
-    logger.debug("caching results for entry {} ...", readerCurrentEntry);
     int outRecordCount = recordCount;
     ArrayList<ValueVector> cachedVectors = new ArrayList<>();
     for (ValueVector v : vectors) {
@@ -562,7 +561,6 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public Iterator<ValueVector> iterator() {
-      logger.debug("iterating vectors on mode:{}", scanMode);
       switch(scanMode){
         case direct:
           return passEntryID(vectors.iterator());
@@ -688,7 +686,6 @@ public class UnionedScanBatch implements RecordBatch {
    */
   private boolean checkReaderOutputIntoNextEntry() {
     int scanningEntry = getEntryMark();
-    logger.debug("entry mark for this output:{}", scanningEntry);
     if(scanningEntry == -1){
       throw new IllegalStateException("cannot find entry mark!");
     }
@@ -704,7 +701,6 @@ public class UnionedScanBatch implements RecordBatch {
         markScanNext();              
       }            
     }
-    logger.debug("checkReaderOutputIntoNextEntry():{}", intoNext);
     return intoNext;
   }
 

@@ -64,7 +64,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private OutputMutator outputMutator;
   private boolean parseRk = false;
   private boolean init = false;
-  private int batchSize = 1024;
+  private int batchSize = 1024 * 16;
 
   private boolean newEntry = false;
 
@@ -221,6 +221,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       initDirectScanner();
       setupEntry(entryIndex);
     } catch (Exception e) {
+      e.printStackTrace();
       throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
     }
   }
