@@ -19,6 +19,7 @@ import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
+import org.apache.drill.exec.physical.impl.unionedscan.MultiEntryHBaseRecordReader;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
@@ -76,8 +77,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
-    endRowKey = appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
+    startRowKey = appendBytes(parseRkStr(config.getStartRowKey()), MultiEntryHBaseRecordReader.produceTail(true));
+    endRowKey = appendBytes(parseRkStr(config.getEndRowKey()), MultiEntryHBaseRecordReader.produceTail(false));
     if (Arrays.equals(startRowKey, endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
@@ -141,7 +142,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private byte[] produceTail(boolean start) {
-    byte[] result = new byte[6];
+    byte[] result = new byte[7];
+
     result[0] = -1;
     for (int i = 1; i < result.length; i++) {
       if (start)

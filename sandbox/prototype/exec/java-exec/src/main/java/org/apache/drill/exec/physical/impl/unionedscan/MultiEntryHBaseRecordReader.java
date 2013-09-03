@@ -380,7 +380,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   }
 
-  private byte[] appendBytes(byte[] orig, byte[] tail) {
+  public static byte[] appendBytes(byte[] orig, byte[] tail) {
     byte[] result = new byte[orig.length + tail.length];
     for (int i = 0; i < result.length; i++) {
       if (i < orig.length)
@@ -391,10 +391,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     return result;
   }
 
-  private byte[] produceTail(boolean start) {
-    byte[] result = new byte[6];
-    result[0] = -1;
-    for (int i = 1; i < result.length; i++) {
+  public static byte[] produceTail(boolean start) {
+    byte[] result = new byte[7];
+    if(start)
+        result[0]='.';
+    else
+        result[0]=-1;
+    result[1] = -1;
+    for (int i = 2; i < result.length; i++) {
       if (start)
         result[i] = 0;
       else
