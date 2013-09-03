@@ -278,18 +278,19 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       }
       allocateNew();
       int recordSetIndex = 0;
-      valIndex = 0;
       while (true) {
         if (valIndex < curRes.size() - 1) {
-          currentEntry = getEntryIndex(curRes.get(valIndex));
+          int readerEntry = getEntryIndex(curRes.get(valIndex));
+          if(readerEntry != currentEntry){
+            newEntry = true ;
+            return endNext(recordSetIndex + 1);
+          }
           int length = splitKeyValues(curRes, valIndex, batchSize - recordSetIndex - 1);
           setValues(curRes, valIndex, length, recordSetIndex);
           recordSetIndex += length;
           if (length + valIndex != curRes.size() - 1) {
             valIndex ++ ;
-            setValueCount(recordSetIndex + 1);
-            entryIndexVector.getMutator().setObject(0, currentEntry);
-            return recordSetIndex;
+            return endNext(recordSetIndex + 1);
           } else {
             valIndex = 0;
             curRes.clear();
@@ -297,9 +298,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
         if (!scanner.next(curRes)) {
           valIndex = 0 ;
-          setValueCount(recordSetIndex + 1);
-          entryIndexVector.getMutator().setObject(0, currentEntry);
-          return recordSetIndex;
+          return endNext(recordSetIndex + 1);
         }
       }
     } catch (Exception e) {
@@ -308,6 +307,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
   }
 
+  private int endNext(int valueCount){
+    setValueCount(valueCount);
+    entryIndexVector.getMutator().setObject(0,currentEntry);
+    return valueCount;
+  }
 
   private int splitKeyValues(List<KeyValue> keyValues, int offset, int maxSize) {
     int length = Math.min(maxSize, keyValues.size() - 1 - offset );
