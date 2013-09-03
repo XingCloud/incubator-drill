@@ -63,18 +63,17 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private List<ValueVector> valueVectors;
   private OutputMutator outputMutator;
   private boolean parseRk = false;
-  private boolean init = false;
   private int batchSize = 1024 * 16;
 
   private boolean newEntry = false;
 
-  private List<DirectScanner> scanners;
-  private int currentScannerIndex = 0;
+  private DirectScanner scanner;
   private int valIndex = -1;
-  private boolean hasMore;
   private List<KeyValue> curRes = new ArrayList<>();
   private List<KeyPart> primaryRowKeyParts;
   private DFARowKeyParser dfaParser;
+
+  private int currentEntry;
 
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
@@ -115,8 +114,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
   }
 
-  private void initDirectScanner() throws IOException{
-    this.scanners = new ArrayList<>();
+  private void initDirectScanner() throws IOException {
     FilterList filterList = new FilterList();
     long startVersion = Long.MIN_VALUE;
     long stopVersion = Long.MAX_VALUE;
@@ -166,11 +164,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                       String cfName = info.cfName;
                       String cqName = info.cqName;
                       SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(Bytes.toBytes(cfName),
-                                                                                        Bytes.toBytes(cqName), op,
-                                                                                        new BinaryComparator(Bytes
-                                                                                                               .toBytes(
-                                                                                                                 rightField
-                                                                                                                   .getLong())));
+                        Bytes.toBytes(cqName), op,
+                        new BinaryComparator(Bytes
+                          .toBytes(
+                            rightField
+                              .getLong())));
                       filterList.addFilter(valueFilter);
                       break;
                     case cversion:
@@ -210,7 +208,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    scanners.add(new DirectScanner(startRowKey, endRowKey, tableName, null, false, false));
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
   }
 
   @Override
@@ -227,17 +225,17 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void setupEntry(int index) throws SchemaChangeException {
-      HBaseFieldInfo[] infos=entryProjFieldInfos.get(index);
-      valueVectors = new ArrayList<>(infos.length);
-      for(int j=0;j<infos.length;j++){
-          TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
-          ValueVector v = getVector(infos[j].fieldSchema.getName(), type);
-          valueVectors.add(v);
-          outputMutator.addField(v);
-      }
-      entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));    
-      outputMutator.addField(entryIndexVector);
-      outputMutator.setNewSchema();
+    HBaseFieldInfo[] infos = entryProjFieldInfos.get(index);
+    valueVectors = new ArrayList<>(infos.length);
+    for (int j = 0; j < infos.length; j++) {
+      TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
+      ValueVector v = getVector(infos[j].fieldSchema.getName(), type);
+      valueVectors.add(v);
+      outputMutator.addField(v);
+    }
+    entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
+    outputMutator.addField(entryIndexVector);
+    outputMutator.setNewSchema();
   }
 
   private void releaseEntry() {
@@ -246,14 +244,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       cleanupVector(v);
     }
     valueVectors.clear();
-    if(entryIndexVector != null){
+    if (entryIndexVector != null) {
       cleanupVector(entryIndexVector);
       entryIndexVector = null;
     }
   }
 
   private void cleanupVector(ValueVector v) {
-    logger.debug("removing {}",v.getField());
+    logger.debug("removing {}", v.getField());
     try {
       outputMutator.removeField(v.getField());
     } catch (SchemaChangeException e) {
@@ -271,101 +269,69 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     return TypeHelper.getNewVector(f, context.getAllocator());
   }
 
-  @Override
   public int next() {
-    if (newEntry) {
-      releaseEntry();
-      try {
+    try {
+      if (newEntry) {
+        releaseEntry();
         setupEntry(entryIndex);
-      } catch (SchemaChangeException e) {
-        throw new IllegalArgumentException(e);
+        newEntry = false;
       }
-      newEntry = false;
+      allocateNew();
+      int recordSetIndex = 0;
+      valIndex = 0;
+      while (true) {
+        if (valIndex < curRes.size() - 1) {
+          currentEntry = getEntryIndex(curRes.get(valIndex));
+          int length = splitKeyValues(curRes, valIndex, batchSize - recordSetIndex - 1);
+          setValues(curRes, valIndex, length, recordSetIndex);
+          recordSetIndex += length;
+          if (length + valIndex != curRes.size() - 1) {
+            valIndex ++ ;
+            setValueCount(recordSetIndex + 1);
+            entryIndexVector.getMutator().setObject(0, currentEntry);
+            return recordSetIndex;
+          } else {
+            valIndex = 0;
+            curRes.clear();
+          }
+        }
+        if (!scanner.next(curRes)) {
+          valIndex = 0 ;
+          setValueCount(recordSetIndex + 1);
+          entryIndexVector.getMutator().setObject(0, currentEntry);
+          return recordSetIndex;
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new DrillRuntimeException("Scan failed");
     }
+  }
 
+
+  private int splitKeyValues(List<KeyValue> keyValues, int offset, int maxSize) {
+    int length = Math.min(maxSize, keyValues.size() - 1 - offset );
+    int lastEntry = getEntryIndex(keyValues.get(offset + length));
+    if (lastEntry != currentEntry) {
+      for (int i = offset + length; i >= offset; i++) {
+        if (currentEntry == getEntryIndex(keyValues.get(i)))
+          return i - offset;
+      }
+    }
+    return length;
+  }
+
+  private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
+    for (int i = offset; i < offset + length; i++) {
+      setValues(keyValues.get(i), valueVectors, setIndex);
+    }
+  }
+
+  private void allocateNew() {
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 8);
     }
     AllocationHelper.allocate(entryIndexVector, batchSize, 4);
-    int recordSetIndex = 0;
-    int nextEntryIndex;
-    while (true) {
-      if (currentScannerIndex > scanners.size() - 1) {
-        setValueCount(recordSetIndex);
-        return recordSetIndex;
-      }
-      DirectScanner scanner = scanners.get(currentScannerIndex);
-      if (valIndex == -1) {
-        if (scanner == null) {
-          return 0;
-        }
-        try {
-          hasMore = scanner.next(curRes);
-        } catch (IOException e) {
-          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage());
-        }
-        valIndex = 0;
-      }
-      if (valIndex > curRes.size() - 1) {
-        if (!hasMore) {
-          currentScannerIndex++;
-          valIndex = -1;
-          continue;
-        }
-        while (hasMore) {
-                        /* Get result list from the same scanner and skip curRes with no element */
-          curRes.clear();
-          try {
-            hasMore = scanner.next(curRes);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-          valIndex = 0;
-          if (!hasMore)
-            currentScannerIndex++;
-          if (curRes.size() != 0) {
-            KeyValue kv = curRes.get(valIndex++);
-            nextEntryIndex = getEntryIndex(kv);
-            if (nextEntryIndex != entryIndex) {
-              valIndex--;
-              entryIndex = nextEntryIndex;
-              newEntry = true;
-              return recordSetIndex;
-            }
-            boolean next = setValues(kv, valueVectors, recordSetIndex);
-            entryIndexVector.getMutator().setObject(recordSetIndex, entryIndex);
-            recordSetIndex++;
-            if (!next) {
-              setValueCount(recordSetIndex);
-              return recordSetIndex;
-
-            }
-            break;
-          }
-        }
-        if (valIndex > curRes.size() - 1) {
-          if (!hasMore)
-            valIndex = -1;
-          continue;
-        }
-
-      }
-      KeyValue kv = curRes.get(valIndex++);
-      nextEntryIndex = getEntryIndex(kv);
-      if (nextEntryIndex != entryIndex) {
-        valIndex--;
-        entryIndex = nextEntryIndex;
-        newEntry = true;
-        return recordSetIndex;
-      }
-      boolean next = setValues(kv, valueVectors, recordSetIndex);
-      entryIndexVector.getMutator().setObject(recordSetIndex, entryIndex);
-      recordSetIndex++;
-      if (!next) {
-        setValueCount(recordSetIndex);
-        return recordSetIndex;
-      }
-    }
   }
 
   private int getEntryIndex(KeyValue kv) {
@@ -394,10 +360,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   public static byte[] produceTail(boolean start) {
     byte[] result = new byte[7];
-    if(start)
-        result[0]='.';
+    if (start)
+      result[0] = '.';
     else
-        result[0]=-1;
+      result[0] = -1;
     result[1] = -1;
     for (int i = 2; i < result.length; i++) {
       if (start)
@@ -439,12 +405,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    for (DirectScanner scanner : scanners) {
-      try {
-        scanner.close();
-      } catch (IOException e) {
-        logger.info("closing scanner failed", e);
-      }
+    try {
+      scanner.close();
+    } catch (IOException e) {
+      logger.info("closing scanner failed", e);
     }
     releaseEntry();
   }
