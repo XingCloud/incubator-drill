@@ -303,6 +303,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           }
         }
         if (!scanner.next(curRes)) {
+          if(recordSetIndex == 0)
+            return  0;
           valIndex = 0 ;
           return endNext(recordSetIndex + 1,currentEntry,currentEntry);
         }
@@ -383,8 +385,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     return result;
   }
 
-  public boolean setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {
-    boolean next = true;
+  public void setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {
     Map<String, Object> rkObjectMap = new HashMap<>();
     if (parseRk)
       rkObjectMap = dfaParser.parse(kv.getRow());
@@ -397,11 +398,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       if (type.equals("string"))
         result = Bytes.toBytes((String) result);
       valueVector.getMutator().setObject(index, result);
-      if (valueVector.getValueCapacity() - index == 1) {
-        next = false;
-      }
     }
-    return next;
   }
 
   private void setValueCount(int valueCount) {

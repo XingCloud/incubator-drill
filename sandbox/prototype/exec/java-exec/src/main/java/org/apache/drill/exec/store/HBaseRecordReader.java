@@ -67,6 +67,8 @@ public class HBaseRecordReader implements RecordReader {
   private int batchSize = 1024 * 16;
   private ValueVector[] valueVectors;
   private boolean init = false;
+  private long timeCost = 0 ;
+  private long timeStart ;
 
   private Map<Object, String> testMap = new HashMap<>();
 
@@ -332,7 +334,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public int next() {
-
+    timeStart = System.currentTimeMillis();
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 8);
     }
@@ -341,11 +343,13 @@ public class HBaseRecordReader implements RecordReader {
     while (true) {
       if (currentScannerIndex > scanners.size() - 1) {
         setValueCount(recordSetIndex);
+        timeCost += System.currentTimeMillis() - timeStart;
         return recordSetIndex;
       }
       DirectScanner scanner = scanners.get(currentScannerIndex);
       if (valIndex == -1) {
         if (scanner == null) {
+          timeCost += System.currentTimeMillis() - timeStart;
           return 0;
         }
         try {
@@ -378,6 +382,7 @@ public class HBaseRecordReader implements RecordReader {
             recordSetIndex++;
             if (!next) {
               setValueCount(recordSetIndex);
+              timeCost += System.currentTimeMillis() - timeStart;
               return recordSetIndex;
 
             }
@@ -472,6 +477,7 @@ public class HBaseRecordReader implements RecordReader {
         logger.error("Scanners close failed : " + e.getMessage());
       }
     }
+    logger.debug("Cost time : " + timeCost + "mills");
   }
 
 
