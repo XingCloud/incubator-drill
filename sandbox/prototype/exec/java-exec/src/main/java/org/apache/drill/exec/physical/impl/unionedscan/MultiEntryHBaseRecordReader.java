@@ -76,6 +76,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private int currentEntry = 0;
 
+  private long timeCost = 0 ;
+  private long start = 0;
+
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
     this.entries = config;
@@ -272,6 +275,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   public int next() {
+    start = System.currentTimeMillis();
     try {
       if (newEntry) {
         releaseEntry();
@@ -310,6 +314,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private int endNext(int valueCount,int entryIndex,int nextEntry ){
+    timeCost += System.currentTimeMillis() - start ;
     setValueCount(valueCount);
     entryIndexVector.getMutator().setObject(0,entryIndex);
     currentEntry = nextEntry;
@@ -409,6 +414,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    logger.debug("Cost time " + timeCost + "mills");
     try {
       scanner.close();
     } catch (IOException e) {
