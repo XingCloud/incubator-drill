@@ -110,7 +110,7 @@ public class DrillClient implements Closeable{
     }
   }
 
-  public boolean isActive{
+  public boolean isActive(){
     return client.isActive();
   }
 
