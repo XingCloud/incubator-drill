@@ -136,7 +136,6 @@ public class UnionedScanBatch implements RecordBatch {
     }
     try{
       recordCount = reader.next();
-      logger.debug("reader.next():{}", recordCount);
     }catch(Exception e){
       logger.info("Reader.next() failed", e);
       //releaseReaderAssets();
@@ -201,7 +200,6 @@ public class UnionedScanBatch implements RecordBatch {
    * 如果超过了指定的entry，则返回false。
    */
   boolean forwardReader2Before(int sortedEntry) {
-    logger.debug("forwardReader2Before({})",sortedEntry);
     if(sortedEntry >= sortedEntries.size()){
       throw new IndexOutOfBoundsException("want to forward to the "+sortedEntry+"'th entry, but only have "+sortedEntries.size());
     }
@@ -486,14 +484,6 @@ public class UnionedScanBatch implements RecordBatch {
                   reset2NextEntry();
                   continue;
                 }
-                //还在这个entry范围内
-                if(logger.isDebugEnabled()){
-                  Iterator<ValueVector> it;
-                  for (it = passEntryID(vectors.iterator()); it.hasNext();) {
-                    ValueVector vector = it.next();
-                    logger.debug("vector on direct mode's next():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));                    
-                  }
-                }
                 return outcome;
             }
             break;
@@ -575,27 +565,6 @@ public class UnionedScanBatch implements RecordBatch {
       logger.debug("iterating vectors on mode:{}", scanMode);
       switch(scanMode){
         case direct:
-          if(logger.isDebugEnabled()){
-            ValueVector previous = null;
-            for(Iterator<ValueVector> it = passEntryID(vectors.iterator());it.hasNext();){
-              ValueVector vector = it.next();
-              if(vector == previous){
-                logger.warn("previous vector same as this!{}", vector.getField());
-              }
-              previous = vector;
-              logger.debug("vector on direct mode's iterator():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));
-              try {
-                Field dataField = vector.getClass().getSuperclass().getDeclaredField("data");
-                dataField.setAccessible(true);
-                Object data = dataField.get(vector);
-                logger.debug("data:{}",data.getClass());
-              } catch (NoSuchFieldException e) {
-                e.printStackTrace();  //e:
-              } catch (IllegalAccessException e) {
-                e.printStackTrace();  //e:
-              }
-            }
-          }
           return passEntryID(vectors.iterator());
         case cached:
           return currentCachedData.getVectors().iterator();
