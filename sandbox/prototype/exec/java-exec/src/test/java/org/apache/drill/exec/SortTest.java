@@ -2,9 +2,13 @@ package org.apache.drill.exec;
 
 import java.util.Random;
 
+import com.xingcloud.meta.ByteUtils;
+import org.apache.drill.exec.physical.impl.unionedscan.MultiEntryHBaseRecordReader;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.QuickSort;
+import org.junit.Test;
 
 public class SortTest {
   private static final int RECORD_COUNT = 10*1000*1000;
@@ -58,4 +62,6 @@ public class SortTest {
       System.arraycopy(space, 0, data, start2, RECORD_SIZE);
     }
   }
+
+
 }

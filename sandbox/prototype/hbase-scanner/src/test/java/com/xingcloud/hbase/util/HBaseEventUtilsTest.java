@@ -70,4 +70,6 @@ public class HBaseEventUtilsTest {
     events.add("a.b.c.d.");
     return HBaseEventUtils.sortEventList(events);
   }
+
+
 }
