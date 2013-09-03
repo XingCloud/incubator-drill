@@ -58,7 +58,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   }
 
   public int getValueCapacity(){
-    return offsetVector.getValueCapacity();
+    return offsetVector.getValueCapacity() - 1;
   }
 
   public int getByteCapacity(){
@@ -299,7 +299,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
 
     public void generateTestData(){
       boolean even = true;
-      for(int i =0; i < valueCount; i++, even = !even){
+      for(int i =0; i < getValueCapacity(); i++, even = !even){
         if(even){
           set(i, new String("aaaaa").getBytes(Charsets.UTF_8));
         }else{
