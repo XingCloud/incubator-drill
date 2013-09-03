@@ -218,7 +218,7 @@
         </dependency>
         <dependency>
             <groupId>com.xingcloud.xa</groupId>
-            <artifactId>Int64Encoding</artifactId>
+            <artifactId>encoding</artifactId>
             <version>1.0</version>
         </dependency>
 

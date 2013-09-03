@@ -1,6 +1,6 @@
 package org.apache.drill.exec.vector;
 
-import com.xingcloud.encoding.Int64EncodingUtils;
+import com.xingcloud.xa.encoding.Int64RemoveLeadingZeroByte;
 import io.netty.buffer.ByteBuf;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.proto.UserBitShared;
@@ -53,6 +53,8 @@ public class VarBigIntVector extends BaseDataValueVector implements VariableWidt
     return dataBytes;
   }
 
+
+
   @Override
   public TransferPair getTransferPair() {
     return new TransferImpl();
@@ -85,11 +87,18 @@ public class VarBigIntVector extends BaseDataValueVector implements VariableWidt
     public long get(int index) {
       assert index >= 0;
       int startIdx = offsetVector.getAccessor().get(index);
-      int length = offsetVector.getAccessor().get(index + 1) - startIdx;
+      int length = 0;
+      if (index == offsetVector.getValueCapacity()-1) {
+        //The last one
+        length = data.capacity() - startIdx;
+      } else {
+        length = offsetVector.getAccessor().get(index + 1) - startIdx;
+      }
+
       assert length >= 0;
       byte[] dst = new byte[length];
       data.getBytes(startIdx, dst, 0, length);
-      long value = Int64EncodingUtils.decode(dst);
+      long value = Int64RemoveLeadingZeroByte.decode(dst);
       return value;
     }
 
@@ -124,7 +133,7 @@ public class VarBigIntVector extends BaseDataValueVector implements VariableWidt
     public void set(int index, long value) {
       assert index >= 0;
       int currentOffset = offsetVector.getAccessor().get(index);
-      byte[] encodedBytes = Int64EncodingUtils.encode(value);
+      byte[] encodedBytes = Int64RemoveLeadingZeroByte.encode(value);
       if (data.capacity() < currentOffset + encodedBytes.length) {
         realloc(index, currentOffset, encodedBytes.length);
       }
@@ -174,6 +183,8 @@ public class VarBigIntVector extends BaseDataValueVector implements VariableWidt
     public void transferTo(ValueVector target, boolean needClear) {
       VarBigIntVector.this.transferTo((VarBigIntVector)target, needClear);
     }
+
+
   }
 
   private class TransferImpl implements TransferPair{
@@ -220,6 +231,8 @@ public class VarBigIntVector extends BaseDataValueVector implements VariableWidt
     data.release() ;
     data = newBuf;
   }
+
+
 
 
 }
