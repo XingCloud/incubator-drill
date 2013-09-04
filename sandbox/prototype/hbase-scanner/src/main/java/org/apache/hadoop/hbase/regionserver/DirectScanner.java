@@ -56,6 +56,7 @@ public class DirectScanner implements XAScanner {
 
     //set scan
     this.scan = new Scan(startRowKey, endRowKey);
+    scan.setMaxVersions();
     scan.setBatch(16 * 1024);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
