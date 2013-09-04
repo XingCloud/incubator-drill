@@ -135,7 +135,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
               if (null == patterns)
                 patterns = new ArrayList<>();
               for (LogicalExpression e : entry.getFilterExpressions()) {
-                String pattern = ((SchemaPath) e).getPath().toString();
+                if(!(e instanceof ValueExpressions.QuotedString)){
+                   throw new IOException("include logicalExpression is not quotedString");
+                }
+                String pattern = ((ValueExpressions.QuotedString)e).value;
                 if (patterns.contains(pattern))
                   patterns.add(pattern);
               }
