@@ -2,6 +2,7 @@ package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.xingcloud.meta.ByteUtils;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.exception.SchemaChangeException;
@@ -17,6 +18,7 @@ import org.apache.drill.exec.vector.ValueVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -82,7 +84,9 @@ public class UnionedScanBatch implements RecordBatch {
     for (int i = 0; i < sortedEntries.size(); i++) {
       HbaseScanPOP.HbaseScanEntry scanEntry = sortedEntries.get(i);
       if(i<sortedEntries.size()-1){
-        if(scanEntry.getEndRowKey().compareTo(sortedEntries.get(i+1).getStartRowKey())>0){
+        byte[] thisEnd = ByteUtils.toBytesBinary(scanEntry.getEndRowKey());
+        byte[] nextStart = ByteUtils.toBytesBinary(sortedEntries.get(i+1).getStartRowKey());
+        if(ByteUtils.compareBytes(thisEnd, nextStart) > 0){
           throw new ExecutionSetupException("entry rowkey overlap: "+i+"'th endKey:"+scanEntry.getEndRowKey()+" vs next startKey:"+sortedEntries.get(i+1).getStartRowKey());
         }
       }

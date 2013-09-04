@@ -56,6 +56,7 @@ public class DirectScanner implements XAScanner {
 
     //set scan
     this.scan = new Scan(startRowKey, endRowKey);
+    scan.setMaxVersions();
     scan.setBatch(16 * 1024);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
@@ -96,7 +97,7 @@ public class DirectScanner implements XAScanner {
           currentScanner = null;
           return false;
         }
-        currentScanner = new StoresScanner(regionList.get(currentIndex), scan);
+        currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
       }
     }
     
@@ -112,9 +113,10 @@ public class DirectScanner implements XAScanner {
     String tableName = args[0];
     String srk = args[1];
     String erk = args[2];
-    boolean isMemOnly = Boolean.parseBoolean(args[3]);
-    boolean isFileOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isMemOnly, isFileOnly);
+    
+    boolean isFileOnly = Boolean.parseBoolean(args[3]);
+    boolean isMemOnly = Boolean.parseBoolean(args[4]);    
+    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isFileOnly, isMemOnly);
     long counter = 0;
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
