@@ -46,24 +46,30 @@ public class XARegionScanner implements XAScanner{
   }
 
   public boolean next(List<KeyValue> results) throws IOException {
+    if (theNext == null) {
+      //Both memstore and hfile have no value at all
+      return false;
+    }
     KeyValue ret = null;
-    while (results.size() < Helper.BATCH_SIZE) {
+    while (results.size() < Helper.BATCH_SIZE + 1) {
       ret = theNext;
-      if (ret == null) {
-        //No more values
-        break;
-      }
       if(theNext == MSNext){
         MSNext = getKVFromMS();
       }else{
         SSNext = getKVFromSS();
       }
       theNext = getLowest(MSNext, SSNext);
+      if (theNext == null) {
+        //The last one
+        results.add(ret);
+        return false;
+      }
       if (!theNext.equals(ret)) {
+        //Remove duplicate kv
         results.add(ret);
       }
     }
-    return ret != null;
+    return true;
   }
 
   @Override
