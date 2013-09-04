@@ -47,6 +47,7 @@ public class ScannerPerformanceTest {
       long cost = (System.nanoTime()-st);
       totalCost += cost;
       LOG.info(i + ":\t" + count + " " + sum + " " + uids.size() + "   " + cost/1.0e9 + " sec");
+      scanner.close();
     }
     LOG.info("HBase client scanner Average: " + totalCost/1.0e9/times + " sec");
   }
@@ -76,7 +77,9 @@ public class ScannerPerformanceTest {
       long cost = (System.nanoTime()-st);
       totalCost += cost;
       LOG.info(i + ":\t" + count + " " + sum + " " + uids.size() + "   " + cost/1.0e9 + " sec");
+      scanner.close();
     }
+
     LOG.info("Direct client scanner Average: " + totalCost/1.0e9/times + " sec");
   }
 
