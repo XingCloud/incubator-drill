@@ -1,6 +1,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import com.xingcloud.hbase.manager.HBaseResourceManager;
+import com.xingcloud.xa.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
@@ -55,6 +56,8 @@ public class DirectScanner implements XAScanner {
 
     //set scan
     this.scan = new Scan(startRowKey, endRowKey);
+    scan.setMaxVersions();
+    scan.setBatch(16 * 1024);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
     if (filter != null)
@@ -94,7 +97,7 @@ public class DirectScanner implements XAScanner {
           currentScanner = null;
           return false;
         }
-        currentScanner = new StoresScanner(regionList.get(currentIndex), scan);
+        currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
       }
     }
     
@@ -110,13 +113,15 @@ public class DirectScanner implements XAScanner {
     String tableName = args[0];
     String srk = args[1];
     String erk = args[2];
-    boolean isMemOnly = Boolean.parseBoolean(args[3]);
-    boolean isFileOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isMemOnly, isFileOnly);
+    
+    boolean isFileOnly = Boolean.parseBoolean(args[3]);
+    boolean isMemOnly = Boolean.parseBoolean(args[4]);    
+    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isFileOnly, isMemOnly);
     long counter = 0;
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
     boolean done = false;
+    Set<Long> uids = new HashSet<>();
     try {
       do {
         results.clear();
@@ -125,6 +130,8 @@ public class DirectScanner implements XAScanner {
           if (counter % 1000 == 0 || !done) {
             LOG.info(Bytes.toString(kv.getRow()));
           }
+          long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(kv.getRow());
+          uids.add(uid);
           counter++;
         }
 
@@ -141,5 +148,7 @@ public class DirectScanner implements XAScanner {
       }
     }
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
+    LOG.info("Uids number: "+uids.size());
+    System.out.println("Uids number: "+uids.size());
   }
 }

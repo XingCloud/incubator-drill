@@ -1,6 +1,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import com.xingcloud.hbase.manager.HBaseResourceManager;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
@@ -39,10 +40,10 @@ public class MemstoresScanner implements XAScanner {
     // make sure that we only get the corresponding memstores for this region
     byte[] startRowKey = hRegionInfo.getStartKey();
     byte[] endRowKey = hRegionInfo.getEndKey();
-    if (Bytes.compareTo(scan.getStartRow(), startRowKey) > 0) {
+    if (Bytes.compareTo(scan.getStartRow(), startRowKey) > 0 || Bytes.equals(startRowKey, HConstants.EMPTY_START_ROW)) {
       startRowKey = scan.getStartRow();
     }
-    if (Bytes.compareTo(scan.getStopRow(), endRowKey) < 0) {
+    if (Bytes.compareTo(scan.getStopRow(), endRowKey) < 0 || Bytes.equals(endRowKey,HConstants.EMPTY_END_ROW))  {
       endRowKey = scan.getStopRow();
     }
     Scan memScan = new Scan(startRowKey, endRowKey);
@@ -60,7 +61,7 @@ public class MemstoresScanner implements XAScanner {
       rs = table.getScanner(memScan);
     } catch (IOException e) {
       e.printStackTrace();
-      LOG.error("Init memstore scanner failure! MSG: " + e.getMessage());
+      LOG.error("Init memstore scanner failure! MSG: " + e.getMessage()); 
     }
   }
 

@@ -228,6 +228,8 @@ public class DrillClient implements Closeable{
           //reconnect failed
           fail(ex);
         }
+      } else{
+        fail(ex);
       }
     }
 
