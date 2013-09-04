@@ -181,6 +181,7 @@ public class StoresScanner implements XAScanner {
   
   public void updateScanner(byte[] family, KeyValue theNext) throws IOException {
     //((StoreScanner)storeScanners.get(Bytes.toString(family))).updateReaders();
+    LOG.info("Reload Store file scanner...");
     close();
     initStoreFiles(hRegionInfo);
     initKVScanners(scan);
