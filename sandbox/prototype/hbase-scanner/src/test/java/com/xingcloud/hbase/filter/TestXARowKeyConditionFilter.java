@@ -25,8 +25,8 @@ import java.util.List;
  * Time: 3:30 PM
  * To change this template use File | Settings | File Templates.
  */
-public class XARowKeyConditionFilterTest {
-    public static Logger logger= LoggerFactory.getLogger(XARowKeyConditionFilterTest.class);
+public class TestXARowKeyConditionFilter {
+    public static Logger logger= LoggerFactory.getLogger(TestXARowKeyConditionFilter.class);
     @Test
     public void testFilter() throws IOException {
         Configuration conf=HBaseConfiguration.create();
@@ -49,7 +49,7 @@ public class XARowKeyConditionFilterTest {
         int count=0;
         for(Result res: resultScanner){
              for(KeyValue kv :res.raw()){
-                 //logger.info(kv.toString());
+                 logger.info(kv.toString());
                  count++;
              }
         }

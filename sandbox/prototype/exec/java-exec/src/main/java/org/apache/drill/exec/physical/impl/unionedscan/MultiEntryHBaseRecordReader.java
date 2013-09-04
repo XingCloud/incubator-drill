@@ -100,7 +100,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.projections = new ArrayList<>();
     this.entryProjections = new ArrayList<>();
     this.fieldInfoMap = new HashMap<>();
-
+    try{
     List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, null);
     for (HBaseFieldInfo col : cols) {
       fieldInfoMap.put(col.fieldSchema.getName(), col);
@@ -113,11 +113,13 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];
       for (int j = 0; j < exprs.size(); j++) {
         exprArr[j] = exprs.get(j);
-        if(!(exprArr[j].getExpr() instanceof ValueExpressions.QuotedString)){
-            logger.info(exprArr[j].getExpr().toString()+" is not quotedString");
-            throw new Exception(exprArr[j].getExpr().toString()+" is not quotedString");
+        try{
+           infos[j] = fieldInfoMap.get( ((SchemaPath)exprArr[j].getExpr()).getPath().toString());
+        }catch (Exception e){
+            logger.info(" error !"+ exprArr[j].getExpr().toString()+ " is not schemaPath");
+            e.printStackTrace();
+            throw e;
         }
-        infos[j] = fieldInfoMap.get(((ValueExpressions.QuotedString) exprArr[j].getExpr()).value);
         if (!projections.contains(exprArr[j]))
           projections.add(exprArr[j]);
         if (false == parseRk && infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey)
@@ -128,6 +130,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
+    }catch (Exception e){
+        e.printStackTrace();
+        throw e;
+    }
   }
 
   private void initDirectScanner() throws IOException {
