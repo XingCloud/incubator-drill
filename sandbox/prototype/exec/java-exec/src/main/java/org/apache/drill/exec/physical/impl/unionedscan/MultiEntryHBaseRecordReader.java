@@ -1,6 +1,7 @@
 package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.xingcloud.hbase.util.DFARowKeyParser;
+import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -75,6 +76,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private DFARowKeyParser dfaParser;
 
   private int currentEntry = 0;
+  private int nextEntry = 0 ;
 
   private long timeCost = 0 ;
   private long start = 0;
@@ -85,8 +87,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    this.startRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[0].getStartRowKey()), produceTail(true));
-    this.endRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[entries.length - 1].getEndRowKey()), produceTail(false));
+    this.startRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(entries[0].getStartRowKey()), RowKeyUtils.produceTail(true));
+    this.endRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(entries[entries.length - 1].getEndRowKey()), RowKeyUtils.produceTail(false));
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
@@ -277,36 +279,36 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   public int next() {
     start = System.currentTimeMillis();
     try {
-      if (newEntry) {
-        releaseEntry();
-        setupEntry(currentEntry);
-        newEntry = false;
-      }
+      if (newEntry) setUpNewEntry();
       allocateNew();
       int recordSetIndex = 0;
       while (true) {
-        if (valIndex < curRes.size() - 1) {
+        if (valIndex < curRes.size()) {
           int readerEntry = getEntryIndex(curRes.get(valIndex));
           if(readerEntry != currentEntry){
+            nextEntry = readerEntry;
             newEntry = true ;
-            return endNext(recordSetIndex + 1, currentEntry, readerEntry);
+            if(recordSetIndex == 0){
+              setUpNewEntry();
+              allocateNew();
+              continue;
+            }
+            return endNext(recordSetIndex);
           }
-          int length = splitKeyValues(curRes, valIndex, batchSize - recordSetIndex - 1);
+          int length = splitKeyValues(curRes, valIndex, batchSize - recordSetIndex);
           setValues(curRes, valIndex, length, recordSetIndex);
           recordSetIndex += length;
-          if (length + valIndex != curRes.size() - 1) {
-            valIndex ++ ;
-            return endNext(recordSetIndex + 1,currentEntry,currentEntry);
+          if (length + valIndex != curRes.size()) {
+            valIndex += length ;
+            return endNext(recordSetIndex);
           } else {
             valIndex = 0;
             curRes.clear();
           }
         }
         if (!scanner.next(curRes)) {
-          if(recordSetIndex == 0)
-            return  0;
           valIndex = 0 ;
-          return endNext(recordSetIndex + 1,currentEntry,currentEntry);
+          return endNext(recordSetIndex);
         }
       }
     } catch (Exception e) {
@@ -315,22 +317,31 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
   }
 
-  private int endNext(int valueCount,int entryIndex,int nextEntry ){
+  private void setUpNewEntry() throws SchemaChangeException{
+    releaseEntry();
+    currentEntry = nextEntry ;
+    setupEntry(currentEntry);
+    newEntry = false;
+  }
+
+  private int endNext(int valueCount){
     timeCost += System.currentTimeMillis() - start ;
+    if(valueCount == 0)
+      return 0;
     setValueCount(valueCount);
-    entryIndexVector.getMutator().setObject(0,entryIndex);
-    currentEntry = nextEntry;
+    entryIndexVector.getMutator().setObject(0,currentEntry);
     return valueCount;
   }
 
   private int splitKeyValues(List<KeyValue> keyValues, int offset, int maxSize) {
-    int length = Math.min(maxSize, keyValues.size() - 1 - offset );
-    int lastEntry = getEntryIndex(keyValues.get(offset + length));
+    int length = Math.min(maxSize, keyValues.size()  - offset );
+    int lastEntry = getEntryIndex(keyValues.get(offset + length - 1));
     if (lastEntry != currentEntry) {
-      for (int i = offset + length; i >= offset; i++) {
+      for (int i = offset + length - 1; i >= offset; i++) {
         if (currentEntry == getEntryIndex(keyValues.get(i)))
-          return i - offset;
+          return i - offset + 1;
       }
+      return 0;
     }
     return length;
   }
@@ -338,6 +349,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
     for (int i = offset; i < offset + length; i++) {
       setValues(keyValues.get(i), valueVectors, setIndex);
+      setIndex ++ ;
     }
   }
 
@@ -356,33 +368,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         return i;
     }
     return currentEntry;
-  }
-
-  public static byte[] appendBytes(byte[] orig, byte[] tail) {
-    byte[] result = new byte[orig.length + tail.length];
-    for (int i = 0; i < result.length; i++) {
-      if (i < orig.length)
-        result[i] = orig[i];
-      else
-        result[i] = tail[i - orig.length];
-    }
-    return result;
-  }
-
-  public static byte[] produceTail(boolean start) {
-    byte[] result = new byte[7];
-    if (start)
-      result[0] = '.';
-    else
-      result[0] = -1;
-    result[1] = -1;
-    for (int i = 2; i < result.length; i++) {
-      if (start)
-        result[i] = 0;
-      else
-        result[i] = -1;
-    }
-    return result;
   }
 
   public void setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {
