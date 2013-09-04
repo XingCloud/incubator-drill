@@ -91,25 +91,26 @@ public class XARegionScanner implements XAScanner{
   public KeyValue getKVFromMS() throws IOException {
     if (null == memstoresScanner) return null;
     
-    while(true){
-      if(0 == MSKVCache.size()){
+    while (true){
+      if (0 == MSKVCache.size()){
         List<KeyValue> results = new ArrayList<KeyValue>();
-        if(memstoresScanner.next(results)){
+        if(memstoresScanner.next(results)) {
           MSKVCache.addAll(results);
-        }else{
+        } else {
           return null;
         }
       }
 
       KeyValue kv = MSKVCache.poll();
-      if(Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0){
-        if(storesScanner != null){
+      LOG.info("From Memstore: " + Bytes.toString(kv.getRow()) + "\t" + Bytes.toLong(kv.getValue()) + "\t" + kv.getTimestamp());
+      if (Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0) {
+        if (storesScanner != null){
           storesScanner.updateScanner(kv.getFamily(), theNext); //todo kv to seek
           if(SSNext == null){
             SSNext = getKVFromSS();
           }
         }
-      }else {
+      } else {
         return kv;
       }
     }
