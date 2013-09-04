@@ -3,7 +3,7 @@
 
 <configuration>
     <property>
-        <name>fs.default.name</name>
+        <name>fs.defaultFS</name>
         <value>hdfs://ELEX-LA-WEB1:19000</value>
     </property>
 
