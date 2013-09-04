@@ -335,6 +335,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private int splitKeyValues(List<KeyValue> keyValues, int offset, int maxSize) {
     int length = Math.min(maxSize, keyValues.size()  - offset );
+    if(length == 0){
+      return  0;
+    }
     int lastEntry = getEntryIndex(keyValues.get(offset + length - 1));
     if (lastEntry != currentEntry) {
       for (int i = offset + length - 1; i >= offset; i++) {
