@@ -218,7 +218,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
   }
 
   @Override
