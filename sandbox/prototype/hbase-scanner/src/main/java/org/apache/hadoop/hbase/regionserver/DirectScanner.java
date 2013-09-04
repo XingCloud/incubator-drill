@@ -1,6 +1,6 @@
 package org.apache.hadoop.hbase.regionserver;
 
-import com.xingcloud.hbase.manager.HBaseResourceManager;
+import com.xingcloud.hbase.manager.*;
 import com.xingcloud.xa.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;

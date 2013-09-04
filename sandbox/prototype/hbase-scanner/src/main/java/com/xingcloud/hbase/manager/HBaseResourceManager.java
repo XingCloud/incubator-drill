@@ -27,9 +27,6 @@ public class HBaseResourceManager {
         if (m_instance == null) {
             m_instance = new HBaseResourceManager();
         }
-        System.out.println("zookeeper.znode.parent: " + conf.get("zookeeper.znode.parent"));
-        System.out.println("hbase.zookeeper.quorum: " + conf.get("hbase.zookeeper.quorum"));
-        System.out.println("hbase.zookeeper.property.clientPort: " + conf.get("hbase.zookeeper.property.clientPort"));
         return m_instance;
     }
     
