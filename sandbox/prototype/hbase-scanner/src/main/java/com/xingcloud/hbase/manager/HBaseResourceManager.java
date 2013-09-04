@@ -27,6 +27,7 @@ public class HBaseResourceManager {
         if (m_instance == null) {
             m_instance = new HBaseResourceManager();
         }
+        System.out.println("zookeeper.znode.parent: " + conf.get("zookeeper.znode.parent"));
         return m_instance; 
     }
     
