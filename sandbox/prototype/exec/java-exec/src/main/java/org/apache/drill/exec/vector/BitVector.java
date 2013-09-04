@@ -91,6 +91,7 @@ public final class BitVector extends BaseDataValueVector implements FixedWidthVe
     target.data = data;
     target.data.retain();
     target.valueCount = valueCount;
+    target.valueCapacity = valueCapacity;
     if(needClear){
       clear();
     }

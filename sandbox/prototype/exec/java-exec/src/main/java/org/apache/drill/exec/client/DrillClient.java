@@ -215,9 +215,11 @@ public class DrillClient implements Closeable{
 
     @Override
     public void submissionFailed(RpcException ex) {
+      logger.debug("submissionFailed with exception:{}", ex);      
       if(ex instanceof ChannelClosedException){
         if(reconnect()){
           try {
+            logger.debug("resubmitting query...");
             client.submitQuery(this, query);
           } catch (RpcException e) {
             fail(e);
