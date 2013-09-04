@@ -75,6 +75,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private DFARowKeyParser dfaParser;
 
   private int currentEntry = 0;
+  private int nextEntry = 0 ;
 
   private long timeCost = 0 ;
   private long start = 0;
@@ -277,36 +278,36 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   public int next() {
     start = System.currentTimeMillis();
     try {
-      if (newEntry) {
-        releaseEntry();
-        setupEntry(currentEntry);
-        newEntry = false;
-      }
+      if (newEntry) setUpNewEntry();
       allocateNew();
       int recordSetIndex = 0;
       while (true) {
-        if (valIndex < curRes.size() - 1) {
+        if (valIndex < curRes.size()) {
           int readerEntry = getEntryIndex(curRes.get(valIndex));
           if(readerEntry != currentEntry){
+            nextEntry = readerEntry;
             newEntry = true ;
-            return endNext(recordSetIndex + 1, currentEntry, readerEntry);
+            if(recordSetIndex == 0){
+              setUpNewEntry();
+              allocateNew();
+              continue;
+            }
+            return endNext(recordSetIndex);
           }
-          int length = splitKeyValues(curRes, valIndex, batchSize - recordSetIndex - 1);
+          int length = splitKeyValues(curRes, valIndex, batchSize - recordSetIndex);
           setValues(curRes, valIndex, length, recordSetIndex);
           recordSetIndex += length;
-          if (length + valIndex != curRes.size() - 1) {
-            valIndex ++ ;
-            return endNext(recordSetIndex + 1,currentEntry,currentEntry);
+          if (length + valIndex != curRes.size()) {
+            valIndex += length ;
+            return endNext(recordSetIndex);
           } else {
             valIndex = 0;
             curRes.clear();
           }
         }
         if (!scanner.next(curRes)) {
-          if(recordSetIndex == 0)
-            return  0;
           valIndex = 0 ;
-          return endNext(recordSetIndex + 1,currentEntry,currentEntry);
+          return endNext(recordSetIndex);
         }
       }
     } catch (Exception e) {
@@ -315,28 +316,38 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
   }
 
-  private int endNext(int valueCount,int entryIndex,int nextEntry ){
+  private void setUpNewEntry() throws SchemaChangeException{
+    releaseEntry();
+    currentEntry = nextEntry ;
+    setupEntry(currentEntry);
+    newEntry = false;
+  }
+
+  private int endNext(int valueCount){
     timeCost += System.currentTimeMillis() - start ;
+    if(valueCount == 0)
+      return 0;
     setValueCount(valueCount);
-    entryIndexVector.getMutator().setObject(0,entryIndex);
-    currentEntry = nextEntry;
+    entryIndexVector.getMutator().setObject(0,currentEntry);
     return valueCount;
   }
 
   private int splitKeyValues(List<KeyValue> keyValues, int offset, int maxSize) {
-    int length = Math.min(maxSize, keyValues.size() - 1 - offset );
-    int lastEntry = getEntryIndex(keyValues.get(offset + length));
+    int length = Math.min(maxSize, keyValues.size()  - offset );
+    int lastEntry = getEntryIndex(keyValues.get(offset + length - 1));
     if (lastEntry != currentEntry) {
-      for (int i = offset + length; i >= offset; i++) {
+      for (int i = offset + length - 1; i >= offset; i++) {
         if (currentEntry == getEntryIndex(keyValues.get(i)))
-          return i - offset;
+          return i - offset + 1;
       }
+      return 0;
     }
     return length;
   }
 
   private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
     for (int i = offset; i < offset + length; i++) {
+      setIndex ++ ;
       setValues(keyValues.get(i), valueVectors, setIndex);
     }
   }
