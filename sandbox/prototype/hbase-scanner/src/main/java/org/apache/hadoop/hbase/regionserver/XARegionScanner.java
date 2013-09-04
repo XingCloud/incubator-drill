@@ -49,16 +49,18 @@ public class XARegionScanner implements XAScanner{
     KeyValue ret = null;
     while (results.size() < Helper.BATCH_SIZE) {
       ret = theNext;
+      if (ret == null) {
+        //No more values
+        break;
+      }
       if(theNext == MSNext){
         MSNext = getKVFromMS();
       }else{
         SSNext = getKVFromSS();
       }
       theNext = getLowest(MSNext, SSNext);
-      if(ret != null){
+      if (theNext != ret) {
         results.add(ret);
-      } else {
-        break;
       }
     }
     return ret != null;
