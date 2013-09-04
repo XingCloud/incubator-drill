@@ -90,35 +90,25 @@ public class DirectScanner implements XAScanner {
 
   @Override
   public boolean next(List<KeyValue> results) throws IOException {
-    if (regionList.size() == 0)
-      return false;
-
-    checkScanner(); // check if we should advance to next region 
-
-    if(currentScanner == null){
+    if (regionList.size() == 0) {
       return false;
     }
-
-    hasNext = currentScanner.next(results);
-    return hasNext;
-  }
-
-  private boolean checkScanner() throws IOException {
     if(currentScanner == null){
       currentScanner = new XARegionScanner(regionList.get(0), scan);
-    }else{
-      if (!hasNext){
-        currentScanner.close();
-        currentIndex++;
-        if (currentIndex > regionList.size()-1){
-          currentScanner = null;
-          return false;
-        }
-        currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
-      }
     }
-
-    return true;
+    hasNext = currentScanner.next(results);
+    if (!hasNext) {
+      //Move to next region
+      currentScanner.close();
+      currentIndex++;
+      if (currentIndex == regionList.size()){
+        currentScanner = null;
+        return false;
+      }
+      currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
+      hasNext = true;
+    }
+    return hasNext;
   }
 
   @Override
