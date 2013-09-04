@@ -73,7 +73,7 @@ public class MysqlRecordReader implements RecordReader {
       initStmtExecutor();
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
-        MajorType type = getMajorType(projections.get(i).getSecond());
+        MajorType type = getMajorType(projections.get(i).getFirst());
         String field = projections.get(i).getFirst();
         if (field.equals("uid")) {
           type = Types.required(MinorType.INT);
