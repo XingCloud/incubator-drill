@@ -938,6 +938,31 @@ public class ByteUtils {
     return toString(b, 0, n);
   }
 
+  /**
+   * 
+   * @param o1
+   * @param o2
+   * @return 1 if o1 is larger than o2 in dictionary oder;
+   * 0 if equal;
+   * -1 of o1 is smaller than o2 in dictionary order.
+   */
+  public static int compareBytes(byte[] o1, byte[] o2){
+    for (int i = 0; i < o1.length; i++) {
+      byte b = o1[i];
+      if(o2.length == i){
+        return 1;
+      }
+      if(o1[i] == o2[i]){
+        continue;
+      }
+      return (0xff & o1[i]) - (0xff & o2[i]);
+    }
+    if(o2.length > o1.length){
+      return -1;
+    }
+    return 0;
+  }
+
   public static void main(String[] args) throws UnsupportedEncodingException {
     String s="我";
     byte[] bytes = toBytesBinary(s);
