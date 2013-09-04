@@ -19,6 +19,7 @@ import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
+import org.apache.drill.exec.physical.impl.unionedscan.MultiEntryHBaseRecordReader;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
@@ -66,6 +67,8 @@ public class HBaseRecordReader implements RecordReader {
   private int batchSize = 1024 * 16;
   private ValueVector[] valueVectors;
   private boolean init = false;
+  private long timeCost = 0 ;
+  private long timeStart ;
 
   private Map<Object, String> testMap = new HashMap<>();
 
@@ -76,8 +79,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = appendBytes(parseRkStr(config.getStartRowKey()), produceTail(true));
-    endRowKey = appendBytes(parseRkStr(config.getEndRowKey()), produceTail(false));
+    startRowKey = appendBytes(parseRkStr(config.getStartRowKey()), MultiEntryHBaseRecordReader.produceTail(true));
+    endRowKey = appendBytes(parseRkStr(config.getEndRowKey()), MultiEntryHBaseRecordReader.produceTail(false));
     if (Arrays.equals(startRowKey, endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
@@ -141,7 +144,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private byte[] produceTail(boolean start) {
-    byte[] result = new byte[6];
+    byte[] result = new byte[7];
+
     result[0] = -1;
     for (int i = 1; i < result.length; i++) {
       if (start)
@@ -330,7 +334,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public int next() {
-
+    timeStart = System.currentTimeMillis();
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 8);
     }
@@ -339,11 +343,13 @@ public class HBaseRecordReader implements RecordReader {
     while (true) {
       if (currentScannerIndex > scanners.size() - 1) {
         setValueCount(recordSetIndex);
+        timeCost += System.currentTimeMillis() - timeStart;
         return recordSetIndex;
       }
       DirectScanner scanner = scanners.get(currentScannerIndex);
       if (valIndex == -1) {
         if (scanner == null) {
+          timeCost += System.currentTimeMillis() - timeStart;
           return 0;
         }
         try {
@@ -376,6 +382,7 @@ public class HBaseRecordReader implements RecordReader {
             recordSetIndex++;
             if (!next) {
               setValueCount(recordSetIndex);
+              timeCost += System.currentTimeMillis() - timeStart;
               return recordSetIndex;
 
             }
@@ -470,6 +477,7 @@ public class HBaseRecordReader implements RecordReader {
         logger.error("Scanners close failed : " + e.getMessage());
       }
     }
+    logger.debug("Cost time : " + timeCost + "mills");
   }
 
 
