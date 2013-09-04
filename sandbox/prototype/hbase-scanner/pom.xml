@@ -192,7 +192,7 @@
             </resource>
         </resources>
 
-        <!--
+
         <plugins>
 
             <plugin>
@@ -200,7 +200,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.apache.hadoop.hbase.regionserver.DirectScanner</mainClass>
+                            <mainClass>org.apache.hadoop.hbase.regionserver.ScannerPerformanceTest</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -236,7 +236,7 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins> -->
+        </plugins>
     </build>
 
 </project>
