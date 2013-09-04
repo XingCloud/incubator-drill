@@ -70,7 +70,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private boolean newEntry = false;
 
   private DirectScanner scanner;
-  private int valIndex = -1;
+  private int valIndex = 0;
   private List<KeyValue> curRes = new ArrayList<>();
   private List<KeyPart> primaryRowKeyParts;
   private DFARowKeyParser dfaParser;
