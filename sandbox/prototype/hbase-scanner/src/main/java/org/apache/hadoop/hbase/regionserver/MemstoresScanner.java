@@ -60,7 +60,7 @@ public class MemstoresScanner implements XAScanner {
       rs = table.getScanner(memScan);
     } catch (IOException e) {
       e.printStackTrace();
-      LOG.error("Init memstore scanner failure! MSG: " + e.getMessage());
+      LOG.error("Init memstore scanner failure! MSG: " + e.getMessage()); 
     }
   }
 
