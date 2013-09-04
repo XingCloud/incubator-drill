@@ -46,19 +46,21 @@ public class XARegionScanner implements XAScanner{
   }
 
   public boolean next(List<KeyValue> results) throws IOException {
-    KeyValue ret = theNext;
-    if(theNext == MSNext){
-      MSNext = getKVFromMS();
-    }else{
-      SSNext = getKVFromSS();
+    KeyValue ret = null;
+    while (results.size() < Helper.BATCH_SIZE) {
+      ret = theNext;
+      if(theNext == MSNext){
+        MSNext = getKVFromMS();
+      }else{
+        SSNext = getKVFromSS();
+      }
+      theNext = getLowest(MSNext, SSNext);
+      if(ret != null){
+        results.add(ret);
+      } else {
+        break;
+      }
     }
-
-    theNext = getLowest(MSNext, SSNext);
-    
-    if(ret != null){
-      results.add(ret); // todo one by one? no problem, we have cache .
-    }
-    
     return ret != null;
   }
 
@@ -104,27 +106,22 @@ public class XARegionScanner implements XAScanner{
   private Queue<KeyValue> SSKVCache = new LinkedList<KeyValue>();
   
   public KeyValue getKVFromSS() throws IOException {
-    if(null== storesScanner) return null;
-    
+    if(null == storesScanner) return null;
     if(0 == SSKVCache.size()){
       List<KeyValue> results = new ArrayList<KeyValue>();
-      if(!storesScanner.next(results)){//todo when to stop, no problem, will not be invoked after returning null until flush.
-//        storesScanner.close();
-//        storesScanner = null;
-      }
+      boolean hasNext = storesScanner.next(results);
       SSKVCache.addAll(results);
     }
-
     return SSKVCache.poll();
   }
 
   private KeyValue getLowest(final KeyValue a, final KeyValue b) {
-    if (a == null) {
+    if (null == a) {
       return b;
     }
-    if (b == null) {
+    if (null == b) {
       return a;
     }
-    return comparator.compareRows(a, b) <= 0? a: b;
+    return comparator.compareRows(a, b) <= 0 ? a: b;
   }  
 }

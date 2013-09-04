@@ -34,7 +34,6 @@ public class StoresScanner implements XAScanner {
   private static Logger LOG = LoggerFactory.getLogger(RegionScanner.class);
 
   private final String familyName = "val";
-  private final int batch = 1000;//todo
 
   private Scan scan;
 
@@ -182,13 +181,14 @@ public class StoresScanner implements XAScanner {
   
   public void updateScanner(byte[] family, KeyValue theNext) throws IOException {
     //((StoreScanner)storeScanners.get(Bytes.toString(family))).updateReaders();
+    close();
     initStoreFiles(hRegionInfo);
     initKVScanners(scan);
     storeScanners.get(Bytes.toString(family)).seek(theNext);
   }
   
   public boolean next(List<KeyValue> outResults) throws IOException {
-    boolean hasMore = next(outResults, batch);
+    boolean hasMore = next(outResults, scan.getBatch());
     numKV.addAndGet(outResults.size());
     return hasMore;
   }

@@ -21,6 +21,11 @@ import java.util.*;
 public class Helper {
 
   private static Logger LOG = LoggerFactory.getLogger(Helper.class);
+
+  public static final byte[] DEFAULT_FAM = Bytes.toBytes("val");
+  public static final byte[] DEFAULT_COL = Bytes.toBytes("val");
+  public static final int BATCH_SIZE = 16 * 1024;
+
   public static List<HRegionInfo> getRegionInfoList(HTable hTable, Pair<byte[], byte[]> seKey) throws IOException {
     Set<HRegionInfo> hRegionInfoSet = new HashSet<HRegionInfo>();
     NavigableMap<HRegionInfo, ServerName> regionInfoMap = hTable.getRegionLocations();

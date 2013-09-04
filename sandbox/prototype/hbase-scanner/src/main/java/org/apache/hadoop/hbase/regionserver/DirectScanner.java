@@ -46,8 +46,13 @@ public class DirectScanner implements XAScanner {
   }
 
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
+                       boolean isFileOnly, boolean isMemOnly) {
+    this(startRowKey, endRowKey, tableName, filter, null, null, isFileOnly, isMemOnly);
+  }
+
+  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
                        byte[] family, byte[] qualifier,
-                       boolean isFileOnly, boolean isMemOnly) throws IOException {
+                       boolean isFileOnly, boolean isMemOnly) {
     this.isFileOnly = isFileOnly;
     this.isMemOnly = isMemOnly;
     this.startRowKey = startRowKey;
@@ -58,19 +63,28 @@ public class DirectScanner implements XAScanner {
     //set scan
     this.scan = new Scan(startRowKey, endRowKey);
     scan.setMaxVersions();
-    scan.setBatch(16 * 1024);
+    scan.setBatch(Helper.BATCH_SIZE);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
     if (filter != null)
       scan.setFilter(filter);
     if (family != null && qualifier != null) {
       scan.addColumn(family, qualifier);
+    } else {
+      scan.addColumn(Helper.DEFAULT_FAM, Helper.DEFAULT_COL);
     }
 
     // get regions 
     Pair<byte[], byte[]> seKey = new Pair(startRowKey, endRowKey);
-    HTable table = (HTable) HBaseResourceManager.getInstance().getTable(Bytes.toBytes(tableName)).getWrappedTable();
-    this.regionList = Helper.getRegionInfoList(table, seKey);
+    HTable table = null;
+    try {
+      table = (HTable) HBaseResourceManager.getInstance().getTable(Bytes.toBytes(tableName)).getWrappedTable();
+      this.regionList = Helper.getRegionInfoList(table, seKey);
+    } catch (IOException e) {
+      e.printStackTrace();
+      LOG.error("Init Direct scanner failure! MSG: " + e.getMessage());
+    }
+
     LOG.info("Number of regions: " + regionList.size() + " for " + tableName + " " + startRowKey + " " + endRowKey);
   }
 
@@ -93,7 +107,7 @@ public class DirectScanner implements XAScanner {
     if(currentScanner == null){
       currentScanner = new XARegionScanner(regionList.get(0), scan);
     }else{
-      if (! hasNext){
+      if (!hasNext){
         currentScanner.close();
         currentIndex++;
         if (currentIndex > regionList.size()-1){
@@ -109,7 +123,7 @@ public class DirectScanner implements XAScanner {
 
   @Override
   public void close() throws IOException {
-    // do nothing
+    LOG.info("Direct scanner closed.");
   }
 
   public static void main(String[] args) throws IOException {
