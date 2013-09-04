@@ -44,6 +44,7 @@ public class HBaseResourceManager {
         try {
             htable = (HTable) pool.getTable(tableName);
         } catch (Exception e) {
+            e.printStackTrace();
             logger.error("Table not found. " + tableName);
             throw new IOException("Table not found. " + tableName);
         }
