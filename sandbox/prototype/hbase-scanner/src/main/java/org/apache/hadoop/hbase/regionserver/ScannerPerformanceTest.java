@@ -85,11 +85,26 @@ public class ScannerPerformanceTest {
     byte[] srk = Bytes.toBytes(args[1]);
     byte[] erk = Bytes.toBytes(args[2]);
     int times = Integer.parseInt(args[3]);
-    try {
-      testHBaseClientScanner(srk, erk, table, times);
-      testDirectScanner(srk, erk, table, times);
-    } catch (IOException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    String mode = args[4];
+    if (mode.equals("compare")) {
+      try {
+        testHBaseClientScanner(srk, erk, table, times);
+        testDirectScanner(srk, erk, table, times);
+      } catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+    } else if (mode.equals("d")) {
+      try {
+        testDirectScanner(srk, erk, table, times);
+      } catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+    } else if (mode.equals("c")) {
+      try {
+        testHBaseClientScanner(srk, erk, table, times);
+      } catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
     }
     LOG.info("All tests finish.");
   }
