@@ -39,12 +39,12 @@ public class DirectScanner implements XAScanner {
   private XAScanner currentScanner;
   private boolean hasNext;
   private Scan scan;
-  
+
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName,
-                       boolean isFileOnly, boolean isMemOnly) throws IOException {  
+                       boolean isFileOnly, boolean isMemOnly) throws IOException {
     this(startRowKey, endRowKey, tableName, null, isFileOnly, isMemOnly);
   }
-  
+
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
                        boolean isFileOnly, boolean isMemOnly) throws IOException {
     this.isFileOnly = isFileOnly;
@@ -56,13 +56,14 @@ public class DirectScanner implements XAScanner {
 
     //set scan
     this.scan = new Scan(startRowKey, endRowKey);
+    scan.setMaxVersions();
     scan.setBatch(16 * 1024);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
     if (filter != null)
       scan.setFilter(filter);
     scan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
-    
+
     // get regions 
     Pair<byte[], byte[]> seKey = new Pair(startRowKey, endRowKey);
     HTable table = (HTable) HBaseResourceManager.getInstance().getTable(Bytes.toBytes(tableName)).getWrappedTable();
@@ -74,13 +75,13 @@ public class DirectScanner implements XAScanner {
   public boolean next(List<KeyValue> results) throws IOException {
     if (regionList.size() == 0)
       return false;
-    
+
     checkScanner(); // check if we should advance to next region 
-    
+
     if(currentScanner == null){
       return false;
     }
-    
+
     hasNext = currentScanner.next(results);
     return hasNext;
   }
@@ -91,33 +92,31 @@ public class DirectScanner implements XAScanner {
     }else{
       if (! hasNext){
         currentScanner.close();
-        currentIndex++; 
+        currentIndex++;
         if (currentIndex > regionList.size()-1){
           currentScanner = null;
           return false;
         }
-        currentScanner = new StoresScanner(regionList.get(currentIndex), scan);
+        currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
       }
     }
-    
+
     return true;
   }
-  
+
   @Override
   public void close() throws IOException {
     // do nothing
   }
 
   public static void main(String[] args) throws IOException {
-
     String tableName = args[0];
     String srk = args[1];
     String erk = args[2];
-    boolean isMemOnly = Boolean.parseBoolean(args[3]);
-    boolean isFileOnly = Boolean.parseBoolean(args[4]);
 
-
-    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isMemOnly, isFileOnly);
+    boolean isFileOnly = Boolean.parseBoolean(args[3]);
+    boolean isMemOnly = Boolean.parseBoolean(args[4]);
+    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isFileOnly, isMemOnly);
     long counter = 0;
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();

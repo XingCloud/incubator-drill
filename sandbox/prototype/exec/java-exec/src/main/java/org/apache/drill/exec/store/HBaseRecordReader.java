@@ -1,6 +1,7 @@
 package org.apache.drill.exec.store;
 
 import com.xingcloud.hbase.util.DFARowKeyParser;
+import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -67,11 +68,8 @@ public class HBaseRecordReader implements RecordReader {
   private int batchSize = 1024 * 16;
   private ValueVector[] valueVectors;
   private boolean init = false;
-  private long timeCost = 0 ;
-  private long timeStart ;
-
-  private Map<Object, String> testMap = new HashMap<>();
-
+  private long timeCost = 0;
+  private long timeStart;
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
     this.context = context;
@@ -79,8 +77,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = appendBytes(parseRkStr(config.getStartRowKey()), MultiEntryHBaseRecordReader.produceTail(true));
-    endRowKey = appendBytes(parseRkStr(config.getEndRowKey()), MultiEntryHBaseRecordReader.produceTail(false));
+    startRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(config.getStartRowKey()), RowKeyUtils.produceTail(true));
+    endRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(config.getEndRowKey()), RowKeyUtils.produceTail(false));
     if (Arrays.equals(startRowKey, endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
@@ -118,44 +116,6 @@ public class HBaseRecordReader implements RecordReader {
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
   }
 
-  /*
-     parse Rk in physical_test: "test"+propId("03")+day("20121201")+[type("str"/"num")+val("en"/"123")]
-    */
-  public static byte[] parseRkStr(String origRk) {
-    byte[] result;
-    if (origRk.startsWith("test")) {
-      String content = origRk.substring(4);
-      result = escape(content);
-    } else {
-      result = ByteUtils.toBytesBinary(origRk);
-    }
-    return result;
-  }
-
-  private byte[] appendBytes(byte[] orig, byte[] tail) {
-    byte[] result = new byte[orig.length + tail.length];
-    for (int i = 0; i < result.length; i++) {
-      if (i < orig.length)
-        result[i] = orig[i];
-      else
-        result[i] = tail[i - orig.length];
-    }
-    return result;
-  }
-
-  private byte[] produceTail(boolean start) {
-    byte[] result = new byte[7];
-
-    result[0] = -1;
-    for (int i = 1; i < result.length; i++) {
-      if (start)
-        result[i] = 0;
-      else
-        result[i] = -1;
-    }
-    return result;
-  }
-
   public static void increaseBytesByOne(byte[] orig) {
     for (int i = orig.length - 1; i >= 0; i--) {
       orig[i]++;
@@ -164,31 +124,9 @@ public class HBaseRecordReader implements RecordReader {
     }
   }
 
-  public static byte[] escape(String constant) {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    for (int i = 0; i < constant.length(); i++) {
-      char c = constant.charAt(i);
-      if (c == '\\' && constant.length() > i + 3
-        && constant.charAt(i + 1) == 'x') {
-        char h = constant.charAt(i + 2);
-        char l = constant.charAt(i + 3);
-        baos.write(Integer.parseInt(constant.substring(i + 2, i + 4), 16));
-        i += 3;
-      } else {
-        baos.write(c);
-      }
-    }
-    return baos.toByteArray();
-  }
-
-
-  private void initTableScanner() throws IOException{
-
+  private void initTableScanner() throws IOException {
     scanners = new ArrayList<>();
-//<<<<<<< HEAD
     FilterList filterList = new FilterList();
-    long startVersion = Long.MIN_VALUE;
-    long stopVersion = Long.MAX_VALUE;
     if (filters != null) {
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         SchemaPath type = entry.getFilterType();
@@ -239,28 +177,6 @@ public class HBaseRecordReader implements RecordReader {
                     );
                     filterList.addFilter(valueFilter);
                     break;
-                  case cversion:
-                    switch (op) {
-                      case GREATER:
-                        startVersion = rightField.getLong() + 1;
-                        break;
-                      case GREATER_OR_EQUAL:
-                        startVersion = rightField.getLong();
-                        break;
-                      case LESS:
-                        stopVersion = rightField.getLong();
-                        break;
-                      case LESS_OR_EQUAL:
-                        stopVersion = rightField.getLong() + 1;
-                        break;
-                      case EQUAL:
-                        List<Long> timestamps = new ArrayList<>();
-                        timestamps.add(rightField.getLong());
-                        Filter timeStampsFilter = new TimestampsFilter(timestamps);
-                        filterList.addFilter(timeStampsFilter);
-                        break;
-                    }
-                    break;
                   case cqname:
                     Filter qualifierFilter =
                       new QualifierFilter(op, new BinaryComparator(Bytes.toBytes(rightField.getLong())));
@@ -277,13 +193,7 @@ public class HBaseRecordReader implements RecordReader {
         }
       }
     }
-    DirectScanner scanner;
-
-    //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-    scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
-
-    scanners.add(scanner);
-
+    scanners.add(new DirectScanner(startRowKey, endRowKey, tableName, null, false, false));
   }
 
 
@@ -296,7 +206,6 @@ public class HBaseRecordReader implements RecordReader {
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
-        int batchRecordCount = batchSize;
         valueVectors[i] =
           getVector(sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
         output.addField(valueVectors[i]);

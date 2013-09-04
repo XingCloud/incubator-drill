@@ -98,7 +98,6 @@ public class UnionRecordBatch implements RecordBatch {
       return IterOutcome.NONE;
     }
     IterOutcome upstream = current.next();
-    logger.debug("Upstream... {}", upstream);
     while (upstream == IterOutcome.NONE) {
       if (!iterator.hasNext()) {
         current = null;
