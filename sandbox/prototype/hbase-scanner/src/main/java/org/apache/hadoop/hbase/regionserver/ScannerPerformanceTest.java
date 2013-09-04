@@ -51,12 +51,12 @@ public class ScannerPerformanceTest {
     LOG.info("HBase client scanner Average: " + totalCost/1.0e9/times + " sec");
   }
 
-  public static void testDirectScanner(byte[] startRowKey, byte[] endRowKey,  String tableName, int times) throws IOException {
+  public static void testDirectScanner(byte[] startRowKey, byte[] endRowKey, byte[] family, byte[] qualifier, String tableName, int times) throws IOException {
     LOG.info("Start to test direct scanner...");
     long totalCost = 0l;
     for (int i=0; i<times; i++) {
       long st = System.nanoTime();
-      DirectScanner scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
+      DirectScanner scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, family, qualifier, false, false);
       List<KeyValue> results = new ArrayList<KeyValue>();
       boolean done = false;
       long count = 0;
@@ -89,19 +89,30 @@ public class ScannerPerformanceTest {
     if (mode.equals("compare")) {
       try {
         testHBaseClientScanner(srk, erk, table, times);
-        testDirectScanner(srk, erk, table, times);
+        testDirectScanner(srk, erk, null, null, table, times);
       } catch (IOException e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
     } else if (mode.equals("d")) {
       try {
-        testDirectScanner(srk, erk, table, times);
+        testDirectScanner(srk, erk, null, null, table, times);
       } catch (IOException e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
     } else if (mode.equals("c")) {
       try {
         testHBaseClientScanner(srk, erk, table, times);
+      } catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+    } else if (mode.equals("test_family")) {
+      byte[] family = Bytes.toBytes("val");
+      byte[] qualifier = Bytes.toBytes("val");
+      try {
+        LOG.info("Direct scan with family...");
+        testDirectScanner(srk, erk, family, qualifier, table, times);
+        LOG.info("Direct scan without family...");
+        testDirectScanner(srk, erk, null, null, table, times);
       } catch (IOException e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }

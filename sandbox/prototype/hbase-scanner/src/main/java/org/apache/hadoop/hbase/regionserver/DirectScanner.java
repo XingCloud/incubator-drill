@@ -42,10 +42,11 @@ public class DirectScanner implements XAScanner {
 
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName,
                        boolean isFileOnly, boolean isMemOnly) throws IOException {
-    this(startRowKey, endRowKey, tableName, null, isFileOnly, isMemOnly);
+    this(startRowKey, endRowKey, tableName, null, null, null, isFileOnly, isMemOnly);
   }
 
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
+                       byte[] family, byte[] qualifier,
                        boolean isFileOnly, boolean isMemOnly) throws IOException {
     this.isFileOnly = isFileOnly;
     this.isMemOnly = isMemOnly;
@@ -62,7 +63,9 @@ public class DirectScanner implements XAScanner {
     scan.setFilesOnly(isFileOnly);
     if (filter != null)
       scan.setFilter(filter);
-    scan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
+    if (family != null && qualifier != null) {
+      scan.addColumn(family, qualifier);
+    }
 
     // get regions 
     Pair<byte[], byte[]> seKey = new Pair(startRowKey, endRowKey);
@@ -116,7 +119,7 @@ public class DirectScanner implements XAScanner {
 
     boolean isFileOnly = Boolean.parseBoolean(args[3]);
     boolean isMemOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isFileOnly, isMemOnly);
+    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, null, null, isFileOnly, isMemOnly);
     long counter = 0;
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
