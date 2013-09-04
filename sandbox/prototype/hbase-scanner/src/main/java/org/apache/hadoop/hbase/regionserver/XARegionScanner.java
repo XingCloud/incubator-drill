@@ -59,7 +59,7 @@ public class XARegionScanner implements XAScanner{
         SSNext = getKVFromSS();
       }
       theNext = getLowest(MSNext, SSNext);
-      if (theNext != ret) {
+      if (!theNext.equals(ret)) {
         results.add(ret);
       }
     }
