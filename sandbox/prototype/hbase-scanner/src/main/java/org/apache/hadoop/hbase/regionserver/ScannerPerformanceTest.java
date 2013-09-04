@@ -56,7 +56,7 @@ public class ScannerPerformanceTest {
     long totalCost = 0l;
     for (int i=0; i<times; i++) {
       long st = System.nanoTime();
-      HBaseClientScanner scanner = new HBaseClientScanner(startRowKey, endRowKey, tableName, null);
+      DirectScanner scanner = new DirectScanner(startRowKey, endRowKey, tableName, null, false, false);
       List<KeyValue> results = new ArrayList<KeyValue>();
       boolean done = false;
       long count = 0;
