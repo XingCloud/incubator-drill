@@ -70,7 +70,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private boolean newEntry = false;
 
   private DirectScanner scanner;
-  private int valIndex = -1;
+  private int valIndex = 0;
   private List<KeyValue> curRes = new ArrayList<>();
   private List<KeyPart> primaryRowKeyParts;
   private DFARowKeyParser dfaParser;
@@ -135,7 +135,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
               if (null == patterns)
                 patterns = new ArrayList<>();
               for (LogicalExpression e : entry.getFilterExpressions()) {
-                String pattern = ((SchemaPath) e).getPath().toString();
+                if(!(e instanceof ValueExpressions.QuotedString)){
+                   throw new IOException("include logicalExpression is not quotedString");
+                }
+                String pattern = ((ValueExpressions.QuotedString)e).value;
                 if (patterns.contains(pattern))
                   patterns.add(pattern);
               }
@@ -335,6 +338,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private int splitKeyValues(List<KeyValue> keyValues, int offset, int maxSize) {
     int length = Math.min(maxSize, keyValues.size()  - offset );
+    if(length == 0){
+      return  0;
+    }
     int lastEntry = getEntryIndex(keyValues.get(offset + length - 1));
     if (lastEntry != currentEntry) {
       for (int i = offset + length - 1; i >= offset; i++) {
