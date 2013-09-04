@@ -6,6 +6,12 @@ import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import com.xingcloud.xa.hbase.filter.XARkConditionFilter;
+import com.xingcloud.xa.hbase.filter.XARkConditionFilter.*;
+import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
+import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
+import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
+import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterRange;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
@@ -34,7 +40,6 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
-import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
@@ -123,27 +128,31 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void initDirectScanner() throws IOException {
     FilterList filterList = new FilterList();
-    long startVersion = Long.MIN_VALUE;
-    long stopVersion = Long.MAX_VALUE;
-    List<String> patterns = null;
-    for (List<HbaseScanPOP.RowkeyFilterEntry> filters : entryFilters) {
-      if (filters != null) {
+    List<RowKeyFilterCondition> conditions = new ArrayList<>();
+    List<String> patterns=new ArrayList<>();
+    for(int i=0;i<entryFilters.size();i++){
+      List<HbaseScanPOP.RowkeyFilterEntry> filters=entryFilters.get(i);
+      if(filters==null || filters.size()==0){
+           conditions.add(new RowKeyFilterRange(entries[i].getStartRowKey(),entries[i].getEndRowKey()));
+      }
+      else {
         for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
           SchemaPath type = entry.getFilterType();
           switch (type.getPath().toString()) {
             case "XARowKeyPatternFilter":
-              if (null == patterns)
-                patterns = new ArrayList<>();
               for (LogicalExpression e : entry.getFilterExpressions()) {
                 if(!(e instanceof ValueExpressions.QuotedString)){
                    throw new IOException("include logicalExpression is not quotedString");
                 }
                 String pattern = ((ValueExpressions.QuotedString)e).value;
-                if (patterns.contains(pattern))
+                if (patterns.contains(pattern)){
+                  conditions.add(new RowKeyFilterPattern(pattern));
                   patterns.add(pattern);
+                }
               }
               break;
             case "HbaseFilter":
+              RowKeyRange range=new RowKeyRange(entries[i].getStartRowKey(),entries[i].getEndRowKey());
               for (LogicalExpression e : entry.getFilterExpressions()) {
                 if (e instanceof FunctionCall) {
                   FunctionCall c = (FunctionCall) e;
@@ -179,34 +188,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                           .toBytes(
                             rightField
                               .getLong())));
-                      filterList.addFilter(valueFilter);
-                      break;
-                    case cversion:
-                      switch (op) {
-                        case GREATER:
-                          startVersion = rightField.getLong() + 1;
-                          break;
-                        case GREATER_OR_EQUAL:
-                          startVersion = rightField.getLong();
-                          break;
-                        case LESS:
-                          stopVersion = rightField.getLong();
-                          break;
-                        case LESS_OR_EQUAL:
-                          stopVersion = rightField.getLong() + 1;
-                          break;
-                        case EQUAL:
-                          List<Long> timestamps = new ArrayList<>();
-                          timestamps.add(rightField.getLong());
-                          Filter timeStampsFilter = new TimestampsFilter(timestamps);
-                          filterList.addFilter(timeStampsFilter);
-                          break;
-                      }
+                      XARkConditionFilter conditionValueFilter=new XARkConditionFilter(range,valueFilter);
+                      filterList.addFilter(conditionValueFilter);
                       break;
                     case cqname:
                       Filter qualifierFilter = new QualifierFilter(op, new BinaryComparator(
                         Bytes.toBytes(rightField.getLong())));
-                      filterList.addFilter(qualifierFilter);
+                      XARkConditionFilter conditionQfFilter=new XARkConditionFilter(range,qualifierFilter);
+                      filterList.addFilter(conditionQfFilter);
                     default:
                       break;
                   }
@@ -218,6 +207,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
+    if(conditions.size()>=1)
+        filterList.addFilter(new XARowKeyPatternFilter(conditions));
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
   }
 

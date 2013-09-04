@@ -7,6 +7,8 @@ import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
+import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
+import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
@@ -128,16 +130,14 @@ public class HBaseRecordReader implements RecordReader {
     scanners = new ArrayList<>();
     FilterList filterList = new FilterList();
     if (filters != null) {
+      List<RowKeyFilterCondition> conditions=new ArrayList<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         SchemaPath type = entry.getFilterType();
         switch (type.getPath().toString()) {
           case "XARowKeyPatternFilter":
-            List<String> patterns = new ArrayList<>();
             for (LogicalExpression e : entry.getFilterExpressions()) {
-              patterns.add(((SchemaPath) e).getPath().toString());
+              conditions.add(new RowKeyFilterPattern(((ValueExpressions.QuotedString)e).value));
             }
-            XARowKeyPatternFilter xaFilter = new XARowKeyPatternFilter(patterns);
-            filterList.addFilter(xaFilter);
             break;
           case "HbaseFilter":
             for (LogicalExpression e : entry.getFilterExpressions()) {
@@ -192,8 +192,13 @@ public class HBaseRecordReader implements RecordReader {
             throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
+      if(conditions.size()>=1){
+        XARowKeyPatternFilter xaFilter = new XARowKeyPatternFilter(conditions);
+        filterList.addFilter(xaFilter);
+      }
     }
-    scanners.add(new DirectScanner(startRowKey, endRowKey, tableName, null, false, false));
+
+    scanners.add(new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false));
   }
 
 
