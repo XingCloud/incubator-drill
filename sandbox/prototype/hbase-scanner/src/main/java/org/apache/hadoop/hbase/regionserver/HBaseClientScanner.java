@@ -1,6 +1,6 @@
 package org.apache.hadoop.hbase.regionserver;
 
-import com.xingcloud.hbase.manager.HBaseResourceManager;
+import com.xingcloud.hbase.manager.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
@@ -50,7 +50,14 @@ public class HBaseClientScanner implements XAScanner {
   @Override
   public boolean next(List<KeyValue> results) throws IOException {
     Result result = scanner.next();
-    results.addAll(Arrays.asList(result.raw()));
+    if (result == null) {
+      return false;
+    }
+    if (!result.isEmpty()) {
+      for (KeyValue kv : result.raw()) {
+        results.add(kv);
+      }
+    }
     return !result.isEmpty();
   }
 
