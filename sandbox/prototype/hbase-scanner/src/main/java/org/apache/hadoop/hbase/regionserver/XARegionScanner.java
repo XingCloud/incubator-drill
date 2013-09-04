@@ -1,5 +1,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Scan;
@@ -18,6 +20,7 @@ import java.util.Queue;
  * Time: 12:53 PM
  */
 public class XARegionScanner implements XAScanner{
+  private static Log LOG = LogFactory.getLog(XARegionScanner.class);
 
   private MemstoresScanner memstoresScanner;
   private StoresScanner storesScanner;
@@ -74,6 +77,7 @@ public class XARegionScanner implements XAScanner{
 
   @Override
   public void close() throws IOException {
+    LOG.info("XARegion scanner closed.");
     if(memstoresScanner != null){
       memstoresScanner.close();
     }  

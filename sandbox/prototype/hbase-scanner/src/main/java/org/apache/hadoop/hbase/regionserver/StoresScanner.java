@@ -354,7 +354,7 @@ public class StoresScanner implements XAScanner {
     for (KeyValueScanner scanner : scanners) {
       scanner.close();
     }
-    LOG.info("Total kv number from hfile: " + numKV.toString());
+    LOG.info("Store Scanner closed. Total kv number from hfile: " + numKV.toString());
   }
 
   private StoreFile openStoreFile(Path filePath) {

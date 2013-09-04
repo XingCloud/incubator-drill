@@ -88,7 +88,7 @@ public class MemstoresScanner implements XAScanner {
     if (rs != null) {
       rs.close();
     }
-    LOG.info("Total kv number form memstore: " + numKV);
+    LOG.info("Memstore scanner closed. Total kv number form memstore: " + numKV);
   }
 
 }
