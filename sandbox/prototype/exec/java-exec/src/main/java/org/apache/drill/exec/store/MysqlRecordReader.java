@@ -101,6 +101,7 @@ public class MysqlRecordReader implements RecordReader {
           return Types.required(MinorType.VARCHAR);
       }
     }
+    logger.error("PropType not found for " + propertyName);
     return null;
   }
 
