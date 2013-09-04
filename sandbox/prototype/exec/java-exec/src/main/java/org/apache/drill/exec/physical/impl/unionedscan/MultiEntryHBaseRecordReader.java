@@ -1,6 +1,7 @@
 package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.xingcloud.hbase.util.DFARowKeyParser;
+import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -86,8 +87,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    this.startRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[0].getStartRowKey()), produceTail(true));
-    this.endRowKey = appendBytes(HBaseRecordReader.parseRkStr(entries[entries.length - 1].getEndRowKey()), produceTail(false));
+    this.startRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(entries[0].getStartRowKey()), RowKeyUtils.produceTail(true));
+    this.endRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(entries[entries.length - 1].getEndRowKey()), RowKeyUtils.produceTail(false));
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
@@ -347,8 +348,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
     for (int i = offset; i < offset + length; i++) {
-      setIndex ++ ;
       setValues(keyValues.get(i), valueVectors, setIndex);
+      setIndex ++ ;
     }
   }
 
@@ -367,33 +368,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         return i;
     }
     return currentEntry;
-  }
-
-  public static byte[] appendBytes(byte[] orig, byte[] tail) {
-    byte[] result = new byte[orig.length + tail.length];
-    for (int i = 0; i < result.length; i++) {
-      if (i < orig.length)
-        result[i] = orig[i];
-      else
-        result[i] = tail[i - orig.length];
-    }
-    return result;
-  }
-
-  public static byte[] produceTail(boolean start) {
-    byte[] result = new byte[7];
-    if (start)
-      result[0] = '.';
-    else
-      result[0] = -1;
-    result[1] = -1;
-    for (int i = 2; i < result.length; i++) {
-      if (start)
-        result[i] = 0;
-      else
-        result[i] = -1;
-    }
-    return result;
   }
 
   public void setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {
