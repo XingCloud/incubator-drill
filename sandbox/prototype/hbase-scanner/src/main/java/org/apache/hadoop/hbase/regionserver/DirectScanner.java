@@ -112,6 +112,7 @@ public class DirectScanner implements XAScanner {
     String tableName = args[0];
     String srk = args[1];
     String erk = args[2];
+    
     boolean isFileOnly = Boolean.parseBoolean(args[3]);
     boolean isMemOnly = Boolean.parseBoolean(args[4]);    
     DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isFileOnly, isMemOnly);
