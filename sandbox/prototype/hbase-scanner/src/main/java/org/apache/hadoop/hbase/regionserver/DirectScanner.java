@@ -109,11 +109,14 @@ public class DirectScanner implements XAScanner {
   }
 
   public static void main(String[] args) throws IOException {
+
     String tableName = args[0];
     String srk = args[1];
     String erk = args[2];
     boolean isMemOnly = Boolean.parseBoolean(args[3]);
     boolean isFileOnly = Boolean.parseBoolean(args[4]);
+
+
     DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isMemOnly, isFileOnly);
     long counter = 0;
     long st = System.nanoTime();
