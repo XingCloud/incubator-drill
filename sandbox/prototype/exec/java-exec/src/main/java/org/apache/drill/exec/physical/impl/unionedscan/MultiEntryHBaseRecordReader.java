@@ -113,7 +113,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];
       for (int j = 0; j < exprs.size(); j++) {
         exprArr[j] = exprs.get(j);
-        infos[j] = fieldInfoMap.get(((SchemaPath) exprArr[j].getExpr()).getPath().toString());
+        if(!(exprArr[j].getExpr() instanceof ValueExpressions.QuotedString)){
+            logger.info(exprArr[j].getExpr().toString()+" is not quotedString");
+            throw new Exception(exprArr[j].getExpr().toString()+" is not quotedString");
+        }
+        infos[j] = fieldInfoMap.get(((ValueExpressions.QuotedString) exprArr[j].getExpr()).value);
         if (!projections.contains(exprArr[j]))
           projections.add(exprArr[j]);
         if (false == parseRk && infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey)
