@@ -78,14 +78,6 @@ public class MemstoresScanner implements XAScanner {
       return false;
     }
     for (KeyValue kv : kvs) {
-      if (numKV.get()%100==0) {
-        //Debug
-        byte[] row = kv.getRow();
-        long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(row);
-        String event = HBaseEventUtils.getEventFromDEURowKey(row);
-        String date = HBaseEventUtils.getDate(row);
-        LOG.info("From Memstore: " + date + "\t" + event + "\t" + uid + "\t" + Bytes.toLong(kv.getValue()) + "\t" + kv.getTimestamp());
-      }
       results.add(kv);
       numKV.incrementAndGet();
     }

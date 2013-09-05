@@ -131,17 +131,17 @@ public class ScannerPerformanceTest {
     LOG.info("Direct scanner:\t" + count + " " + sum + " " + uids.size() + "   " + cost/1.0e9 + " sec");
     scannerD.close();
 
-    LOG.info("Start to compare...");
-    LOG.info("Client kv size: " + kvsFromClient.size() + "\tDirect kv size: " + kvsFromDirect.size());
+    LOG.info("----------Start to compare...");
     for (KeyValue kv : kvsFromDirect) {
       if (!kvsFromClient.contains(kv)) {
         byte[] row = kv.getRow();
         long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(row);
         String event = HBaseEventUtils.getEventFromDEURowKey(row);
         String date = HBaseEventUtils.getDate(row);
-        LOG.info(date + "\t" + event + "\t" + uid + "\t" + Bytes.toLong(kv.getValue()) + "\t" + kv.getTimestamp());
+        LOG.info("Diff: " + date + "\t" + event + "\t" + uid + "\t" + Bytes.toLong(kv.getValue()) + "\t" + kv.getTimestamp());
       }
     }
+    LOG.info("Client kv size: " + kvsFromClient.size() + "\tDirect kv size: " + kvsFromDirect.size());
 
   }
 
