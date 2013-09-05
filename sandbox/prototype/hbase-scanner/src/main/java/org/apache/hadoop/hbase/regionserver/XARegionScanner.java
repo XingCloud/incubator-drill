@@ -26,6 +26,9 @@ public class XARegionScanner implements XAScanner{
   private MemstoresScanner memstoresScanner;
   private StoresScanner storesScanner;
   private KeyValue.KVComparator comparator;
+
+  //Use to control version of one row
+  private long versionCounter = 0;
   
   public XARegionScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     if(!scan.isFilesOnly()){
@@ -68,9 +71,19 @@ public class XARegionScanner implements XAScanner{
         results.add(ret);
         return false;
       }
+      //Remove duplicate kv
       if (!theNext.equals(ret)) {
-        //Remove duplicate kv
-        results.add(ret);
+        //Control version of each cell
+        byte[] rowCurrent = ret.getRow();
+        byte[] rowNext = theNext.getRow();
+        if (Bytes.compareTo(rowCurrent, rowNext) == 0) {
+          versionCounter++;
+        } else {
+          versionCounter = 0;
+        }
+        if (versionCounter < Helper.MAX_VERSIONS) {
+          results.add(ret);
+        }
       }
     }
     return true;
@@ -87,14 +100,14 @@ public class XARegionScanner implements XAScanner{
     }
   }
 
-  private Queue<KeyValue> MSKVCache = new LinkedList<KeyValue>();
+  private Queue<KeyValue> MSKVCache = new LinkedList<>();
   
   public KeyValue getKVFromMS() throws IOException {
     if (null == memstoresScanner) return null;
     
     while (true){
       if (0 == MSKVCache.size()){
-        List<KeyValue> results = new ArrayList<KeyValue>();
+        List<KeyValue> results = new ArrayList<>();
         if(memstoresScanner.next(results)) {
           MSKVCache.addAll(results);
         } else {
@@ -117,12 +130,12 @@ public class XARegionScanner implements XAScanner{
     }
   }
 
-  private Queue<KeyValue> SSKVCache = new LinkedList<KeyValue>();
+  private Queue<KeyValue> SSKVCache = new LinkedList<>();
   
   public KeyValue getKVFromSS() throws IOException {
     if(null == storesScanner) return null;
     if(0 == SSKVCache.size()){
-      List<KeyValue> results = new ArrayList<KeyValue>();
+      List<KeyValue> results = new ArrayList<>();
       boolean hasNext = storesScanner.next(results);
       SSKVCache.addAll(results);
     }
