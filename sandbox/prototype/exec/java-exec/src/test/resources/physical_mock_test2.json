@@ -13,7 +13,7 @@
             url: "http://apache.org",
             entries:[
             	{records: 100, types: [
-            	  {name: "blue", type: "INT", mode: "REQUIRED"},
+            	  {name: "blue", type: "BIGINT", mode: "REQUIRED"},
             	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
             	  {name: "green", type: "INT", mode: "REQUIRED"}
             	]}
