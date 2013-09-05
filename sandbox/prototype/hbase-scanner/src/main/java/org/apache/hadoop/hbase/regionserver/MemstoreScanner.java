@@ -1,10 +1,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,13 +19,13 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MemstoreScanner implements DataScanner {
     private static Logger LOG = LoggerFactory.getLogger(MemstoreScanner.class);
 
-    private HTable table;
+    private HTableInterface table;
     private Scan scan;
     private ResultScanner rs;
     private AtomicLong numKV = new AtomicLong();
 
 
-    public MemstoreScanner(HTable table, Scan scan) {
+    public MemstoreScanner(HTableInterface table, Scan scan) {
         this.table = table;
         this.scan = scan;
         try {

@@ -6,6 +6,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -62,7 +63,8 @@ public class TableScanner implements XAScanner {
         List<Pair<byte[], byte[]>> seKeyList = new ArrayList<Pair<byte[], byte[]>>();
         Pair<byte[], byte[]> pair = new Pair(startRowKey, endRowKey);
         seKeyList.add(pair);
-        HTable table = HBaseResourceManager.getInstance().getTable(tableName);
+
+        HTableInterface table = HBaseResourceManager.getInstance().getTable(tableName);
 
         scanners = new ArrayList<DataScanner>();
         long st = System.nanoTime();
