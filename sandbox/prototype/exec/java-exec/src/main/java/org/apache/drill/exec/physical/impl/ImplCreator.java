@@ -20,6 +20,7 @@ package org.apache.drill.exec.physical.impl;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
+import org.apache.drill.exec.engine.async.AsyncImplCreator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.*;
 import org.apache.drill.exec.physical.config.*;
@@ -131,11 +132,13 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
   }
 
   public static RootExec getExec(FragmentContext context, FragmentRoot root) throws ExecutionSetupException {
-    ImplCreator i = new ImplCreator();
+    return AsyncImplCreator.getExec(context, root);
+    /*ImplCreator i = new ImplCreator();
     root.accept(i, context);
     if (i.root == null)
       throw new ExecutionSetupException("The provided fragment did not have a root node that correctly created a RootExec value.");
     return i.getRoot();
+    */
   }
 
   @Override
