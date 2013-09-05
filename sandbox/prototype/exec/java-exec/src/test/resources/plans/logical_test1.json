@@ -1,0 +1,146 @@
+
+  {
+  head : {
+    type : "APACHE_DRILL_LOGICAL",
+    version : 1,
+    generator : {
+      type : "AUTO",
+      info : "sof-dsk"
+    }
+  },
+  storage : { },
+  query : [ {
+    op : "unioned-scan",
+    @id : 1,
+    memo : "[deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*]",
+    storageengine : "hbase",
+    selection : [ {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130101visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
+        start : "20130101visit.auto.\\xFF\\x00\\x00\\x00\\x00\\x00"
+      },
+      table : "sof-dsk_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130102visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
+        start : "20130102visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E.\\xFF\\x00\\x00\\x00\\x00\\x00"
+      },
+      table : "sof-dsk_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130103visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
+        start : "20130103visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E.\\xFF\\x00\\x00\\x00\\x00\\x00"
+      },
+      table : "sof-dsk_deu"
+    }, {
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      } ],
+      filters : null,
+      rowkey : {
+        end : "20130104visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
+        start : "20130104visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E.\\xFF\\x00\\x00\\x00\\x00\\x00"
+      },
+      table : "sof-dsk_deu"
+    } ],
+    ref : "event"
+  }, {
+    op : "unioned-scan-split",
+    @id : 2,
+    memo : "[1]",
+    input : 1,
+    entries : [ 1 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 3,
+    memo : "[0]",
+    input : 1,
+    entries : [ 0 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 4,
+    memo : "[2]",
+    input : 1,
+    entries : [ 2 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 5,
+    memo : "[3]",
+    input : 1,
+    entries : [ 3 ]
+  }, {
+    op : "union",
+    @id : 6,
+    inputs : [ 2, 3, 4, 5 ],
+    distinct : false
+  }, {
+    op : "collapsingaggregate",
+    @id : 7,
+    input : 6,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 8,
+    input : 7,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,sof-dsk,2013-08-15,2013-08-15,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "store",
+    @id : 9,
+    input : 8,
+    target : null,
+    partition : null,
+    storageEngine : "DEFAULT-STORE"
+  } ]
+  }

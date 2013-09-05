@@ -143,7 +143,7 @@ public class UnionedScanBatch implements RecordBatch {
       recordCount = reader.next();
     }catch(Exception e){
       logger.info("Reader.next() failed", e);
-      //releaseReaderAssets();
+      releaseReaderAssets();
       return IterOutcome.STOP;
     }
     if(recordCount == 0){
@@ -285,6 +285,9 @@ public class UnionedScanBatch implements RecordBatch {
     private SchemaBuilder builder = BatchSchema.newBuilder();
 
     public void removeField(MaterializedField field) throws SchemaChangeException {
+      //for test
+      //if(!fieldVectorMap.containsKey(field))
+      //    return;
       schemaChanged();
       ValueVector vector = fieldVectorMap.remove(field);
       if (vector == null) throw new SchemaChangeException("Failure attempting to remove an unknown field.");
