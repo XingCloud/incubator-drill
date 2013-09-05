@@ -27,7 +27,7 @@ public class HBaseResourceManager {
         if (m_instance == null) {
             m_instance = new HBaseResourceManager();
         }
-        return m_instance; 
+        return m_instance;
     }
     
     
@@ -39,11 +39,12 @@ public class HBaseResourceManager {
         return (HTablePool.PooledHTable) pool.getTable(tableName);
     }
     
-    public HTable getTable(String tableName) throws IOException {
-        HTable htable = null;
+    public HTablePool.PooledHTable getTable(String tableName) throws IOException {
+        HTablePool.PooledHTable htable = null;
         try {
-            htable = (HTable) pool.getTable(tableName);
+            htable = (HTablePool.PooledHTable) pool.getTable(tableName);
         } catch (Exception e) {
+            e.printStackTrace();
             logger.error("Table not found. " + tableName);
             throw new IOException("Table not found. " + tableName);
         }

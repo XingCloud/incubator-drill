@@ -1,5 +1,8 @@
 package org.apache.hadoop.hbase.regionserver;
 
+import com.xingcloud.hbase.util.HBaseEventUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Scan;
@@ -18,6 +21,7 @@ import java.util.Queue;
  * Time: 12:53 PM
  */
 public class XARegionScanner implements XAScanner{
+  private static Log LOG = LogFactory.getLog(XARegionScanner.class);
 
   private MemstoresScanner memstoresScanner;
   private StoresScanner storesScanner;
@@ -46,24 +50,35 @@ public class XARegionScanner implements XAScanner{
   }
 
   public boolean next(List<KeyValue> results) throws IOException {
-    KeyValue ret = theNext;
-    if(theNext == MSNext){
-      MSNext = getKVFromMS();
-    }else{
-      SSNext = getKVFromSS();
+    if (theNext == null) {
+      //Both memstore and hfile have no value at all
+      return false;
     }
-
-    theNext = getLowest(MSNext, SSNext);
-    
-    if(ret != null){
-      results.add(ret); // todo one by one? no problem, we have cache .
+    KeyValue ret = null;
+    while (results.size() < Helper.BATCH_SIZE + 1) {
+      ret = theNext;
+      if(theNext == MSNext){
+        MSNext = getKVFromMS();
+      }else{
+        SSNext = getKVFromSS();
+      }
+      theNext = getLowest(MSNext, SSNext);
+      if (theNext == null) {
+        //The last one
+        results.add(ret);
+        return false;
+      }
+      if (!theNext.equals(ret)) {
+        //Remove duplicate kv
+        results.add(ret);
+      }
     }
-    
-    return ret != null;
+    return true;
   }
 
   @Override
   public void close() throws IOException {
+    LOG.info("XARegion scanner closed.");
     if(memstoresScanner != null){
       memstoresScanner.close();
     }  
@@ -77,25 +92,26 @@ public class XARegionScanner implements XAScanner{
   public KeyValue getKVFromMS() throws IOException {
     if (null == memstoresScanner) return null;
     
-    while(true){
-      if(0 == MSKVCache.size()){
+    while (true){
+      if (0 == MSKVCache.size()){
         List<KeyValue> results = new ArrayList<KeyValue>();
-        if(memstoresScanner.next(results)){
+        if(memstoresScanner.next(results)) {
           MSKVCache.addAll(results);
-        }else{
+        } else {
           return null;
         }
       }
 
       KeyValue kv = MSKVCache.poll();
-      if(Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0){
-        if(storesScanner != null){
+
+      if (Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0) {
+        if (storesScanner != null){
           storesScanner.updateScanner(kv.getFamily(), theNext); //todo kv to seek
           if(SSNext == null){
             SSNext = getKVFromSS();
           }
         }
-      }else {
+      } else {
         return kv;
       }
     }
@@ -104,27 +120,22 @@ public class XARegionScanner implements XAScanner{
   private Queue<KeyValue> SSKVCache = new LinkedList<KeyValue>();
   
   public KeyValue getKVFromSS() throws IOException {
-    if(null== storesScanner) return null;
-    
+    if(null == storesScanner) return null;
     if(0 == SSKVCache.size()){
       List<KeyValue> results = new ArrayList<KeyValue>();
-      if(!storesScanner.next(results)){//todo when to stop, no problem, will not be invoked after returning null until flush.
-//        storesScanner.close();
-//        storesScanner = null;
-      }
+      boolean hasNext = storesScanner.next(results);
       SSKVCache.addAll(results);
     }
-
     return SSKVCache.poll();
   }
 
   private KeyValue getLowest(final KeyValue a, final KeyValue b) {
-    if (a == null) {
+    if (null == a) {
       return b;
     }
-    if (b == null) {
+    if (null == b) {
       return a;
     }
-    return comparator.compareRows(a, b) <= 0? a: b;
+    return comparator.compareRows(a, b) <= 0 ? a: b;
   }  
 }

@@ -1,6 +1,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import com.xingcloud.hbase.manager.HBaseResourceManager;
+import com.xingcloud.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
@@ -88,7 +89,7 @@ public class MemstoresScanner implements XAScanner {
     if (rs != null) {
       rs.close();
     }
-    LOG.info("Total kv number form memstore: " + numKV);
+    LOG.info("Memstore scanner closed. Total kv number form memstore: " + numKV);
   }
 
 }
