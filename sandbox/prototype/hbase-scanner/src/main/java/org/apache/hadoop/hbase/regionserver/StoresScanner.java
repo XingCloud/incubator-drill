@@ -56,7 +56,7 @@ public class StoresScanner implements XAScanner {
   private HRegionInfo hRegionInfo;
   private KeyValue.KVComparator comparator;
   private HColumnDescriptor family;
-  private List<StoreFile> storeFiles = new ArrayList<StoreFile>();
+  private List<StoreFile> storeFiles = new ArrayList<>();
   private List<KeyValueScanner> scanners;
   private ScanQueryMatcher matcher;
   private Store.ScanInfo scanInfo;
@@ -71,7 +71,7 @@ public class StoresScanner implements XAScanner {
   private final KeyValue KV_LIMIT = new KeyValue();
 
 
-  Map<String, KeyValueScanner> storeScanners =  new HashMap<String, KeyValueScanner>();
+  Map<String, KeyValueScanner> storeScanners =  new HashMap<>();
 
   public StoresScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     InetAddress addr = InetAddress.getLocalHost();

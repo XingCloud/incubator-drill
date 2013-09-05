@@ -5,10 +5,7 @@ import com.xingcloud.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,17 +24,16 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MemstoresScanner implements XAScanner {
   private static Logger LOG = LoggerFactory.getLogger(MemstoresScanner.class);
 
-  private Scan scan;
   private ResultScanner rs;
   private AtomicLong numKV = new AtomicLong();
   private HRegionInfo hRegionInfo;
 
+  private HTableInterface hTable = null;
+
   public MemstoresScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     this.hRegionInfo = hRegionInfo;
-    this.scan = scan;
-    this.scan.setRaw(true);
-    long st = System.nanoTime();
 
+    long st = System.nanoTime();
     // make sure that we only get the corresponding memstores for this region
     byte[] startRowKey = hRegionInfo.getStartKey();
     byte[] endRowKey = hRegionInfo.getEndKey();
@@ -47,19 +43,16 @@ public class MemstoresScanner implements XAScanner {
     if (Bytes.compareTo(scan.getStopRow(), endRowKey) < 0 || Bytes.equals(endRowKey,HConstants.EMPTY_END_ROW))  {
       endRowKey = scan.getStopRow();
     }
-    Scan memScan = new Scan(startRowKey, endRowKey);
-    
-    memScan.setMaxVersions();
+    Scan memScan = new Scan(scan);
+    memScan.setStartRow(startRowKey);
+    memScan.setStopRow(endRowKey);
     memScan.setMemOnly(true);
-    if (scan.getFilter() != null)
-      memScan.setFilter(scan.getFilter());
-    memScan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
 
     LOG.info("Init memstore scanner finished. Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
     
-    HTable table = (HTable) HBaseResourceManager.getInstance().getTable(hRegionInfo.getTableName()).getWrappedTable();
+    hTable = HBaseResourceManager.getInstance().getTable(hRegionInfo.getTableName());
     try {
-      rs = table.getScanner(memScan);
+      rs = hTable.getScanner(memScan);
     } catch (IOException e) {
       e.printStackTrace();
       LOG.error("Init memstore scanner failure! MSG: " + e.getMessage()); 
@@ -88,6 +81,9 @@ public class MemstoresScanner implements XAScanner {
   public void close() throws IOException {
     if (rs != null) {
       rs.close();
+    }
+    if (hTable != null) {
+      hTable.close();
     }
     LOG.info("Memstore scanner closed. Total kv number form memstore: " + numKV);
   }

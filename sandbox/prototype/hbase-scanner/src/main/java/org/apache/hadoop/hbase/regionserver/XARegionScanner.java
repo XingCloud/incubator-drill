@@ -87,14 +87,14 @@ public class XARegionScanner implements XAScanner{
     }
   }
 
-  private Queue<KeyValue> MSKVCache = new LinkedList<KeyValue>();
+  private Queue<KeyValue> MSKVCache = new LinkedList<>();
   
   public KeyValue getKVFromMS() throws IOException {
     if (null == memstoresScanner) return null;
     
     while (true){
       if (0 == MSKVCache.size()){
-        List<KeyValue> results = new ArrayList<KeyValue>();
+        List<KeyValue> results = new ArrayList<>();
         if(memstoresScanner.next(results)) {
           MSKVCache.addAll(results);
         } else {
@@ -117,12 +117,12 @@ public class XARegionScanner implements XAScanner{
     }
   }
 
-  private Queue<KeyValue> SSKVCache = new LinkedList<KeyValue>();
+  private Queue<KeyValue> SSKVCache = new LinkedList<>();
   
   public KeyValue getKVFromSS() throws IOException {
     if(null == storesScanner) return null;
     if(0 == SSKVCache.size()){
-      List<KeyValue> results = new ArrayList<KeyValue>();
+      List<KeyValue> results = new ArrayList<>();
       boolean hasNext = storesScanner.next(results);
       SSKVCache.addAll(results);
     }
