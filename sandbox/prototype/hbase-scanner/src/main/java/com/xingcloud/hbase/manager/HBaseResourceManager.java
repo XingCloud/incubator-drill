@@ -42,7 +42,8 @@ public class HBaseResourceManager {
     public HTable getTable(String tableName) throws IOException {
         HTable htable = null;
         try {
-            htable = (HTable) pool.getTable(tableName);
+            //htable = (HTable) pool.getTable(tableName);
+            htable= new HTable(conf,tableName);
         } catch (Exception e) {
             logger.error("Table not found. " + tableName);
             throw new IOException("Table not found. " + tableName);

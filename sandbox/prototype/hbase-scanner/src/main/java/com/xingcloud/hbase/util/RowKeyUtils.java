@@ -17,10 +17,28 @@ public class RowKeyUtils {
 
   public static byte[] produceTail(boolean start) {
     if(start){
-      return new byte[]{'.',-1,0,0,0,0,0};
+      return new byte[]{0,0,0,0,0};
     }else{
-      return new byte[]{'.',-1,-1,-1,-1,-1,-1};
+      return new byte[]{-1,-1,-1,-1,-1};
     }
+  }
+
+  public static String processRkBound(String rk,boolean start){
+     if(start){
+         if(rk.endsWith(".\\xFF\\x00\\x00\\x00\\x00\\x00"))
+             return rk;
+         else if(rk.endsWith(".\\xFF"))
+             return rk.concat("\\x00\\x00\\x00\\x00\\x00");
+         else
+             return rk.concat(".\\xFF\\x00\\x00\\x00\\x00\\x00");
+     }else {
+         if(rk.endsWith("\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"))
+             return rk;
+         else if(rk.endsWith("\\xFF\\xFF"))
+             return rk.concat("\\xFF\\xFF\\xFF\\xFF\\xFF");
+         else
+             return rk.concat("\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF");
+     }
   }
 
 }

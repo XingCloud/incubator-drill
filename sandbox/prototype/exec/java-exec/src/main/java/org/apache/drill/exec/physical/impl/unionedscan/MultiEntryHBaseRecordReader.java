@@ -1,5 +1,6 @@
 package org.apache.drill.exec.physical.impl.unionedscan;
 
+import com.xingcloud.hbase.util.Constants;
 import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
@@ -41,6 +42,8 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
+import org.apache.hadoop.hbase.regionserver.TableScanner;
+import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
@@ -74,7 +77,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private boolean newEntry = false;
 
-  private DirectScanner scanner;
+  private XAScanner scanner;
   private int valIndex = 0;
   private List<KeyValue> curRes = new ArrayList<>();
   private List<KeyPart> primaryRowKeyParts;
@@ -92,8 +95,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    this.startRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(entries[0].getStartRowKey()), RowKeyUtils.produceTail(true));
-    this.endRowKey = RowKeyUtils.appendBytes(ByteUtils.toBytesBinary(entries[entries.length - 1].getEndRowKey()), RowKeyUtils.produceTail(false));
+    this.startRowKey = Bytes.toBytesBinary(entries[0].getStartRowKey());
+    this.endRowKey = Bytes.toBytesBinary(entries[entries.length - 1].getEndRowKey());
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
@@ -147,9 +150,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       }
       else {
         for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
-          SchemaPath type = entry.getFilterType();
-          switch (type.getPath().toString()) {
-            case "XARowKeyPatternFilter":
+          Constants.FilterType type = entry.getFilterType();
+          switch (type) {
+            case XaRowKeyPattern:
               for (LogicalExpression e : entry.getFilterExpressions()) {
                 if(!(e instanceof ValueExpressions.QuotedString)){
                    throw new IOException("include logicalExpression is not quotedString");
@@ -161,7 +164,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                 }
               }
               break;
-            case "HbaseFilter":
+            case HbaseOrig:
               RowKeyRange range=new RowKeyRange(entries[i].getStartRowKey(),entries[i].getEndRowKey());
               for (LogicalExpression e : entry.getFilterExpressions()) {
                 if (e instanceof FunctionCall) {
@@ -220,6 +223,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     if(conditions.size()>=1)
         filterList.addFilter(new XARowKeyPatternFilter(conditions));
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    //test
+    //scanner= new TableScanner(startRowKey,endRowKey,tableName,filterList,false,false);
   }
 
   @Override
@@ -257,7 +262,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     valueVectors.clear();
     if (entryIndexVector != null) {
       cleanupVector(entryIndexVector);
-      entryIndexVector = null;
+      //entryIndexVector = null;
     }
   }
 

@@ -3,6 +3,7 @@ package org.apache.drill.exec.physical.config;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.xingcloud.hbase.util.Constants;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
 import org.apache.drill.common.expression.SchemaPath;
@@ -56,16 +57,16 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
     public static class RowkeyFilterEntry {
 
 
-        private SchemaPath filterType;
+        private Constants.FilterType filterType;
         private List<LogicalExpression> filterExpressions;
         @JsonCreator
-        public RowkeyFilterEntry(@JsonProperty("type") FieldReference filterType,
+        public RowkeyFilterEntry(@JsonProperty("type") Constants.FilterType filterType,
                                  @JsonProperty("exprs") List<LogicalExpression> filterExpressions) {
             this.filterType = filterType;
             this.filterExpressions = filterExpressions;
         }
 
-        public SchemaPath getFilterType() {
+        public Constants.FilterType getFilterType() {
             return filterType;
         }
 
