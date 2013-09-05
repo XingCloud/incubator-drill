@@ -234,6 +234,10 @@ public class AsyncExecutor {
   private RecordBatch.IterOutcome nextUpward(RecordBatch batch) {
     boolean parentKilled = false;
     RecordBatch.IterOutcome outcome = batch.next();
+    if(outcome == RecordBatch.IterOutcome.NOT_YET){
+      //data not ready yet, no need to continue upward
+      return outcome;
+    }
     List<RelayRecordBatch> parents = getParentRelaysFor(batch);
     for (int i = 0; i < parents.size(); i++) {
       RelayRecordBatch parentRelay = parents.get(i);
