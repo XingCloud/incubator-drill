@@ -27,7 +27,8 @@ public class Helper {
   public static final int BATCH_SIZE = 16 * 1024;
 
   public static List<HRegionInfo> getRegionInfoList(HTable hTable, Pair<byte[], byte[]> seKey) throws IOException {
-    Set<HRegionInfo> hRegionInfoSet = new HashSet<HRegionInfo>();
+    long st = System.nanoTime();
+    Set<HRegionInfo> hRegionInfoSet = new HashSet<>();
     NavigableMap<HRegionInfo, ServerName> regionInfoMap = hTable.getRegionLocations();
     if (regionInfoMap.size() == 1) {
       /*There is only one region*/
@@ -42,7 +43,7 @@ public class Helper {
     for (HRegionInfo ri : regionInfoList) {
       summary.append(ri.getRegionNameAsString()).append("\n");
     }
-    LOG.info(summary.toString());
+    LOG.info(summary.toString() + "Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
     return regionInfoList;
   }
 
