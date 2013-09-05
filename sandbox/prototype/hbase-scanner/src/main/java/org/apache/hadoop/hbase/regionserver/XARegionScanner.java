@@ -26,6 +26,9 @@ public class XARegionScanner implements XAScanner{
   private MemstoresScanner memstoresScanner;
   private StoresScanner storesScanner;
   private KeyValue.KVComparator comparator;
+
+  //Use to control version of one row
+  private long versionCounter = 0;
   
   public XARegionScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     if(!scan.isFilesOnly()){
@@ -68,9 +71,19 @@ public class XARegionScanner implements XAScanner{
         results.add(ret);
         return false;
       }
+      //Remove duplicate kv
       if (!theNext.equals(ret)) {
-        //Remove duplicate kv
-        results.add(ret);
+        //Control version of each cell
+        byte[] rowCurrent = ret.getRow();
+        byte[] rowNext = theNext.getRow();
+        if (Bytes.compareTo(rowCurrent, rowNext) == 0) {
+          versionCounter++;
+        } else {
+          versionCounter = 0;
+        }
+        if (versionCounter < Helper.MAX_VERSIONS) {
+          results.add(ret);
+        }
       }
     }
     return true;

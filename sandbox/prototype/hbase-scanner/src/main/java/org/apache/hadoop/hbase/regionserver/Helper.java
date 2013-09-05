@@ -26,6 +26,7 @@ public class Helper {
   public static final byte[] DEFAULT_COL = Bytes.toBytes("val");
   public static final int BATCH_SIZE = 16 * 1024;
   public static final int CACHE_SIZE = 16 * 1024;
+  public static final int MAX_VERSIONS = 2000;
 
   public static List<HRegionInfo> getRegionInfoList(HTable hTable, Pair<byte[], byte[]> seKey) throws IOException {
     long st = System.nanoTime();
