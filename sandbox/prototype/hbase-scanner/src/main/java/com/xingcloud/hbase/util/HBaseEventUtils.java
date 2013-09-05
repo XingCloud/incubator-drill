@@ -158,6 +158,11 @@ public class HBaseEventUtils {
         return (int)(0xffffffffl & suid);
     }
 
+    public static String getDate(byte[] rk) {
+      byte[] date = Arrays.copyOfRange(rk, 0, 8);
+      return Bytes.toString(date);
+    }
+
 
 
 }

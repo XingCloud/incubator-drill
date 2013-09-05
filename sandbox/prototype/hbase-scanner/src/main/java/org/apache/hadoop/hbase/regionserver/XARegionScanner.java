@@ -1,5 +1,6 @@
 package org.apache.hadoop.hbase.regionserver;
 
+import com.xingcloud.hbase.util.HBaseEventUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -102,7 +103,7 @@ public class XARegionScanner implements XAScanner{
       }
 
       KeyValue kv = MSKVCache.poll();
-      LOG.info("From Memstore: " + Bytes.toString(kv.getRow()) + "\t" + Bytes.toLong(kv.getValue()) + "\t" + kv.getTimestamp());
+
       if (Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0) {
         if (storesScanner != null){
           storesScanner.updateScanner(kv.getFamily(), theNext); //todo kv to seek
