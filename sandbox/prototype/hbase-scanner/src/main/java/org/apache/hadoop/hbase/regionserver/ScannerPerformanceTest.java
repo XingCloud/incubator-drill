@@ -1,9 +1,14 @@
 package org.apache.hadoop.hbase.regionserver;
 
+import com.xingcloud.hbase.manager.HBaseResourceManager;
 import com.xingcloud.hbase.util.HBaseEventUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -132,6 +137,7 @@ public class ScannerPerformanceTest {
     scannerD.close();
 
     LOG.info("----------Start to compare...");
+    HTableInterface table = HBaseResourceManager.getInstance().getTable(tableName);
     for (KeyValue kv : kvsFromDirect) {
       if (!kvsFromClient.contains(kv)) {
         byte[] row = kv.getRow();
@@ -139,10 +145,14 @@ public class ScannerPerformanceTest {
         String event = HBaseEventUtils.getEventFromDEURowKey(row);
         String date = HBaseEventUtils.getDate(row);
         LOG.info("Diff: " + date + "\t" + event + "\t" + uid + "\t" + Bytes.toLong(kv.getValue()) + "\t" + kv.getTimestamp());
+        Get get = new Get(row);
+        get.setTimeStamp(kv.getTimestamp());
+        Result res = table.get(get);
+        LOG.info("Exist: " + !res.isEmpty());
       }
     }
+    table.close();
     LOG.info("Client kv size: " + kvsFromClient.size() + "\tDirect kv size: " + kvsFromDirect.size());
-
   }
 
   public static void main(String[] args) {
