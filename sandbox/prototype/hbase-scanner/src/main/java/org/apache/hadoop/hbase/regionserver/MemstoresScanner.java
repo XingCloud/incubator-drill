@@ -35,7 +35,7 @@ public class MemstoresScanner implements XAScanner {
   public MemstoresScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     this.hRegionInfo = hRegionInfo;
     this.scan = scan;
-
+    this.scan.setRaw(true);
     long st = System.nanoTime();
 
     // make sure that we only get the corresponding memstores for this region
