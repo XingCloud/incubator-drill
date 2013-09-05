@@ -67,6 +67,7 @@ public class UnionedScanBatch implements RecordBatch {
   
   
   private int readerCurrentEntry;
+  private int lastReaderEntry;
 
   public UnionedScanBatch(FragmentContext context, List<HbaseScanPOP.HbaseScanEntry> readEntries) throws ExecutionSetupException {
     this.context = context;
@@ -149,6 +150,8 @@ public class UnionedScanBatch implements RecordBatch {
       releaseReaderAssets();
       return IterOutcome.NONE;
     }
+    lastReaderEntry = getEntryMark();
+    removeEntryMark();
     if (schemaChanged) {
       schemaChanged = false;
       return IterOutcome.OK_NEW_SCHEMA;
@@ -648,6 +651,7 @@ public class UnionedScanBatch implements RecordBatch {
     splitsChecked = true;
   }
 
+
   private int getEntryMark() {
     for(ValueVector v:vectors){
       if(v.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
@@ -689,11 +693,10 @@ public class UnionedScanBatch implements RecordBatch {
    * @return
    */
   private boolean checkReaderOutputIntoNextEntry() {
-    int scanningEntry = getEntryMark();
+    int scanningEntry = lastReaderEntry;
     if(scanningEntry == -1){
       throw new IllegalStateException("cannot find entry mark!");
     }
-    removeEntryMark();
     boolean intoNext = false;
     if(scanningEntry > readerCurrentEntry){
       intoNext = true;

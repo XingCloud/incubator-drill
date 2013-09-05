@@ -63,7 +63,11 @@ public class ImplCreator extends AbstractPhysicalVisitor<RecordBatch, FragmentCo
 
   @Override
   public RecordBatch visitProject(Project op, FragmentContext context) throws ExecutionSetupException {
-    return pc.getBatch(context, op, getChildren(op, context));
+    if(op.getIterationBuffer() == null)
+      return pc.getBatch(context, op, getChildren(op, context));
+    else{
+      return pc.getBatch(context,op,null);
+    }
   }
 
   @Override

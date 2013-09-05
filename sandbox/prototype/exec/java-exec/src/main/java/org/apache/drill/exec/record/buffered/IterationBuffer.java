@@ -76,7 +76,7 @@ public class IterationBuffer {
         doTransfer(outcome);
         break;
       default:
-        BufferedStackFrameImpl frame = new BufferedStackFrameImpl(head.getSchema(),
+        BufferedStackFrameImpl frame = new BufferedStackFrameImpl(null,
           0, null, null, null,
           outcome, head.getContext());
         buffer.add(frame);

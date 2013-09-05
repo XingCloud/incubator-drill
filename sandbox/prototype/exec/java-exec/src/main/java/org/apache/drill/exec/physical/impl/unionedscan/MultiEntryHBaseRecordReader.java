@@ -364,7 +364,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 8);
     }
-    AllocationHelper.allocate(entryIndexVector, batchSize, 4);
+    AllocationHelper.allocate(entryIndexVector, 1, 4);
   }
 
   private int getEntryIndex(KeyValue kv) {
@@ -398,7 +398,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       ValueVector v = valueVectors.get(i);
       v.getMutator().setValueCount(valueCount);
     }
-    entryIndexVector.getMutator().setValueCount(valueCount);
+    entryIndexVector.getMutator().setValueCount(1);
   }
 
   @Override
