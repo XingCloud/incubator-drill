@@ -83,6 +83,68 @@ public class ScannerPerformanceTest {
     LOG.info("Direct client scanner Average: " + totalCost/1.0e9/times + " sec");
   }
 
+  public static void testDiff(byte[] startRowKey, byte[] endRowKey, byte[] family, byte[] qualifier, String tableName) throws IOException {
+    long st = System.nanoTime();
+    Set<KeyValue> kvsFromClient = new HashSet<>();
+    HBaseClientScanner scannerC = new HBaseClientScanner(startRowKey, endRowKey, tableName, null);
+    List<KeyValue> results = new ArrayList<>();
+    boolean done = false;
+    long count = 0;
+    long sum = 0;
+    Set<Long> uids = new HashSet<>();
+    do {
+      results.clear();
+      done = scannerC.next(results);
+      for (KeyValue kv : results) {
+        byte[] row = kv.getRow();
+        long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(row);
+        uids.add(uid);
+        count++;
+        sum += Bytes.toLong(kv.getValue());
+        kvsFromClient.add(kv);
+      }
+    } while (done);
+    long cost = (System.nanoTime()-st);
+    LOG.info("Client scanner:\t" + count + " " + sum + " " + uids.size() + "   " + cost/1.0e9 + " sec");
+    scannerC.close();
+
+    Set<KeyValue> kvsFromDirect = new HashSet<>();
+    st = System.nanoTime();
+    DirectScanner scannerD = new DirectScanner(startRowKey, endRowKey, tableName, null, family, qualifier, false, false);
+    results = new ArrayList<>();
+    done = false;
+    count = 0;
+    sum = 0;
+    uids = new HashSet<>();
+    do {
+      results.clear();
+      done = scannerD.next(results);
+      for (KeyValue kv : results) {
+        byte[] row = kv.getRow();
+        long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(row);
+        uids.add(uid);
+        count++;
+        sum += Bytes.toLong(kv.getValue());
+        kvsFromDirect.add(kv);
+      }
+    } while (done);
+    LOG.info("Direct scanner:\t" + count + " " + sum + " " + uids.size() + "   " + cost/1.0e9 + " sec");
+    scannerD.close();
+
+    LOG.info("Start to compare...");
+    LOG.info("Client kv size: " + kvsFromClient.size() + "\tDirect kv size: " + kvsFromDirect.size());
+    for (KeyValue kv : kvsFromDirect) {
+      if (!kvsFromClient.contains(kv)) {
+        byte[] row = kv.getRow();
+        long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(row);
+        String event = HBaseEventUtils.getEventFromDEURowKey(row);
+        String date = HBaseEventUtils.getDate(row);
+        LOG.info(date + "\t" + event + "\t" + uid + "\t" + Bytes.toLong(kv.getValue()) + "\t" + kv.getTimestamp());
+      }
+    }
+
+  }
+
   public static void main(String[] args) {
     String table = args[0];
     byte[] srk = Bytes.toBytes(args[1]);
@@ -116,6 +178,12 @@ public class ScannerPerformanceTest {
         testDirectScanner(srk, erk, family, qualifier, table, times);
         LOG.info("Direct scan without family...");
         testDirectScanner(srk, erk, null, null, table, times);
+      } catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+    } else if (mode.equals("diff")) {
+      try {
+        testDiff(srk, erk, null, null, table);
       } catch (IOException e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
