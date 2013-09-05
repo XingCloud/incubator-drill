@@ -32,6 +32,8 @@ public class Helper {
     long st = System.nanoTime();
     Set<HRegionInfo> hRegionInfoSet = new HashSet<>();
     NavigableMap<HRegionInfo, ServerName> regionInfoMap = hTable.getRegionLocations();
+    LOG.info("Get region location taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
+
     if (regionInfoMap.size() == 1) {
       /*There is only one region*/
       return new ArrayList<HRegionInfo>(regionInfoMap.keySet());
@@ -45,7 +47,7 @@ public class Helper {
     for (HRegionInfo ri : regionInfoList) {
       summary.append(ri.getRegionNameAsString()).append("\n");
     }
-    LOG.info(summary.toString() + "Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
+    LOG.info(summary.toString() + "Total Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
     return regionInfoList;
   }
 
