@@ -89,6 +89,7 @@ public class StoresScanner implements XAScanner {
     }
 
     this.conf = HBaseConfiguration.create();
+    this.conf.set("hbase.metrics.showTableName", "true");
     this.cacheConf = new CacheConfig(this.conf);
     this.fs = FileSystem.get(conf);
     this.filter = scan.getFilter();
