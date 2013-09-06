@@ -2,6 +2,9 @@ package org.apache.drill.exec.engine.async;
 
 
 import org.apache.drill.exec.physical.impl.VectorHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -11,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements RelayRecordBatch{
 
+  static final Logger logger = LoggerFactory.getLogger(BlockingRelayRecordBatch.class);
   private VectorHolder vh = null;    
 
   BlockingDeque<RecordFrame> resultQueue = new LinkedBlockingDeque<>();
@@ -53,7 +57,15 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
   }
 
   @Override
+  public void markNextFailed(RuntimeException cause) {
+    RecordFrame frame = new RecordFrame();    
+    frame.nextErrorCause = cause;
+    resultQueue.add(frame);
+  }
+
+  @Override
   public void mirrorResultFromIncoming(IterOutcome incomingOutcome) {
+    logger.debug("mirroring results...{}",incomingOutcome);
     RecordFrame frame = new RecordFrame();
     super.mirrorResultFromIncoming(incomingOutcome, incoming, frame);
     resultQueue.add(frame);

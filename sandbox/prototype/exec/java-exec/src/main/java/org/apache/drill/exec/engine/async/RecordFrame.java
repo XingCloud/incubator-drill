@@ -18,4 +18,7 @@ class RecordFrame {
   FragmentContext context;
   
   RecordBatch.IterOutcome outcome;
+  
+  // exception thrown when calling next()
+  RuntimeException nextErrorCause;
 }

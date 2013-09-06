@@ -223,12 +223,13 @@ public class AsyncExecutor {
 
     @Override
     public void run() {
+      loop:
       while (true) {
         RecordBatch.IterOutcome outcome = nextUpward(scanBatch);
         switch (outcome) {
           case NONE:
           case STOP:
-            break;
+            break loop;
         }
       }
     }
@@ -236,9 +237,14 @@ public class AsyncExecutor {
 
   private RecordBatch.IterOutcome nextUpward(RecordBatch batch) {
     RecordBatch.IterOutcome outcome = null;
+    Throwable errorCause = null;
     while (true) {
       boolean parentKilled = false;
-      outcome = batch.next();
+      try{
+        outcome = batch.next();
+      }catch(Throwable e){
+        errorCause = e;
+      }
       if (outcome == RecordBatch.IterOutcome.NOT_YET) {
         //data not ready yet, no need to continue upward
         return outcome;
@@ -250,7 +256,15 @@ public class AsyncExecutor {
           parentKilled = true;
           break;
         } else {
-          parentRelay.mirrorResultFromIncoming(outcome);
+          if(errorCause != null){
+            if(errorCause instanceof RuntimeException){
+              parentRelay.markNextFailed((RuntimeException) errorCause);              
+            }else{
+              parentRelay.markNextFailed(new RuntimeException(errorCause));              
+            }
+          }else{
+            parentRelay.mirrorResultFromIncoming(outcome);            
+          }
         }
       }
       for (ValueVector v : batch) {
@@ -261,8 +275,10 @@ public class AsyncExecutor {
       }
       for (int i = 0; i < parents.size(); i++) {
         RelayRecordBatch parentRelay = parents.get(i);
-        if (parentRelay instanceof SingleRelayRecordBatch) {
-          nextUpward(((SingleRelayRecordBatch) parentRelay).parent);
+        if (parentRelay instanceof BlockingRelayRecordBatch) {
+          //do nothing
+        }else{
+          nextUpward(((SingleRelayRecordBatch) parentRelay).parent);          
         }
       }
       if(outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET){

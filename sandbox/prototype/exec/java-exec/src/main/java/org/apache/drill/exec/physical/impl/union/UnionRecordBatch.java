@@ -1,6 +1,5 @@
 package org.apache.drill.exec.physical.impl.union;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.ops.FragmentContext;
@@ -27,14 +26,14 @@ public class UnionRecordBatch implements RecordBatch {
   private List<ValueVector> outputVectors;
   private VectorHolder vh;
   private RecordBatch current = null;
-  private List<RecordBatch> childrens = Lists.newArrayList();
+  private List<RecordBatch> children = Lists.newArrayList();
   private ArrayList<TransferPair> transfers;
   private int outRecordCount;
 
   public UnionRecordBatch(Union config, List<RecordBatch> children, FragmentContext context) {
     this.unionConfig = config;
     this.incoming = children;
-    childrens.addAll(incoming);
+    this.children.addAll(incoming);
     this.context = context;
     sv = null;
   }
@@ -91,21 +90,22 @@ public class UnionRecordBatch implements RecordBatch {
 
   @Override
   public IterOutcome next() {
-    if (childrens.isEmpty()) { // end of iteration
+    if (children.isEmpty()) { // end of iteration
       return IterOutcome.NONE;
     }
 
     IterOutcome upstream = null;
-    for (RecordBatch recordBatch : childrens) {
+    for (Iterator<RecordBatch> it = children.iterator();it.hasNext();) {
+      RecordBatch recordBatch = it.next();
       upstream = recordBatch.next();
       switch (upstream) {
         case OK_NEW_SCHEMA:
         case OK:
           if (recordBatch != current) {
+            current = recordBatch;
             upstream = IterOutcome.OK_NEW_SCHEMA;
             setupSchema();
           }
-          current = recordBatch;
           doTransfer();
           return upstream;
         case NOT_YET:
@@ -113,8 +113,11 @@ public class UnionRecordBatch implements RecordBatch {
         case STOP:
           return IterOutcome.STOP;
         case NONE:
-          childrens.remove(recordBatch);
+          it.remove();
       }
+    }
+    if(children.size()==0){
+      return IterOutcome.NONE;
     }
     return IterOutcome.NOT_YET;
 

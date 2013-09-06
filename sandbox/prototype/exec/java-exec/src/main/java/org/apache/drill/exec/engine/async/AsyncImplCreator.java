@@ -72,8 +72,9 @@ public class AsyncImplCreator extends AbstractPhysicalVisitor<RecordBatch, Fragm
 
   @Override
   public RecordBatch visitOp(PhysicalOperator op, FragmentContext context) throws ExecutionSetupException {
-    if (op instanceof SelectionVectorRemover)
-      return svc.getBatch(context, (SelectionVectorRemover) op, getChildren(op, context));
+    if (op instanceof SelectionVectorRemover){
+      return createBatchWithChildren(svc, (SelectionVectorRemover) op, context);
+    }
     return super.visitOp(op, context);
   }
 

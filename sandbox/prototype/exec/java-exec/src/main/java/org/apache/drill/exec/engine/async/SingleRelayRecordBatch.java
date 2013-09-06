@@ -10,6 +10,8 @@ import org.apache.drill.exec.record.WritableBatch;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
 import org.apache.drill.exec.vector.ValueVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,6 +19,7 @@ import java.util.List;
 
 public class SingleRelayRecordBatch implements RelayRecordBatch {
 
+  static final Logger logger = LoggerFactory.getLogger(SingleRelayRecordBatch.class);  
 
   RecordBatch incoming;
   RecordBatch parent;
@@ -75,6 +78,9 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public IterOutcome next() {
+    if(null != getCurrent().nextErrorCause){
+      throw getCurrent().nextErrorCause;
+    }
     if(null==getCurrent().outcome){
       return IterOutcome.NOT_YET;
     }
@@ -92,9 +98,16 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   public Iterator<ValueVector> iterator() {
     return getCurrent().vectors.iterator();
   }
-  
+
+  @Override
+  public void markNextFailed(RuntimeException cause) {
+    logger.debug("throwing up errors:{}",cause);
+    getCurrent().nextErrorCause = cause;
+  }
+
   @Override
   public void mirrorResultFromIncoming(IterOutcome incomingOutcome){
+    logger.debug("mirroring results...");    
     mirrorResultFromIncoming(incomingOutcome, incoming, getCurrent());
     if(incomingOutcome == IterOutcome.OK_NEW_SCHEMA){
       vh = new VectorHolder(getCurrent().vectors);
@@ -108,6 +121,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   protected void mirrorResultFromIncoming(IterOutcome incomingOutcome, RecordBatch incoming, RecordFrame current) {
     current.outcome = incomingOutcome;
+    current.context = incoming.getContext();
     switch (current.outcome) {
       case OK_NEW_SCHEMA:
         current.schema = incoming.getSchema();
