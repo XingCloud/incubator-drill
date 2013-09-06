@@ -11,6 +11,8 @@ import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.physical.impl.unionedscan.UnionedScanBatch;
 import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.vector.ValueVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -28,6 +30,7 @@ public class AsyncExecutor {
   private boolean started = false;
 
   private List<LeafDriver> drivers = new ArrayList<>();
+  private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
   /**
    * *************
@@ -184,17 +187,20 @@ public class AsyncExecutor {
 
     @Override
     public void run() {
+      logger.debug("driver start");
       for (int i = 0; i < splits.size(); i++) {
         UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
+        loop:
         while (true) {
           RecordBatch.IterOutcome outcome = nextUpward(split);
           switch (outcome) {
             case NONE:
             case STOP:
-              break;
+              break loop;
           }
         }
       }
+      logger.debug("driver exit");
     }
   }
 
@@ -223,15 +229,23 @@ public class AsyncExecutor {
 
     @Override
     public void run() {
+      logger.debug("driver start");
       loop:
       while (true) {
-        RecordBatch.IterOutcome outcome = nextUpward(scanBatch);
-        switch (outcome) {
-          case NONE:
-          case STOP:
-            break loop;
+        try {
+          RecordBatch.IterOutcome outcome = nextUpward(scanBatch);
+          switch (outcome) {
+            case NONE:
+            case STOP:
+              break loop;
+          }
+        } catch (Exception e) {
+          logger.warn("driver failed:", e);
         }
+
       }
+      logger.debug("driver exit");
+
     }
   }
 
@@ -240,9 +254,9 @@ public class AsyncExecutor {
     Throwable errorCause = null;
     while (true) {
       boolean parentKilled = false;
-      try{
+      try {
         outcome = batch.next();
-      }catch(Throwable e){
+      } catch (Throwable e) {
         errorCause = e;
       }
       if (outcome == RecordBatch.IterOutcome.NOT_YET) {
@@ -256,19 +270,21 @@ public class AsyncExecutor {
           parentKilled = true;
           break;
         } else {
-          if(errorCause != null){
-            if(errorCause instanceof RuntimeException){
-              parentRelay.markNextFailed((RuntimeException) errorCause);              
-            }else{
-              parentRelay.markNextFailed(new RuntimeException(errorCause));              
+          if (errorCause != null) {
+            if (errorCause instanceof RuntimeException) {
+              parentRelay.markNextFailed((RuntimeException) errorCause);
+            } else {
+              parentRelay.markNextFailed(new RuntimeException(errorCause));
             }
-          }else{
-            parentRelay.mirrorResultFromIncoming(outcome);            
+          } else {
+            parentRelay.mirrorResultFromIncoming(outcome);
           }
         }
       }
-      for (ValueVector v : batch) {
-        v.clear();
+      if (outcome == RecordBatch.IterOutcome.OK_NEW_SCHEMA || outcome == RecordBatch.IterOutcome.OK) {
+        for (ValueVector v : batch) {
+          v.clear();
+        }
       }
       if (parentKilled) {
         return RecordBatch.IterOutcome.STOP;
@@ -277,11 +293,11 @@ public class AsyncExecutor {
         RelayRecordBatch parentRelay = parents.get(i);
         if (parentRelay instanceof BlockingRelayRecordBatch) {
           //do nothing
-        }else{
-          nextUpward(((SingleRelayRecordBatch) parentRelay).parent);          
+        } else {
+          nextUpward(((SingleRelayRecordBatch) parentRelay).parent);
         }
       }
-      if(outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET){
+      if (outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
         break;
       }
     }

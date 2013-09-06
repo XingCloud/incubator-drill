@@ -107,11 +107,13 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public void mirrorResultFromIncoming(IterOutcome incomingOutcome){
-    logger.debug("mirroring results...");    
+    logger.debug("mirroring results...");
+
     mirrorResultFromIncoming(incomingOutcome, incoming, getCurrent());
     if(incomingOutcome == IterOutcome.OK_NEW_SCHEMA){
       vh = new VectorHolder(getCurrent().vectors);
     }
+    logger.info("Vector size : " + getCurrent().vectors.size() + " : " + incoming.getClass() );
   }
 
   @Override
@@ -166,6 +168,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
         ValueVector vector = current.vectors.get(i);
         vector.clear();
       }
+      current.vectors.clear();
     }
     current.vectors = new ArrayList<>();
     if(current.sv2 != null){

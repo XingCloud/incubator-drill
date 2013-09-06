@@ -1,5 +1,7 @@
 package org.apache.drill.exec.engine.async;
 
+import org.apache.drill.exec.rpc.NamedThreadFactory;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -10,7 +12,8 @@ public class DriverPoolExecutor {
   private ThreadPoolExecutor executor;
 
   public DriverPoolExecutor() {
-    executor = new ThreadPoolExecutor(24, 24, 60000, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(1024));
+    executor = new ThreadPoolExecutor(24, 24, 60000, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(1024),
+      new NamedThreadFactory("Drivers"));
   }
 
   public static DriverPoolExecutor getInstance() {

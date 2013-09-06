@@ -37,6 +37,9 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
         cleanupVectors(current);
       }
       current = resultQueue.poll(Long.MAX_VALUE, TimeUnit.SECONDS);
+      if(current.nextErrorCause != null){
+        throw current.nextErrorCause;
+      }
       return current.outcome;
     } catch (InterruptedException e) {
       e.printStackTrace();  
