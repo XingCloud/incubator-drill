@@ -59,65 +59,59 @@ public class FilterBatch extends BaseRecordBatch {
 
   @Override
   public IterOutcome next() {
-
-    while (true) {
-      IterOutcome o = incoming.next();
-      switch (o) {
-        case NONE:
-        case STOP:
-        case NOT_YET:
-          recordCount = 0;
-          break;
-        case OK_NEW_SCHEMA:
-          new_schema = true;
-        case OK:
-          recordCount = 0;
-          outputVectors.clear();
-          try {
-            bitVector = eval.eval();
-            BitVector.Accessor bitFilter = bitVector.getAccessor();
-            for (int i = 0; i < bitFilter.getValueCount(); i++) {
-              if (bitFilter.get(i) == 1) {
-                recordCount++;
-              }
+    IterOutcome o = incoming.next();
+    switch (o) {
+      case NONE:
+      case STOP:
+      case NOT_YET:
+        return o;
+      case OK_NEW_SCHEMA:
+        new_schema = true;
+      case OK:
+        recordCount = 0;
+        outputVectors.clear();
+        try {
+          bitVector = eval.eval();
+          BitVector.Accessor bitFilter = bitVector.getAccessor();
+          for (int i = 0; i < bitFilter.getValueCount(); i++) {
+            if (bitFilter.get(i) == 1) {
+              recordCount++;
             }
-            if (recordCount == 0) {
-              clearBits();
-              clearIncoming();
-              continue;
-            }
-            for (ValueVector in : incoming) {
-              ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
-              AllocationHelper.allocate(out, recordCount, 8);
-              ValueVector.Mutator mutator = out.getMutator();
-              ValueVector.Accessor accessor = in.getAccessor();
-              for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
-                if (bitFilter.get(j) == 1) {
-                  mutator.setObject(i++, accessor.getObject(j));
-                }
-              }
-              mutator.setValueCount(recordCount);
-              outputVectors.add(out);
-            }
-            clearIncoming();
-            clearBits();
-            vh = new VectorHolder(outputVectors);
-          } catch (Exception e) {
-            logger.error(e.getMessage());
-            e.printStackTrace();
-            context.fail(e);
-            return IterOutcome.STOP;
           }
-          break;
-
-      }
-      if (new_schema) {
-        new_schema = false;
-        return IterOutcome.OK_NEW_SCHEMA;
-      }
-      return o;
+          if (recordCount == 0) {
+            clearBits();
+            clearIncoming();
+            return IterOutcome.NOT_YET;
+          }
+          for (ValueVector in : incoming) {
+            ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
+            AllocationHelper.allocate(out, recordCount, 8);
+            ValueVector.Mutator mutator = out.getMutator();
+            ValueVector.Accessor accessor = in.getAccessor();
+            for (int i = 0, j = 0; i < recordCount && j < accessor.getValueCount(); j++) {
+              if (bitFilter.get(j) == 1) {
+                mutator.setObject(i++, accessor.getObject(j));
+              }
+            }
+            mutator.setValueCount(recordCount);
+            outputVectors.add(out);
+          }
+          clearIncoming();
+          clearBits();
+          vh = new VectorHolder(outputVectors);
+        } catch (Exception e) {
+          logger.error(e.getMessage());
+          e.printStackTrace();
+          context.fail(e);
+          return IterOutcome.STOP;
+        }
+        break;
     }
-
+    if (new_schema) {
+      new_schema = false;
+      return IterOutcome.OK_NEW_SCHEMA;
+    }
+    return IterOutcome.OK;
   }
 
   @Override
@@ -128,8 +122,8 @@ public class FilterBatch extends BaseRecordBatch {
     clearBits();
   }
 
-  private void clearIncoming(){
-    for(ValueVector v : incoming){
+  private void clearIncoming() {
+    for (ValueVector v : incoming) {
       v.close();
     }
   }
