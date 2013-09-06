@@ -264,28 +264,47 @@ public class AsyncExecutor {
         return outcome;
       }
       List<RelayRecordBatch> parents = getParentRelaysFor(batch);
-      for (int i = 0; i < parents.size(); i++) {
-        RelayRecordBatch parentRelay = parents.get(i);
-        if (parentRelay.isKilled()) {
+      if(parents.size()==1 && parents.get(0) instanceof BlockingRelayRecordBatch){
+        //it's Root up there. so transfer vectors early.
+        BlockingRelayRecordBatch blockingRelay = (BlockingRelayRecordBatch) parents.get(0);
+        if(blockingRelay.isKilled()){
           parentKilled = true;
-          break;
-        } else {
-          if (errorCause != null) {
+        }else{
+          if(errorCause != null){
             if (errorCause instanceof RuntimeException) {
-              parentRelay.markNextFailed((RuntimeException) errorCause);
+              blockingRelay.markNextFailed((RuntimeException) errorCause);
             } else {
-              parentRelay.markNextFailed(new RuntimeException(errorCause));
+              blockingRelay.markNextFailed(new RuntimeException(errorCause));
             }
+          }else{
+            blockingRelay.mirrorResultFromIncoming(outcome, true); 
+          }
+        }
+      }else{// not BlockingRelayRecordBatch
+        for (int i = 0; i < parents.size(); i++) {
+          RelayRecordBatch parentRelay = parents.get(i);
+          if (parentRelay.isKilled()) {
+            parentKilled = true;
+            break;
           } else {
-            parentRelay.mirrorResultFromIncoming(outcome);
+            if (errorCause != null) {
+              if (errorCause instanceof RuntimeException) {
+                parentRelay.markNextFailed((RuntimeException) errorCause);
+              } else {
+                parentRelay.markNextFailed(new RuntimeException(errorCause));
+              }
+            } else {
+              parentRelay.mirrorResultFromIncoming(outcome, false);
+            }
+          }
+        }
+        if (outcome == RecordBatch.IterOutcome.OK_NEW_SCHEMA || outcome == RecordBatch.IterOutcome.OK) {
+          for (ValueVector v : batch) {
+            v.clear();
           }
         }
       }
-      if (outcome == RecordBatch.IterOutcome.OK_NEW_SCHEMA || outcome == RecordBatch.IterOutcome.OK) {
-        for (ValueVector v : batch) {
-          v.clear();
-        }
-      }
+
       if (parentKilled) {
         return RecordBatch.IterOutcome.STOP;
       }

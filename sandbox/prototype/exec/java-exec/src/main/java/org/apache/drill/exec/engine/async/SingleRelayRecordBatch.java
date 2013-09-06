@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 public class SingleRelayRecordBatch implements RelayRecordBatch {
 
@@ -106,10 +105,10 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   }
 
   @Override
-  public void mirrorResultFromIncoming(IterOutcome incomingOutcome){
+  public void mirrorResultFromIncoming(IterOutcome incomingOutcome, boolean needTransfer){
     logger.debug("mirroring results...");
 
-    mirrorResultFromIncoming(incomingOutcome, incoming, getCurrent());
+    mirrorResultFromIncoming(incomingOutcome, incoming, getCurrent(), needTransfer);
     if(incomingOutcome == IterOutcome.OK_NEW_SCHEMA){
       vh = new VectorHolder(getCurrent().vectors);
     }
@@ -121,7 +120,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
     return this.killed;
   }
 
-  protected void mirrorResultFromIncoming(IterOutcome incomingOutcome, RecordBatch incoming, RecordFrame current) {
+  protected void mirrorResultFromIncoming(IterOutcome incomingOutcome, RecordBatch incoming, RecordFrame current, boolean needTransfer) {
     current.outcome = incomingOutcome;
     current.context = incoming.getContext();
     switch (current.outcome) {
@@ -137,7 +136,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
         int i = 0;
         for (ValueVector vector : incoming) {
           ValueVector currentVector = current.vectors.get(i++);
-          vector.getMutator().transferTo(currentVector, false);
+          vector.getMutator().transferTo(currentVector, needTransfer);
         }
         switch (current.schema.getSelectionVectorMode()) {
           case NONE:

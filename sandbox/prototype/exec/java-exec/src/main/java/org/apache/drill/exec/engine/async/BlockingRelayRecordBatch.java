@@ -67,10 +67,10 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
   }
 
   @Override
-  public void mirrorResultFromIncoming(IterOutcome incomingOutcome) {
+  public void mirrorResultFromIncoming(IterOutcome incomingOutcome, boolean needTransfer) {
     logger.debug("mirroring results...{}",incomingOutcome);
     RecordFrame frame = new RecordFrame();
-    super.mirrorResultFromIncoming(incomingOutcome, incoming, frame);
+    super.mirrorResultFromIncoming(incomingOutcome, incoming, frame, needTransfer);
     resultQueue.add(frame);
   }
 }
