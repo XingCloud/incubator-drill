@@ -84,7 +84,7 @@ public class FilterBatch extends BaseRecordBatch {
             if (recordCount == 0) {
               clearBits();
               clearIncoming();
-              continue;
+              return IterOutcome.NOT_YET;
             }
             for (ValueVector in : incoming) {
               ValueVector out = TypeHelper.getNewVector(in.getField(), context.getAllocator());
