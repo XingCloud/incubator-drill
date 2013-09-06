@@ -28,6 +28,7 @@ public class AsyncExecutor {
   private boolean started = false;
 
   private List<LeafDriver> drivers = new ArrayList<>();
+
   /**
    * *************
    * data preparation
@@ -138,28 +139,28 @@ public class AsyncExecutor {
     for (Map.Entry<PhysicalOperator, RecordBatch> entry : pop2OriginalBatch.entrySet()) {
       PhysicalOperator pop = entry.getKey();
       RecordBatch batch = entry.getValue();
-      if (getChildRelaysFor(batch).size()==0){
-        if(batch instanceof UnionedScanBatch.UnionedScanSplitBatch){
+      if (getChildRelaysFor(batch).size() == 0) {
+        if (batch instanceof UnionedScanBatch.UnionedScanSplitBatch) {
           UnionedScanBatch incoming = ((UnionedScanBatch.UnionedScanSplitBatch) batch).getIncoming();
           List<UnionedScanBatch.UnionedScanSplitBatch> splits = unioned2Splits.get(incoming);
-          if(splits == null){
+          if (splits == null) {
             splits = new ArrayList<>();
             unioned2Splits.put(incoming, splits);
           }
           splits.add((UnionedScanBatch.UnionedScanSplitBatch) batch);
-        }else{
+        } else {
           //collect
           leaves.add(batch);
         }
       }
     }
-    
+
     //start drivers
     for (RecordBatch batch : leaves) {
       LeafDriver driver = null;
-      if(batch instanceof UnionedScanBatch){
+      if (batch instanceof UnionedScanBatch) {
         driver = new UnionedScanDriver((UnionedScanBatch) batch, unioned2Splits.get(batch));
-      }else if(batch instanceof ScanBatch){
+      } else if (batch instanceof ScanBatch) {
         driver = new ScanDriver((ScanBatch) batch);
       }
       drivers.add(driver);
@@ -167,10 +168,11 @@ public class AsyncExecutor {
     }
   }
 
-  
+
   public class UnionedScanDriver implements LeafDriver {
     UnionedScanBatch unionedScanBatch;
     List<UnionedScanBatch.UnionedScanSplitBatch> splits;
+
     public UnionedScanDriver(UnionedScanBatch unionedScanBatch, List<UnionedScanBatch.UnionedScanSplitBatch> splits) {
       this.unionedScanBatch = unionedScanBatch;
       UnionedScanBatch.UnionedScanSplitBatch[] splitArray = splits.toArray(new UnionedScanBatch.UnionedScanSplitBatch[splits.size()]);
@@ -179,14 +181,14 @@ public class AsyncExecutor {
       Arrays.sort(splitArray, new SplitComparator(unionedScanBatch));
       this.splits = Arrays.asList(splitArray);
     }
-  
+
     @Override
     public void run() {
       for (int i = 0; i < splits.size(); i++) {
         UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
-        while(true){
+        while (true) {
           RecordBatch.IterOutcome outcome = nextUpward(split);
-          switch (outcome){
+          switch (outcome) {
             case NONE:
             case STOP:
               break;
@@ -195,7 +197,8 @@ public class AsyncExecutor {
       }
     }
   }
-  public static class SplitComparator implements Comparator<UnionedScanBatch.UnionedScanSplitBatch>{
+
+  public static class SplitComparator implements Comparator<UnionedScanBatch.UnionedScanSplitBatch> {
 
 
     private final UnionedScanBatch usb;
@@ -210,19 +213,19 @@ public class AsyncExecutor {
       return table[o1.getPop().getEntries()[0]] - table[o2.getPop().getEntries()[0]];
     }
   }
-  
+
   public class ScanDriver implements LeafDriver {
     ScanBatch scanBatch;
-    
+
     public ScanDriver(ScanBatch scanBatch) {
       this.scanBatch = scanBatch;
     }
-  
+
     @Override
     public void run() {
-      while(true){
+      while (true) {
         RecordBatch.IterOutcome outcome = nextUpward(scanBatch);
-        switch (outcome){
+        switch (outcome) {
           case NONE:
           case STOP:
             break;
@@ -232,36 +235,42 @@ public class AsyncExecutor {
   }
 
   private RecordBatch.IterOutcome nextUpward(RecordBatch batch) {
-    boolean parentKilled = false;
-    RecordBatch.IterOutcome outcome = batch.next();
-    if(outcome == RecordBatch.IterOutcome.NOT_YET){
-      //data not ready yet, no need to continue upward
-      return outcome;
-    }
-    List<RelayRecordBatch> parents = getParentRelaysFor(batch);
-    for (int i = 0; i < parents.size(); i++) {
-      RelayRecordBatch parentRelay = parents.get(i);
-      if(parentRelay.isKilled()){
-        parentKilled = true;
-        break;
-      }else{
-        parentRelay.mirrorResultFromIncoming(outcome);
+    RecordBatch.IterOutcome outcome = null;
+    while (true) {
+      boolean parentKilled = false;
+      outcome = batch.next();
+      if (outcome == RecordBatch.IterOutcome.NOT_YET) {
+        //data not ready yet, no need to continue upward
+        return outcome;
       }
-    }
-    for(ValueVector v: batch){
-      v.clear();
-    }
-    if(parentKilled){
-      return RecordBatch.IterOutcome.STOP;
-    }
-    for (int i = 0; i < parents.size(); i++) {
-      RelayRecordBatch parentRelay = parents.get(i);
-      if(parentRelay instanceof SingleRelayRecordBatch){
-        nextUpward(((SingleRelayRecordBatch) parentRelay).parent);
+      List<RelayRecordBatch> parents = getParentRelaysFor(batch);
+      for (int i = 0; i < parents.size(); i++) {
+        RelayRecordBatch parentRelay = parents.get(i);
+        if (parentRelay.isKilled()) {
+          parentKilled = true;
+          break;
+        } else {
+          parentRelay.mirrorResultFromIncoming(outcome);
+        }
+      }
+      for (ValueVector v : batch) {
+        v.clear();
+      }
+      if (parentKilled) {
+        return RecordBatch.IterOutcome.STOP;
+      }
+      for (int i = 0; i < parents.size(); i++) {
+        RelayRecordBatch parentRelay = parents.get(i);
+        if (parentRelay instanceof SingleRelayRecordBatch) {
+          nextUpward(((SingleRelayRecordBatch) parentRelay).parent);
+        }
+      }
+      if(outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET){
+        break;
       }
     }
     return outcome;
   }
-  
-  
+
+
 }
