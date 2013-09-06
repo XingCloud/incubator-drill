@@ -26,19 +26,16 @@ public class UnionRecordBatch implements RecordBatch {
   private BatchSchema outSchema;
   private List<ValueVector> outputVectors;
   private VectorHolder vh;
-  private Iterator<RecordBatch> iterator = null;
   private RecordBatch current = null;
+  private List<RecordBatch> childrens = Lists.newArrayList();
   private ArrayList<TransferPair> transfers;
   private int outRecordCount;
 
   public UnionRecordBatch(Union config, List<RecordBatch> children, FragmentContext context) {
     this.unionConfig = config;
     this.incoming = children;
+    childrens.addAll(incoming);
     this.context = context;
-    this.iterator = incoming.iterator();
-    if (iterator.hasNext()) {
-      current = iterator.next();
-    }
     sv = null;
   }
 
@@ -94,33 +91,29 @@ public class UnionRecordBatch implements RecordBatch {
 
   @Override
   public IterOutcome next() {
-    if (current == null) { // end of iteration
+    if (childrens.isEmpty()) { // end of iteration
       return IterOutcome.NONE;
     }
-    IterOutcome upstream = current.next();
-    while (upstream == IterOutcome.NONE) {
-      if (!iterator.hasNext()) {
-        current = null;
-        return IterOutcome.NONE;
+
+    IterOutcome upstream = null;
+    for (RecordBatch recordBatch : childrens) {
+      upstream = recordBatch.next();
+      switch (upstream) {
+        case OK_NEW_SCHEMA:
+        case OK:
+          if(recordBatch != current)
+            setupSchema();
+          current = recordBatch ;
+          doTransfer();
+          return upstream;
+        case NOT_YET:
+          continue;
+        case NONE:
+            childrens.remove(recordBatch);
       }
-      current = iterator.next();
-      upstream = current.next();
     }
-    switch (upstream) {
-      case NONE:
-        throw new IllegalArgumentException("not possible!");
-      case NOT_YET:
-      case STOP:
-        return upstream;
-      case OK_NEW_SCHEMA:
-        setupSchema();
-        // fall through.
-      case OK:
-        doTransfer();
-        return upstream; // change if upstream changed, otherwise normal.
-      default:
-        throw new UnsupportedOperationException();
-    }
+    return IterOutcome.NOT_YET;
+
   }
 
   private void doTransfer() {
