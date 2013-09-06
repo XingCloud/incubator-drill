@@ -126,7 +126,7 @@ public class JoinBatch extends BaseRecordBatch {
       }
     }
     if (leftFinished) {
-      if (leftCache.size() == 0) {
+      if (rightCache.size() == 0) {
         if (rightFinished) {
           clearCache();
           return IterOutcome.NONE;
@@ -134,7 +134,7 @@ public class JoinBatch extends BaseRecordBatch {
           return IterOutcome.NOT_YET;
         }
       }
-      while (leftCache.size() != 0) {
+      while (rightCache.size() != 0) {
         connector.setup();
         if (!connector.connect()) {
           connector.clear();
