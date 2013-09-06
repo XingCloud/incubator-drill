@@ -1,6 +1,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
-import com.xingcloud.hbase.manager.HBaseResourceManager;
+import com.xingcloud.hbase.manager.*;
+import com.xingcloud.xa.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
@@ -38,14 +39,20 @@ public class DirectScanner implements XAScanner {
   private XAScanner currentScanner;
   private boolean hasNext;
   private Scan scan;
-  
+
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName,
-                       boolean isFileOnly, boolean isMemOnly) throws IOException {  
-    this(startRowKey, endRowKey, tableName, null, isFileOnly, isMemOnly);
-  }
-  
-  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
                        boolean isFileOnly, boolean isMemOnly) throws IOException {
+    this(startRowKey, endRowKey, tableName, null, null, null, isFileOnly, isMemOnly);
+  }
+
+  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
+                       boolean isFileOnly, boolean isMemOnly) {
+    this(startRowKey, endRowKey, tableName, filter, null, null, isFileOnly, isMemOnly);
+  }
+
+  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
+                       byte[] family, byte[] qualifier,
+                       boolean isFileOnly, boolean isMemOnly) {
     this.isFileOnly = isFileOnly;
     this.isMemOnly = isMemOnly;
     this.startRowKey = startRowKey;
@@ -55,68 +62,74 @@ public class DirectScanner implements XAScanner {
 
     //set scan
     this.scan = new Scan(startRowKey, endRowKey);
+    scan.setMaxVersions();
+    scan.setBatch(Helper.BATCH_SIZE);
+    scan.setCaching(Helper.CACHE_SIZE);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
     if (filter != null)
       scan.setFilter(filter);
-    scan.addColumn(Bytes.toBytes("val"), Bytes.toBytes("val"));
-    
+    if (family != null && qualifier != null) {
+      scan.addColumn(family, qualifier);
+    } else {
+      scan.addColumn(Helper.DEFAULT_FAM, Helper.DEFAULT_COL);
+    }
+
     // get regions 
     Pair<byte[], byte[]> seKey = new Pair(startRowKey, endRowKey);
-    HTable table = (HTable) HBaseResourceManager.getInstance().getTable(Bytes.toBytes(tableName)).getWrappedTable();
-    this.regionList = Helper.getRegionInfoList(table, seKey);
+    HTable table = null;
+    try {
+      table = (HTable) HBaseResourceManager.getInstance().getTable(Bytes.toBytes(tableName)).getWrappedTable();
+      this.regionList = Helper.getRegionInfoList(table, seKey);
+    } catch (IOException e) {
+      e.printStackTrace();
+      LOG.error("Init Direct scanner failure! MSG: " + e.getMessage());
+    }
+
     LOG.info("Number of regions: " + regionList.size() + " for " + tableName + " " + startRowKey + " " + endRowKey);
   }
 
   @Override
   public boolean next(List<KeyValue> results) throws IOException {
-    if (regionList.size() == 0)
-      return false;
-    
-    checkScanner(); // check if we should advance to next region 
-    
-    if(currentScanner == null){
+    if (regionList.size() == 0) {
       return false;
     }
-    
+    if(currentScanner == null){
+      currentScanner = new XARegionScanner(regionList.get(0), scan);
+    }
     hasNext = currentScanner.next(results);
+    if (!hasNext) {
+      //Move to next region
+      currentScanner.close();
+      currentIndex++;
+      if (currentIndex == regionList.size()){
+        currentScanner = null;
+        return false;
+      }
+      currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
+      hasNext = true;
+    }
     return hasNext;
   }
 
-  private boolean checkScanner() throws IOException {
-    if(currentScanner == null){
-      currentScanner = new XARegionScanner(regionList.get(0), scan);
-    }else{
-      if (! hasNext){
-        currentScanner.close();
-        currentIndex++; 
-        if (currentIndex > regionList.size()-1){
-          currentScanner = null;
-          return false;
-        }
-        currentScanner = new StoresScanner(regionList.get(currentIndex), scan);
-      }
-    }
-    
-    return true;
-  }
-  
   @Override
   public void close() throws IOException {
-    // do nothing
+    LOG.info("Direct scanner closed.");
   }
 
   public static void main(String[] args) throws IOException {
     String tableName = args[0];
     String srk = args[1];
     String erk = args[2];
-    boolean isMemOnly = Boolean.parseBoolean(args[3]);
-    boolean isFileOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, isMemOnly, isFileOnly);
+
+    boolean isFileOnly = Boolean.parseBoolean(args[3]);
+    boolean isMemOnly = Boolean.parseBoolean(args[4]);
+    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, null, null, isFileOnly, isMemOnly);
     long counter = 0;
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
     boolean done = false;
+    Set<Long> uids = new HashSet<>();
     try {
       do {
         results.clear();
@@ -125,6 +138,8 @@ public class DirectScanner implements XAScanner {
           if (counter % 1000 == 0 || !done) {
             LOG.info(Bytes.toString(kv.getRow()));
           }
+          long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(kv.getRow());
+          uids.add(uid);
           counter++;
         }
 
@@ -141,5 +156,7 @@ public class DirectScanner implements XAScanner {
       }
     }
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
+    LOG.info("Uids number: "+uids.size());
+    System.out.println("Uids number: "+uids.size());
   }
 }

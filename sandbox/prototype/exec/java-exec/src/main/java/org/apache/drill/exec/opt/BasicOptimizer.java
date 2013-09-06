@@ -17,6 +17,8 @@ import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
+import com.xingcloud.hbase.util.Constants;
+import com.xingcloud.hbase.util.RowKeyUtils;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
@@ -51,6 +53,7 @@ import org.apache.drill.exec.physical.config.Screen;
 import org.apache.drill.exec.physical.config.SegmentPOP;
 import org.apache.drill.exec.physical.config.UnionedScanPOP;
 import org.apache.drill.exec.physical.config.UnionedScanSplitPOP;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -150,7 +153,7 @@ public class BasicOptimizer extends Optimizer {
       NamedExpression ne;
       List<HbaseScanPOP.RowkeyFilterEntry> filterEntries;
       HbaseScanPOP.RowkeyFilterEntry rowkeyFilterEntry;
-      FieldReference filterTypeFR;
+      Constants.FilterType filterTypeFR;
       for (JsonNode selection : root) {
         // Table name
         table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
@@ -158,7 +161,11 @@ public class BasicOptimizer extends Optimizer {
         // Rowkey range
         rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
         rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
+        rowkeyStart= RowKeyUtils.processRkBound(rowkeyStart,true);
+        //rowkeyStart = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyStart),RowKeyUtils.produceTail(true)));
         rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
+        rowkeyEnd=RowKeyUtils.processRkBound(rowkeyEnd,false);
+        //rowkeyEnd = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyEnd),RowKeyUtils.produceTail(false)));
 
         // Filters
         filters = selection.get(SELECTION_KEY_WORD_FILTERS);
@@ -175,7 +182,7 @@ public class BasicOptimizer extends Optimizer {
               for (JsonNode include : includes) {
                 filterList.add(FieldReferenceBuilder.buildColumn(include.textValue()));
               }
-              filterTypeFR = new FieldReference("XARowKeyPatternFilter", ExpressionPosition.UNKNOWN);
+              filterTypeFR = Constants.FilterType.XaRowKeyPattern;
               rowkeyFilterEntry = new HbaseScanPOP.RowkeyFilterEntry(filterTypeFR, filterList);
               filterEntries.add(rowkeyFilterEntry);
             }

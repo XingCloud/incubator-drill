@@ -1,5 +1,6 @@
 package org.apache.drill.exec.store;
 
+import com.xingcloud.hbase.util.Constants;
 import com.xingcloud.hbase.util.HBaseUserUtils;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
@@ -29,11 +30,11 @@ public class TestHBaseRecordReader {
    public void  readEventTable(){
        String startKey = System.getProperty("hbase.start");
        if(startKey==null)
-           startKey="20130101visit.22find.hp.";
+           startKey="20130101visit.22find.hp";
        System.out.println("startKey = " + startKey);
        String stopKey=System.getProperty("hbase.stop");
        if(stopKey==null)
-           stopKey="20130101visit.";
+           stopKey="20130101visit";
        System.out.println("stopKey = "+stopKey);
 
        String eventTable=System.getProperty("hbase.table");
@@ -121,7 +122,7 @@ public class TestHBaseRecordReader {
   }
 
    private HbaseScanPOP.HbaseScanEntry getReadEntry(String table, String startKey, String stopKey, String option){
-       List<LogicalExpression> filters=new ArrayList<>();
+       List<HbaseScanPOP.RowkeyFilterEntry> filters=new ArrayList<>();
        List<NamedExpression> projections=new ArrayList<>();
        HbaseScanPOP.HbaseScanEntry entry=null;
        switch (option){
@@ -138,19 +139,28 @@ public class TestHBaseRecordReader {
                 entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,null,projections);
                 return entry;
            case "event":
+
+               List<LogicalExpression> includes=new ArrayList<>();
+               /*
                FunctionDefinition funcDef=new BooleanFunctions().getFunctionDefintions()[3];
                List<LogicalExpression> funcArgs=new ArrayList<>();
                funcArgs.add(new SchemaPath("value",ExpressionPosition.UNKNOWN));
                funcArgs.add(new ValueExpressions.LongExpression(1000l,ExpressionPosition.UNKNOWN));
                FunctionCall func=new FunctionCall(funcDef,funcArgs,ExpressionPosition.UNKNOWN);
-               filters.add(func);
+               includes.add(func);
+               */
+               includes.add(new ValueExpressions.QuotedString("20130101visit.auto",null));
+               Constants.FilterType type= Constants.FilterType.XaRowKeyPattern;
+               HbaseScanPOP.RowkeyFilterEntry filterEntry=new HbaseScanPOP.RowkeyFilterEntry(type,includes);
+               filters.add(filterEntry);
+
                NamedExpression e1=new NamedExpression(new SchemaPath("uid",ExpressionPosition.UNKNOWN),new FieldReference("uid",ExpressionPosition.UNKNOWN));
                NamedExpression e2=new NamedExpression(new SchemaPath("event0",ExpressionPosition.UNKNOWN),new FieldReference("event0",ExpressionPosition.UNKNOWN));
                NamedExpression e3=new NamedExpression(new SchemaPath("value",ExpressionPosition.UNKNOWN),new FieldReference("value",ExpressionPosition.UNKNOWN));
                projections.add(e1);
                projections.add(e2);
                projections.add(e3);
-               entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,null,projections);
+               entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,filters,projections);
                return entry;
 
     }

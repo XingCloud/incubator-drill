@@ -34,7 +34,6 @@ public class StoresScanner implements XAScanner {
   private static Logger LOG = LoggerFactory.getLogger(RegionScanner.class);
 
   private final String familyName = "val";
-  private final int batch = 1000;//todo
 
   private Scan scan;
 
@@ -57,7 +56,7 @@ public class StoresScanner implements XAScanner {
   private HRegionInfo hRegionInfo;
   private KeyValue.KVComparator comparator;
   private HColumnDescriptor family;
-  private List<StoreFile> storeFiles = new ArrayList<StoreFile>();
+  private List<StoreFile> storeFiles = new ArrayList<>();
   private List<KeyValueScanner> scanners;
   private ScanQueryMatcher matcher;
   private Store.ScanInfo scanInfo;
@@ -72,7 +71,7 @@ public class StoresScanner implements XAScanner {
   private final KeyValue KV_LIMIT = new KeyValue();
 
 
-  Map<String, KeyValueScanner> storeScanners =  new HashMap<String, KeyValueScanner>();
+  Map<String, KeyValueScanner> storeScanners =  new HashMap<>();
 
   public StoresScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     InetAddress addr = InetAddress.getLocalHost();
@@ -182,13 +181,15 @@ public class StoresScanner implements XAScanner {
   
   public void updateScanner(byte[] family, KeyValue theNext) throws IOException {
     //((StoreScanner)storeScanners.get(Bytes.toString(family))).updateReaders();
+    LOG.info("Reload Store file scanner...");
+    close();
     initStoreFiles(hRegionInfo);
     initKVScanners(scan);
     storeScanners.get(Bytes.toString(family)).seek(theNext);
   }
   
   public boolean next(List<KeyValue> outResults) throws IOException {
-    boolean hasMore = next(outResults, batch);
+    boolean hasMore = next(outResults, scan.getBatch());
     numKV.addAndGet(outResults.size());
     return hasMore;
   }
@@ -353,7 +354,7 @@ public class StoresScanner implements XAScanner {
     for (KeyValueScanner scanner : scanners) {
       scanner.close();
     }
-    LOG.info("Total kv number from hfile: " + numKV.toString());
+    LOG.info("Store Scanner closed. Total kv number from hfile: " + numKV.toString());
   }
 
   private StoreFile openStoreFile(Path filePath) {

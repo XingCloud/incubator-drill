@@ -1,5 +1,8 @@
 package org.apache.hadoop.hbase.regionserver;
 
+import com.xingcloud.hbase.util.HBaseEventUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Scan;
@@ -18,10 +21,14 @@ import java.util.Queue;
  * Time: 12:53 PM
  */
 public class XARegionScanner implements XAScanner{
+  private static Log LOG = LogFactory.getLog(XARegionScanner.class);
 
   private MemstoresScanner memstoresScanner;
   private StoresScanner storesScanner;
   private KeyValue.KVComparator comparator;
+
+  //Use to control version of one row
+  private long versionCounter = 0;
   
   public XARegionScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     if(!scan.isFilesOnly()){
@@ -46,24 +53,45 @@ public class XARegionScanner implements XAScanner{
   }
 
   public boolean next(List<KeyValue> results) throws IOException {
-    KeyValue ret = theNext;
-    if(theNext == MSNext){
-      MSNext = getKVFromMS();
-    }else{
-      SSNext = getKVFromSS();
+    if (theNext == null) {
+      //Both memstore and hfile have no value at all
+      return false;
     }
-
-    theNext = getLowest(MSNext, SSNext);
-    
-    if(ret != null){
-      results.add(ret); // todo one by one?
+    KeyValue ret = null;
+    while (results.size() < Helper.BATCH_SIZE + 1) {
+      ret = theNext;
+      if(theNext == MSNext){
+        MSNext = getKVFromMS();
+      }else{
+        SSNext = getKVFromSS();
+      }
+      theNext = getLowest(MSNext, SSNext);
+      if (theNext == null) {
+        //The last one
+        results.add(ret);
+        return false;
+      }
+      //Remove duplicate kv
+      if (!theNext.equals(ret)) {
+        //Control version of each cell
+        byte[] rowCurrent = ret.getRow();
+        byte[] rowNext = theNext.getRow();
+        if (Bytes.compareTo(rowCurrent, rowNext) == 0) {
+          versionCounter++;
+        } else {
+          versionCounter = 0;
+        }
+        if (versionCounter < Helper.MAX_VERSIONS) {
+          results.add(ret);
+        }
+      }
     }
-    
-    return ret != null;
+    return true;
   }
 
   @Override
   public void close() throws IOException {
+    LOG.info("XARegion scanner closed.");
     if(memstoresScanner != null){
       memstoresScanner.close();
     }  
@@ -72,59 +100,55 @@ public class XARegionScanner implements XAScanner{
     }
   }
 
-  private Queue<KeyValue> MSKVCache = new LinkedList<KeyValue>();
+  private Queue<KeyValue> MSKVCache = new LinkedList<>();
   
   public KeyValue getKVFromMS() throws IOException {
     if (null == memstoresScanner) return null;
     
-    while(true){
-      if(0 == MSKVCache.size()){
-        List<KeyValue> results = new ArrayList<KeyValue>();
-        if(memstoresScanner.next(results)){
+    while (true){
+      if (0 == MSKVCache.size()){
+        List<KeyValue> results = new ArrayList<>();
+        if(memstoresScanner.next(results)) {
           MSKVCache.addAll(results);
-        }else{
+        } else {
           return null;
         }
       }
 
       KeyValue kv = MSKVCache.poll();
-      if(Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0){
-        if(storesScanner != null){
+
+      if (Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0) {
+        if (storesScanner != null){
           storesScanner.updateScanner(kv.getFamily(), theNext); //todo kv to seek
           if(SSNext == null){
             SSNext = getKVFromSS();
           }
         }
-      }else {
+      } else {
         return kv;
       }
     }
   }
 
-  private Queue<KeyValue> SSKVCache = new LinkedList<KeyValue>();
+  private Queue<KeyValue> SSKVCache = new LinkedList<>();
   
   public KeyValue getKVFromSS() throws IOException {
-    if(null== storesScanner) return null;
-    
+    if(null == storesScanner) return null;
     if(0 == SSKVCache.size()){
-      List<KeyValue> results = new ArrayList<KeyValue>();
-      if(!storesScanner.next(results)){//todo when to stop
-//        storesScanner.close();
-//        storesScanner = null;
-      }
+      List<KeyValue> results = new ArrayList<>();
+      boolean hasNext = storesScanner.next(results);
       SSKVCache.addAll(results);
     }
-
     return SSKVCache.poll();
   }
 
   private KeyValue getLowest(final KeyValue a, final KeyValue b) {
-    if (a == null) {
+    if (null == a) {
       return b;
     }
-    if (b == null) {
+    if (null == b) {
       return a;
     }
-    return comparator.compareRows(a, b) <= 0? a: b;
+    return comparator.compareRows(a, b) <= 0 ? a: b;
   }  
 }

@@ -21,9 +21,19 @@ import java.util.*;
 public class Helper {
 
   private static Logger LOG = LoggerFactory.getLogger(Helper.class);
+
+  public static final byte[] DEFAULT_FAM = Bytes.toBytes("val");
+  public static final byte[] DEFAULT_COL = Bytes.toBytes("val");
+  public static final int BATCH_SIZE = 16 * 1024;
+  public static final int CACHE_SIZE = 16 * 1024;
+  public static final int MAX_VERSIONS = 2000;
+
   public static List<HRegionInfo> getRegionInfoList(HTable hTable, Pair<byte[], byte[]> seKey) throws IOException {
-    Set<HRegionInfo> hRegionInfoSet = new HashSet<HRegionInfo>();
+    long st = System.nanoTime();
+    Set<HRegionInfo> hRegionInfoSet = new HashSet<>();
     NavigableMap<HRegionInfo, ServerName> regionInfoMap = hTable.getRegionLocations();
+    LOG.info("Get region location taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
+
     if (regionInfoMap.size() == 1) {
       /*There is only one region*/
       return new ArrayList<HRegionInfo>(regionInfoMap.keySet());
@@ -37,7 +47,7 @@ public class Helper {
     for (HRegionInfo ri : regionInfoList) {
       summary.append(ri.getRegionNameAsString()).append("\n");
     }
-    LOG.info(summary.toString());
+    LOG.info(summary.toString() + "Total Taken: " + (System.nanoTime()-st)/1.0e9 + " sec");
     return regionInfoList;
   }
 

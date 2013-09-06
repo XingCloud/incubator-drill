@@ -2,6 +2,7 @@ package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.xingcloud.meta.ByteUtils;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.exception.SchemaChangeException;
@@ -17,6 +18,7 @@ import org.apache.drill.exec.vector.ValueVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -65,6 +67,7 @@ public class UnionedScanBatch implements RecordBatch {
   
   
   private int readerCurrentEntry;
+  private int lastReaderEntry;
 
   public UnionedScanBatch(FragmentContext context, List<HbaseScanPOP.HbaseScanEntry> readEntries) throws ExecutionSetupException {
     this.context = context;
@@ -82,7 +85,9 @@ public class UnionedScanBatch implements RecordBatch {
     for (int i = 0; i < sortedEntries.size(); i++) {
       HbaseScanPOP.HbaseScanEntry scanEntry = sortedEntries.get(i);
       if(i<sortedEntries.size()-1){
-        if(scanEntry.getEndRowKey().compareTo(sortedEntries.get(i+1).getStartRowKey())>0){
+        byte[] thisEnd = ByteUtils.toBytesBinary(scanEntry.getEndRowKey());
+        byte[] nextStart = ByteUtils.toBytesBinary(sortedEntries.get(i+1).getStartRowKey());
+        if(ByteUtils.compareBytes(thisEnd, nextStart) > 0){
           throw new ExecutionSetupException("entry rowkey overlap: "+i+"'th endKey:"+scanEntry.getEndRowKey()+" vs next startKey:"+sortedEntries.get(i+1).getStartRowKey());
         }
       }
@@ -136,16 +141,17 @@ public class UnionedScanBatch implements RecordBatch {
     }
     try{
       recordCount = reader.next();
-      logger.debug("reader.next():{}", recordCount);
     }catch(Exception e){
       logger.info("Reader.next() failed", e);
-      //releaseReaderAssets();
+      releaseReaderAssets();
       return IterOutcome.STOP;
     }
     if(recordCount == 0){
       releaseReaderAssets();
       return IterOutcome.NONE;
     }
+    lastReaderEntry = getEntryMark();
+    removeEntryMark();
     if (schemaChanged) {
       schemaChanged = false;
       return IterOutcome.OK_NEW_SCHEMA;
@@ -201,7 +207,6 @@ public class UnionedScanBatch implements RecordBatch {
    * 如果超过了指定的entry，则返回false。
    */
   boolean forwardReader2Before(int sortedEntry) {
-    logger.debug("forwardReader2Before({})",sortedEntry);
     if(sortedEntry >= sortedEntries.size()){
       throw new IndexOutOfBoundsException("want to forward to the "+sortedEntry+"'th entry, but only have "+sortedEntries.size());
     }
@@ -250,7 +255,6 @@ public class UnionedScanBatch implements RecordBatch {
   }
 
   private void doCache(RecordBatch.IterOutcome outcome, List<CachedFrame> cache) {
-    logger.debug("caching results for entry {} ...", readerCurrentEntry);
     int outRecordCount = recordCount;
     ArrayList<ValueVector> cachedVectors = new ArrayList<>();
     for (ValueVector v : vectors) {
@@ -281,6 +285,9 @@ public class UnionedScanBatch implements RecordBatch {
     private SchemaBuilder builder = BatchSchema.newBuilder();
 
     public void removeField(MaterializedField field) throws SchemaChangeException {
+      //for test
+      //if(!fieldVectorMap.containsKey(field))
+      //    return;
       schemaChanged();
       ValueVector vector = fieldVectorMap.remove(field);
       if (vector == null) throw new SchemaChangeException("Failure attempting to remove an unknown field.");
@@ -486,14 +493,6 @@ public class UnionedScanBatch implements RecordBatch {
                   reset2NextEntry();
                   continue;
                 }
-                //还在这个entry范围内
-                if(logger.isDebugEnabled()){
-                  Iterator<ValueVector> it;
-                  for (it = passEntryID(vectors.iterator()); it.hasNext();) {
-                    ValueVector vector = it.next();
-                    logger.debug("vector on direct mode's next():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));                    
-                  }
-                }
                 return outcome;
             }
             break;
@@ -572,30 +571,8 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public Iterator<ValueVector> iterator() {
-      logger.debug("iterating vectors on mode:{}", scanMode);
       switch(scanMode){
         case direct:
-          if(logger.isDebugEnabled()){
-            ValueVector previous = null;
-            for(Iterator<ValueVector> it = passEntryID(vectors.iterator());it.hasNext();){
-              ValueVector vector = it.next();
-              if(vector == previous){
-                logger.warn("previous vector same as this!{}", vector.getField());
-              }
-              previous = vector;
-              logger.debug("vector on direct mode's iterator():{},{}...", vector.getAccessor().getValueCount(),vector.getAccessor().getObject(0));
-              try {
-                Field dataField = vector.getClass().getSuperclass().getDeclaredField("data");
-                dataField.setAccessible(true);
-                Object data = dataField.get(vector);
-                logger.debug("data:{}",data.getClass());
-              } catch (NoSuchFieldException e) {
-                e.printStackTrace();  //e:
-              } catch (IllegalAccessException e) {
-                e.printStackTrace();  //e:
-              }
-            }
-          }
           return passEntryID(vectors.iterator());
         case cached:
           return currentCachedData.getVectors().iterator();
@@ -677,6 +654,7 @@ public class UnionedScanBatch implements RecordBatch {
     splitsChecked = true;
   }
 
+
   private int getEntryMark() {
     for(ValueVector v:vectors){
       if(v.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
@@ -718,12 +696,10 @@ public class UnionedScanBatch implements RecordBatch {
    * @return
    */
   private boolean checkReaderOutputIntoNextEntry() {
-    int scanningEntry = getEntryMark();
-    logger.debug("entry mark for this output:{}", scanningEntry);
+    int scanningEntry = lastReaderEntry;
     if(scanningEntry == -1){
       throw new IllegalStateException("cannot find entry mark!");
     }
-    removeEntryMark();
     boolean intoNext = false;
     if(scanningEntry > readerCurrentEntry){
       intoNext = true;
@@ -735,7 +711,6 @@ public class UnionedScanBatch implements RecordBatch {
         markScanNext();              
       }            
     }
-    logger.debug("checkReaderOutputIntoNextEntry():{}", intoNext);
     return intoNext;
   }
 

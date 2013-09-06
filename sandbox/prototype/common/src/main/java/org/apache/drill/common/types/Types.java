@@ -33,6 +33,7 @@ public class Types {
     case UINT2:
     case UINT4:
     case UINT8:
+    case VARBIGINT:
       return true;
       default:
         return false;
@@ -44,6 +45,7 @@ public class Types {
     case VARBINARY:
     case VAR16CHAR:
     case VARCHAR:
+    case VARBIGINT:
       return false;
     default:
       return true;

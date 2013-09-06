@@ -30,5 +30,18 @@ public class Constants {
         // between ... and ...[x, y]
         BETWEEN
     }
+    public enum FilterType{
+        XaRowKeyPattern("XaRowKeyPattern"),
+        HbaseOrig("HbaseOrig");
+        private String type;
+        FilterType(String type){
+            type=type.toLowerCase();
+            if(type.contains("hbaseorig"))
+                this.type="HbaseOrig";
+            else if(type.contains("rowkey")){
+                this.type="XaRowKeyPattern";
+            }
+        }
+    }
 
 }

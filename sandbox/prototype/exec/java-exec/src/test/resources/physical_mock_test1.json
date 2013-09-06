@@ -1,0 +1,58 @@
+{
+    head:{
+        type:"APACHE_DRILL_PHYSICAL",
+        version:"1",
+        generator:{
+            type:"manual"
+        }
+    },
+	graph:[
+        {
+            @id:1,
+            pop:"mock-scan",
+            url: "http://apache.org",
+            entries:[
+            	{records: 100, types: [
+            	  {name: "blue", type: "BIGINT", mode: "REQUIRED"},
+            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
+            	  {name: "green", type: "INT", mode: "REQUIRED"}
+            	]}
+            ]
+        },
+        {
+              pop: "segment",
+              @id:2,
+              child : 1,
+              ref: "segment",
+              exprs :[ { ref: "blue", expr: "blue"}]
+            },
+        {
+              pop: "PhysicalCollapsingAggregate",
+              @id: 3,
+              child: 2,
+              within: "segment",
+              carryovers: [
+                "blue"
+              ],
+              aggregations: [
+                {
+                  ref: "count",
+                  expr: "count(blue) "
+                },
+                {
+                  ref: "count_distinct",
+                  expr: "count_distinct(blue) "
+                },
+                {
+                  ref: "sum",
+                  expr: "sum(blue) "
+                }
+              ]
+        },
+        {
+            @id: 4,
+            child: 3,
+            pop: "screen"
+        }
+    ]
+}
