@@ -38,6 +38,7 @@ import org.apache.drill.common.logical.data.Union;
 import org.apache.drill.common.logical.data.UnionedScan;
 import org.apache.drill.common.logical.data.UnionedScanSplit;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
+import org.apache.drill.common.util.FieldReferenceBuilder;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
@@ -145,7 +146,6 @@ public class BasicOptimizer extends Optimizer {
       int selectionSize = root.size();
       HbaseScanPOP.HbaseScanEntry entry;
       List<LogicalExpression> filterList;
-      LogicalExpression le;
       List<NamedExpression> projectionList;
       NamedExpression ne;
       List<HbaseScanPOP.RowkeyFilterEntry> filterEntries;
@@ -173,12 +173,7 @@ public class BasicOptimizer extends Optimizer {
               }
               filterList = new ArrayList<>(includes.size());
               for (JsonNode include : includes) {
-                try {
-                  le = mapper.readValue(include.traverse(), LogicalExpression.class);
-                } catch (Exception e) {
-                  throw new OptimizerException("Cannot parse filter - " + include.textValue());
-                }
-                filterList.add(le);
+                filterList.add(FieldReferenceBuilder.buildColumn(include.textValue()));
               }
               filterTypeFR = new FieldReference("XARowKeyPatternFilter", ExpressionPosition.UNKNOWN);
               rowkeyFilterEntry = new HbaseScanPOP.RowkeyFilterEntry(filterTypeFR, filterList);
