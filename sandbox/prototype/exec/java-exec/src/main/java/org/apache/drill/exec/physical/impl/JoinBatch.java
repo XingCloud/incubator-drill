@@ -265,7 +265,7 @@ public class JoinBatch extends BaseRecordBatch {
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
-      for (MaterializedField f : rightIncoming.getSchema()) {
+      for (MaterializedField f : rightSchema) {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
@@ -338,7 +338,7 @@ public class JoinBatch extends BaseRecordBatch {
         outMutator.setValueCount(recordCount);
         outputVectors.add(out);
       }
-      for (MaterializedField f : rightIncoming.getSchema()) {
+      for (MaterializedField f : rightSchema) {
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
@@ -365,9 +365,9 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public boolean connect() {
       cacheRight();
-      rightMarkBits.allocateNew(rightIncoming.getRecordCount());
+      rightMarkBits.allocateNew(rightValueCount);
       BitVector.Mutator mutator = rightMarkBits.getMutator();
-      mutator.setValueCount(rightIncoming.getRecordCount());
+      mutator.setValueCount(rightValueCount);
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       for (int i = 0; i < accessor.getValueCount(); i++) {
         if (leftValueMap.containsKey(accessor.get(i))) {
@@ -463,7 +463,7 @@ public class JoinBatch extends BaseRecordBatch {
     }
 
     public Tuple<List<ValueVector>, IntVector, Integer> removeFirst() {
-      return new Tuple<List<ValueVector>, IntVector, Integer>(incomings.removeFirst(),
+      return new Tuple<>(incomings.removeFirst(),
         joinKeys.removeFirst(), recordCounts.removeFirst());
     }
 
