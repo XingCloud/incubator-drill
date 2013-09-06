@@ -101,15 +101,19 @@ public class UnionRecordBatch implements RecordBatch {
       switch (upstream) {
         case OK_NEW_SCHEMA:
         case OK:
-          if(recordBatch != current)
+          if (recordBatch != current) {
+            upstream = IterOutcome.OK_NEW_SCHEMA;
             setupSchema();
-          current = recordBatch ;
+          }
+          current = recordBatch;
           doTransfer();
           return upstream;
         case NOT_YET:
           continue;
+        case STOP:
+          return IterOutcome.STOP;
         case NONE:
-            childrens.remove(recordBatch);
+          childrens.remove(recordBatch);
       }
     }
     return IterOutcome.NOT_YET;
