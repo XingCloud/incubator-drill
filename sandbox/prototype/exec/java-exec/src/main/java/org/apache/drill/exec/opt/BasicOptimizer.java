@@ -25,6 +25,7 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.expression.ValueExpressions;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
@@ -40,7 +41,6 @@ import org.apache.drill.common.logical.data.Union;
 import org.apache.drill.common.logical.data.UnionedScan;
 import org.apache.drill.common.logical.data.UnionedScanSplit;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
-import org.apache.drill.common.util.FieldReferenceBuilder;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
@@ -53,7 +53,6 @@ import org.apache.drill.exec.physical.config.Screen;
 import org.apache.drill.exec.physical.config.SegmentPOP;
 import org.apache.drill.exec.physical.config.UnionedScanPOP;
 import org.apache.drill.exec.physical.config.UnionedScanSplitPOP;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -161,10 +160,10 @@ public class BasicOptimizer extends Optimizer {
         // Rowkey range
         rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
         rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
-        rowkeyStart= RowKeyUtils.processRkBound(rowkeyStart,true);
+        rowkeyStart = RowKeyUtils.processRkBound(rowkeyStart, true);
         //rowkeyStart = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyStart),RowKeyUtils.produceTail(true)));
         rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-        rowkeyEnd=RowKeyUtils.processRkBound(rowkeyEnd,false);
+        rowkeyEnd = RowKeyUtils.processRkBound(rowkeyEnd, false);
         //rowkeyEnd = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyEnd),RowKeyUtils.produceTail(false)));
 
         // Filters
@@ -180,7 +179,9 @@ public class BasicOptimizer extends Optimizer {
               }
               filterList = new ArrayList<>(includes.size());
               for (JsonNode include : includes) {
-                filterList.add(FieldReferenceBuilder.buildColumn(include.textValue()));
+                filterString = include.textValue();
+                filterString = filterString.substring(1, filterString.length() - 1);
+                filterList.add(new ValueExpressions.QuotedString(filterString, ExpressionPosition.UNKNOWN));
               }
               filterTypeFR = Constants.FilterType.XaRowKeyPattern;
               rowkeyFilterEntry = new HbaseScanPOP.RowkeyFilterEntry(filterTypeFR, filterList);

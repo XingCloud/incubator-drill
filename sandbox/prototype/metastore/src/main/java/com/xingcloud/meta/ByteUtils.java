@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Random;
 
 /**
  * Utility class that handles byte arrays, conversions to/from other types, comparisons, hash code generation,
@@ -964,37 +965,30 @@ public class ByteUtils {
   }
 
   public static void main(String[] args) throws UnsupportedEncodingException {
-    String s="我";
-    byte[] bytes = toBytesBinary(s);
-    System.out.println(Arrays.toString(bytes));
-    System.out.println(toStringBinary(bytes));
+    String randomString = "行云";
+    System.out.println("None ascii string is " + randomString);
+    byte[] stringBytes = randomString.getBytes();
+    System.out.println("None ascii string byte array is " + Arrays.toString(stringBytes));
 
-    bytes = toBytes(s);
-    System.out.println(Arrays.toString(bytes));
-    System.out.println(toStringBinary(bytes));
-//    String randomString = RandomStringUtils.randomAlphanumeric(10);
-//    randomString = "中";
-//    System.out.println("String is " + randomString);
-//    byte[] stringBytes = randomString.getBytes();
-//    System.out.println("String byte array is " + Arrays.toString(stringBytes));
-//
-//    long l = 984121;
-//    System.out.println("Long is " + l);
-//    byte[] longBytes = toBytes(l);
-//    System.out.println("Long byte array is " + Arrays.toString(longBytes));
-//
-//    byte[] newBytes = new byte[stringBytes.length + longBytes.length];
-//    System.arraycopy(stringBytes, 0, newBytes, 0, stringBytes.length);
-//    System.arraycopy(longBytes, 0, newBytes, stringBytes.length, longBytes.length);
-//    System.out.println("Combined byte array rowkey is " + Arrays.toString(newBytes));
-//
-//    String printableString = toStringBinary(newBytes);
-//    System.out.println("Printable string is " + printableString);
-//
-//    String unprintableString = toString(newBytes);
-//    System.out.println("Unprintable string is " + unprintableString);
-//
-//    System.out.println(Arrays.toString(toBytesBinary(printableString)));
+    System.out.println("---------------------------------");
+    long l = new Random().nextLong();
+    System.out.println("Long is " + l);
+    byte[] longBytes = toBytes(l);
+    System.out.println("Long byte array is " + Arrays.toString(longBytes));
+
+    System.out.println("---------------------------------");
+    byte[] newBytes = new byte[stringBytes.length + longBytes.length];
+    System.arraycopy(stringBytes, 0, newBytes, 0, stringBytes.length);
+    System.arraycopy(longBytes, 0, newBytes, stringBytes.length, longBytes.length);
+    System.out.println("Combined byte array rowkey is " + Arrays.toString(newBytes));
+
+    String printableString = toStringBinary(newBytes);
+    System.out.println("Printable string is " + printableString);
+    String unprintableString = toString(newBytes);
+    System.out.println("Unprintable string is " + unprintableString);
+
+    System.out.println("---------------------------------");
+    System.out.println(Arrays.toString(toBytesBinary(printableString)));
   }
 
 }
