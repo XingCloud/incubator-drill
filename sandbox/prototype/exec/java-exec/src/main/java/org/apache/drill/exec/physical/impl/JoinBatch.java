@@ -365,7 +365,6 @@ public class JoinBatch extends BaseRecordBatch {
 
     @Override
     public boolean connect() {
-      cacheRight();
       rightMarkBits.allocateNew(rightValueCount);
       BitVector.Mutator mutator = rightMarkBits.getMutator();
       mutator.setValueCount(rightValueCount);
