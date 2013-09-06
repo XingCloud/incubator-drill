@@ -120,6 +120,9 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
   @Override
   public IterOutcome next() {
+    if(!hasMore){
+      return IterOutcome.NONE;
+    }
     IterOutcome o = incoming.next();
     switch (o) {
       case OK_NEW_SCHEMA:
@@ -141,6 +144,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
           return IterOutcome.NONE;
         }
         writeOutPut();
+        hasMore = false ;
         return IterOutcome.OK_NEW_SCHEMA;
     }
     return  IterOutcome.NONE ;
