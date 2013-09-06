@@ -162,6 +162,7 @@ public class JoinBatch extends BaseRecordBatch {
 
   private void cacheRight() {
     rightCache.cache(TransferHelper.transferVectors(rightIncoming), (IntVector) rightEvaluator.eval(), rightIncoming.getRecordCount());
+    rightCache.setSchema(rightIncoming.getSchema());
   }
 
   public void setupSchema() {
@@ -213,7 +214,7 @@ public class JoinBatch extends BaseRecordBatch {
 
     public void setup() {
       leftIncomings = leftCache.getIncomings();
-      leftSchema = leftIncoming.getSchema();
+      leftSchema = leftCache.getSchema();
       RightCache.Tuple<List<ValueVector>, IntVector, Integer> tuple = rightCache.removeFirst();
       rightVectors = tuple.getFirst();
       rightJoinKey = tuple.getSecond();
