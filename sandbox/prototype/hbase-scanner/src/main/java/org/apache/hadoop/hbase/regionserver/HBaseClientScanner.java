@@ -74,6 +74,9 @@ public class HBaseClientScanner implements XAScanner {
     scan.setBatch(batchSize);
     scan.setCaching(cacheSize);
     scan.setMaxVersions();
+    if (filter != null) {
+      scan.setFilter(filter);
+    }
     return scan;
   }
 }
