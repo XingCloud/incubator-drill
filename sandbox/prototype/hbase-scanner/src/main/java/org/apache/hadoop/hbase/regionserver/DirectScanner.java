@@ -37,7 +37,7 @@ public class DirectScanner implements XAScanner {
   private int currentIndex = 0;
   private List<HRegionInfo> regionList;
   private XAScanner currentScanner;
-  private boolean hasNext;
+  private boolean hasNext = true;
   private Scan scan;
 
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName,
@@ -91,12 +91,10 @@ public class DirectScanner implements XAScanner {
 
   @Override
   public boolean next(List<KeyValue> results) throws IOException {
-    if (!hasNext) {
+    if (!hasNext || regionList.size() == 0) {
       return false;
     }
-    if (regionList.size() == 0) {
-      return false;
-    }
+
     if(currentScanner == null){
       currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
     }
