@@ -18,6 +18,7 @@ import java.util.*;
 
 public class AsyncExecutor {
 
+//  Lock lock = new ReentrantLock(true);
   /**
    * mapping from POP to implementing RecordBatch
    */
@@ -192,7 +193,7 @@ public class AsyncExecutor {
         UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
         loop:
         while (true) {
-          RecordBatch.IterOutcome outcome = nextUpward(split);
+          RecordBatch.IterOutcome outcome = nextUpward(split, false);
           switch (outcome) {
             case NONE:
             case STOP:
@@ -233,7 +234,7 @@ public class AsyncExecutor {
       loop:
       while (true) {
         try {
-          RecordBatch.IterOutcome outcome = nextUpward(scanBatch);
+          RecordBatch.IterOutcome outcome = nextUpward(scanBatch, false);
           switch (outcome) {
             case NONE:
             case STOP:
@@ -249,7 +250,14 @@ public class AsyncExecutor {
     }
   }
 
-  private RecordBatch.IterOutcome nextUpward(RecordBatch batch) {
+  private RecordBatch.IterOutcome nextUpward(RecordBatch batch, boolean sync) {
+    Object syncer = null;
+    if(sync){
+      syncer = AsyncExecutor.this;
+    }else{
+      syncer = new Object();
+    }
+    synchronized (syncer){
     RecordBatch.IterOutcome outcome = null;
     Throwable errorCause = null;
     while (true) {
@@ -258,6 +266,9 @@ public class AsyncExecutor {
         outcome = batch.next();
       } catch (Throwable e) {
         errorCause = e;
+      }
+      if(errorCause != null && !(errorCause instanceof RuntimeException)){
+        errorCause = new RuntimeException(errorCause);
       }
       if (outcome == RecordBatch.IterOutcome.NOT_YET) {
         //data not ready yet, no need to continue upward
@@ -271,11 +282,7 @@ public class AsyncExecutor {
           parentKilled = true;
         }else{
           if(errorCause != null){
-            if (errorCause instanceof RuntimeException) {
-              blockingRelay.markNextFailed((RuntimeException) errorCause);
-            } else {
-              blockingRelay.markNextFailed(new RuntimeException(errorCause));
-            }
+            blockingRelay.markNextFailed((RuntimeException) errorCause);
           }else{
             blockingRelay.mirrorResultFromIncoming(outcome, true); 
           }
@@ -288,11 +295,7 @@ public class AsyncExecutor {
             break;
           } else {
             if (errorCause != null) {
-              if (errorCause instanceof RuntimeException) {
-                parentRelay.markNextFailed((RuntimeException) errorCause);
-              } else {
-                parentRelay.markNextFailed(new RuntimeException(errorCause));
-              }
+              parentRelay.markNextFailed((RuntimeException) errorCause);
             } else {
               parentRelay.mirrorResultFromIncoming(outcome, false);
             }
@@ -313,7 +316,7 @@ public class AsyncExecutor {
         if (parentRelay instanceof BlockingRelayRecordBatch) {
           //do nothing
         } else {
-          nextUpward(((SingleRelayRecordBatch) parentRelay).parent);
+          nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true);
         }
       }
       if (outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
@@ -322,6 +325,6 @@ public class AsyncExecutor {
     }
     return outcome;
   }
-
+  }
 
 }
