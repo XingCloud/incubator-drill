@@ -29,7 +29,7 @@ import org.apache.drill.common.logical.data.visitors.LogicalVisitor;
 @JsonTypeName("scan")
 public class Scan extends SourceOperator{
 	private final String storageEngine;
-	private final JSONOptions selection;
+	private JSONOptions selection;
 	private final FieldReference outputReference;
 	
 	@JsonCreator
@@ -47,6 +47,10 @@ public class Scan extends SourceOperator{
 
   public JSONOptions getSelection() {
     return selection;
+  }
+
+  public void setSelection(JSONOptions selection) {
+    this.selection = selection;
   }
 
   @JsonProperty("ref")

@@ -28,6 +28,10 @@ public class Selections {
   public static final String SELECTION_KEY_WORD_PROPERTY = "prop";
   public static final String SELECTION_KEY_WORD_PROPERTY_VALUE = "propv";
 
+  public static final String SELECTION_KEY_UID_RANGE = "uid_range";
+  public static final String SELECTION_KEY_UID_RANGE_START = "start";
+  public static final String SELECTION_KEY_UID_RANGE_END = "end";
+
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static JSONOptions NONE_HBASE_SELECTION;
 
