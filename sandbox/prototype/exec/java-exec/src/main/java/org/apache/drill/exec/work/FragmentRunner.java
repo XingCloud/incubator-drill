@@ -64,6 +64,7 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
   
   @Override
   public void run() {
+    long startTime = System.currentTimeMillis() ;
     logger.debug("Starting fragment runner. {}:{}", context.getHandle().getMajorFragmentId(), context.getHandle().getMinorFragmentId());
     if(!updateState(FragmentState.AWAITING_ALLOCATION, FragmentState.RUNNING, false)){
       internalFail(new RuntimeException(String.format("Run was called when fragment was in %s state.  FragmentRunnables should only be started when they are currently in awaiting allocation state.", FragmentState.valueOf(state.get()))));
@@ -97,7 +98,7 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
     }finally{
       t.stop();
     }
-    logger.debug("Fragment runner complete. {}:{}", context.getHandle().getMajorFragmentId(), context.getHandle().getMinorFragmentId());
+    logger.debug("Fragment runner complete. {}:{},cost time{} mills", context.getHandle().getMajorFragmentId(), context.getHandle().getMinorFragmentId(),System.currentTimeMillis() - startTime);
   }
   
   private void internalFail(Throwable excep){
