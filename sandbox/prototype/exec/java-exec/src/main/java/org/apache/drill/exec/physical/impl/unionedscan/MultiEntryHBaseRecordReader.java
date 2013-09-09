@@ -222,7 +222,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     if(conditions.size()>=1)
         filterList.addFilter(new XARowKeyPatternFilter(conditions));
-    scanner = new TableScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
     //scanner= new TableScanner(startRowKey,endRowKey,tableName,filterList,false,false);
   }
