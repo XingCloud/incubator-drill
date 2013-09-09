@@ -29,6 +29,10 @@ public class XARegionScanner implements XAScanner{
 
   //Use to control version of one row
   private long versionCounter = 0;
+
+
+  private boolean hasMoreMM = true;
+  private boolean hasMoreSS = true;
   
   public XARegionScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
     if(!scan.isFilesOnly()){
@@ -54,11 +58,11 @@ public class XARegionScanner implements XAScanner{
 
   public boolean next(List<KeyValue> results) throws IOException {
     if (theNext == null) {
-      //Both memstore and hfile have no value at all
+      //Both memstore and hfile have no values at all
       return false;
     }
     KeyValue ret = null;
-    while (results.size() < Helper.BATCH_SIZE + 1) {
+    while (results.size() < Helper.BATCH_SIZE) {
       ret = theNext;
       if(theNext == MSNext){
         MSNext = getKVFromMS();
@@ -107,16 +111,18 @@ public class XARegionScanner implements XAScanner{
     
     while (true){
       if (0 == MSKVCache.size()){
-        List<KeyValue> results = new ArrayList<>();
-        if(memstoresScanner.next(results)) {
-          MSKVCache.addAll(results);
-        } else {
+        if (!hasMoreMM) {
           return null;
         }
+        List<KeyValue> results = new ArrayList<>();
+        hasMoreMM = memstoresScanner.next(results);
+        MSKVCache.addAll(results);
+
       }
-
       KeyValue kv = MSKVCache.poll();
-
+      if (null == kv) {
+        return kv;
+      }
       if (Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0) {
         if (storesScanner != null){
           storesScanner.updateScanner(kv.getFamily(), theNext); //todo kv to seek
@@ -134,9 +140,12 @@ public class XARegionScanner implements XAScanner{
   
   public KeyValue getKVFromSS() throws IOException {
     if(null == storesScanner) return null;
-    if(0 == SSKVCache.size()){
+    if(0 == SSKVCache.size()) {
+      if (!hasMoreSS) {
+        return null;
+      }
       List<KeyValue> results = new ArrayList<>();
-      boolean hasNext = storesScanner.next(results);
+      hasMoreSS = storesScanner.next(results);
       SSKVCache.addAll(results);
     }
     return SSKVCache.poll();
