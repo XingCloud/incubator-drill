@@ -91,11 +91,14 @@ public class DirectScanner implements XAScanner {
 
   @Override
   public boolean next(List<KeyValue> results) throws IOException {
+    if (!hasNext) {
+      return false;
+    }
     if (regionList.size() == 0) {
       return false;
     }
     if(currentScanner == null){
-      currentScanner = new XARegionScanner(regionList.get(0), scan);
+      currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
     }
     hasNext = currentScanner.next(results);
     if (!hasNext) {
