@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,6 +40,8 @@ public class DirectScanner implements XAScanner {
   private XAScanner currentScanner;
   private boolean hasNext = true;
   private Scan scan;
+
+  private AtomicLong numKV = new AtomicLong();
 
   public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName,
                        boolean isFileOnly, boolean isMemOnly) throws IOException {
@@ -99,6 +102,7 @@ public class DirectScanner implements XAScanner {
       currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
     }
     hasNext = currentScanner.next(results);
+    numKV.addAndGet(results.size());
     if (!hasNext) {
       //Move to next region
       currentScanner.close();
@@ -110,12 +114,13 @@ public class DirectScanner implements XAScanner {
       currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
       hasNext = true;
     }
+
     return hasNext;
   }
 
   @Override
   public void close() throws IOException {
-    LOG.info("Direct scanner closed.");
+    LOG.info("Direct scanner closed. Total records from memstore and hfile: " + numKV.get());
   }
 
   public static void main(String[] args) throws IOException {
