@@ -89,7 +89,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private long timeCost = 0 ;
   private long start = 0;
-  private boolean hasMore = true ;
 
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
@@ -222,12 +221,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    if(conditions.size()>=1) {
-      filterList.addFilter(new XARowKeyPatternFilter(conditions));
-    }
-    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    if(conditions.size()>=1)
+        filterList.addFilter(new XARowKeyPatternFilter(conditions));
+    //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
-    //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
   }
 
   @Override
@@ -289,14 +287,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   public int next() {
-    if(!hasMore) {
-      try {
-        scanner.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      return 0;
-    }
     start = System.currentTimeMillis();
     try {
       if (newEntry) setUpNewEntry();
@@ -327,7 +317,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           }
         }
         if (!scanner.next(curRes)) {
-          hasMore = false ;
           valIndex = 0 ;
           return endNext(recordSetIndex);
         }
