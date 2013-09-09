@@ -120,61 +120,65 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
   @Override
   public IterOutcome next() {
-    if (!hasMore) {
-      recordCount = 0;
-      outputVectors.clear();
+    if(!hasMore){
       return IterOutcome.NONE;
     }
     IterOutcome o = incoming.next();
-    while (true) {
-      if(o == IterOutcome.NONE)
-        break;
-      else if(o == IterOutcome.STOP){
-        return  o ;
-      }
-      try {
-        consumeCurrent();
-        int groupId = 0;
-        Object[] carryOverValue = null;
-        Long[] aggValues = new Long[aggregatingEvaluators.length];
-        for (int i = 0; i < aggregatingEvaluators.length; i++) {
-          BigIntVector aggVector = (BigIntVector) aggregatingEvaluators[i].eval();
-          aggValues[i] = aggVector.getAccessor().get(0);
-          aggVector.close();
+    switch (o) {
+      case OK_NEW_SCHEMA:
+      case OK:
+        try{
+         doAggerate();
+        }catch (Exception e) {
+          logger.error(e.getMessage());
+          e.printStackTrace();
+          context.fail(e);
+          return IterOutcome.STOP;
         }
-        if (carryovers.length != 0) {
-          carryOverValue = new Object[carryovers.length];
-          ValueVector v;
-          for (int i = 0; i < carryovers.length; i++) {
-            v = carryovers[i].eval();
-            carryOverValue[i] = v.getAccessor().getObject(0);
-            carryOverTypes[i] = v.getField().getType();
-            v.close();
-          }
-        }
-        if (boundaryKey != null) {
-          IntVector boundaryVector = (IntVector) boundaryKey.eval();
-          groupId = boundaryVector.getAccessor().get(0);
-          boundaryVector.close();
-        }
-        mergeAggValues(groupId, aggValues, carryOverValue);
-        for (ValueVector v : incoming) {
-          v.close();
-        }
-        o = incoming.next();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-        e.printStackTrace();
-        context.fail(e);
+      case NOT_YET:
+        return IterOutcome.NOT_YET;
+      case STOP:
         return IterOutcome.STOP;
+      case NONE:
+        if (aggValues.isEmpty()) {
+          return IterOutcome.NONE;
+        }
+        writeOutPut();
+        hasMore = false ;
+        return IterOutcome.OK_NEW_SCHEMA;
+    }
+    return  IterOutcome.NONE ;
+  }
+
+  public void doAggerate(){
+    consumeCurrent();
+    int groupId = 0;
+    Object[] carryOverValue = null;
+    Long[] aggValues = new Long[aggregatingEvaluators.length];
+    for (int i = 0; i < aggregatingEvaluators.length; i++) {
+      BigIntVector aggVector = (BigIntVector) aggregatingEvaluators[i].eval();
+      aggValues[i] = aggVector.getAccessor().get(0);
+      aggVector.close();
+    }
+    if (carryovers.length != 0) {
+      carryOverValue = new Object[carryovers.length];
+      ValueVector v;
+      for (int i = 0; i < carryovers.length; i++) {
+        v = carryovers[i].eval();
+        carryOverValue[i] = v.getAccessor().getObject(0);
+        carryOverTypes[i] = v.getField().getType();
+        v.close();
       }
     }
-    if (aggValues.isEmpty()) {
-      return IterOutcome.NONE;
+    if (boundaryKey != null) {
+      IntVector boundaryVector = (IntVector) boundaryKey.eval();
+      groupId = boundaryVector.getAccessor().get(0);
+      boundaryVector.close();
     }
-    writeOutPut();
-    hasMore = false;
-    return IterOutcome.OK_NEW_SCHEMA;
+    mergeAggValues(groupId, aggValues, carryOverValue);
+    for (ValueVector v : incoming) {
+      v.close();
+    }
   }
 
 

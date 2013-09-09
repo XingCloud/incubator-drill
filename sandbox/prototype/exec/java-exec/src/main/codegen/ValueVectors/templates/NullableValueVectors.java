@@ -7,6 +7,7 @@
 <@pp.changeOutputFile name="${className}.java" />
 
 package org.apache.drill.exec.vector;
+import com.google.common.collect.ObjectArrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -56,8 +57,7 @@ public final class ${className} extends BaseValueVector implements <#if type.maj
   
   @Override
   public ByteBuf[] getBuffers() {
-    ByteBuf[] byteBufs = values.getBuffers();
-    return new ByteBuf[]{bits.data, byteBufs[0],byteBufs[1]};
+      return ObjectArrays.concat(bits.getBuffers(),values.getBuffers(),ByteBuf.class);
   }
   
   @Override

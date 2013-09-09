@@ -350,7 +350,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     int lastEntry = getEntryIndex(keyValues.get(offset + length - 1));
     if (lastEntry != currentEntry) {
-      for (int i = offset + length - 1; i >= offset; i++) {
+      for (int i = offset + length - 1; i >= offset; i--) {
         if (currentEntry == getEntryIndex(keyValues.get(i)))
           return i - offset + 1;
       }
