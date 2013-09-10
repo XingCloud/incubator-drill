@@ -42,12 +42,7 @@ public class UnionedScanBatch implements RecordBatch {
   private List<UnionedScanSplitBatch> splits = new ArrayList<>();
   private boolean splitsChecked = false;
   private FragmentContext context;
-  /*
-   * 已经缓存的结果。
-   * key 是 sortedIndex。
-   */
-  Map<Integer, List<CachedFrame>> cached = new HashMap<>();
-
+  
   IterOutcome lastOutcome = null;
   
   /**
@@ -64,9 +59,6 @@ public class UnionedScanBatch implements RecordBatch {
 
   private final Mutator mutator = new Mutator();
   
-  
-  
-  private int readerCurrentEntry;
   private int lastReaderEntry;
 
   public UnionedScanBatch(FragmentContext context, List<HbaseScanPOP.HbaseScanEntry> readEntries) throws ExecutionSetupException {
@@ -134,6 +126,9 @@ public class UnionedScanBatch implements RecordBatch {
   }  
   
   private IterOutcome nextReaderOutput() {
+    if(reader == null){
+      return IterOutcome.NONE;
+    }
     if(lastOutcome != null){
       IterOutcome ret = lastOutcome;
       lastOutcome = null;
@@ -160,16 +155,7 @@ public class UnionedScanBatch implements RecordBatch {
     }    
   }
 
-  /**
-   * 如果reader读完之前，还有entry没被扫到，则所有entry都加入一个IterOutcome.NONE的缓存
-   * @param outcome
-   */
-  private void finishRemainingEntries(IterOutcome outcome) {
-    for(;readerCurrentEntry<sortedEntries.size();markScanNext()){
-      getCacheFor(readerCurrentEntry).add(new CachedFrame(null,0,null, outcome, context));
-    }
-  }
-
+ 
   private void releaseReaderAssets() {
     if(reader != null){
       reader.cleanup();
@@ -181,14 +167,6 @@ public class UnionedScanBatch implements RecordBatch {
    * release cache and output variables of reader
    */
   private void releaseCache() {
-    for (Map.Entry<Integer, List<CachedFrame>> entry : cached.entrySet()) {
-      List<CachedFrame> value = entry.getValue();
-      for (CachedFrame frame : value) {
-        frame.close();
-      }
-      value.clear();
-    }
-    cached.clear();
     if(vectors!=null){
       for (ValueVector valueVector : vectors) {
         valueVector.close();
@@ -200,81 +178,6 @@ public class UnionedScanBatch implements RecordBatch {
   @Override
   public FragmentContext getContext() {
     return context;
-  }
-
-  /**
-   * 将reader 前进到指定的sortedEntry的起始处。
-   * 之前的entry如果没有被输出，则将结果缓存下来。
-   * @param sortedEntry
-   * @return 如果成功前进到了指定的entry，则返回true；
-   * 如果超过了指定的entry，则返回false。
-   */
-  boolean forwardReader2Before(int sortedEntry) {
-    if(sortedEntry >= sortedEntries.size()){
-      throw new IndexOutOfBoundsException("want to forward to the "+sortedEntry+"'th entry, but only have "+sortedEntries.size());
-    }
-    if(readerCurrentEntry == sortedEntry){
-      return true;
-    }
-    List<CachedFrame> cache = null;
-    while(true){
-      IterOutcome outcome = nextReaderOutput();
-      switch (outcome){
-        case OK_NEW_SCHEMA:
-        case OK:
-          checkReaderOutputIntoNextEntry();
-          cache = getCacheFor(readerCurrentEntry);
-          if (readerCurrentEntry == sortedEntry) {
-            //到达需要的这个entry
-            stallOutcome(outcome);
-            return true;
-          } else if (readerCurrentEntry > sortedEntry) {
-            //走过了这个entry
-            stallOutcome(outcome);
-            return false;
-          } else {
-            doCache(outcome, cache);
-            continue;
-          }
-        default://NONE, STOP
-          CachedFrame frame = new CachedFrame(schema,
-            0, null,outcome, context);
-          cache = getCacheFor(readerCurrentEntry);
-          cache.add(frame);
-          markScanNext();
-          finishRemainingEntries(outcome);          
-          return false;
-      }//switch
-    }
-  }
-
-  private List<CachedFrame> getCacheFor(int sortedEntry) {
-    List<CachedFrame> cache = cached.get(sortedEntry);
-        if(cache == null){
-          cache = new ArrayList<>();
-          cached.put(sortedEntry, cache);
-        }
-    return cache;
-  }
-
-  private void doCache(RecordBatch.IterOutcome outcome, List<CachedFrame> cache) {
-    int outRecordCount = recordCount;
-    ArrayList<ValueVector> cachedVectors = new ArrayList<>();
-    for (ValueVector v : vectors) {
-      if(v.getField().getName().equals(UNION_MARKER_VECTOR_NAME)){
-        v.clear();
-      }else{
-        TransferPair tp = v.getTransferPair();
-        cachedVectors.add(tp.getTo());
-        tp.transfer();
-      }
-    }
-
-
-    CachedFrame frame = new CachedFrame(schema,
-      outRecordCount, cachedVectors,
-      outcome, context);
-    cache.add(frame);
   }
   
   @Override
@@ -319,79 +222,22 @@ public class UnionedScanBatch implements RecordBatch {
     }
 
   }
-
-  static enum ScanMode {
-    direct, cached
-  }
-  
-  public class CachedFrame{
- 
-     /**
-      * recorded iteration results
-      */
-     BatchSchema schema;
-     private int recordCount;
-     private List<ValueVector> vectors;
-     private RecordBatch.IterOutcome outcome;
-     private FragmentContext context;
- 
-     public CachedFrame(BatchSchema schema,
-                                   int recordCount,
-                                   List<ValueVector> vectors,
-                                   RecordBatch.IterOutcome outcome,
-                                   FragmentContext context) {
-       this.schema = schema;
-       this.recordCount = recordCount;
-       this.vectors = vectors;
-       this.outcome = outcome;
-       this.context = context;
-     }
-
-    public BatchSchema getSchema() {
-      return schema;
-    }
-
-    public int getRecordCount() {
-      return recordCount;
-    }
-
-    public List<ValueVector> getVectors() {
-      return vectors;
-    }
-
-    public IterOutcome getOutcome() {
-      return outcome;
-    }
-
-    public FragmentContext getContext() {
-      return context;
-    }
-    
-    public void close() {
-       //clear self
-       if (vectors != null) {
-         for (ValueVector v : vectors) {
-           v.close();
-         }
-         this.vectors.clear();
-         this.vectors = null;
-       }
-     }
-  }
   
   public class UnionedScanSplitBatch implements RecordBatch{
   
     private final UnionedScanSplitPOP pop;
     private final FragmentContext context;
     
-    ScanMode scanMode = null;
     public int currentEntryIndex = 0;
-    public int currentCacheIndex = 0;
-    public CachedFrame currentCachedData = null;
 
+    public int mySortedEntry = 0;
     public UnionedScanSplitBatch(FragmentContext context, UnionedScanSplitPOP config) {
       this.pop = config;
       this.context = context;
+      if(this.pop.getEntries().length != 1){
+        throw new IllegalArgumentException("only support single entry for ScanSplit!");
+      }
+      mySortedEntry = original2sorted[this.pop.getEntries()[0]];
     }
 
     public UnionedScanSplitPOP getPop() {
@@ -405,26 +251,19 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public BatchSchema getSchema() {
-      switch (scanMode){
-        case cached:
-          return currentCachedData.getSchema();
-        case direct:
-          return schema;
-        default:
-          throw new IllegalArgumentException("can't recognize ScanMode:"+scanMode);
+      if(lastReaderEntry != mySortedEntry){
+        throw new IllegalStateException("last reader entry:"+lastReaderEntry+", current split index:"+original2sorted[pop.getEntries()[0]]);
       }
+      return schema;
     }
   
     @Override
     public int getRecordCount() {
-      switch (scanMode){
-        case cached:
-          return currentCachedData.getRecordCount();
-        case direct:
-          return recordCount;
-        default:
-          throw new IllegalArgumentException("can't recognize ScanMode:"+scanMode);
+      if(lastReaderEntry != mySortedEntry){
+        throw new IllegalStateException("last reader entry:"+lastReaderEntry+", current split index:"+original2sorted[pop.getEntries()[0]]);
       }
+      return recordCount;
+      
     }
   
     @Override
@@ -445,26 +284,18 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public TypedFieldId getValueVectorId(SchemaPath path) {
-      switch (scanMode){
-        case cached:
-          return new VectorHolder(currentCachedData.getVectors()).getValueVector(path);
-        case direct:
-          return holder.getValueVector(path);          
-        default:
-          throw new IllegalArgumentException("can't recognize ScanMode:"+scanMode);
+      if(lastReaderEntry != mySortedEntry){
+        throw new IllegalStateException("last reader entry:"+lastReaderEntry+", current split index:"+original2sorted[pop.getEntries()[0]]);
       }
+      return holder.getValueVector(path);          
     }
   
     @Override
     public <T extends ValueVector> T getValueVectorById(int fieldId, Class<?> clazz) {
-      switch (scanMode){
-        case cached:
-          return new VectorHolder(currentCachedData.getVectors()).getValueVector(fieldId, clazz);
-        case direct:
-          return holder.getValueVector(fieldId, clazz);
-        default:
-          throw new IllegalArgumentException("can't recognize ScanMode:"+scanMode);
+      if(lastReaderEntry != mySortedEntry){
+        throw new IllegalStateException("last reader entry:"+lastReaderEntry+", current split index:"+original2sorted[pop.getEntries()[0]]);
       }
+      return holder.getValueVector(fieldId, clazz);
     }
   
     @Override
@@ -473,105 +304,17 @@ public class UnionedScanBatch implements RecordBatch {
         checkSplits();
         splitsChecked = true;
       }
-      while (true) {
-        //first next() to decide scanMode
-        if (scanMode == null) {
-          initScanMode();
-        }
-        if(scanMode == null){
-          if(currentEntryIndex == pop.getEntries().length){
-            //完成
-            return IterOutcome.NONE;
-          }
-          //初始化scanMode失败
-          throw new IllegalStateException("scanMode initialization failed!");
-        }
-        switch (scanMode) {
-          case direct:
-            IterOutcome outcome = nextReaderOutput();
-            switch (outcome) {
-              case NONE:
-              case STOP:
-                markScanNext();
-                finishRemainingEntries(outcome);                
-                return outcome;
-              case OK:
-              case OK_NEW_SCHEMA:
-                if (checkReaderOutputIntoNextEntry()) {
-                  //本entry结束
-                  stallOutcome(outcome);
-                  reset2NextEntry();
-                  continue;
-                }
-                return outcome;
-            }
-            break;
-          case cached:
-            if(currentCachedData != null){
-              currentCachedData.close();
-            }
-            List<CachedFrame> cache = cached.get(currentSortedEntry());
-            if(currentCacheIndex >=cache.size()){
-              //eof, 本entry结束，go next
-              reset2NextEntry();
-              continue;
-            }
-            currentCachedData = cache.get(currentCacheIndex++);
-            outcome = currentCachedData.getOutcome();
-            if(outcome == IterOutcome.NONE || outcome == IterOutcome.STOP){
-              currentCachedData.close();
-            }
-            return currentCachedData.getOutcome();
-          default:
-            throw new IllegalArgumentException("can't recognize ScanMode:"+scanMode);
-        }
+      IterOutcome outcome = nextReaderOutput();
+      if(lastReaderEntry > mySortedEntry){
+        //reader run passed this split
+        stallOutcome(outcome);
+        return IterOutcome.NONE;
       }
-    }
-
-    private void reset2NextEntry(){
-      scanMode = null;
-      currentCacheIndex = 0;
-      currentCachedData = null;
-      currentEntryIndex++;
-    }
-    
-    int currentSortedEntry(){
-      if(currentEntryIndex >= pop.getEntries().length){
-        return -1;
+      if(lastReaderEntry < mySortedEntry){
+        //cannot reach this point!
+        throw new IllegalStateException("reader:"+lastReaderEntry+" is behind this split:"+mySortedEntry);
       }
-      return original2sorted[pop.getEntries()[currentEntryIndex]];
-    }
-
-    private void initScanMode() {
-      if(currentEntryIndex == pop.getEntries().length){
-        scanMode = null;
-        return;
-      }
-      int entryID = pop.getEntries()[currentEntryIndex];
-      int sortedEntry = original2sorted[entryID];
-      if(sortedEntry > readerCurrentEntry){
-        //null, 还没扫到这个entry
-        if(!forwardReader2Before(sortedEntry)){
-          scanMode = ScanMode.direct;
-          return;
-        }
-        if(readerCurrentEntry == sortedEntry){
-          scanMode = ScanMode.direct;
-        }else if(readerCurrentEntry > sortedEntry){
-          scanMode = ScanMode.direct;
-        }else{
-          throw new IllegalStateException("cannot forward to the "+sortedEntry+"'n entry!");
-        }
-      }else if(sortedEntry < readerCurrentEntry){
-          this.scanMode = ScanMode.cached;
-          if(cached.get(sortedEntry)==null){
-            //已经扫过这个entry，但是没有结果，说明被别的split输出了结果
-            throw new NullPointerException("cached output not found:"+entryID);
-          }
-          currentCacheIndex = 0;
-      }else{//sortedEntry == readerCurrentEntry
-          this.scanMode = ScanMode.direct;
-      }
+      return outcome;
     }
 
     @Override
@@ -581,14 +324,10 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public Iterator<ValueVector> iterator() {
-      switch(scanMode){
-        case direct:
-          return passEntryID(vectors.iterator());
-        case cached:
-          return currentCachedData.getVectors().iterator();
-        default:
-          throw new IllegalArgumentException("can't recognize scanMode:"+scanMode);
+      if(lastReaderEntry != mySortedEntry){
+        throw new IllegalStateException("last reader entry:"+lastReaderEntry+", current split index:"+original2sorted[pop.getEntries()[0]]);
       }
+      return passEntryID(vectors.iterator());
     }
 
     public UnionedScanBatch getIncoming(){
@@ -701,39 +440,7 @@ public class UnionedScanBatch implements RecordBatch {
   private void stallOutcome(IterOutcome outcome) {
     lastOutcome = outcome;
   }
-
-  /**
-   * 检查是否上次reader输出的内容，已经进入了下一个entry的范围;
-   * 如果进入了下一个entry，则更新readerCurrentEntry以及cache。
-   * 同时，将vector里面的entrymark删掉。
-   * @return
-   */
-  private boolean checkReaderOutputIntoNextEntry() {
-    int scanningEntry = lastReaderEntry;
-    if(scanningEntry == -1){
-      throw new IllegalStateException("cannot find entry mark!");
-    }
-    boolean intoNext = false;
-    if(scanningEntry > readerCurrentEntry){
-      intoNext = true;
-      markScanNext();
-      for(;scanningEntry > readerCurrentEntry;){
-        //可能中间有无结果，直接被跳过的entry
-        List<CachedFrame> cache = getCacheFor(readerCurrentEntry);
-        cache.add(new CachedFrame(null, 0, null, IterOutcome.NONE, context));
-        markScanNext();              
-      }            
-    }
-    return intoNext;
-  }
-
-  /**
-   * 标记reader开始扫描下一个entry
-   */
-  private void markScanNext() {
-    readerCurrentEntry++;
-  }
-
+ 
   @Override
    public BatchSchema getSchema() {
      throw new UnsupportedOperationException("UnionedScanBatch should not be called like other batches");
