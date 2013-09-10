@@ -208,7 +208,7 @@ public class AsyncExecutor {
           }
         }
       }
-      logger.debug("driver exit");
+      logger.debug("UnionedScanBatch driver exit");
     }
   }
 
@@ -253,7 +253,7 @@ public class AsyncExecutor {
         }
 
       }
-      logger.debug("driver exit");
+      logger.debug("ScanBatch driver exit");
 
     }
   }
@@ -330,7 +330,7 @@ public class AsyncExecutor {
       if (outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
         break;
       }
-    }
+    }//while(true)
     return outcome;
   }
   }
