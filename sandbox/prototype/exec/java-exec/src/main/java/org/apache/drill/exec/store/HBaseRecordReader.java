@@ -325,6 +325,7 @@ public class HBaseRecordReader implements RecordReader {
       recordSetIndex++;
       if (!next) {
         setValueCount(recordSetIndex);
+        timeCost += System.currentTimeMillis() - timeStart ;
         return recordSetIndex;
       }
 
