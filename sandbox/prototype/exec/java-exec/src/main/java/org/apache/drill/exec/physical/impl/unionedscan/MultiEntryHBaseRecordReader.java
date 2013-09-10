@@ -159,7 +159,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                    throw new IOException("include logicalExpression is not quotedString");
                 }
                 String pattern = ((ValueExpressions.QuotedString)e).value;
-                if (patterns.contains(pattern)){
+                if (!patterns.contains(pattern)){
                   conditions.add(new RowKeyFilterPattern(pattern));
                   patterns.add(pattern);
                 }

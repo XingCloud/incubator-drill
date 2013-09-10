@@ -122,16 +122,23 @@ public class XAEvaluators {
           varCharVector = new VarCharVector(MaterializedField.create(new SchemaPath("date", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR)),
             recordBatch.getContext().getAllocator());
         }
-        BigIntVector bigIntVector = (BigIntVector) child.eval();
-        BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+        // BigIntVector or NullableBigIntVector
+        ValueVector valueVector =  child.eval();
+        ValueVector.Accessor accessor = valueVector.getAccessor();
         int recordCount = accessor.getValueCount();
-        varCharVector.allocateNew(20 * recordCount, recordCount);
+        varCharVector.allocateNew(8 * recordCount, recordCount);
         VarCharVector.Mutator mutator = varCharVector.getMutator();
+        Object obj = null ;
         for (int i = 0; i < recordCount; i++) {
-          mutator.set(i, getDateString(accessor.get(i)).getBytes());
+          obj = accessor.getObject(i) ;
+          if(obj == null){
+            mutator.set(i,"XA-NA".getBytes());
+          }else{
+            mutator.set(i, getDateString((Long)obj).getBytes());
+          }
         }
         mutator.setValueCount(recordCount);
-        bigIntVector.close();
+        valueVector.close();
         return varCharVector;
       }
 

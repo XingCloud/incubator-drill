@@ -134,12 +134,17 @@ public class HBaseRecordReader implements RecordReader {
     FilterList filterList = new FilterList();
     if (filters != null) {
       List<RowKeyFilterCondition> conditions=new ArrayList<>();
+      List<String>  patterns=new ArrayList<String>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
        Constants.FilterType type = entry.getFilterType();
         switch (type) {
           case XaRowKeyPattern:
             for (LogicalExpression e : entry.getFilterExpressions()) {
-              conditions.add(new RowKeyFilterPattern(((ValueExpressions.QuotedString)e).value));
+              String pattern=((ValueExpressions.QuotedString)e).value;
+              if(!patterns.contains(pattern)){
+                conditions.add(new RowKeyFilterPattern(((ValueExpressions.QuotedString)e).value));
+                patterns.add(pattern);
+              }
             }
             break;
           case HbaseOrig:
