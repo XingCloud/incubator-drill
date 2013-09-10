@@ -161,10 +161,9 @@ public class BasicOptimizer extends Optimizer {
         rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
         rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
         rowkeyStart = RowKeyUtils.processRkBound(rowkeyStart, true);
-        //rowkeyStart = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyStart),RowKeyUtils.produceTail(true)));
+
         rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
         rowkeyEnd = RowKeyUtils.processRkBound(rowkeyEnd, false);
-        //rowkeyEnd = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyEnd),RowKeyUtils.produceTail(false)));
 
         // Filters
         filters = selection.get(SELECTION_KEY_WORD_FILTERS);
@@ -234,29 +233,30 @@ public class BasicOptimizer extends Optimizer {
           createHbaseScanEntry(selections, scan.getOutputReference(), entries);
           pop = new HbaseScanPOP(entries);
         } else if (SE_MYSQL.equals(storageEngine)) {
-          JSONOptions root = scan.getSelection();
-          if (root == null) {
+          JSONOptions selections = scan.getSelection();
+          if (selections == null) {
             throw new OptimizerException("Selection is null");
           }
-          JsonNode selection = root.getRoot(), projections;
+          JsonNode projections;
           String tableName, filter = null;
           List<MysqlScanPOP.MysqlReadEntry> readEntries = Lists.newArrayList();
           List<NamedExpression> projectionList = Lists.newArrayList();
-          tableName = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
-          if (selection.get(SELECTION_KEY_WORD_FILTER) != null)
-            filter = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
-          projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
-          ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
-          for (JsonNode projection : projections) {
-            try {
-              projectionList.add(mapper.readValue(projection.toString(), NamedExpression.class));
-            } catch (IOException e) {
-              throw new OptimizerException("Cannot parse projection : " + projection.toString());
+          for (JsonNode selection : selections.getRoot()) {
+            tableName = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
+            if (selection.get(SELECTION_KEY_WORD_FILTER) != null)
+              filter = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
+            projections = selection.get(SELECTION_KEY_WORD_PROJECTIONS);
+            ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
+            for (JsonNode projection : projections) {
+              try {
+                projectionList.add(mapper.readValue(projection.toString(), NamedExpression.class));
+              } catch (IOException e) {
+                throw new OptimizerException("Cannot parse projection : " + projection.toString());
+              }
             }
+            readEntries.add(new MysqlScanPOP.MysqlReadEntry(tableName, filter, projectionList));
           }
-          readEntries.add(new MysqlScanPOP.MysqlReadEntry(tableName, filter, projectionList));
           pop = new MysqlScanPOP(readEntries);
-
         } else {
           throw new OptimizerException("Unsupported storage engine - " + storageEngine);
         }
