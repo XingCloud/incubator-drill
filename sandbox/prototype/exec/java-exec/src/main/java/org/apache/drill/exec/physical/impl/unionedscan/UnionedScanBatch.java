@@ -171,7 +171,10 @@ public class UnionedScanBatch implements RecordBatch {
   }
 
   private void releaseReaderAssets() {
-    reader.cleanup();
+    if(reader != null){
+      reader.cleanup();
+      reader = null;
+    }
   }
 
   /**
