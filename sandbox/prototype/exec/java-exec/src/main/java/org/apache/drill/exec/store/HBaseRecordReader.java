@@ -411,7 +411,7 @@ public class HBaseRecordReader implements RecordReader {
         logger.error("Scanners close failed : " + e.getMessage());
       }
     }
-    logger.debug("Scan and parse cost {} ,scan cost {} , parse cost {} ",timeCost,scanCost,parseCost/1000.0);
+    logger.debug("Scan and parse cost {} ,scan cost {} , parse cost {} ",timeCost,scanCost,parseCost/1000000);
   }
 
 
