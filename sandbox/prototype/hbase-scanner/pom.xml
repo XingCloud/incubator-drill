@@ -186,7 +186,7 @@
             </resource>
         </resources>
 
-
+        <!--
         <plugins>
 
             <plugin>
@@ -230,7 +230,7 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins>
+        </plugins>  -->
     </build>
 
 </project>
