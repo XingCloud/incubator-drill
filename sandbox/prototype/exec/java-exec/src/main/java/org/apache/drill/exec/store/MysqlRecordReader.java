@@ -91,6 +91,9 @@ public class MysqlRecordReader implements RecordReader {
   }
 
   private MajorType getMajorType(String propertyName) {
+    if("uid".equals(propertyName)){
+      return Types.required(MinorType.INT);
+    }
     UserProp userProp = propMap.get(propertyName);
     if (userProp != null) {
       switch (userProp.getPropType()) {

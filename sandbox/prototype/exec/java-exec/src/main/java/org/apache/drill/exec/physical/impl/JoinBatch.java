@@ -156,12 +156,14 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   private void cacheLeft() {
-    leftCache.cache(TransferHelper.transferVectors(leftIncoming), (IntVector) leftEvaluator.eval());
+    IntVector key =  (IntVector) leftEvaluator.eval() ;
+    leftCache.cache(TransferHelper.transferVectors(leftIncoming),key );
     leftCache.setSchema(leftIncoming.getSchema());
   }
 
   private void cacheRight() {
-    rightCache.cache(TransferHelper.transferVectors(rightIncoming), (IntVector) rightEvaluator.eval(), rightIncoming.getRecordCount());
+    IntVector key = (IntVector) rightEvaluator.eval()  ;
+    rightCache.cache(TransferHelper.transferVectors(rightIncoming), key , rightIncoming.getRecordCount());
     rightCache.setSchema(rightIncoming.getSchema());
   }
 

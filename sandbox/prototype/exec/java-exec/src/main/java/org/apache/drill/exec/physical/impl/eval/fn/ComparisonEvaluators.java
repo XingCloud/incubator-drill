@@ -1,5 +1,6 @@
 package org.apache.drill.exec.physical.impl.eval.fn;
 
+import com.beust.jcommander.internal.Lists;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos;
@@ -11,6 +12,8 @@ import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.util.operation.Comparator;
 import org.apache.drill.exec.vector.BitVector;
 import org.apache.drill.exec.vector.ValueVector;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -125,40 +128,47 @@ public class ComparisonEvaluators {
 
   @FunctionEvaluator("and")
   public static class And extends BaseBasicEvaluator {
-    private final BasicEvaluator left;
-    private final BasicEvaluator right;
+    private BasicEvaluator evaluators[];
     private BitVector value;
 
     public And(RecordBatch recordBatch, FunctionArguments args) {
 
       super(args.isOnlyConstants(), recordBatch);
-      this.left = args.getEvaluator(0);
-      this.right = args.getEvaluator(1);
+      this.evaluators = args.getArgsAsArray();
 
     }
 
     @Override
     public ValueVector eval() {
-      BitVector leftBits = (BitVector) left.eval() ;
-      BitVector rightBits = (BitVector) right.eval();
-      BitVector.Accessor leftAccessor = leftBits.getAccessor();
-      BitVector.Accessor rightAccessor = rightBits.getAccessor();
+      List<BitVector> bits = Lists.newArrayList();
+      for (int i = 0; i < evaluators.length; i++) {
+        bits.add((BitVector) evaluators[i].eval());
+      }
+
       if (value == null) {
         value = new BitVector(MaterializedField.create(new SchemaPath("and", ExpressionPosition.UNKNOWN),
           Types.required(
             TypeProtos.MinorType.BIT)),
           recordBatch.getContext().getAllocator());
       }
-      value.allocateNew(leftAccessor.getValueCount());
+      int recordCount = bits.get(0).getAccessor().getValueCount() ;
+      value.allocateNew(recordCount);
       BitVector.Mutator valueMutator = value.getMutator();
-      for (int i = 0; i < leftAccessor.getValueCount(); i++) {
-        if (leftAccessor.get(i) == 1 && rightAccessor.get(i) == 1) {
-          valueMutator.set(i, 1);
+      int intValue ;
+      for (int i = 0; i < recordCount; i++) {
+        intValue = 1 ;
+        for(BitVector bitVector : bits){
+          if(bitVector.getAccessor().get(i) == 0){
+            intValue = 0 ;
+            break;
+          }
         }
+        valueMutator.set(i, intValue);
       }
-      valueMutator.setValueCount(leftAccessor.getValueCount());
-      leftBits.close();
-      rightBits.close();
+      valueMutator.setValueCount(recordCount);
+      for (BitVector bitVector : bits) {
+        bitVector.close();
+      }
       return value;
     }
   }
