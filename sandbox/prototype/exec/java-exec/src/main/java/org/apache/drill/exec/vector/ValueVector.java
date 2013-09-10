@@ -24,6 +24,7 @@ import java.io.Closeable;
 import org.apache.drill.exec.proto.UserBitShared.FieldMetadata;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.record.TransferPair;
+import com.google.common.collect.ObjectArrays;
 
 /**
  * ValueVectorTypes defines a set of template-generated classes which implement type-specific value vectors. The

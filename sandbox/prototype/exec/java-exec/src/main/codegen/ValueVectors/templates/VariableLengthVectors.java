@@ -26,6 +26,7 @@ import org.apache.drill.exec.vector.ByteHolder;
 import org.mortbay.jetty.servlet.Holder;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ObjectArrays;
 
 import antlr.collections.impl.Vector;
 
@@ -111,7 +112,7 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
 
   @Override
   public ByteBuf[] getBuffers() {
-    return new ByteBuf[]{offsetVector.data, this.data};
+    return ObjectArrays.concat(offsetVector.getBuffers(),super.getBuffers(),ByteBuf.class);
   }
 
   public TransferPair getTransferPair(){

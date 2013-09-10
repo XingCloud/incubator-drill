@@ -280,6 +280,9 @@ public class UnionedScanBatch implements RecordBatch {
     releaseCache();
   }
 
+  public int[] getOriginalID2sorted() {
+    return original2sorted;
+  }
 
   private class Mutator implements OutputMutator {
     private SchemaBuilder builder = BatchSchema.newBuilder();
@@ -387,7 +390,11 @@ public class UnionedScanBatch implements RecordBatch {
       this.pop = config;
       this.context = context;
     }
-  
+
+    public UnionedScanSplitPOP getPop() {
+      return pop;
+    }
+
     @Override
     public FragmentContext getContext() {
       return this.context;
@@ -580,7 +587,10 @@ public class UnionedScanBatch implements RecordBatch {
           throw new IllegalArgumentException("can't recognize scanMode:"+scanMode);
       }
     }
-    
+
+    public UnionedScanBatch getIncoming(){
+      return UnionedScanBatch.this;
+    }
   }
 
   private Iterator<ValueVector> passEntryID(Iterator<ValueVector> iterator) {

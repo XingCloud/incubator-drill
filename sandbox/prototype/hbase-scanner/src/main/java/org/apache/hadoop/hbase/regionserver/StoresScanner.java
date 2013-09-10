@@ -41,8 +41,6 @@ public class StoresScanner implements XAScanner {
   private Configuration conf;
   private CacheConfig cacheConf;
 
-  private String ip;
-
   private StoreFile.BloomType bloomType = StoreFile.BloomType.NONE;
   private DataBlockEncoding dataBlockEncoding;
   private Compression.Algorithm compression;
@@ -74,9 +72,6 @@ public class StoresScanner implements XAScanner {
   Map<String, KeyValueScanner> storeScanners =  new HashMap<>();
 
   public StoresScanner(HRegionInfo hRegionInfo, Scan scan) throws IOException {
-    InetAddress addr = InetAddress.getLocalHost();
-    this.ip = addr.getHostAddress();
-
     this.hRegionInfo = hRegionInfo;
     this.comparator = hRegionInfo.getComparator();
 

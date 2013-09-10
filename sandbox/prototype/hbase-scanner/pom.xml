@@ -140,7 +140,7 @@
         <dependency>
             <groupId>com.xingcloud.xa.hbase</groupId>
             <artifactId>filter</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>2.0-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -165,11 +165,6 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.xingcloud.xa.hbase</groupId>
-            <artifactId>filter</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>com.xingcloud.xa</groupId>
             <artifactId>encoding</artifactId>
             <version>1.0</version>
@@ -191,7 +186,7 @@
             </resource>
         </resources>
 
-
+        <!--
         <plugins>
 
             <plugin>
@@ -235,7 +230,7 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins>
+        </plugins>  -->
     </build>
 
 </project>
