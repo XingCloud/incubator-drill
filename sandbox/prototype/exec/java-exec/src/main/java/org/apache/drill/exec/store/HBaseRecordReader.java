@@ -74,6 +74,8 @@ public class HBaseRecordReader implements RecordReader {
   private ValueVector[] valueVectors;
   private boolean init = false;
   private long timeCost = 0;
+  private long scanCost = 0 ;
+  private long parseCost = 0 ;
   private long timeStart;
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
@@ -278,7 +280,9 @@ public class HBaseRecordReader implements RecordReader {
           return 0;
         }
         try {
+          long scanStart = System.currentTimeMillis();
           hasMore = scanner.next(curRes);
+          scanCost += System.currentTimeMillis() - scanStart ;
 
         } catch (IOException e) {
           throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage());
@@ -295,7 +299,9 @@ public class HBaseRecordReader implements RecordReader {
                         /* Get result list from the same scanner and skip curRes with no element */
           curRes.clear();
           try {
+            long scanStart = System.currentTimeMillis();
             hasMore = scanner.next(curRes);
+            scanCost += System.currentTimeMillis() - scanStart;
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -339,7 +345,9 @@ public class HBaseRecordReader implements RecordReader {
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
+      long parseStart = System.nanoTime() ;
       Object result = getValFromKeyValue(kv, info, rkObjectMap);
+      parseCost += System.nanoTime() - parseStart ;
       String type = info.fieldSchema.getType();
       if (type.equals("string"))
         result = Bytes.toBytes((String) result);
@@ -403,7 +411,7 @@ public class HBaseRecordReader implements RecordReader {
         logger.error("Scanners close failed : " + e.getMessage());
       }
     }
-    logger.debug("Cost time : " + timeCost + "mills");
+    logger.debug("Scan and parse cost {} ,scan cost {} , parse cost {} ",timeCost,scanCost,parseCost/1000.0);
   }
 
 
