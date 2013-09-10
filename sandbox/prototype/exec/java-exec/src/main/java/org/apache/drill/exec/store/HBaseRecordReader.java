@@ -345,7 +345,7 @@ public class HBaseRecordReader implements RecordReader {
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
-      long parseStart = System.currentTimeMillis() ;
+      long parseStart = System.nanoTime() ;
       Object result = getValFromKeyValue(kv, info, rkObjectMap);
       parseCost += System.nanoTime() - parseStart ;
       String type = info.fieldSchema.getType();
