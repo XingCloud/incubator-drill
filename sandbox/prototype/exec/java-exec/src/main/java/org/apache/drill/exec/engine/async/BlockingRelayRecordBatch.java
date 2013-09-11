@@ -40,6 +40,9 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
       if(current.nextErrorCause != null){
         throw current.nextErrorCause;
       }
+      if(current.outcome == null){
+        logger.warn("current outcome null!", new NullPointerException());
+      }
       return current.outcome;
     } catch (InterruptedException e) {
       e.printStackTrace();  
@@ -71,6 +74,9 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
     RecordFrame frame = new RecordFrame();    
     frame.nextErrorCause = cause;
     resultQueue.add(frame);
+    if(cause == null){
+      logger.warn("errorCause null!", new NullPointerException());
+    }
   }
 
   @Override
@@ -79,5 +85,8 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
     RecordFrame frame = new RecordFrame();
     super.mirrorResultFromIncoming(incomingOutcome, incoming, frame, needTransfer);
     resultQueue.add(frame);
+    if(incomingOutcome == null){
+      logger.warn("incomingOutcome null!", new NullPointerException());      
+    }
   }
 }
