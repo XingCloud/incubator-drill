@@ -2,6 +2,7 @@ package org.apache.drill.exec.engine.async;
 
 
 import org.apache.drill.exec.physical.impl.VectorHolder;
+import org.apache.drill.exec.record.RecordBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +41,11 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
       if(current.nextErrorCause != null){
         throw current.nextErrorCause;
       }
-      if(current.outcome == null){
+      IterOutcome ret = current.outcome;
+      if(ret == null){
         logger.warn("current outcome null!", new NullPointerException());
       }
-      return current.outcome;
+      return ret;
     } catch (InterruptedException e) {
       e.printStackTrace();  
       return IterOutcome.STOP;      

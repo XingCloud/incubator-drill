@@ -225,7 +225,7 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.debug("driver start");
+        logger.debug("driver["+unionedScanBatch+"] start");
         loopSplit:
         for (int i = 0; i < splits.size(); i++) {
           UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
@@ -245,7 +245,7 @@ public class AsyncExecutor {
             }
           }
         }
-        logger.debug("UnionedScanBatch driver exit");
+        logger.debug("UnionedScanBatch driver["+unionedScanBatch+"] exit");
       } finally {
         driverStopped(this);
       }
@@ -284,7 +284,7 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.debug("driver start");
+        logger.debug("driver["+scanBatch+"] start");
         loop:
         while (!stopped) {
           try {
@@ -300,7 +300,7 @@ public class AsyncExecutor {
           }
 
         }
-        logger.debug("ScanBatch driver exit");
+        logger.debug("ScanBatch driver["+scanBatch+"] exit");
       } finally {
         driverStopped(this);
       }
