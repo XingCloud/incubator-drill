@@ -278,6 +278,9 @@ public class AsyncExecutor {
       if(errorCause != null && !(errorCause instanceof RuntimeException)){
         errorCause = new RuntimeException(errorCause);
       }
+      if(outcome == null){
+        errorCause = new NullPointerException("batch returns outcome NULL:"+batch);
+      }
       if (outcome == RecordBatch.IterOutcome.NOT_YET) {
         //data not ready yet, no need to continue upward
         return outcome;
