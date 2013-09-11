@@ -189,19 +189,26 @@ public class AsyncExecutor {
     @Override
     public void run() {
       logger.debug("driver start");
+      loopSplit:
       for (int i = 0; i < splits.size(); i++) {
         UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
-        loop:
+        loopNext:
         while (true) {
+          try{
           RecordBatch.IterOutcome outcome = nextUpward(split, false);
           switch (outcome) {
             case NONE:
+              break loopNext;
             case STOP:
-              break loop;
+              break loopSplit;
+          }
+          }catch(Exception e){
+            logger.warn("driver failed.", e);
+            break loopSplit;
           }
         }
       }
-      logger.debug("driver exit");
+      logger.debug("UnionedScanBatch driver exit");
     }
   }
 
@@ -242,10 +249,11 @@ public class AsyncExecutor {
           }
         } catch (Exception e) {
           logger.warn("driver failed:", e);
+          break;
         }
 
       }
-      logger.debug("driver exit");
+      logger.debug("ScanBatch driver exit");
 
     }
   }
@@ -322,7 +330,7 @@ public class AsyncExecutor {
       if (outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
         break;
       }
-    }
+    }//while(true)
     return outcome;
   }
   }

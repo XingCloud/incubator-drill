@@ -56,7 +56,7 @@ public class QueryResultHandler {
     UserResultsListener l = resultsListener.get(result.getQueryId());
 
     boolean failed = batch.getHeader().getQueryState() == QueryResult.QueryState.FAILED;
-    // logger.debug("For QueryId [{}], retrieved result listener {}", result.getQueryId(), l);
+    logger.debug("For QueryId [{}], retrieved result listener {}", result.getQueryId(), l);
     if (l == null) {
       BufferingListener bl = new BufferingListener();
       l = resultsListener.putIfAbsent(result.getQueryId(), bl);
