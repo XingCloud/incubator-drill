@@ -4,9 +4,14 @@ import com.xingcloud.hbase.util.*;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +25,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class TestParseRowkey {
+    private static final Log LOG = LogFactory.getLog(TestParseRowkey.class);
 
     //private int index=0;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap=new HashMap<>();
@@ -59,13 +65,50 @@ public class TestParseRowkey {
         rkObjectMap=new HashMap<>();
 
     }
+    @Test
+    public void testPerformance() throws Exception {
+      String tableName = "deu_age";
+      String[] projections = {"date", "event0", "uid", "value"};
+      List<String> options=Arrays.asList(projections);
+      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
+      for (HBaseFieldInfo col : cols) {
+        rkFieldInfoMap.put(col.fieldSchema.getName(), col);
+      }
+      primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
+      rkObjectMap = new HashMap<>();
+
+      LOG.info("HTable Meta Info: ");
+      for (KeyPart kp : primaryRowKeyParts) {
+        LOG.info(kp);
+      }
+
+      LOG.info("Start to parse row key...");
+      DFARowKeyParser dfaParser = new DFARowKeyParser(primaryRowKeyParts, rkFieldInfoMap);
+      String path = "/Users/snake/XingCloud/Test/rk/out/total";
+      File file = new File(path);
+      BufferedReader br = new BufferedReader(new FileReader(file));
+      String line = null;
+      long st = System.nanoTime();
+      long counter = 0;
+      while ((line=br.readLine()) != null) {
+        byte[] rk = Bytes.toBytes(line);
+        Map<String, Object> info = dfaParser.parse(rk);
+        counter++;
+      }
+      LOG.info("Parse taken " + (System.nanoTime()-st)/1.0e9 + " sec");
+
+      LOG.info("Construct state taken " + dfaParser.constructStateCost/1.0e9 + " sec");
+      LOG.info("Parse value taken " + dfaParser.parseValueCost/1.0e9 + " sec [Parse bytes: " + dfaParser.parseBytesCost/1.0e9 + "\tParse str: " + dfaParser.parseStrCost/1.0e9 + "]");
+      LOG.info("Total kv: " + counter);
+    }
+
 
 
     @Test
-    public void tesetParse()throws Exception{
+    public void testParse()throws Exception{
         try {
             init();
-            initUserTable("property_sof-dsk_index");
+            //initUserTable("property_sof-dsk_index");
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

@@ -41,9 +41,10 @@ public class DFA {
 
     public State next(State curState, byte input){
         curState.len++;
-        byteType type=getType(input);
-        if(curState.len>curState.size)
+        if(curState.len > curState.size) {
+            byteType type = getType(input);
             return curState.nexts.get(type);
+        }
         else return curState;
     }
 
