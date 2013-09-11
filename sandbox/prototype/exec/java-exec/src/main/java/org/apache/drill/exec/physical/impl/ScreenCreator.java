@@ -78,10 +78,13 @@ public class ScreenCreator implements RootCreator<Screen>{
       try{
         outcome = incoming.next();
       }catch(Exception e){
+        context.fail(e);
+        outcome = IterOutcome.STOP;
+        logger.info("incoming failed with:", e);
         try{
           incoming.kill();
         }catch(Exception e1){
-          logger.info("kill failed.");
+          logger.info("kill failed with:", e1);
         }
       }
       logger.debug("Screen Outcome {}", outcome);

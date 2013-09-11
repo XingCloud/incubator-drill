@@ -55,6 +55,7 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
   @Override
   public void kill() {
     //clean up after driver shutdown
+    //this method would block, until all drivers stopped, and all batches killed.
     executor.submitKill();
     this.postCleanup();
   }
