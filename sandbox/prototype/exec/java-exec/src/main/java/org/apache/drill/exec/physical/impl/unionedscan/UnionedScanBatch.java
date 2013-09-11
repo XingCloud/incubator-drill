@@ -132,6 +132,9 @@ public class UnionedScanBatch implements RecordBatch {
     if(lastOutcome != null){
       IterOutcome ret = lastOutcome;
       lastOutcome = null;
+      if(ret == null){
+        throw new NullPointerException("lastOutcome becomes null!");
+      }
       return ret;
     }
     try{
@@ -305,6 +308,9 @@ public class UnionedScanBatch implements RecordBatch {
         splitsChecked = true;
       }
       IterOutcome outcome = nextReaderOutput();
+      if(outcome == null){
+        throw new NullPointerException("null outcome received from nextReaderOutput()!");
+      }
       if(lastReaderEntry > mySortedEntry){
         //reader run passed this split
         stallOutcome(outcome);
