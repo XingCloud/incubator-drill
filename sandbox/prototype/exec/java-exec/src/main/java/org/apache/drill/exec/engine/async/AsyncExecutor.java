@@ -275,10 +275,12 @@ public class AsyncExecutor {
       } catch (Throwable e) {
         errorCause = e;
       }
+      //wrap errorCause in RuntimeException if not
       if(errorCause != null && !(errorCause instanceof RuntimeException)){
         errorCause = new RuntimeException(errorCause);
       }
-      if(outcome == null){
+      //check whether outcome is null
+      if(errorCause == null && outcome == null){
         errorCause = new NullPointerException("batch returns outcome NULL:"+batch);
       }
       if (outcome == RecordBatch.IterOutcome.NOT_YET) {

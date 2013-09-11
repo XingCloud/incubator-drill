@@ -85,6 +85,9 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
     }
     IterOutcome ret = getCurrent().outcome;
     getCurrent().outcome = null;
+    if(ret == null){
+      throw new NullPointerException("next null, and returned!!");
+    }
     return ret;
   }
 
