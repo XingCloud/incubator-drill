@@ -76,6 +76,7 @@ public class HBaseRecordReader implements RecordReader {
   private long timeCost = 0;
   private long scanCost = 0 ;
   private long parseCost = 0 ;
+  private long setVectorCost = 0 ;
   private long timeStart;
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
@@ -339,6 +340,7 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   public boolean setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
+    long setVecotorStart = System.nanoTime();
     boolean next = true;
     Map<String, Object> rkObjectMap = new HashMap<>();
     if (parseRk) rkObjectMap = dfaParser.parse(kv.getRow());
@@ -356,6 +358,7 @@ public class HBaseRecordReader implements RecordReader {
         next = false;
       }
     }
+    setVectorCost += System.nanoTime() - setVecotorStart ;
     return next;
   }
 
@@ -411,7 +414,7 @@ public class HBaseRecordReader implements RecordReader {
         logger.error("Scanners close failed : " + e.getMessage());
       }
     }
-    logger.debug("Scan and parse cost {} ,scan cost {} , parse cost {} ",timeCost,scanCost,parseCost/1000000);
+    logger.debug("Scan and parse cost {} ,scan cost {} , parse cost {} ,setVectorCost {} ",timeCost,scanCost,parseCost/1000000,(setVectorCost - parseCost)/1000000);
   }
 
 
