@@ -46,9 +46,8 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public void kill() {
-    killed = true;
-    cleanupVectors(getCurrent());
-    incoming.kill();
+    postCleanup();
+//    incoming.kill();
   }
 
   @Override
@@ -116,6 +115,12 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
       vh = new VectorHolder(getCurrent().vectors);
     }
     //logger.info("Vector size : " + getCurrent().vectors.size() + " : " + incoming.getClass() );
+  }
+
+  @Override
+  public void postCleanup() {
+    killed = true;
+    cleanupVectors(getCurrent());    
   }
 
   @Override

@@ -49,7 +49,14 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
 
   @Override
   public void kill() {
-    super.kill();
+    //clean up after driver shutdown
+    executor.submitKill();
+    this.postCleanup();
+  }
+
+  @Override
+  public void postCleanup() {
+    super.postCleanup();
     while(!resultQueue.isEmpty()){
       cleanupVectors(resultQueue.poll());
     }
