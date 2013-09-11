@@ -330,7 +330,7 @@ public class AsyncExecutor {
           nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true);
         }
       }
-      if (outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
+      if (errorCause != null || outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
         break;
       }
     }//while(true)
