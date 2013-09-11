@@ -225,7 +225,7 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.debug("driver["+unionedScanBatch+"] start");
+        logger.debug("UnionedScanBatch driver["+unionedScanBatch+"] start");
         loopSplit:
         for (int i = 0; i < splits.size(); i++) {
           UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
@@ -284,7 +284,7 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.debug("driver["+scanBatch+"] start");
+        logger.debug("ScanBatch driver["+scanBatch+"] start");
         loop:
         while (!stopped) {
           try {
