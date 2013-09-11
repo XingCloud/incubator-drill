@@ -343,11 +343,13 @@ public class HBaseRecordReader implements RecordReader {
     long setVecotorStart = System.nanoTime();
     boolean next = true;
     Map<String, Object> rkObjectMap = new HashMap<>();
+    long parseStart = System.nanoTime() ;
     if (parseRk) rkObjectMap = dfaParser.parse(kv.getRow());
+    parseCost +=  System.nanoTime() - parseStart ;
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
-      long parseStart = System.nanoTime() ;
+      parseStart = System.nanoTime() ;
       Object result = getValFromKeyValue(kv, info, rkObjectMap);
       parseCost += System.nanoTime() - parseStart ;
       String type = info.fieldSchema.getType();
