@@ -323,7 +323,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       }
     } catch (Exception e) {
       e.printStackTrace();
-      throw new DrillRuntimeException("Scan failed");
+      throw new DrillRuntimeException("Scan failed", e);
     }
   }
 
