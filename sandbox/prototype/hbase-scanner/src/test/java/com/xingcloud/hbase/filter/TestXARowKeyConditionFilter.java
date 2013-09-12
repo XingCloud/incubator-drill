@@ -29,11 +29,11 @@ import java.util.List;
  */
 public class TestXARowKeyConditionFilter {
     public static Logger logger= LoggerFactory.getLogger(TestXARowKeyConditionFilter.class);
-    /*
+
     @Test
     public void testFilter() throws IOException {
         Configuration conf=HBaseConfiguration.create();
-        byte[] srk=Bytes.toBytesBinary("20130101");
+        byte[] srk=Bytes.toBytesBinary("20121201");
         byte[] enk=Bytes.toBytesBinary("20130103visit.\\xFF");
         HTable table=new HTable(conf,"sof-dsk_deu");
         Scan scan=new Scan();
@@ -41,17 +41,17 @@ public class TestXARowKeyConditionFilter {
         scan.setStopRow(enk);
         List<RowKeyFilterCondition> filterConditionList=new ArrayList<>();
         String uidSrt= Bytes.toStringBinary(Bytes.tail(Bytes.toBytes(0l),5));
-        String uidEnd= Bytes.toStringBinary(new byte[]{-1,-1,-1,-1,-1});
-        //filterConditionList.add(new RowKeyFilterPattern("20130101visit.auto.\\xFF",uidSrt,uidEnd));
-        filterConditionList.add(new RowKeyFilterRange("20130101z","20130104d",uidSrt,uidEnd));
+        String uidEnd= Bytes.toStringBinary(new byte[]{64,-1,-1,-1,-1});
+        filterConditionList.add(new RowKeyFilterPattern("20121201visit.auto.\\xFF",uidSrt,uidEnd));
+        filterConditionList.add(new RowKeyFilterRange("20121201z","20130102d",uidSrt,uidEnd));
         //filterConditionList.add(new RowKeyFilterRange("20130102z","20130103b"));
         //filterConditionList.add(new RowKeyFilterRange("20130102v","20130102y"));
         //filterConditionList.add(new RowKeyFilterRange("20130101visit.s","20130101visit.y") );
         //filterConditionList.add(new RowKeyFilterRange("20130102","20130102visit.y"));
         XARowKeyPatternFilter filter=new XARowKeyPatternFilter(filterConditionList);
         scan.setFilter(filter);
-        scan.setBatch(1000);
-        scan.setCaching(32);
+        scan.setBatch(10);
+        scan.setCaching(2048);
         ResultScanner resultScanner=table.getScanner(scan);
         logger.info("hhhh");
         long t1=System.currentTimeMillis();
@@ -101,5 +101,5 @@ public class TestXARowKeyConditionFilter {
         long t2=System.currentTimeMillis();
         logger.info("use time "+(t2-t1)+" count "+count);
     }
-    */
+
 }
