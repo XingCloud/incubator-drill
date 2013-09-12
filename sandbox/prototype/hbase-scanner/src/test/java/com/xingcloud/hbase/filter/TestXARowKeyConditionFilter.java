@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class TestXARowKeyConditionFilter {
     public static Logger logger= LoggerFactory.getLogger(TestXARowKeyConditionFilter.class);
+    /*
     @Test
     public void testFilter() throws IOException {
         Configuration conf=HBaseConfiguration.create();
@@ -100,5 +101,5 @@ public class TestXARowKeyConditionFilter {
         long t2=System.currentTimeMillis();
         logger.info("use time "+(t2-t1)+" count "+count);
     }
-
+    */
 }
