@@ -3,6 +3,7 @@ package org.apache.hadoop.hbase.regionserver;
 import com.xingcloud.hbase.manager.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -41,7 +42,7 @@ public class HBaseClientScanner implements XAScanner {
       scanner = hTable.getScanner(scan);
     } catch (IOException e) {
       e.printStackTrace();
-      LOG.error("Init hbase client scanner failure!");
+      LOG.error("Init hbase client scanner failure!", e);
       hTable = null;
     }
 
