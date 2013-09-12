@@ -59,7 +59,7 @@ public class UnionedScanBatch implements RecordBatch {
 
   private final Mutator mutator = new Mutator();
   
-  private int lastReaderEntry;
+  private int lastReaderEntry = -1;
 
   public UnionedScanBatch(FragmentContext context, List<HbaseScanPOP.HbaseScanEntry> readEntries) throws ExecutionSetupException {
     this.context = context;
@@ -308,6 +308,9 @@ public class UnionedScanBatch implements RecordBatch {
         splitsChecked = true;
       }
       IterOutcome outcome = nextReaderOutput();
+      if(lastReaderEntry == -1){
+        return IterOutcome.NONE;
+      }
       if(outcome == null){
         throw new NullPointerException("null outcome received from nextReaderOutput()!");
       }
