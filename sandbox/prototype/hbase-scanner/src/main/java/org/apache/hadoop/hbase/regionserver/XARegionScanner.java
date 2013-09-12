@@ -124,7 +124,7 @@ public class XARegionScanner implements XAScanner{
         return kv;
       }
       if (Bytes.compareTo(kv.getRow(), Bytes.toBytes("flush")) == 0) {
-        if (storesScanner != null){
+        if (storesScanner != null) {
           storesScanner.updateScanner(kv.getFamily(), theNext); //todo kv to seek
           if(SSNext == null){
             SSNext = getKVFromSS();

@@ -133,9 +133,10 @@ public class DirectScanner implements XAScanner {
     byte[] srk = Helper.bytesCombine(srkPre, tailStart);
     byte[] erk = Helper.bytesCombine(erkPre, tailEnd);
 
+    LOG.info("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
     boolean isFileOnly = Boolean.parseBoolean(args[3]);
     boolean isMemOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(srk, erk, tableName, null, null, null, isFileOnly, isMemOnly);
+    DirectScanner scanner = new DirectScanner(srk, erk, tableName, isFileOnly, isMemOnly);
     long counter = 0;
     long sum = 0;
     long st = System.nanoTime();
