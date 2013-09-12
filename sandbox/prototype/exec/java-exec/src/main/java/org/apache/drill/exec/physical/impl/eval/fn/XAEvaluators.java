@@ -26,6 +26,67 @@ import java.util.TimeZone;
 public class XAEvaluators {
 
 
+  public static abstract class DivEvaluator extends BaseBasicEvaluator{
+    protected BasicEvaluator child ;
+    private BigIntVector quotient ;
+
+    public DivEvaluator(RecordBatch recordBatch, FunctionArguments args) {
+      super(args.isOnlyConstants(), recordBatch);
+      child = args.getOnlyEvaluator();
+    }
+
+    @Override
+    public BigIntVector eval() {
+      int divisor  = getDivisor() ;
+      if(quotient == null){
+         quotient = new BigIntVector(MaterializedField.create(new SchemaPath("XA",ExpressionPosition.UNKNOWN),
+           Types.required(TypeProtos.MinorType.BIGINT)),
+           recordBatch.getContext().getAllocator());
+      }
+
+      BigIntVector bigIntVector = (BigIntVector) child.eval();
+      BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+      int recordCount = accessor.getValueCount() ;
+      quotient.allocateNew(recordCount);
+      BigIntVector.Mutator mutator = quotient.getMutator();
+      for(int i = 0 ; i < recordCount ; i ++){
+         mutator.set(i,accessor.get(i)/divisor);
+      }
+      bigIntVector.close();
+      mutator.setValueCount(recordCount);
+      return quotient;
+    }
+
+    public abstract int getDivisor();
+  }
+
+
+  public static  class Div300Evaluator extends DivEvaluator{
+
+    public Div300Evaluator(RecordBatch recordBatch, FunctionArguments args) {
+      super(recordBatch, args);
+    }
+
+    @Override
+    public int getDivisor() {
+      return 300;
+    }
+  }
+
+
+  public static class Div3600Evaluator extends  DivEvaluator{
+
+    public Div3600Evaluator(RecordBatch recordBatch, FunctionArguments args) {
+      super(recordBatch, args);
+    }
+
+    @Override
+    public int getDivisor() {
+      return 3600;
+    }
+  }
+
+
   public static abstract class XAEvaluator extends BaseBasicEvaluator {
     protected BasicEvaluator child;
     private VarCharVector timeStr;
@@ -48,7 +109,7 @@ public class XAEvaluators {
       BigIntVector bigIntVector =   (BigIntVector) child.eval() ;
       BigIntVector.Accessor accessor = bigIntVector.getAccessor();
       int recordCount = accessor.getValueCount();
-      timeStr.allocateNew(40 * recordCount, recordCount);
+      timeStr.allocateNew(10 * recordCount, recordCount);
       VarCharVector.Mutator mutator = timeStr.getMutator();
 
 
