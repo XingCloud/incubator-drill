@@ -64,7 +64,7 @@ public class TestXARowKeyConditionFilter {
         long t2=System.currentTimeMillis();
         logger.info("use time "+(t2-t1)+" count "+count);
     }
-
+    @Test
     public void testFilterOnline() throws IOException {
         Configuration conf=HBaseConfiguration.create();
         byte[] srk=Bytes.toBytesBinary("20130101");
@@ -73,13 +73,15 @@ public class TestXARowKeyConditionFilter {
         if(tableName==null)
             tableName="sof-dsk_deu";
         List<RowKeyFilterCondition> filterConditionList=new ArrayList<>();
-        Integer bucketNum=Integer.parseInt(System.getenv("bucketNum"));
-        if(bucketNum==null){
+        String bucket=System.getenv("bucketNum");
+        int bucketNum;
+        if(bucket==null)
             bucketNum=127;
-        }
+        else
+            bucketNum=Integer.parseInt(bucket);
         if(bucketNum>127)bucketNum=bucketNum-256;
         String uidSrt= Bytes.toStringBinary(Bytes.tail(Bytes.toBytes(0l),5));
-        String uidEnd= Bytes.toStringBinary(new byte[]{(byte)bucketNum.intValue(),-1,-1,-1,-1});
+        String uidEnd= Bytes.toStringBinary(new byte[]{(byte)bucketNum,-1,-1,-1,-1});
         //filterConditionList.add(new RowKeyFilterPattern("20130101visit.auto.\\xFF",uidSrt,uidEnd));
         filterConditionList.add(new RowKeyFilterRange("20130101z","20130104d",uidSrt,uidEnd));
         //filterConditionList.add(new RowKeyFilterRange("20130102z","20130103b"));
