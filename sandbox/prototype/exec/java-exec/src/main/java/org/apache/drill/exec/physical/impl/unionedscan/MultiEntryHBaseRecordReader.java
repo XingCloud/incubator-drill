@@ -2,7 +2,6 @@ package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.xingcloud.hbase.util.Constants;
 import com.xingcloud.hbase.util.DFARowKeyParser;
-import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -43,17 +42,12 @@ import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
-import org.apache.hadoop.hbase.regionserver.TableScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MultiEntryHBaseRecordReader implements RecordReader {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MultiEntryHBaseRecordReader.class);
@@ -67,9 +61,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private List<List<HbaseScanPOP.RowkeyFilterEntry>> entryFilters;
 
   private ValueVector entryIndexVector;
-  private List<NamedExpression> projections;
-  private List<NamedExpression[]> entryProjections;
+
   private List<HBaseFieldInfo[]> entryProjFieldInfos = new ArrayList<>();
+  private List<Set<String>> entriesProjs = new ArrayList<>();
+
   private Map<String, HBaseFieldInfo> fieldInfoMap;
   private List<ValueVector> valueVectors;
   private OutputMutator outputMutator;
@@ -101,8 +96,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
-    this.projections = new ArrayList<>();
-    this.entryProjections = new ArrayList<>();
     this.fieldInfoMap = new HashMap<>();
     try{
     List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, null);
@@ -115,6 +108,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       List<NamedExpression> exprs = entries[i].getProjections();
       NamedExpression[] exprArr = new NamedExpression[exprs.size()];
       HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];
+      Set<String> projs = new HashSet<>();
       for (int j = 0; j < exprs.size(); j++) {
         exprArr[j] = exprs.get(j);
         try{
@@ -124,13 +118,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
             e.printStackTrace();
             throw e;
         }
-        if (!projections.contains(exprArr[j]))
-          projections.add(exprArr[j]);
+        projs.add(infos[j].fieldSchema.getName());
         if (false == parseRk && infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey)
           parseRk = true;
       }
-      entryProjections.add(exprArr);
       entryProjFieldInfos.add(infos);
+      entriesProjs.add(projs);
     }
     primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
@@ -221,11 +214,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    if(conditions.size()>=1)
+    if(conditions.size()>=1) {
         filterList.addFilter(new XARowKeyPatternFilter(conditions));
-    //scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    }
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
-    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
   }
 
   @Override
@@ -385,8 +379,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   public void setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {
     Map<String, Object> rkObjectMap = new HashMap<>();
-    if (parseRk)
-      rkObjectMap = dfaParser.parse(kv.getRow());
+    if (parseRk) {
+      Set<String> projs = entriesProjs.get(currentEntry);
+      rkObjectMap = dfaParser.parse(kv.getRow(), projs);
+    }
     HBaseFieldInfo[] infos = entryProjFieldInfos.get(currentEntry);
     for (int i = 0; i < infos.length; i++) {
       HBaseFieldInfo info = infos[i];
