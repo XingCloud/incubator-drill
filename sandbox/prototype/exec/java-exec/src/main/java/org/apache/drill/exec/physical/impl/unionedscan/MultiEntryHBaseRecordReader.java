@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -213,8 +214,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    if(conditions.size()>=1)
+    if(conditions.size()>=1) {
         filterList.addFilter(new XARowKeyPatternFilter(conditions));
+    }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
     //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
