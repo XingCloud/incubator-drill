@@ -32,9 +32,9 @@ public class RowKeyUtils {
          else
              return rk.concat(".\\xFF\\x00\\x00\\x00\\x00\\x00");
      }else {
-         if(rk.endsWith("\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"))
+         if(rk.endsWith(".\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"))
              return rk;
-         else if(rk.endsWith("\\xFF\\xFF"))
+         else if(rk.endsWith(".\\xFF"))
              return rk.concat("\\xFF\\xFF\\xFF\\xFF\\xFF");
          else
              return rk.concat("\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF");
