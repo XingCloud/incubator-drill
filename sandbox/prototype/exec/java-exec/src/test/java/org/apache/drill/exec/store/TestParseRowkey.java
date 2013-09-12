@@ -4,13 +4,15 @@ import com.xingcloud.hbase.util.*;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,6 +22,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class TestParseRowkey {
+    private static final Log LOG = LogFactory.getLog(TestParseRowkey.class);
 
     //private int index=0;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap=new HashMap<>();
@@ -60,12 +63,11 @@ public class TestParseRowkey {
 
     }
 
-
     @Test
-    public void tesetParse()throws Exception{
+    public void testParse()throws Exception{
         try {
             init();
-            initUserTable("property_sof-dsk_index");
+            //initUserTable("property_sof-dsk_index");
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -186,7 +188,7 @@ public class TestParseRowkey {
         List<KeyPart> rkParts=propRowKeyParts[propId-1];
         Map<String,HBaseFieldInfo> rkFieldInfoMap=propRkFieldInfoMaps[propId-1];
         //Map<String,Object> parsedResult=RowKeyParser.parse(rk,rkParts,rkFieldInfoMap);
-        Map<String,Object> parsedResult= dfaParser.parse(rk);
+        Map<String,Object> parsedResult= dfaParser.parse(rk, null);
         for(Map.Entry<String,Object> entry: refResults.entrySet()){
             Object o=parsedResult.get(entry.getKey());
             if(null==o)System.out.println(entry.getKey()+":"+entry.getValue());
@@ -217,7 +219,7 @@ public class TestParseRowkey {
         for (int i = 0; i < iuid.length; i++) {
             rk[index++] = iuid[i];
         }
-        Map<String,Object> parsedResult= dfaParser.parse(rk);
+        Map<String,Object> parsedResult= dfaParser.parse(rk, null);
         /*for(Map.Entry<String,Object> entry: result.entrySet()){
             Object o=parsedResult.get(entry.getKey());
             if(null==o)System.out.println(event);
@@ -226,7 +228,7 @@ public class TestParseRowkey {
     }
 
     public void parseRowKey(byte[] rk,DFARowKeyParser dfaParser,Map<String, Object> result){
-        Map<String,Object> parsedResult= dfaParser.parse(rk);
+        Map<String,Object> parsedResult= dfaParser.parse(rk, null);
         for(Map.Entry<String,Object> entry: result.entrySet()){
             Object o=parsedResult.get(entry.getKey());
             if(null==o){

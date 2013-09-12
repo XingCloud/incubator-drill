@@ -23,17 +23,15 @@ import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
-import org.apache.drill.exec.physical.impl.unionedscan.MultiEntryHBaseRecordReader;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
-import org.apache.hadoop.hbase.regionserver.TableScanner;
+import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -54,6 +52,8 @@ public class HBaseRecordReader implements RecordReader {
   private String tableName;
 
   private List<HBaseFieldInfo> projections;
+  private Set<String> projs;
+
   private Map<String, String> sourceRefMap;
   private List<KeyPart> primaryRowKeyParts;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
@@ -92,6 +92,7 @@ public class HBaseRecordReader implements RecordReader {
     String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
     projections = new ArrayList<>();
+    projs = new HashSet<>();
     fieldInfoMap = new HashMap<>();
     sourceRefMap = new HashMap<>();
     List<NamedExpression> logProjection = config.getProjections();
@@ -114,8 +115,10 @@ public class HBaseRecordReader implements RecordReader {
       } else {
         HBaseFieldInfo proInfo = fieldInfoMap.get(name);
         projections.add(proInfo);
-        if (false == parseRk && proInfo.fieldType == HBaseFieldInfo.FieldType.rowkey)
+        if (false == parseRk && proInfo.fieldType == HBaseFieldInfo.FieldType.rowkey) {
           parseRk = true;
+        }
+        projs.add(proInfo.fieldSchema.getName());
       }
     }
     filters = config.getFilters();
@@ -211,7 +214,7 @@ public class HBaseRecordReader implements RecordReader {
 
     XAScanner scanner=new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
-    //XAScanner scanner=new TableScanner(startRowKey,endRowKey,tableName,filterList,false,false);
+    //XAScanner scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
     scanners.add(scanner);
   }
 
@@ -344,7 +347,7 @@ public class HBaseRecordReader implements RecordReader {
     boolean next = true;
     Map<String, Object> rkObjectMap = new HashMap<>();
     long parseStart = System.nanoTime() ;
-    if (parseRk) rkObjectMap = dfaParser.parse(kv.getRow());
+    if (parseRk) rkObjectMap = dfaParser.parse(kv.getRow(), projs);
     parseCost +=  System.nanoTime() - parseStart ;
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);

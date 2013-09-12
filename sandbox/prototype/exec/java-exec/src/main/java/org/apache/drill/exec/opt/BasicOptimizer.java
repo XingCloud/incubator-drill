@@ -160,10 +160,10 @@ public class BasicOptimizer extends Optimizer {
         // Rowkey range
         rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
         rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
-        rowkeyStart = RowKeyUtils.processRkBound(rowkeyStart, true);
+        //rowkeyStart = RowKeyUtils.processRkBound(rowkeyStart, true);
         //rowkeyStart = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyStart),RowKeyUtils.produceTail(true)));
         rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-        rowkeyEnd = RowKeyUtils.processRkBound(rowkeyEnd, false);
+        //rowkeyEnd = RowKeyUtils.processRkBound(rowkeyEnd, false);
         //rowkeyEnd = Bytes.toStringBinary(RowKeyUtils.appendBytes(Bytes.toBytesBinary(rowkeyEnd),RowKeyUtils.produceTail(false)));
 
         // Filters
