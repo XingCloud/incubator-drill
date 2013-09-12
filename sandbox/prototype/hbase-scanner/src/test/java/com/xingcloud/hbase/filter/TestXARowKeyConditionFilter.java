@@ -42,7 +42,7 @@ public class TestXARowKeyConditionFilter {
         String uidSrt= Bytes.toStringBinary(Bytes.tail(Bytes.toBytes(0l),5));
         String uidEnd= Bytes.toStringBinary(new byte[]{-1,-1,-1,-1,-1});
         //filterConditionList.add(new RowKeyFilterPattern("20130101visit.auto.\\xFF",uidSrt,uidEnd));
-        //filterConditionList.add(new RowKeyFilterRange("20130101z","20130104d",uidSrt,uidEnd));
+        filterConditionList.add(new RowKeyFilterRange("20130101z","20130104d",uidSrt,uidEnd));
         //filterConditionList.add(new RowKeyFilterRange("20130102z","20130103b"));
         //filterConditionList.add(new RowKeyFilterRange("20130102v","20130102y"));
         //filterConditionList.add(new RowKeyFilterRange("20130101visit.s","20130101visit.y") );
@@ -83,7 +83,7 @@ public class TestXARowKeyConditionFilter {
         String uidSrt= Bytes.toStringBinary(Bytes.tail(Bytes.toBytes(0l),5));
         String uidEnd= Bytes.toStringBinary(new byte[]{(byte)bucketNum,-1,-1,-1,-1});
         //filterConditionList.add(new RowKeyFilterPattern("20130101visit.auto.\\xFF",uidSrt,uidEnd));
-        //filterConditionList.add(new RowKeyFilterRange("20130101z","20130104d",uidSrt,uidEnd));
+        filterConditionList.add(new RowKeyFilterRange("20130101z","20130104d",uidSrt,uidEnd));
         //filterConditionList.add(new RowKeyFilterRange("20130102z","20130103b"));
         //filterConditionList.add(new RowKeyFilterRange("20130102v","20130102y"));
         //filterConditionList.add(new RowKeyFilterRange("20130101visit.s","20130101visit.y") );
