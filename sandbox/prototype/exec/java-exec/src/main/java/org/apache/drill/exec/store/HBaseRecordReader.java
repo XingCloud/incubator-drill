@@ -23,17 +23,15 @@ import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
-import org.apache.drill.exec.physical.impl.unionedscan.MultiEntryHBaseRecordReader;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
-import org.apache.hadoop.hbase.regionserver.TableScanner;
+import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -216,7 +214,7 @@ public class HBaseRecordReader implements RecordReader {
 
     XAScanner scanner=new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
-    //XAScanner scanner=new TableScanner(startRowKey,endRowKey,tableName,filterList,false,false);
+    //XAScanner scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
     scanners.add(scanner);
   }
 
