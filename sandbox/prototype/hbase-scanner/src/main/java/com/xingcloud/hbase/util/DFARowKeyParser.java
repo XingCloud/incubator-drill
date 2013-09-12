@@ -6,9 +6,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,21 +22,14 @@ public class DFARowKeyParser {
     private List<KeyPart> primaryRowKeyParts;
     private Map<String,HBaseFieldInfo> rkFieldInfoMap;
 
-    public long constructStateCost = 0;
-    public long parseValueCost = 0;
-    public long parseBytesCost = 0;
-    public long parseStrCost = 0;
-
-
-
-    public DFARowKeyParser(List<KeyPart> primaryRowKeyParts,Map<String,HBaseFieldInfo> rkFieldInfoMap){
-        this.primaryRowKeyParts=primaryRowKeyParts;
-        this.rkFieldInfoMap=rkFieldInfoMap;
-        this.dfa=new DFA(this.primaryRowKeyParts,this.rkFieldInfoMap);
+    public DFARowKeyParser(List<KeyPart> primaryRowKeyParts, Map<String,HBaseFieldInfo> rkFieldInfoMap){
+        this.primaryRowKeyParts = primaryRowKeyParts;
+        this.rkFieldInfoMap = rkFieldInfoMap;
+        this.dfa = new DFA(this.primaryRowKeyParts,this.rkFieldInfoMap);
     }
 
-    public  Map<String,Object> parse(byte[] rk){
-        Map<String,Object> rkObjectMap = new HashMap<>();
+    public  Map<String,Object> parse(byte[] rk, Set<String> projs){
+        Map<String, Object> rkObjectMap = new HashMap<>();
         DFA.State prev = dfa.begin().directNext;
         DFA.State next;
         DFA.State end = dfa.end();
@@ -47,12 +38,13 @@ public class DFARowKeyParser {
         int len = 1;
         int index = 0;
         offsets[0] = 0;
-        long st = System.nanoTime();
-        while(index < rk.length){
+        while(index < rk.length) {
             next = dfa.next(prev,rk[index]);
             if (next != prev){
                 offsets[len] = index;
                 Kps[len++] = prev.kp;
+                //下次解析起始len为0
+                prev.len = 0;
                 index--;
                 prev = next;
                 if(prev == end){
@@ -71,34 +63,28 @@ public class DFARowKeyParser {
         if(prev != end){
             offsets[len] = rk.length;
             Kps[len] = prev.kp;
+            //下次解析起始len为0
             prev.len = 0;
         }
-        constructStateCost += System.nanoTime() - st;
 
-        st = System.nanoTime();
         for(int i=1; i<len+1; i++){
             KeyPart kp = Kps[i];
             if(kp.getType() == KeyPart.Type.field){
-                java.lang.String colName = kp.getField().getName();
-                HBaseFieldInfo info = rkFieldInfoMap.get(colName);
-
-                if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
-                    long stTmp = System.nanoTime();
-
-                    java.lang.Object o = parseBytes(rk, offsets[i-1], offsets[i], kp.getField().getType());
-                    parseBytesCost += System.nanoTime() - stTmp;
-                    rkObjectMap.put(colName,o);
-                } else {
-                    long stTmp = System.nanoTime();
-                    java.lang.Object o = parseString
-                            (decodeText(rk, offsets[i-1], offsets[i]), kp.getField().getType());
-                    parseStrCost += System.nanoTime() - stTmp;
-                    rkObjectMap.put(colName,o);
+                String colName = kp.getField().getName();
+                //如果需要此字段的投影才解析
+                if (projs != null && projs.contains(colName)) {
+                  HBaseFieldInfo info = rkFieldInfoMap.get(colName);
+                  Object o = null;
+                  if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
+                      o = parseBytes(rk, offsets[i-1], offsets[i], kp.getField().getType());
+                  } else {
+                      o = parseString
+                              (decodeText(rk, offsets[i-1], offsets[i]), kp.getField().getType());
+                  }
+                  rkObjectMap.put(colName, o);
                 }
             }
         }
-        parseValueCost += System.nanoTime() - st;
-        dfa.reset();
         return rkObjectMap;
     }
 
@@ -151,8 +137,7 @@ public class DFARowKeyParser {
         int len = end-start;
         switch (type) {
             case "int":
-                result = new byte[4];
-                System.arraycopy(orig, start, result, 4-len, len);
+                result = Arrays.copyOfRange(orig, start, end);
 //                for (int i = 0; i < 4 - len; i++)
 //                    result[i] = 0;
 //                for (int i = 4 - len; i < 4; i++)

@@ -219,7 +219,7 @@ public class DFA {
 
     public void reset() {
         for(Map.Entry<KeyPart,State> entry: kpStateMap.entrySet()){
-             entry.getValue().len=0;
+          entry.getValue().len=0;
         }
     }
 

@@ -12,10 +12,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -65,44 +62,6 @@ public class TestParseRowkey {
         rkObjectMap=new HashMap<>();
 
     }
-    @Test
-    public void testPerformance() throws Exception {
-      String tableName = "deu_age";
-      String[] projections = {"date", "event0", "uid", "value"};
-      List<String> options=Arrays.asList(projections);
-      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
-      for (HBaseFieldInfo col : cols) {
-        rkFieldInfoMap.put(col.fieldSchema.getName(), col);
-      }
-      primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
-      rkObjectMap = new HashMap<>();
-
-      LOG.info("HTable Meta Info: ");
-      for (KeyPart kp : primaryRowKeyParts) {
-        LOG.info(kp);
-      }
-
-      LOG.info("Start to parse row key...");
-      DFARowKeyParser dfaParser = new DFARowKeyParser(primaryRowKeyParts, rkFieldInfoMap);
-      String path = "/Users/snake/XingCloud/Test/rk/out/total";
-      File file = new File(path);
-      BufferedReader br = new BufferedReader(new FileReader(file));
-      String line = null;
-      long st = System.nanoTime();
-      long counter = 0;
-      while ((line=br.readLine()) != null) {
-        byte[] rk = Bytes.toBytes(line);
-        Map<String, Object> info = dfaParser.parse(rk);
-        counter++;
-      }
-      LOG.info("Parse taken " + (System.nanoTime()-st)/1.0e9 + " sec");
-
-      LOG.info("Construct state taken " + dfaParser.constructStateCost/1.0e9 + " sec");
-      LOG.info("Parse value taken " + dfaParser.parseValueCost/1.0e9 + " sec [Parse bytes: " + dfaParser.parseBytesCost/1.0e9 + "\tParse str: " + dfaParser.parseStrCost/1.0e9 + "]");
-      LOG.info("Total kv: " + counter);
-    }
-
-
 
     @Test
     public void testParse()throws Exception{
@@ -229,7 +188,7 @@ public class TestParseRowkey {
         List<KeyPart> rkParts=propRowKeyParts[propId-1];
         Map<String,HBaseFieldInfo> rkFieldInfoMap=propRkFieldInfoMaps[propId-1];
         //Map<String,Object> parsedResult=RowKeyParser.parse(rk,rkParts,rkFieldInfoMap);
-        Map<String,Object> parsedResult= dfaParser.parse(rk);
+        Map<String,Object> parsedResult= dfaParser.parse(rk, null);
         for(Map.Entry<String,Object> entry: refResults.entrySet()){
             Object o=parsedResult.get(entry.getKey());
             if(null==o)System.out.println(entry.getKey()+":"+entry.getValue());
@@ -260,7 +219,7 @@ public class TestParseRowkey {
         for (int i = 0; i < iuid.length; i++) {
             rk[index++] = iuid[i];
         }
-        Map<String,Object> parsedResult= dfaParser.parse(rk);
+        Map<String,Object> parsedResult= dfaParser.parse(rk, null);
         /*for(Map.Entry<String,Object> entry: result.entrySet()){
             Object o=parsedResult.get(entry.getKey());
             if(null==o)System.out.println(event);
@@ -269,7 +228,7 @@ public class TestParseRowkey {
     }
 
     public void parseRowKey(byte[] rk,DFARowKeyParser dfaParser,Map<String, Object> result){
-        Map<String,Object> parsedResult= dfaParser.parse(rk);
+        Map<String,Object> parsedResult= dfaParser.parse(rk, null);
         for(Map.Entry<String,Object> entry: result.entrySet()){
             Object o=parsedResult.get(entry.getKey());
             if(null==o){
