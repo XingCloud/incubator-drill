@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
+import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.TableScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -158,7 +159,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                    throw new IOException("include logicalExpression is not quotedString");
                 }
                 String pattern = ((ValueExpressions.QuotedString)e).value;
-                if (patterns.contains(pattern)){
+                if (!patterns.contains(pattern)){
                   conditions.add(new RowKeyFilterPattern(pattern));
                   patterns.add(pattern);
                 }
@@ -224,7 +225,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         filterList.addFilter(new XARowKeyPatternFilter(conditions));
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
-    //scanner= new TableScanner(startRowKey,endRowKey,tableName,filterList,false,false);
+    //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
   }
 
   @Override
@@ -322,7 +323,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       }
     } catch (Exception e) {
       e.printStackTrace();
-      throw new DrillRuntimeException("Scan failed");
+      throw new DrillRuntimeException("Scan failed", e);
     }
   }
 
@@ -349,7 +350,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     int lastEntry = getEntryIndex(keyValues.get(offset + length - 1));
     if (lastEntry != currentEntry) {
-      for (int i = offset + length - 1; i >= offset; i++) {
+      for (int i = offset + length - 1; i >= offset; i--) {
         if (currentEntry == getEntryIndex(keyValues.get(i)))
           return i - offset + 1;
       }

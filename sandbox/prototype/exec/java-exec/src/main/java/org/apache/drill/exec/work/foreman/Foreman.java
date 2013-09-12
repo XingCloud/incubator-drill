@@ -182,7 +182,9 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
     MakeFragmentsVisitor makeFragmentsVisitor = new MakeFragmentsVisitor();
     Fragment rootFragment;
     try {
+      long startTime = System.currentTimeMillis() ;
       rootFragment = rootOperator.accept(makeFragmentsVisitor, null);
+      logger.debug("Setup cost : {} mills." , System.currentTimeMillis() - startTime);
     } catch (FragmentSetupException e) {
       fail("Failure while fragmenting query.", e);
       return;

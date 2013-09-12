@@ -27,10 +27,7 @@ import org.apache.drill.exec.physical.base.Size;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.apache.drill.exec.physical.base.reentrant.ReentrantDelegate;
-import org.apache.drill.exec.physical.base.reentrant.ReentrantOperator;
 import org.apache.drill.exec.physical.base.reentrant.ReentrantPhysicalOperator;
-import org.apache.drill.exec.record.buffered.IterationBuffer;
 
 @JsonTypeName("filter")
 public class Filter extends AbstractSingle implements ReentrantPhysicalOperator{
@@ -39,7 +36,6 @@ public class Filter extends AbstractSingle implements ReentrantPhysicalOperator{
 
   private final LogicalExpression expr;
   private final float selectivity;
-  private final ReentrantOperator reentrantDelegate = new ReentrantDelegate();
   
   @JsonCreator
   public Filter(@JsonProperty("child") PhysicalOperator child, @JsonProperty("expr") LogicalExpression expr, @JsonProperty("selectivity") float selectivity) {

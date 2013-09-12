@@ -1,6 +1,5 @@
 package org.apache.drill.exec.physical.impl.union;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.ops.FragmentContext;
@@ -26,19 +25,16 @@ public class UnionRecordBatch implements RecordBatch {
   private BatchSchema outSchema;
   private List<ValueVector> outputVectors;
   private VectorHolder vh;
-  private Iterator<RecordBatch> iterator = null;
   private RecordBatch current = null;
+  private List<RecordBatch> children = Lists.newArrayList();
   private ArrayList<TransferPair> transfers;
   private int outRecordCount;
 
   public UnionRecordBatch(Union config, List<RecordBatch> children, FragmentContext context) {
     this.unionConfig = config;
     this.incoming = children;
+    this.children.addAll(incoming);
     this.context = context;
-    this.iterator = incoming.iterator();
-    if (iterator.hasNext()) {
-      current = iterator.next();
-    }
     sv = null;
   }
 
@@ -94,33 +90,37 @@ public class UnionRecordBatch implements RecordBatch {
 
   @Override
   public IterOutcome next() {
-    if (current == null) { // end of iteration
+    if (children.isEmpty()) { // end of iteration
       return IterOutcome.NONE;
     }
-    IterOutcome upstream = current.next();
-    while (upstream == IterOutcome.NONE) {
-      if (!iterator.hasNext()) {
-        current = null;
-        return IterOutcome.NONE;
+
+    IterOutcome upstream = null;
+    for (Iterator<RecordBatch> it = children.iterator();it.hasNext();) {
+      RecordBatch recordBatch = it.next();
+      upstream = recordBatch.next();
+      switch (upstream) {
+        case OK_NEW_SCHEMA:
+        case OK:
+          if (upstream == IterOutcome.OK_NEW_SCHEMA || recordBatch != current) {
+            current = recordBatch;
+            upstream = IterOutcome.OK_NEW_SCHEMA;
+            setupSchema();
+          }
+          doTransfer();
+          return upstream;
+        case NOT_YET:
+          continue;
+        case STOP:
+          return IterOutcome.STOP;
+        case NONE:
+          it.remove();
       }
-      current = iterator.next();
-      upstream = current.next();
     }
-    switch (upstream) {
-      case NONE:
-        throw new IllegalArgumentException("not possible!");
-      case NOT_YET:
-      case STOP:
-        return upstream;
-      case OK_NEW_SCHEMA:
-        setupSchema();
-        // fall through.
-      case OK:
-        doTransfer();
-        return upstream; // change if upstream changed, otherwise normal.
-      default:
-        throw new UnsupportedOperationException();
+    if(children.size()==0){
+      return IterOutcome.NONE;
     }
+    return IterOutcome.NOT_YET;
+
   }
 
   private void doTransfer() {

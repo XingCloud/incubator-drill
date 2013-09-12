@@ -31,10 +31,7 @@ abstract class BaseDataValueVector extends BaseValueVector{
   
   @Override
   public ByteBuf[] getBuffers(){
-    ByteBuf[] out = new ByteBuf[]{data};
-    data.readerIndex(0);
-    clear();
-    return out;
+    return new ByteBuf[]{data};
   }
   
   public int getBufferSize() {

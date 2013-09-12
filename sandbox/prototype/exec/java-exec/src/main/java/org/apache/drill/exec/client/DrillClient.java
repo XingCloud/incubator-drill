@@ -95,6 +95,7 @@ public class DrillClient implements Closeable{
     }
 
     Collection<DrillbitEndpoint> endpoints = clusterCoordinator.getAvailableEndpoints();
+    logger.debug("Endpoints size {}" , endpoints.size());
     checkState(!endpoints.isEmpty(), "No DrillbitEndpoint can be found");
     // just use the first endpoint for now
     DrillbitEndpoint endpoint = endpoints.iterator().next();

@@ -65,7 +65,7 @@ public class TestParseRowkey {
     public void tesetParse()throws Exception{
         try {
             init();
-            initUserTable("property_sof-dsk_index");
+            //initUserTable("property_sof-dsk_index");
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
