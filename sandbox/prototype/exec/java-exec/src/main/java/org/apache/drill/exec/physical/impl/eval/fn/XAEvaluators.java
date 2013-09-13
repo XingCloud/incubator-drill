@@ -45,15 +45,15 @@ public class XAEvaluators {
            recordBatch.getContext().getAllocator());
       }
 
-      IntVector intVector = (IntVector) child.eval();
-      IntVector.Accessor accessor = intVector.getAccessor();
+      BigIntVector bigIntVector = (BigIntVector) child.eval();
+      BigIntVector.Accessor accessor = bigIntVector.getAccessor();
       int recordCount = accessor.getValueCount() ;
       quotient.allocateNew(recordCount);
       IntVector.Mutator mutator = quotient.getMutator();
       for(int i = 0 ; i < recordCount ; i ++){
-         mutator.set(i,accessor.get(i)/divisor);
+         mutator.set(i, (int) accessor.get(i)/divisor);
       }
-      intVector.close();
+      bigIntVector.close();
       mutator.setValueCount(recordCount);
       return quotient;
     }
@@ -71,7 +71,7 @@ public class XAEvaluators {
 
     @Override
     public int getDivisor() {
-      return 300;
+      return 300_000;
     }
   }
 
@@ -85,7 +85,7 @@ public class XAEvaluators {
 
     @Override
     public int getDivisor() {
-      return 3600;
+      return 3600_000;
     }
   }
 
@@ -249,7 +249,7 @@ public class XAEvaluators {
     SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     sf.setTimeZone(tz);
 
-    long timestamp = quotient * period * 60 ;
+    long timestamp = quotient * period * 60_000 ;
 
     String[] yhm = sf.format(timestamp).split(" ");
     String[] hm = yhm[1].split(":");
