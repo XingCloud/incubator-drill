@@ -11,15 +11,20 @@ public class KeyPart {
     constant, // this part of rowkey is a constant/separator between fields
     optionalgroup // this part of rowkey may or may not exists
   }
+
+
   
   public Type type;
+
+
   
   private FieldSchema field;
   private String constant;  
   private byte[] serializedConstant;
   
   private List<KeyPart> optionalGroup;
-  
+
+
   public KeyPart(Type type, FieldSchema field, String constant) {
     this(type, field, constant, null);
   }
@@ -29,6 +34,7 @@ public class KeyPart {
     this.field = field;
     this.constant = constant;
     this.optionalGroup = optionalGroup;
+
   }
 
   public static KeyPart optionalGroupKeyPart(List<KeyPart> optionalGroup){

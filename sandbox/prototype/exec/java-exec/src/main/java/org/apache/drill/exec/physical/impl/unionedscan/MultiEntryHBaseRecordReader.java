@@ -405,9 +405,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       HBaseFieldInfo info = entry.getValue();
       Object value = null;
       if (info.fieldType == HBaseFieldInfo.FieldType.cellvalue) {
-        value = DFARowKeyParser.parseBytes(kv.getValue(), info.fieldSchema.getType());
+        value = DFARowKeyParser.parseBytes(kv.getValue(), info.getDataType());
       } else if (info.fieldType == HBaseFieldInfo.FieldType.cqname) {
-        value = DFARowKeyParser.parseBytes(kv.getQualifier(), info.fieldSchema.getType());
+        value = DFARowKeyParser.parseBytes(kv.getQualifier(), info.getDataType());
       } else if (info.fieldType == HBaseFieldInfo.FieldType.cversion) {
         value = kv.getTimestamp();
       }

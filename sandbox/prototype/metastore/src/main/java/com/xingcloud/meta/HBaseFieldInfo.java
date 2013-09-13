@@ -37,7 +37,17 @@ public class HBaseFieldInfo extends FieldInfo {
 
   private boolean exists=true;
   private String depFieldName=null;
-  
+
+  public static enum DataType {
+    INT,
+    SMALLINT,
+    BIGINT,
+    STRING,
+    TINYINT,
+    NONE
+  }
+  public DataType dataType;
+
   public HBaseFieldInfo(FieldSchema fieldSchema, FieldType fieldType, String cfName, String cqName, DataSerType serType, int serLength) {
     this.fieldSchema = fieldSchema;
     this.fieldType = fieldType;
@@ -45,6 +55,26 @@ public class HBaseFieldInfo extends FieldInfo {
     this.cqName = cqName;
     this.serType = serType;
     this.serLength = serLength;
+
+    switch (fieldSchema.getType()) {
+      case "int":
+        this.dataType = DataType.INT;
+        break;
+      case "smallint":
+        this.dataType = DataType.SMALLINT;
+        break;
+      case "bigint":
+        this.dataType = DataType.BIGINT;
+        break;
+      case "string":
+        this.dataType = DataType.STRING;
+        break;
+      case "tinyint":
+        this.dataType = DataType.TINYINT;
+        break;
+      default:
+        this.dataType = DataType.NONE;
+    }
   }
   
   public static void setColumnType(Table table, HBaseFieldInfo hBaseFieldInfo){
@@ -184,5 +214,9 @@ public class HBaseFieldInfo extends FieldInfo {
     }
     public void setDepFieldName(String fieldName){
         this.depFieldName=fieldName;
+    }
+
+    public DataType getDataType() {
+      return dataType;
     }
 }
