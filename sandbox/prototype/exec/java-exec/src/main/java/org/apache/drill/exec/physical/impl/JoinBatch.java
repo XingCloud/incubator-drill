@@ -267,6 +267,9 @@ public class JoinBatch extends BaseRecordBatch {
       ValueVector out;
       Mutator outMutator;
       for (MaterializedField f : leftSchema) {
+        if (f.equals(keyField)) {
+          continue;
+        }
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
