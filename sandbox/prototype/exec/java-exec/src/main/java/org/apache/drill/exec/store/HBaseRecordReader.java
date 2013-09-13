@@ -315,7 +315,6 @@ public class HBaseRecordReader implements RecordReader {
     return valueCount;
   }
 
-
   public void setValues(KeyValue kv, int index) {
     long setVecotorStart = System.nanoTime();
     long parseStart = System.nanoTime();
@@ -332,9 +331,9 @@ public class HBaseRecordReader implements RecordReader {
       HBaseFieldInfo info = entry.getValue();
       Object value = null;
       if (info.fieldType == HBaseFieldInfo.FieldType.cellvalue) {
-        value = DFARowKeyParser.parseBytes(kv.getValue(), info.fieldSchema.getType());
+        value = DFARowKeyParser.parseBytes(kv.getValue(), info.getDataType());
       } else if (info.fieldType == HBaseFieldInfo.FieldType.cqname) {
-        value = DFARowKeyParser.parseBytes(kv.getQualifier(), info.fieldSchema.getType());
+        value = DFARowKeyParser.parseBytes(kv.getQualifier(), info.getDataType());
       } else if (info.fieldType == HBaseFieldInfo.FieldType.cversion) {
         value = kv.getTimestamp();
       }
@@ -347,33 +346,6 @@ public class HBaseRecordReader implements RecordReader {
     for (int i = 0; i < valueVectors.length; i++) {
       valueVectors[i].getMutator().setValueCount(valueCount);
     }
-  }
-
-  public static Object getValFromKeyValue(KeyValue keyvalue, HBaseFieldInfo option, Map<String, Object> rkObjectMap) {
-    String fieldName = option.fieldSchema.getName();
-    if (option.fieldType == HBaseFieldInfo.FieldType.rowkey) {
-      if (!rkObjectMap.containsKey(fieldName))
-        logger.info("error! " + fieldName + " does not exists in this keyvalue");
-      else
-        return rkObjectMap.get(fieldName);
-    } else if (option.fieldType == HBaseFieldInfo.FieldType.cellvalue) {
-      String cfName = Bytes.toString(keyvalue.getFamily());
-      String cqName = Bytes.toString(keyvalue.getQualifier());
-      if (!option.cfName.equals(cfName) || !option.cqName.equals(cqName))
-        logger.info("error! this field's column info---" + option.cqName + ":" + option.cqName +
-          " does not match the keyvalue's column info---" + cfName + ":" + cqName);
-      else {
-        return DFARowKeyParser.parseBytes(keyvalue.getValue(), option.fieldSchema.getType());
-      }
-    } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
-      return keyvalue.getTimestamp();
-    } else if (option.fieldType == HBaseFieldInfo.FieldType.cqname) {
-      byte[] orig = new byte[4];
-      for (int i = 0; i < 4; i++)
-        orig[i] = keyvalue.getQualifier()[i + 1];
-      return DFARowKeyParser.parseBytes(orig, option.fieldSchema.getType());
-    }
-    return null;
   }
 
 

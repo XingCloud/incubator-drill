@@ -38,7 +38,6 @@ public class DFARowKeyParser {
     }
 
     public void parseAndSet(byte[] rk, Map<String, HBaseFieldInfo> projs, Map<String, ValueVector> vvMap, int vvIndex) {
-        long st = System.nanoTime();
         DFA.State prev = dfa.begin().directNext;
         DFA.State next;
         DFA.State end = dfa.end();
@@ -92,7 +91,6 @@ public class DFARowKeyParser {
         }
 
         //如果需要此字段的投影才解析
-        st = System.nanoTime();
         for (Map.Entry<String, HBaseFieldInfo> entry : projs.entrySet()) {
           String colName = entry.getKey();
           HBaseFieldInfo info = entry.getValue();
@@ -103,14 +101,14 @@ public class DFARowKeyParser {
 
           Object o = null;
           if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
-            o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), kp.getField().getType());
+            o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), info.getDataType());
           } else {
             if (info.fieldSchema.getType().equals("string")) {
               //string类型直接返回byte[]，提供给value vector存储
-              o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), kp.getField().getType());
+              o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), info.getDataType());
             } else {
               o = parseString
-                    (decodeText(rk, posInfo.getFirst(), posInfo.getSecond()), kp.getField().getType());
+                    (decodeText(rk, posInfo.getFirst(), posInfo.getSecond()), info.getDataType());
             }
           }
           ValueVector vv = vvMap.get(colName);
@@ -127,23 +125,23 @@ public class DFARowKeyParser {
         return new String(chars);
     }
 
-    public static Object parseBytes(byte[] orig, String type){
+    public static Object parseBytes(byte[] orig, HBaseFieldInfo.DataType type){
         byte[] result;
         int len = orig.length;
         switch (type) {
-            case "int":
+            case INT:
               result = new byte[INT_BYTE_SIZE];
               System.arraycopy(orig, 0, result, INT_BYTE_SIZE-len, len);
               return Bytes.toInt(result);
-            case "smallint":
+            case SMALLINT:
               result = new byte[SMALLINT_BYTE_SIZE];
               System.arraycopy(orig, 0, result, SMALLINT_BYTE_SIZE-len, len);
               return Bytes.toShort(result);
-            case "tinyint":
+            case TINYINT:
                 return orig[0];
-            case "string":
+            case STRING:
                 return orig;
-            case "bigint":
+            case BIGINT:
               result = new byte[LONG_BYTE_SIZE];
               System.arraycopy(orig, 0, result, LONG_BYTE_SIZE-len, len);
               return Bytes.toLong(result);
@@ -151,25 +149,25 @@ public class DFARowKeyParser {
         return null;
     }
 
-    public static Object parseBytes(byte[] orig, int start, int end, String type) {
+    public static Object parseBytes(byte[] orig, int start, int end, HBaseFieldInfo.DataType type) {
         byte[] result;
         int len = end-start;
         switch (type) {
-            case "int":
+            case INT:
                 result = new byte[INT_BYTE_SIZE];
                 System.arraycopy(orig, start, result, INT_BYTE_SIZE-len, len);
                 return Bytes.toInt(result);
-            case "smallint":
+            case SMALLINT:
                 result = new byte[SMALLINT_BYTE_SIZE];
                 System.arraycopy(orig, start, result, SMALLINT_BYTE_SIZE-len, len);
                 return Bytes.toShort(result);
-            case "tinyint":
+            case TINYINT:
                 return orig[0];
-            case "string":
+            case STRING:
                 result = new byte[len];
                 System.arraycopy(orig, start, result, 0, len);
                 return result;
-            case "bigint":
+            case BIGINT:
                 result = new byte[LONG_BYTE_SIZE];
                 System.arraycopy(orig, start, result, LONG_BYTE_SIZE-len, len);
                 return Bytes.toLong(result);
@@ -177,17 +175,17 @@ public class DFARowKeyParser {
         return null;
     }
 
-    public static Object parseString(String orig, String type){
+    public static Object parseString(String orig, HBaseFieldInfo.DataType type){
         switch (type) {
-            case "int":
+            case INT:
                 return Integer.parseInt(orig);
-            case "tinyint":
-                return type.charAt(0);
-            case "smallint":
+            case TINYINT:
+                return orig.charAt(0);
+            case SMALLINT:
                 return (short)Integer.parseInt(orig);
-            case "string":
+            case STRING:
                 return orig;
-            case "bigint":
+            case BIGINT:
                 return Long.parseLong(orig);
         }
         return null;
