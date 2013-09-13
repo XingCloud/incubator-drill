@@ -29,7 +29,7 @@ public class XAEvaluators {
 
   public static abstract class DivEvaluator extends BaseBasicEvaluator{
     protected BasicEvaluator child ;
-    private BigIntVector quotient ;
+    private IntVector quotient ;
 
     public DivEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
@@ -37,23 +37,23 @@ public class XAEvaluators {
     }
 
     @Override
-    public BigIntVector eval() {
+    public IntVector eval() {
       int divisor  = getDivisor() ;
       if(quotient == null){
-         quotient = new BigIntVector(MaterializedField.create(new SchemaPath("XA",ExpressionPosition.UNKNOWN),
-           Types.required(TypeProtos.MinorType.BIGINT)),
+         quotient = new IntVector(MaterializedField.create(new SchemaPath("XA",ExpressionPosition.UNKNOWN),
+           Types.required(TypeProtos.MinorType.INT)),
            recordBatch.getContext().getAllocator());
       }
 
-      BigIntVector bigIntVector = (BigIntVector) child.eval();
-      BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+      IntVector intVector = (IntVector) child.eval();
+      IntVector.Accessor accessor = intVector.getAccessor();
       int recordCount = accessor.getValueCount() ;
       quotient.allocateNew(recordCount);
-      BigIntVector.Mutator mutator = quotient.getMutator();
+      IntVector.Mutator mutator = quotient.getMutator();
       for(int i = 0 ; i < recordCount ; i ++){
          mutator.set(i,accessor.get(i)/divisor);
       }
-      bigIntVector.close();
+      intVector.close();
       mutator.setValueCount(recordCount);
       return quotient;
     }
@@ -109,8 +109,8 @@ public class XAEvaluators {
           , recordBatch.getContext().getAllocator());
       }
 
-      BigIntVector bigIntVector =   (BigIntVector) child.eval() ;
-      BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+      IntVector intVector =   (IntVector) child.eval() ;
+      IntVector.Accessor accessor = intVector.getAccessor();
       int recordCount = accessor.getValueCount();
       timeStr.allocateNew(10 * recordCount, recordCount);
       VarCharVector.Mutator mutator = timeStr.getMutator();
@@ -120,7 +120,7 @@ public class XAEvaluators {
         mutator.set(i, getKeyBySpecificPeriod(accessor.get(i), period).getBytes());
       }
 
-      bigIntVector.close();
+      intVector.close();
       mutator.setValueCount(recordCount);
       return timeStr;
 
