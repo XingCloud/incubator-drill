@@ -214,21 +214,11 @@ public class JoinBatch extends BaseRecordBatch {
     protected List<MaterializedField> rightFields;
     protected int rightValueCount;
     protected MaterializedField keyField;
-
-    public abstract void upstream();
-
-    public abstract boolean connect();
-
-    public void setLeft(){
-
-    }
-
-    public void setRight(){
-
-    }
+    protected List<ValueVector> leftOutPut;
+    protected List<ValueVector> rightOutPut;
 
     public void setup() {
-      leftIncomings = leftCache.getIncomings();
+      leftIncomings = (List<List<ValueVector>>) leftCache.getIncomings();
       leftFields = leftCache.getFields();
       Tuple<List<ValueVector>, IntVector, Integer> tuple = rightCache.removeFirst();
       rightVectors = tuple.getFirst();
@@ -238,6 +228,70 @@ public class JoinBatch extends BaseRecordBatch {
       leftValueMap = leftCache.getValuesIndexMap();
       keyField = leftCache.keyField;
     }
+
+    public abstract boolean connect();
+
+    public void upstream() {
+      beforeCopy();
+      copyLeft();
+      copyRight();
+      afterCopy();
+    }
+
+    public void beforeCopy() {
+      outputVectors.clear();
+      leftOutPut = Lists.newArrayList();
+      rightOutPut = Lists.newArrayList();
+    }
+
+    public void afterCopy() {
+      for (ValueVector v : leftOutPut) {
+        v.getMutator().setValueCount(recordCount);
+        outputVectors.add(v);
+      }
+      for (ValueVector v : rightOutPut) {
+        v.getMutator().setValueCount(recordCount);
+        outputVectors.add(v);
+      }
+      outRecords.clear();
+    }
+
+    public void copyLeft() {
+      for (int fieldId = 0; fieldId < leftFields.size(); fieldId++) {
+        MaterializedField f = leftFields.get(fieldId);
+        if (f.equals(keyField)) {
+          continue;
+        }
+        ValueVector out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
+        AllocationHelper.allocate(out, recordCount, 8);
+        Mutator outMutator = out.getMutator();
+        ValueVector.Accessor current = null;
+        for (int i = 0; i < outRecords.size(); i++) {
+          int[] indexes = outRecords.get(i);
+          current = leftIncomings.get(indexes[0]).get(fieldId).getAccessor();
+          outMutator.setObject(i, current.getObject(indexes[1]));
+        }
+        leftOutPut.add(out);
+      }
+    }
+
+    public void copyRight() {
+      for (int fieldId = 0; fieldId < rightFields.size(); fieldId++) {
+        MaterializedField f = rightFields.get(fieldId);
+        ValueVector out = TypeHelper.getNewVector(f, context.getAllocator());
+        AllocationHelper.allocate(out, recordCount, 8);
+        Mutator outMutator = out.getMutator();
+        ValueVector.Accessor accessor = rightVectors.get(fieldId).getAccessor();
+        for (int i = 0; i < outRecords.size(); i++) {
+          int[] indexes = outRecords.get(i);
+          outMutator.setObject(i, accessor.getObject(indexes[2]));
+        }
+        rightOutPut.add(out);
+      }
+    }
+
+    public abstract MaterializedField getMaterializedField(MaterializedField f);
+
 
     public void clear() {
       if (rightJoinKey != null) {
@@ -259,45 +313,6 @@ public class JoinBatch extends BaseRecordBatch {
   class InnerConnector extends Connector {
 
     @Override
-    public void upstream() {
-      outputVectors.clear();
-      recordCount = outRecords.size();
-      ValueVector out;
-      Mutator outMutator;
-      for (int fieldId = 0; fieldId < leftFields.size(); fieldId++) {
-        MaterializedField f = leftFields.get(fieldId);
-        if (f.equals(keyField)) {
-          continue;
-        }
-        out = TypeHelper.getNewVector(f, context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 8);
-        outMutator = out.getMutator();
-        ValueVector.Accessor current = null;
-        for (int i = 0; i < recordCount; i++) {
-          int[] indexes = outRecords.get(i);
-          current = leftIncomings.get(indexes[0]).get(fieldId).getAccessor();
-          outMutator.setObject(i, current.getObject(indexes[1]));
-        }
-        outMutator.setValueCount(recordCount);
-        outputVectors.add(out);
-      }
-      for (int fieldId = 0; fieldId < rightFields.size(); fieldId++) {
-        MaterializedField f = rightFields.get(fieldId);
-        out = TypeHelper.getNewVector(f, context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 8);
-        outMutator = out.getMutator();
-        ValueVector.Accessor accessor = rightVectors.get(fieldId).getAccessor();
-        for (int i = 0; i < recordCount; i++) {
-          int[] indexes = outRecords.get(i);
-          outMutator.setObject(i, accessor.getObject(indexes[2]));
-        }
-        outMutator.setValueCount(recordCount);
-        outputVectors.add(out);
-      }
-      outRecords.clear();
-    }
-
-    @Override
     public boolean connect() {
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       Pair<Integer, Integer> pair = new Pair<>();
@@ -310,17 +325,42 @@ public class JoinBatch extends BaseRecordBatch {
       return !outRecords.isEmpty();
     }
 
+    @Override
+    public void afterCopy() {
+      super.afterCopy();
+    }
+
+    @Override
+    public void beforeCopy() {
+      super.beforeCopy();
+      recordCount = outRecords.size();
+    }
+
+    public MaterializedField getMaterializedField(MaterializedField f) {
+      return f;
+    }
   }
 
   // right outer join
   class RightConnector extends Connector {
 
     BitVector rightMarkBits = new BitVector(null, getContext().getAllocator());
+    List<Integer> misMatchIndex;
 
     @Override
-    public void upstream() {
-      outputVectors.clear();
-      List<Integer> misMatchIndex = Lists.newArrayList();
+    public void beforeCopy() {
+      super.beforeCopy();
+      getMisMatch();
+    }
+
+    @Override
+    public void afterCopy() {
+      copyMisMatch();
+      super.afterCopy();
+    }
+
+    private void getMisMatch() {
+      misMatchIndex = Lists.newArrayList();
       int misMatchCount = 0;
       BitVector.Accessor bitAccessor = rightMarkBits.getAccessor();
       for (int i = 0; i < bitAccessor.getValueCount(); i++) {
@@ -331,51 +371,23 @@ public class JoinBatch extends BaseRecordBatch {
       }
       recordCount = outRecords.size() + misMatchCount;
       rightMarkBits.close();
-      ValueVector out;
-      Mutator outMutator;
-      for (int fieldId = 0; fieldId < leftFields.size(); fieldId++) {
-        MaterializedField f = leftFields.get(fieldId);
-        if (f.equals(keyField)) {
-          continue;
-        }
-        out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 8);
-        outMutator = out.getMutator();
-        ValueVector.Accessor current = null;
-        for (int i = 0; i < outRecords.size(); i++) {
-          int[] indexes = outRecords.get(i);
-          current = leftIncomings.get(indexes[0]).get(fieldId).getAccessor();
-          outMutator.setObject(i, current.getObject(indexes[1]));
-        }
-        for (int i = outRecords.size(); i < recordCount; i++) {
-          outMutator.setObject(i, null);
-        }
-        outMutator.setValueCount(recordCount);
-        outputVectors.add(out);
-      }
-      for (int fieldId = 0; fieldId < rightFields.size(); fieldId++) {
-        MaterializedField f = rightFields.get(fieldId);
-        out = TypeHelper.getNewVector(f, context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 8);
-        outMutator = out.getMutator();
-        ValueVector.Accessor accessor = rightVectors.get(fieldId).getAccessor();
-        for (int i = 0; i < outRecords.size(); i++) {
-          int[] indexes = outRecords.get(i);
-          outMutator.setObject(i, accessor.getObject(indexes[2]));
-        }
-        int index = outRecords.size();
-        for (int i : misMatchIndex) {
-          outMutator.setObject(index++, accessor.getObject(i));
-        }
-        outMutator.setValueCount(recordCount);
-        outputVectors.add(out);
-      }
-      outRecords.clear();
     }
 
-    private MaterializedField getMaterializedField(MaterializedField f) {
-      return MaterializedField.create(new SchemaPath(f.getName(), ExpressionPosition.UNKNOWN)
-        , Types.optional(f.getType().getMinorType()));
+    private void copyMisMatch() {
+      for (int i = 0; i < leftOutPut.size(); i++) {
+        ValueVector.Mutator out = leftOutPut.get(i).getMutator();
+        for (int j = outRecords.size(); j < recordCount; j++) {
+          out.setObject(j, null);
+        }
+      }
+      for (int i = 0; i < rightOutPut.size(); i++) {
+        ValueVector.Accessor in = rightVectors.get(i).getAccessor();
+        ValueVector.Mutator out = rightOutPut.get(i).getMutator();
+        int index = outRecords.size();
+        for (int j : misMatchIndex) {
+          out.setObject(index++, in.getObject(j));
+        }
+      }
     }
 
     @Override
@@ -393,6 +405,11 @@ public class JoinBatch extends BaseRecordBatch {
         }
       }
       return true;
+    }
+
+    public MaterializedField getMaterializedField(MaterializedField f) {
+      return MaterializedField.create(new SchemaPath(f.getName(), ExpressionPosition.UNKNOWN)
+        , Types.optional(f.getType().getMinorType()));
     }
 
     @Override
@@ -418,20 +435,38 @@ public class JoinBatch extends BaseRecordBatch {
     public void clear() {
 
     }
+
+    @Override
+    public MaterializedField getMaterializedField(MaterializedField f) {
+      return null;
+    }
   }
 
   class Cache {
-    List<MaterializedField> fields = Lists.newArrayList();
+    Collection<List<ValueVector>> incomings;
+    List<MaterializedField> fields;
+    boolean isSet;
 
-    boolean fieldsSet = false;
+    Cache() {
+      fields = Lists.newArrayList();
+      isSet = false;
+    }
 
     List<MaterializedField> getFields() {
       return fields;
     }
 
+    public Collection<List<ValueVector>> getIncomings() {
+      return incomings;
+    }
+
+    public int size() {
+      return incomings.size();
+    }
+
     void setSchema(BatchSchema schema) {
-      if (!fieldsSet) {
-        fieldsSet = true;
+      if (!isSet) {
+        isSet = true;
         for (MaterializedField f : schema) {
           this.fields.add(f);
         }
@@ -439,14 +474,23 @@ public class JoinBatch extends BaseRecordBatch {
       }
     }
 
-
+    public void clear() {
+      for (List<ValueVector> vectors : incomings) {
+        for (ValueVector v : vectors) {
+          v.close();
+        }
+      }
+    }
   }
 
   class LeftCache extends Cache {
-    List<List<ValueVector>> incomings = Lists.newArrayList();
     IntIntOpenHashMap valuesIndexMap = new IntIntOpenHashMap();
     MaterializedField keyField;
 
+    LeftCache() {
+      super();
+      incomings = Lists.newArrayList();
+    }
 
     public void cache(List<ValueVector> incoming, IntVector joinKey) {
       Collections.sort(incoming, new VectorComparator());
@@ -463,56 +507,38 @@ public class JoinBatch extends BaseRecordBatch {
     IntIntOpenHashMap getValuesIndexMap() {
       return valuesIndexMap;
     }
-
-    public List<List<ValueVector>> getIncomings() {
-      return incomings;
-    }
-
-    public void clear() {
-      for (List<ValueVector> vectors : incomings) {
-        for (ValueVector v : vectors) {
-          v.close();
-        }
-      }
-    }
-
-    public int size() {
-      return incomings.size();
-    }
   }
 
   class RightCache extends Cache {
-    Deque<List<ValueVector>> incomings = new LinkedList<>();
-    Deque<IntVector> joinKeys = new LinkedList<>();
-    Deque<Integer> recordCounts = new LinkedList<>();
+    Deque<IntVector> joinKeys;
+    Deque<Integer> recordCounts;
+
+    RightCache() {
+      super();
+      incomings = new LinkedList<>();
+      joinKeys = new LinkedList<>();
+      recordCounts = new LinkedList<>();
+    }
 
     public void cache(List<ValueVector> incoming, IntVector joinKey, int recordCount) {
       Collections.sort(incoming, new VectorComparator());
-      incomings.addLast(incoming);
+      ((LinkedList<List<ValueVector>>) incomings).addLast(incoming);
       joinKeys.addLast(joinKey);
       recordCounts.addLast(recordCount);
     }
 
     public Tuple<List<ValueVector>, IntVector, Integer> removeFirst() {
-      return new Tuple<>(incomings.removeFirst(),
+      return new Tuple<>(((LinkedList<List<ValueVector>>) incomings).removeFirst(),
         joinKeys.removeFirst(), recordCounts.removeFirst());
     }
 
+    @Override
     public void clear() {
-      for (List<ValueVector> vectors : incomings) {
-        for (ValueVector v : vectors) {
-          v.close();
-        }
-      }
+      super.clear();
       for (ValueVector v : joinKeys) {
         v.close();
       }
     }
-
-    public int size() {
-      return incomings.size();
-    }
-
   }
 
   public class Pair<First, Second> {
