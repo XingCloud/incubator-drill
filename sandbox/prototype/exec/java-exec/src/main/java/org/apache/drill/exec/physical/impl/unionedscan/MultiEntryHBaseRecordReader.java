@@ -1,7 +1,6 @@
 package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.xingcloud.hbase.util.Constants;
-import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -30,6 +29,7 @@ import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.store.HBaseRecordReader;
 import org.apache.drill.exec.store.RecordReader;
+import org.apache.drill.exec.util.parser.DFARowKeyParser;
 import org.apache.drill.exec.vector.AllocationHelper;
 import org.apache.drill.exec.vector.TypeHelper;
 import org.apache.drill.exec.vector.ValueVector;
@@ -63,12 +63,19 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private ValueVector entryIndexVector;
 
   private List<HBaseFieldInfo[]> entryProjFieldInfos = new ArrayList<>();
-  private List<Set<String>> entriesProjs = new ArrayList<>();
+  //记录row key中的投影
+  private List<Map<String, HBaseFieldInfo>> entriesRowKeyProjs = new ArrayList<>();
+  //记录在family, qualifier, value, ts中所需要的投影
+  private List<Map<String, HBaseFieldInfo>> entriesOtherProjs = new ArrayList<>();
 
   private Map<String, HBaseFieldInfo> fieldInfoMap;
+
   private List<ValueVector> valueVectors;
+
+  //记录每个投影的value vector所对应的在valueVectors中的位置
+  private Map<String, ValueVector> vvMap;
+
   private OutputMutator outputMutator;
-  private boolean parseRk = false;
   private int batchSize = 1024 * 16;
 
   private boolean newEntry = false;
@@ -108,7 +115,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       List<NamedExpression> exprs = entries[i].getProjections();
       NamedExpression[] exprArr = new NamedExpression[exprs.size()];
       HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];
-      Set<String> projs = new HashSet<>();
+      Map<String, HBaseFieldInfo> rkProjs = new HashMap<>();
+      Map<String, HBaseFieldInfo> otherProjs = new HashMap<>();
       for (int j = 0; j < exprs.size(); j++) {
         exprArr[j] = exprs.get(j);
         try{
@@ -118,12 +126,16 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
             e.printStackTrace();
             throw e;
         }
-        projs.add(infos[j].fieldSchema.getName());
-        if (false == parseRk && infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey)
-          parseRk = true;
+
+        if (infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey) {
+          rkProjs.put(infos[j].fieldSchema.getName(), infos[j]);
+        } else {
+          otherProjs.put(infos[j].fieldSchema.getName(), infos[j]);
+        }
       }
+      entriesRowKeyProjs.add(rkProjs);
+      entriesOtherProjs.add(otherProjs);
       entryProjFieldInfos.add(infos);
-      entriesProjs.add(projs);
     }
     primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
@@ -238,11 +250,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private void setupEntry(int index) throws SchemaChangeException {
     HBaseFieldInfo[] infos = entryProjFieldInfos.get(index);
     valueVectors = new ArrayList<>(infos.length);
+    vvMap = new HashMap<>(valueVectors.size());
+
     for (int j = 0; j < infos.length; j++) {
       TypeProtos.MajorType type = HBaseRecordReader.getMajorType(infos[j]);
       ValueVector v = getVector(infos[j].fieldSchema.getName(), type);
       valueVectors.add(v);
       outputMutator.addField(v);
+      vvMap.put(infos[j].fieldSchema.getName(), v);
     }
     entryIndexVector = getVector(UnionedScanBatch.UNION_MARKER_VECTOR_NAME, Types.required(TypeProtos.MinorType.INT));
     outputMutator.addField(entryIndexVector);
@@ -257,7 +272,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     valueVectors.clear();
     if (entryIndexVector != null) {
       cleanupVector(entryIndexVector);
-      //entryIndexVector = null;
     }
   }
 
@@ -355,7 +369,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
     for (int i = offset; i < offset + length; i++) {
-      setValues(keyValues.get(i), valueVectors, setIndex);
+      setValues(keyValues.get(i), setIndex);
       setIndex ++ ;
     }
   }
@@ -377,21 +391,27 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     return currentEntry;
   }
 
-  public void setValues(KeyValue kv, List<ValueVector> valueVectors, int index) {
-    Map<String, Object> rkObjectMap = new HashMap<>();
-    if (parseRk) {
-      Set<String> projs = entriesProjs.get(currentEntry);
-      rkObjectMap = dfaParser.parse(kv.getRow(), projs);
+  public void setValues(KeyValue kv, int index) {
+    Map<String, HBaseFieldInfo> rkProjs = entriesRowKeyProjs.get(currentEntry);
+    //更新row key里的投影值
+    if (rkProjs.size() != 0) {
+      dfaParser.parseAndSet(kv.getRow(), rkProjs, vvMap, index);
     }
-    HBaseFieldInfo[] infos = entryProjFieldInfos.get(currentEntry);
-    for (int i = 0; i < infos.length; i++) {
-      HBaseFieldInfo info = infos[i];
-      ValueVector valueVector = valueVectors.get(i);
-      Object result = HBaseRecordReader.getValFromKeyValue(kv, info, rkObjectMap);
-      String type = info.fieldSchema.getType();
-      if (type.equals("string"))
-        result = Bytes.toBytes((String) result);
-      valueVector.getMutator().setObject(index, result);
+    //更新family，qualifier，ts和value的投影值
+    Map<String, HBaseFieldInfo> otherProjs = entriesOtherProjs.get(currentEntry);
+    for (Map.Entry<String, HBaseFieldInfo> entry : otherProjs.entrySet()) {
+      String colName = entry.getKey();
+      ValueVector vv = vvMap.get(colName);
+      HBaseFieldInfo info = entry.getValue();
+      Object value = null;
+      if (info.fieldType == HBaseFieldInfo.FieldType.cellvalue) {
+        value = DFARowKeyParser.parseBytes(kv.getValue(), info.fieldSchema.getType());
+      } else if (info.fieldType == HBaseFieldInfo.FieldType.cqname) {
+        value = DFARowKeyParser.parseBytes(kv.getQualifier(), info.fieldSchema.getType());
+      } else if (info.fieldType == HBaseFieldInfo.FieldType.cversion) {
+        value = kv.getTimestamp();
+      }
+      vv.getMutator().setObject(index, value);
     }
   }
 

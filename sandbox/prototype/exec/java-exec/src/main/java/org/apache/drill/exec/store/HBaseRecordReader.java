@@ -1,7 +1,6 @@
 package org.apache.drill.exec.store;
 
 import com.xingcloud.hbase.util.Constants;
-import com.xingcloud.hbase.util.DFARowKeyParser;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -23,6 +22,7 @@ import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.HbaseScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.record.MaterializedField;
+import org.apache.drill.exec.util.parser.DFARowKeyParser;
 import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
@@ -51,7 +51,6 @@ public class HBaseRecordReader implements RecordReader {
   private String tableName;
 
   private List<HBaseFieldInfo> projections;
-  private Set<String> projs;
 
   private Map<String, String> sourceRefMap;
   private List<KeyPart> primaryRowKeyParts;
@@ -59,6 +58,14 @@ public class HBaseRecordReader implements RecordReader {
   private boolean parseRk = false;
 
   private DFARowKeyParser dfaParser;
+
+  //记录row key中的投影
+  private Map<String, HBaseFieldInfo> rowKeyProjs = new HashMap<>();
+  //记录在family, qualifier, value, ts中所需要的投影
+  private Map<String, HBaseFieldInfo> otherProjs = new HashMap<>();
+
+  private Map<String, ValueVector> vvMap;
+
 
   private List<HbaseScanPOP.RowkeyFilterEntry> filters;
   private OutputMutator output;
@@ -87,7 +94,6 @@ public class HBaseRecordReader implements RecordReader {
     String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
     projections = new ArrayList<>();
-    projs = new HashSet<>();
     fieldInfoMap = new HashMap<>();
     sourceRefMap = new HashMap<>();
     List<NamedExpression> logProjection = config.getProjections();
@@ -105,15 +111,17 @@ public class HBaseRecordReader implements RecordReader {
       String ref = (String) e.getRef().getPath();
       String name = (String) ((SchemaPath) e.getExpr()).getPath();
       sourceRefMap.put(name, ref);
+
       if (!fieldInfoMap.containsKey(name)) {
         logger.debug("wrong field " + name + " hbase table has no this field");
       } else {
         HBaseFieldInfo proInfo = fieldInfoMap.get(name);
         projections.add(proInfo);
-        if (false == parseRk && proInfo.fieldType == HBaseFieldInfo.FieldType.rowkey) {
-          parseRk = true;
+        if (proInfo.fieldType == HBaseFieldInfo.FieldType.rowkey) {
+          rowKeyProjs.put(proInfo.fieldSchema.getName(), proInfo);
+        } else {
+          otherProjs.put(proInfo.fieldSchema.getName(), proInfo);
         }
-        projs.add(proInfo.fieldSchema.getName());
       }
     }
     filters = config.getFilters();
@@ -208,7 +216,7 @@ public class HBaseRecordReader implements RecordReader {
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
-    // scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    //scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
   }
 
 
@@ -219,13 +227,16 @@ public class HBaseRecordReader implements RecordReader {
       initConfig();
       initTableScanner();
       valueVectors = new ValueVector[projections.size()];
+      vvMap = new HashMap<>(valueVectors.length);
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i));
         valueVectors[i] =
           getVector(sourceRefMap.get(projections.get(i).fieldSchema.getName()), type);
         output.addField(valueVectors[i]);
         output.setNewSchema();
+        vvMap.put(projections.get(i).fieldSchema.getName(), valueVectors[i]);
       }
+
     } catch (Exception e) {
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
@@ -292,7 +303,7 @@ public class HBaseRecordReader implements RecordReader {
 
   private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
     for (int i = offset; i < offset + length; i++) {
-      setValues(keyValues.get(i), valueVectors, setIndex);
+      setValues(keyValues.get(i), setIndex);
       setIndex++;
     }
   }
@@ -305,22 +316,29 @@ public class HBaseRecordReader implements RecordReader {
   }
 
 
-  public void setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
+  public void setValues(KeyValue kv, int index) {
     long setVecotorStart = System.nanoTime();
-    Map<String, Object> rkObjectMap = new HashMap<>();
     long parseStart = System.nanoTime();
-    if (parseRk) rkObjectMap = dfaParser.parse(kv.getRow(), projs);
+    //填充row key中的投影
+    if (rowKeyProjs.size() != 0) {
+      dfaParser.parseAndSet(kv.getRow(), rowKeyProjs, vvMap, index);
+    }
     parseCost += System.nanoTime() - parseStart;
-    for (int i = 0; i < projections.size(); i++) {
-      HBaseFieldInfo info = projections.get(i);
-      ValueVector valueVector = valueVectors[i];
-      parseStart = System.nanoTime();
-      Object result = getValFromKeyValue(kv, info, rkObjectMap);
-      parseCost += System.nanoTime() - parseStart;
-      String type = info.fieldSchema.getType();
-      if (type.equals("string"))
-        result = Bytes.toBytes((String) result);
-      valueVector.getMutator().setObject(index, result);
+
+    //更新family，qualifier，ts和value的投影值
+    for (Map.Entry<String, HBaseFieldInfo> entry : otherProjs.entrySet()) {
+      String colName = entry.getKey();
+      ValueVector vv = vvMap.get(colName);
+      HBaseFieldInfo info = entry.getValue();
+      Object value = null;
+      if (info.fieldType == HBaseFieldInfo.FieldType.cellvalue) {
+        value = DFARowKeyParser.parseBytes(kv.getValue(), info.fieldSchema.getType());
+      } else if (info.fieldType == HBaseFieldInfo.FieldType.cqname) {
+        value = DFARowKeyParser.parseBytes(kv.getQualifier(), info.fieldSchema.getType());
+      } else if (info.fieldType == HBaseFieldInfo.FieldType.cversion) {
+        value = kv.getTimestamp();
+      }
+      vv.getMutator().setObject(index, value);
     }
     setVectorCost += System.nanoTime() - setVecotorStart;
   }
