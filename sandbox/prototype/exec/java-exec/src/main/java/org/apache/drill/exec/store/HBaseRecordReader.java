@@ -2,7 +2,6 @@ package org.apache.drill.exec.store;
 
 import com.xingcloud.hbase.util.Constants;
 import com.xingcloud.hbase.util.DFARowKeyParser;
-import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -65,19 +64,15 @@ public class HBaseRecordReader implements RecordReader {
   private OutputMutator output;
 
 
-  private List<XAScanner> scanners = new ArrayList<>();
-  private int currentScannerIndex = 0;
+  private XAScanner scanner;
   private List<KeyValue> curRes = new ArrayList<KeyValue>();
-  private int valIndex = -1;
-  private boolean hasMore;
+  private int valIndex = 0;
   private int batchSize = 1024 * 16;
   private ValueVector[] valueVectors;
-  private boolean init = false;
-  private long timeCost = 0;
-  private long scanCost = 0 ;
-  private long parseCost = 0 ;
-  private long setVectorCost = 0 ;
-  private long timeStart;
+  private long scanCost = 0;
+  private long parseCost = 0;
+  private long setVectorCost = 0;
+  boolean hasMore = true;
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
     this.context = context;
@@ -136,19 +131,18 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initTableScanner() throws IOException {
-    scanners = new ArrayList<>();
     FilterList filterList = new FilterList();
     if (filters != null) {
-      List<RowKeyFilterCondition> conditions=new ArrayList<>();
-      List<String>  patterns=new ArrayList<String>();
+      List<RowKeyFilterCondition> conditions = new ArrayList<>();
+      List<String> patterns = new ArrayList<String>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
-       Constants.FilterType type = entry.getFilterType();
+        Constants.FilterType type = entry.getFilterType();
         switch (type) {
           case XaRowKeyPattern:
             for (LogicalExpression e : entry.getFilterExpressions()) {
-              String pattern=((ValueExpressions.QuotedString)e).value;
-              if(!patterns.contains(pattern)){
-                conditions.add(new RowKeyFilterPattern(((ValueExpressions.QuotedString)e).value));
+              String pattern = ((ValueExpressions.QuotedString) e).value;
+              if (!patterns.contains(pattern)) {
+                conditions.add(new RowKeyFilterPattern(((ValueExpressions.QuotedString) e).value));
                 patterns.add(pattern);
               }
             }
@@ -206,16 +200,15 @@ public class HBaseRecordReader implements RecordReader {
             throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
-      if(conditions.size()>=1){
+      if (conditions.size() >= 1) {
         XARowKeyPatternFilter xaFilter = new XARowKeyPatternFilter(conditions);
         filterList.addFilter(xaFilter);
       }
     }
 
-    XAScanner scanner=new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
-    //XAScanner scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
-    scanners.add(scanner);
+    // scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
   }
 
 
@@ -263,108 +256,73 @@ public class HBaseRecordReader implements RecordReader {
   }
 
 
-  @Override
   public int next() {
-    timeStart = System.currentTimeMillis();
     for (ValueVector v : valueVectors) {
-      AllocationHelper.allocate(v, batchSize, 8);
+      AllocationHelper.allocate(v, batchSize, 4);
     }
-
     int recordSetIndex = 0;
     while (true) {
-      if (currentScannerIndex > scanners.size() - 1) {
-        setValueCount(recordSetIndex);
-        timeCost += System.currentTimeMillis() - timeStart;
-        return recordSetIndex;
-      }
-      XAScanner scanner = scanners.get(currentScannerIndex);
-      if (valIndex == -1) {
-        if (scanner == null) {
-          timeCost += System.currentTimeMillis() - timeStart;
-          return 0;
-        }
-        try {
-          long scanStart = System.currentTimeMillis();
-          hasMore = scanner.next(curRes);
-          scanCost += System.currentTimeMillis() - scanStart ;
-
-        } catch (IOException e) {
-          throw new DrillRuntimeException("Scan hbase failed : " + e.getMessage());
-        }
-        valIndex = 0;
-      }
-      if (valIndex > curRes.size() - 1) {
-        if (!hasMore) {
-          currentScannerIndex++;
-          valIndex = -1;
-          continue;
-        }
-        while (hasMore) {
-                        /* Get result list from the same scanner and skip curRes with no element */
-          curRes.clear();
-          try {
-            long scanStart = System.currentTimeMillis();
-            hasMore = scanner.next(curRes);
-            scanCost += System.currentTimeMillis() - scanStart;
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+      if (valIndex < curRes.size()) {
+        int length = Math.min(batchSize - recordSetIndex, curRes.size() - valIndex);
+        setValues(curRes, valIndex, length, recordSetIndex);
+        recordSetIndex += length;
+        if (valIndex + length != curRes.size()) {
+          valIndex += length;
+          return endNext(recordSetIndex);
+        } else {
           valIndex = 0;
-          if (!hasMore) currentScannerIndex++;
-          if (curRes.size() != 0) {
-            KeyValue kv = curRes.get(valIndex++);
-            boolean next = setValues(kv, valueVectors, recordSetIndex);
-            recordSetIndex++;
-            if (!next) {
-              setValueCount(recordSetIndex);
-              timeCost += System.currentTimeMillis() - timeStart;
-              return recordSetIndex;
-
-            }
-            break;
-          }
+          curRes.clear();
         }
-        if (valIndex > curRes.size() - 1) {
-          if (!hasMore) valIndex = -1;
-          continue;
+      }
+      try {
+        if (hasMore) {
+          long scannerStart = System.currentTimeMillis();
+          hasMore = scanner.next(curRes);
+          scanCost += System.currentTimeMillis() - scannerStart ;
         }
-
+        if (curRes.size() == 0) {
+          return endNext(recordSetIndex);
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new DrillRuntimeException("Scanner failed");
       }
-      KeyValue kv = curRes.get(valIndex++);
-      boolean next = setValues(kv, valueVectors, recordSetIndex);
-      recordSetIndex++;
-      if (!next) {
-        setValueCount(recordSetIndex);
-        timeCost += System.currentTimeMillis() - timeStart ;
-        return recordSetIndex;
-      }
-
     }
   }
 
-  public boolean setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
+  private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
+    for (int i = offset; i < offset + length; i++) {
+      setValues(keyValues.get(i), valueVectors, setIndex);
+      setIndex++;
+    }
+  }
+
+  public int endNext(int valueCount) {
+    if (valueCount == 0)
+      return 0;
+    setValueCount(valueCount);
+    return valueCount;
+  }
+
+
+  public void setValues(KeyValue kv, ValueVector[] valueVectors, int index) {
     long setVecotorStart = System.nanoTime();
-    boolean next = true;
     Map<String, Object> rkObjectMap = new HashMap<>();
-    long parseStart = System.nanoTime() ;
+    long parseStart = System.nanoTime();
     if (parseRk) rkObjectMap = dfaParser.parse(kv.getRow(), projs);
-    parseCost +=  System.nanoTime() - parseStart ;
+    parseCost += System.nanoTime() - parseStart;
     for (int i = 0; i < projections.size(); i++) {
       HBaseFieldInfo info = projections.get(i);
       ValueVector valueVector = valueVectors[i];
-      parseStart = System.nanoTime() ;
+      parseStart = System.nanoTime();
       Object result = getValFromKeyValue(kv, info, rkObjectMap);
-      parseCost += System.nanoTime() - parseStart ;
+      parseCost += System.nanoTime() - parseStart;
       String type = info.fieldSchema.getType();
       if (type.equals("string"))
         result = Bytes.toBytes((String) result);
       valueVector.getMutator().setObject(index, result);
-      if (valueVector.getValueCapacity() - index == 1) {
-        next = false;
-      }
     }
-    setVectorCost += System.nanoTime() - setVecotorStart ;
-    return next;
+    setVectorCost += System.nanoTime() - setVecotorStart;
   }
 
   private void setValueCount(int valueCount) {
@@ -392,7 +350,6 @@ public class HBaseRecordReader implements RecordReader {
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cversion) {
       return keyvalue.getTimestamp();
     } else if (option.fieldType == HBaseFieldInfo.FieldType.cqname) {
-      byte[] qualif = keyvalue.getQualifier();
       byte[] orig = new byte[4];
       for (int i = 0; i < 4; i++)
         orig[i] = keyvalue.getQualifier()[i + 1];
@@ -412,14 +369,12 @@ public class HBaseRecordReader implements RecordReader {
       }
       valueVectors[i].close();
     }
-    for (XAScanner scanner : scanners) {
-      try {
-        scanner.close();
-      } catch (Exception e) {
-        logger.error("Scanners close failed : " + e.getMessage());
-      }
+    try {
+      scanner.close();
+    } catch (Exception e) {
+      logger.error("Scanners close failed : " + e.getMessage());
     }
-    logger.debug("Scan and parse cost {} ,scan cost {} , parse cost {} ,setVectorCost {} ",timeCost,scanCost,parseCost/1000000,(setVectorCost - parseCost)/1000000);
+    logger.debug("scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
   }
 
 
