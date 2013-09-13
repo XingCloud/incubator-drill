@@ -1,4 +1,4 @@
-package com.xingcloud.hbase.util;
+package org.apache.drill.exec.util.parser;
 
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
@@ -22,7 +22,7 @@ public class DFA {
     private Map<String,HBaseFieldInfo> infoMap;
     private Map<KeyPart,State> kpStateMap;
     private byteType[] inputTypes;
-    public  DFA(List<KeyPart> keyPartList,Map<String,HBaseFieldInfo> fieldInfoMap){
+    public DFA(List<KeyPart> keyPartList, Map<String, HBaseFieldInfo> fieldInfoMap){
         this.keyParts=keyPartList;   //To change body of created methods use File | Settings | File Templates.
         this.infoMap=fieldInfoMap;
         this.start=new State(null,null,false);
@@ -41,9 +41,10 @@ public class DFA {
 
     public State next(State curState, byte input){
         curState.len++;
-        byteType type=getType(input);
-        if(curState.len>curState.size)
+        if(curState.len > curState.size) {
+            byteType type = getType(input);
             return curState.nexts.get(type);
+        }
         else return curState;
     }
 
@@ -62,12 +63,12 @@ public class DFA {
         inputTypes=new byteType[256];
         for(int input=0;input<256;input++){
             if((input>=48&&input<=57)||(input>=65&&input<=90)||(input>=97&&input<=122)){
-                inputTypes[input]=byteType.Word;
+                inputTypes[input]= byteType.Word;
             }
             else if(input>=32&&input<=126)
-                inputTypes[input]=byteType.Text;
+                inputTypes[input]= byteType.Text;
             else
-                inputTypes[input]=byteType.Binary;
+                inputTypes[input]= byteType.Binary;
         }
 
     }
@@ -218,7 +219,7 @@ public class DFA {
 
     public void reset() {
         for(Map.Entry<KeyPart,State> entry: kpStateMap.entrySet()){
-             entry.getValue().len=0;
+          entry.getValue().len=0;
         }
     }
 

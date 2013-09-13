@@ -1,7 +1,8 @@
 package org.apache.drill.exec.physical.impl;
 
 import com.beust.jcommander.internal.Lists;
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
+import com.carrotsearch.hppc.IntIntOpenHashMap;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.JoinCondition;
@@ -175,6 +176,20 @@ public class JoinBatch extends BaseRecordBatch {
     batchSchema = schemaBuilder.build();
   }
 
+  public int encode(int batch,int row){
+    if(batch > 0x0000ffff || row > 0x0000ffff){
+      logger.error("Endcode batch batch & row failed . batch : {} , row {} ",batch,row);
+      throw  new DrillRuntimeException("Encode batch & row failed .");
+    }
+    return (batch << 16 ) | row ;
+  }
+
+  public void decode(int position,Pair<Integer,Integer> pair ){
+    pair.setFirst( position >> 16);
+    pair.setSecond(position & 0x0000ffff);
+  }
+
+
   @Override
   public void releaseAssets() {
     clearCache();
@@ -201,7 +216,7 @@ public class JoinBatch extends BaseRecordBatch {
   abstract class Connector {
 
     protected List<int[]> outRecords = Lists.newArrayList();
-    IntObjectOpenHashMap<int[]> leftValueMap;
+    IntIntOpenHashMap leftValueMap;
     protected List<List<ValueVector>> leftIncomings;
     protected BatchSchema leftSchema;
     protected List<ValueVector> rightVectors;
@@ -217,7 +232,7 @@ public class JoinBatch extends BaseRecordBatch {
     public void setup() {
       leftIncomings = leftCache.getIncomings();
       leftSchema = leftCache.getSchema();
-      RightCache.Tuple<List<ValueVector>, IntVector, Integer> tuple = rightCache.removeFirst();
+      Tuple<List<ValueVector>, IntVector, Integer> tuple = rightCache.removeFirst();
       rightVectors = tuple.getFirst();
       rightJoinKey = tuple.getSecond();
       rightValueCount = tuple.getThird();
@@ -252,6 +267,9 @@ public class JoinBatch extends BaseRecordBatch {
       ValueVector out;
       Mutator outMutator;
       for (MaterializedField f : leftSchema) {
+        if (f.equals(keyField)) {
+          continue;
+        }
         out = TypeHelper.getNewVector(f, context.getAllocator());
         AllocationHelper.allocate(out, recordCount, 8);
         outMutator = out.getMutator();
@@ -286,10 +304,11 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public boolean connect() {
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
+      Pair<Integer,Integer> pair = new Pair<>();
       for (int i = 0; i < accessor.getValueCount(); i++) {
         if (leftValueMap.containsKey(accessor.get(i))) {
-          int[] index = leftValueMap.lget();
-          outRecords.add(new int[]{index[0], index[1], i});
+          decode( leftValueMap.lget(),pair);
+          outRecords.add(new int[]{pair.first, pair.second,i});
         }
       }
       return !outRecords.isEmpty();
@@ -371,10 +390,11 @@ public class JoinBatch extends BaseRecordBatch {
       BitVector.Mutator mutator = rightMarkBits.getMutator();
       mutator.setValueCount(rightValueCount);
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
+      Pair<Integer,Integer> pair = new Pair<>();
       for (int i = 0; i < accessor.getValueCount(); i++) {
         if (leftValueMap.containsKey(accessor.get(i))) {
-          int[] index = leftValueMap.lget();
-          outRecords.add(new int[]{index[0], index[1], i});
+          decode(leftValueMap.lget(), pair);
+          outRecords.add(new int[]{pair.first, pair.second, i});
           mutator.set(i, 1);
         }
       }
@@ -409,7 +429,7 @@ public class JoinBatch extends BaseRecordBatch {
   class LeftCache {
     BatchSchema schema;
     List<List<ValueVector>> incomings = Lists.newArrayList();
-    IntObjectOpenHashMap<int[]> valuesIndexMap = new IntObjectOpenHashMap<>();
+    IntIntOpenHashMap valuesIndexMap = new IntIntOpenHashMap();
     MaterializedField keyField;
 
     public void cache(List<ValueVector> incoming, IntVector joinKey) {
@@ -417,7 +437,7 @@ public class JoinBatch extends BaseRecordBatch {
       int index = incomings.size() - 1;
       IntVector.Accessor accessor = joinKey.getAccessor();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        valuesIndexMap.put(accessor.get(i), new int[]{index, i});
+        valuesIndexMap.put(accessor.get(i), encode(index, i));
       }
       keyField = joinKey.getField();
       joinKey.close();
@@ -431,7 +451,7 @@ public class JoinBatch extends BaseRecordBatch {
       this.schema = schema;
     }
 
-    IntObjectOpenHashMap<int[]> getValuesIndexMap() {
+    IntIntOpenHashMap getValuesIndexMap() {
       return valuesIndexMap;
     }
 
@@ -492,29 +512,59 @@ public class JoinBatch extends BaseRecordBatch {
       }
     }
 
-    class Tuple<First, Second, Third> {
+  }
 
-      First first;
-      Second second;
-      Third third;
+  public class Pair<First,Second>{
+    First first ;
+    Second second ;
 
-      Tuple(First first, Second second, Third third) {
-        this.first = first;
-        this.second = second;
-        this.third = third;
-      }
+    public Pair() {
+    }
 
-      First getFirst() {
-        return first;
-      }
+    Pair(First first, Second second) {
+      this.first = first;
+      this.second = second;
+    }
 
-      Second getSecond() {
-        return second;
-      }
+    First getFirst() {
+      return first;
+    }
 
-      Third getThird() {
-        return third;
-      }
+    void setFirst(First first) {
+      this.first = first;
+    }
+
+    Second getSecond() {
+      return second;
+    }
+
+    void setSecond(Second second) {
+      this.second = second;
+    }
+  }
+
+  public class Tuple<First, Second, Third> {
+
+    First first;
+    Second second;
+    Third third;
+
+    Tuple(First first, Second second, Third third) {
+      this.first = first;
+      this.second = second;
+      this.third = third;
+    }
+
+    First getFirst() {
+      return first;
+    }
+
+    Second getSecond() {
+      return second;
+    }
+
+    Third getThird() {
+      return third;
     }
   }
 

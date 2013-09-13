@@ -1,113 +1,139 @@
-
-  {
+{
   head : {
     type : "APACHE_DRILL_LOGICAL",
     version : 1,
     generator : {
       type : "AUTO",
-      info : "sof-dsk"
+      info : "age"
     }
   },
   storage : { },
   query : [ {
     op : "unioned-scan",
     @id : 1,
-    memo : "[deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*, deu_sof-dsk,2013-08-15,2013-08-15,visit.*]",
+    memo : "[deu_age:20130910, 20130911, deu_age:20130911, 20130911, deu_age:20130911, 20130911, deu_age:20130911, 20130912]",
     storageengine : "hbase",
     selection : [ {
+      rowkey : {
+        start : "20130910\\x00.\\xFF\\x00\\x00\\x00\\x00\\x00",
+        end : "20130911\\x00.\\xFF\\x00\\x00\\x00\\x00\\x00"
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "0",
+        expr : "0"
       } ],
-      filters : null,
-      rowkey : {
-        end : "20130101visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
-        start : "20130101visit.auto.\\xFF\\x00\\x00\\x00\\x00\\x00"
-      },
-      table : "sof-dsk_deu"
+      table : "deu_age"
     }, {
+      rowkey : {
+        start : "20130911\\x00.\\xFF\\x00\\x00\\x00\\x00\\x00",
+        end : "20130911\\x00.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "0",
+        expr : "0"
       } ],
-      filters : null,
-      rowkey : {
-        end : "20130102visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
-        start : "20130102visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E.\\xFF\\x00\\x00\\x00\\x00\\x00"
-      },
-      table : "sof-dsk_deu"
+      table : "deu_age"
     }, {
+      rowkey : {
+        start : "20130911\\x00.\\xFF\\x00\\x00\\x00\\x00\\x00",
+        end : "20130911\\x00.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "0",
+        expr : "0"
       } ],
-      filters : null,
-      rowkey : {
-        end : "20130103visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
-        start : "20130103visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E.\\xFF\\x00\\x00\\x00\\x00\\x00"
-      },
-      table : "sof-dsk_deu"
+      table : "deu_age"
     }, {
+      rowkey : {
+        start : "20130911\\x00.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
+        end : "20130912\\x00.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"
+      },
       projections : [ {
         ref : "uid",
         expr : "uid"
       }, {
         ref : "value",
         expr : "value"
+      }, {
+        ref : "0",
+        expr : "0"
       } ],
-      filters : null,
-      rowkey : {
-        end : "20130104visit\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
-        start : "20130104visit.\\xC5\\xA1\\x08\\xED\\x87\\xA8E.\\xFF\\x00\\x00\\x00\\x00\\x00"
-      },
-      table : "sof-dsk_deu"
+      table : "deu_age"
     } ],
     ref : "event"
   }, {
     op : "unioned-scan-split",
     @id : 2,
-    memo : "[1]",
-    input : 1,
-    entries : [ 1 ]
-  }, {
-    op : "unioned-scan-split",
-    @id : 3,
     memo : "[0]",
     input : 1,
     entries : [ 0 ]
   }, {
     op : "unioned-scan-split",
-    @id : 4,
+    @id : 3,
     memo : "[2]",
     input : 1,
     entries : [ 2 ]
   }, {
+    op : "union",
+    @id : 4,
+    inputs : [ 2, 3 ],
+    distinct : false
+  }, {
     op : "unioned-scan-split",
     @id : 5,
+    memo : "[1]",
+    input : 1,
+    entries : [ 1 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 6,
     memo : "[3]",
     input : 1,
     entries : [ 3 ]
   }, {
     op : "union",
-    @id : 6,
-    inputs : [ 2, 3, 4, 5 ],
+    @id : 7,
+    inputs : [ 5, 6 ],
     distinct : false
   }, {
+    op : "union",
+    @id : 8,
+    inputs : [ 4, 7 ],
+    distinct : false
+  }, {
+    op : "segment",
+    @id : 9,
+    input : 8,
+    exprs : [ {
+      ref : "dimension",
+      expr : "0"
+    } ],
+    name : "sgmt"
+  }, {
     op : "collapsingaggregate",
-    @id : 7,
-    input : 6,
-    within : null,
+    @id : 10,
+    input : 9,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -120,11 +146,14 @@
     } ]
   }, {
     op : "project",
-    @id : 8,
-    input : 7,
+    @id : 11,
+    input : 10,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,sof-dsk,2013-08-15,2013-08-15,visit.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+      expr : "'GROUP,age,2013-09-10,2013-09-11,*.*,TOTAL_USER,VF-ALL-0-0,EVENT,0'"
+    }, {
+      ref : "dimension",
+      expr : "dimension"
     }, {
       ref : "count",
       expr : "count"
@@ -137,10 +166,10 @@
     } ]
   }, {
     op : "store",
-    @id : 9,
-    input : 8,
+    @id : 12,
+    input : 11,
     target : null,
     partition : null,
     storageEngine : "DEFAULT-STORE"
   } ]
-  }
+}

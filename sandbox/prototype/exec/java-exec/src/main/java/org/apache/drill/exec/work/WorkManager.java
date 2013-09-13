@@ -104,7 +104,7 @@ public class WorkManager implements Closeable{
   public class WorkerBee{
 
     public void addFragmentRunner(FragmentRunner runner){
-      logger.debug("Fragment added to task queue:{}", runner);
+      logger.debug("FragmentRunner added to task queue:{}", runner);
       pendingTasks.add(runner);
     }
     

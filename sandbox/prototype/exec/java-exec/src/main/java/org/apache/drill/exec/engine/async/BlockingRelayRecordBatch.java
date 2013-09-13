@@ -2,6 +2,7 @@ package org.apache.drill.exec.engine.async;
 
 
 import org.apache.drill.exec.physical.impl.VectorHolder;
+import org.apache.drill.exec.record.RecordBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,11 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
       if(current.nextErrorCause != null){
         throw current.nextErrorCause;
       }
-      return current.outcome;
+      IterOutcome ret = current.outcome;
+      if(ret == null){
+        logger.warn("current outcome null!", new NullPointerException());
+      }
+      return ret;
     } catch (InterruptedException e) {
       e.printStackTrace();  
       return IterOutcome.STOP;      
@@ -49,7 +54,15 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
 
   @Override
   public void kill() {
-    super.kill();
+    //clean up after driver shutdown
+    //this method would block, until all drivers stopped, and all batches killed.
+    executor.submitKill();
+    this.postCleanup();
+  }
+
+  @Override
+  public void postCleanup() {
+    super.postCleanup();
     while(!resultQueue.isEmpty()){
       cleanupVectors(resultQueue.poll());
     }
@@ -64,6 +77,9 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
     RecordFrame frame = new RecordFrame();    
     frame.nextErrorCause = cause;
     resultQueue.add(frame);
+    if(cause == null){
+      logger.warn("errorCause null!", new NullPointerException());
+    }
   }
 
   @Override
@@ -72,5 +88,8 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
     RecordFrame frame = new RecordFrame();
     super.mirrorResultFromIncoming(incomingOutcome, incoming, frame, needTransfer);
     resultQueue.add(frame);
+    if(incomingOutcome == null){
+      logger.warn("incomingOutcome null!", new NullPointerException());      
+    }
   }
 }
