@@ -74,7 +74,7 @@ public class HBaseRecordReader implements RecordReader {
   private XAScanner scanner;
   private List<KeyValue> curRes = new ArrayList<KeyValue>();
   private int valIndex = 0;
-  private int batchSize = 1024 * 16;
+  private int batchSize = 1024 * 63;
   private ValueVector[] valueVectors;
   private long scanCost = 0;
   private long parseCost = 0;
