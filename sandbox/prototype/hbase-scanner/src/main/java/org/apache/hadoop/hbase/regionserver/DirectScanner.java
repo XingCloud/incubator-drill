@@ -125,13 +125,20 @@ public class DirectScanner implements XAScanner {
 
   public static void main(String[] args) throws IOException {
     String tableName = args[0];
-    String srk = args[1];
-    String erk = args[2];
+    byte[] srkPre = Bytes.toBytes(args[1]);
+    byte[] erkPre = Bytes.toBytes(args[2]);
+    byte[] tailStart = Helper.produceTail(true);
+    byte[] tailEnd = Helper.produceTail(false);
 
+    byte[] srk = Helper.bytesCombine(srkPre, tailStart);
+    byte[] erk = Helper.bytesCombine(erkPre, tailEnd);
+
+    LOG.info("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
     boolean isFileOnly = Boolean.parseBoolean(args[3]);
     boolean isMemOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(Bytes.toBytes(srk), Bytes.toBytes(erk), tableName, null, null, null, isFileOnly, isMemOnly);
+    DirectScanner scanner = new DirectScanner(srk, erk, tableName, isFileOnly, isMemOnly);
     long counter = 0;
+    long sum = 0;
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
     boolean done = false;
@@ -141,12 +148,10 @@ public class DirectScanner implements XAScanner {
         results.clear();
         done = scanner.next(results);
         for (KeyValue kv : results) {
-          if (counter % 1000 == 0 || !done) {
-            LOG.info(Bytes.toString(kv.getRow()));
-          }
           long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(kv.getRow());
           uids.add(uid);
           counter++;
+          sum += Bytes.toLong(kv.getValue());
         }
 
       } while (done);
@@ -162,7 +167,6 @@ public class DirectScanner implements XAScanner {
       }
     }
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
-    LOG.info("Uids number: "+uids.size());
-    System.out.println("Uids number: "+uids.size());
+    LOG.info("Uids number: " + uids.size() + "\tCount: " + counter + "\tSum: " + sum);
   }
 }

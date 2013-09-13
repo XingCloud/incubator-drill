@@ -78,14 +78,19 @@ class RunningFragmentManager implements FragmentStatusListener{
     queryId = rootFragment.getHandle().getQueryId() ;
     // set up the root fragment first so we'll have incoming buffers available.
     {
+      long t0 = System.nanoTime();
       IncomingBuffers buffers = new IncomingBuffers(rootOperator);
-      
+      long t1 = System.nanoTime();      
       FragmentContext rootContext = new FragmentContext(bee.getContext(), rootFragment.getHandle(), rootClient, buffers, bee.getFunctionImpRegistry());
+      long t2 = System.nanoTime();          
       RootExec rootExec = ImplCreator.getExec(rootContext, rootOperator);
+      long t3 = System.nanoTime();            
       // add fragment to local node.
       map.put(rootFragment.getHandle(), new FragmentData(rootFragment.getHandle(), null, true));
       rootRunner = new FragmentRunner(rootContext, rootExec, new RootFragmentManager(rootContext, rootFragment));
       LocalFragmentHandler handler = new LocalFragmentHandler(rootFragment.getHandle(), buffers, rootRunner);
+      long t4 = System.nanoTime();       
+      logger.debug("t1\t"+(t1-t0)+"\tt2\t"+(t2-t1)+"\tt3\t"+(t3-t2)+"\tt4\t"+(t4-t3));
       if(buffers.isDone()){
         bee.addFragmentRunner(handler.getRunnable());
       }else{

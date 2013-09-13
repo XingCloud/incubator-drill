@@ -94,4 +94,35 @@ public class Helper {
 
     return regionInfoList;
   }
+
+  public static byte[] bytesCombine(byte[]... bytesArrays){
+    int length = 0;
+    for (byte[] bytes: bytesArrays){
+      length += bytes.length;
+    }
+    byte[] combinedBytes = new byte[length];
+    int index = 0;
+    for (byte[] bytes: bytesArrays){
+      for(byte b: bytes){
+        combinedBytes[index] = b;
+        index++;
+      }
+    }
+    return combinedBytes;
+  }
+
+  public static byte[] produceTail(boolean begin) {
+    byte[] tail = new byte[6];
+    tail[0] = (byte)255;
+    if (begin) {
+      for (int i=1; i<6; i++) {
+        tail[i] = 0;
+      }
+    } else {
+      for (int i=1; i<6; i++) {
+        tail[i] = (byte)255;
+      }
+    }
+    return tail;
+  }
 }
