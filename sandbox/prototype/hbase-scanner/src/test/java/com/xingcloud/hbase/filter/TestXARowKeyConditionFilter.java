@@ -41,7 +41,7 @@ public class TestXARowKeyConditionFilter {
         scan.setStopRow(enk);
         List<RowKeyFilterCondition> filterConditionList=new ArrayList<>();
         String uidSrt= Bytes.toStringBinary(Bytes.tail(Bytes.toBytes(0l),5));
-        String uidEnd= Bytes.toStringBinary(new byte[]{64,-1,-1,-1,-1});
+        String uidEnd= Bytes.toStringBinary(new byte[]{-1,-1,-1,-1,-1});
         filterConditionList.add(new RowKeyFilterPattern("20121201visit.auto.\\xFF",uidSrt,uidEnd));
         filterConditionList.add(new RowKeyFilterRange("20121201z","20130102d",uidSrt,uidEnd));
         //filterConditionList.add(new RowKeyFilterRange("20130102z","20130103b"));
