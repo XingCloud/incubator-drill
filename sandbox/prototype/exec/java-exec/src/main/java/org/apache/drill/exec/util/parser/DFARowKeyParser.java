@@ -103,7 +103,7 @@ public class DFARowKeyParser {
           if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
             o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), info.getDataType());
           } else {
-            if (info.fieldSchema.getType().equals("string")) {
+            if (info.getDataType() == HBaseFieldInfo.DataType.STRING) {
               //string类型直接返回byte[]，提供给value vector存储
               o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), info.getDataType());
             } else {
