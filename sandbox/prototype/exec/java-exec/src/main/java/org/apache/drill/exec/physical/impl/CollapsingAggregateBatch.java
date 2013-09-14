@@ -1,6 +1,6 @@
 package org.apache.drill.exec.physical.impl;
 
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Maps;
 import org.apache.drill.common.expression.FieldReference;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos.MajorType;
@@ -13,14 +13,11 @@ import org.apache.drill.exec.physical.impl.eval.ConstantValues;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.AggregatingEvaluator;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
-import org.apache.drill.exec.physical.impl.eval.fn.agg.CountDistinctAggregator;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.vector.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,62 +35,39 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   private RecordBatch incoming;
   private BatchSchema batchSchema;
   private boolean hasMore = true;
-
-
   private AggregatingEvaluator[] aggregatingEvaluators;
-  private SchemaPath[] aggNames;
-
-  private BasicEvaluator[] carryovers;
-  private SchemaPath[] carryoverNames;
-
-
-  private SchemaPath boundaryPath[];
-  private BasicEvaluator boundaryKey;
-
-  private Map<Integer, AggValue> aggValues = new HashMap<>();
-  private MajorType[] carryOverTypes;
-
-  private int outColumnsLength;
-  private List<MaterializedField> materializedFieldList = Lists.newArrayList();
-
+  private BasicEvaluator boundaryKey = new ConstantValues.IntegerScalar(0, this);
+  private BasicEvaluator[] carryOversEvaluator = new BasicEvaluator[0];
+  private Map<Integer, Object[]> carryOversValues = Maps.newHashMap();
+  private MajorType[] carryOverTypes = new MajorType[0];
+  private boolean newSchema = false ;
 
   public CollapsingAggregateBatch(FragmentContext context, CollapsingAggregatePOP config, RecordBatch incoming) {
     this.context = context;
     this.config = config;
     this.incoming = incoming;
     setupEvals();
-
   }
 
   @Override
   public void setupEvals() {
-    EvaluatorFactory evaluatorFactory = new BasicEvaluatorFactory();
+    EvaluatorFactory ef = new BasicEvaluatorFactory();
     if (config.getWithin() != null) {
-      boundaryPath = new SchemaPath[]{config.getWithin()};
-      boundaryKey = evaluatorFactory.getBasicEvaluator(incoming, config.getWithin());
+      boundaryKey = ef.getBasicEvaluator(incoming, config.getWithin());
     }
     aggregatingEvaluators = new AggregatingEvaluator[config.getAggregations().length];
-    aggNames = new SchemaPath[aggregatingEvaluators.length];
-    if (config.getCarryovers() != null)
-      carryovers = new BasicEvaluator[config.getCarryovers().length];
-    else
-      carryovers = new BasicEvaluator[0];
-    carryoverNames = new FieldReference[carryovers.length];
-    carryOverTypes = new MajorType[carryovers.length];
     for (int i = 0; i < aggregatingEvaluators.length; i++) {
-      aggregatingEvaluators[i] = evaluatorFactory.
+      aggregatingEvaluators[i] = ef.
         getAggregateEvaluator(incoming, config.getAggregations()[i].getExpr());
-      if (aggregatingEvaluators[i] instanceof CountDistinctAggregator) {
-        BasicEvaluator within = boundaryKey == null ? new ConstantValues.IntegerScalar(0, this) : boundaryKey;
-        ((CountDistinctAggregator) aggregatingEvaluators[i]).setWithin(within);
+      aggregatingEvaluators[i].setWithin(boundaryKey);
+    }
+    if (config.getCarryovers() != null) {
+      carryOversEvaluator = new BasicEvaluator[config.getCarryovers().length];
+      carryOverTypes = new MajorType[carryOversEvaluator.length];
+      for (int i = 0; i < carryOversEvaluator.length; i++) {
+        carryOversEvaluator[i] = ef.getBasicEvaluator(incoming, config.getCarryovers()[i]);
       }
-      aggNames[i] = config.getAggregations()[i].getRef();
     }
-    for (int i = 0; i < carryovers.length; i++) {
-      carryovers[i] = evaluatorFactory.getBasicEvaluator(incoming, config.getCarryovers()[i]);
-      carryoverNames[i] = config.getCarryovers()[i];
-    }
-    outColumnsLength = aggNames.length + carryoverNames.length;
   }
 
   private void consumeCurrent() {
@@ -120,16 +94,17 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
   @Override
   public IterOutcome next() {
-    if(!hasMore){
+    if (!hasMore) {
       return IterOutcome.NONE;
     }
     IterOutcome o = incoming.next();
     switch (o) {
       case OK_NEW_SCHEMA:
+        newSchema = true;
       case OK:
-        try{
-         doAggerate();
-        }catch (Exception e) {
+        try {
+          doAggerate();
+        } catch (Exception e) {
           logger.error(e.getMessage());
           e.printStackTrace();
           context.fail(e);
@@ -140,42 +115,30 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       case STOP:
         return IterOutcome.STOP;
       case NONE:
-        if (aggValues.isEmpty()) {
+        if(!newSchema){
           return IterOutcome.NONE;
         }
-        writeOutPut();
-        hasMore = false ;
+        upstream();
+        setupSchema();
+        hasMore = false;
         return IterOutcome.OK_NEW_SCHEMA;
     }
-    return  IterOutcome.NONE ;
+    return IterOutcome.NONE;
   }
 
-  public void doAggerate(){
+  public void doAggerate() {
     consumeCurrent();
-    int groupId = 0;
-    Object[] carryOverValue = null;
-    Long[] aggValues = new Long[aggregatingEvaluators.length];
-    for (int i = 0; i < aggregatingEvaluators.length; i++) {
-      BigIntVector aggVector = (BigIntVector) aggregatingEvaluators[i].eval();
-      aggValues[i] = aggVector.getAccessor().get(0);
-      aggVector.close();
+    Object[] carryOverValue = new Object[carryOversEvaluator.length];
+    for (int i = 0; i < carryOversEvaluator.length; i++) {
+      ValueVector v = carryOversEvaluator[i].eval();
+      carryOverValue[i] = v.getAccessor().getObject(0);
+      carryOverTypes[i] = v.getField().getType();
+      v.close();
     }
-    if (carryovers.length != 0) {
-      carryOverValue = new Object[carryovers.length];
-      ValueVector v;
-      for (int i = 0; i < carryovers.length; i++) {
-        v = carryovers[i].eval();
-        carryOverValue[i] = v.getAccessor().getObject(0);
-        carryOverTypes[i] = v.getField().getType();
-        v.close();
-      }
-    }
-    if (boundaryKey != null) {
-      IntVector boundaryVector = (IntVector) boundaryKey.eval();
-      groupId = boundaryVector.getAccessor().get(0);
-      boundaryVector.close();
-    }
-    mergeAggValues(groupId, aggValues, carryOverValue);
+    IntVector boundaryVector = (IntVector) boundaryKey.eval();
+    int boundaryKey = boundaryVector.getAccessor().get(0);
+    boundaryVector.close();
+    carryOversValues.put(boundaryKey, carryOverValue);
     for (ValueVector v : incoming) {
       v.close();
     }
@@ -184,38 +147,44 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
 
   private void setupSchema() {
     SchemaBuilder schemaBuilder = BatchSchema.newBuilder();
-    for (int i = 0; i < aggNames.length; i++) {
-      MaterializedField f = MaterializedField.create(aggNames[i], Types.required(MinorType.BIGINT));
-      schemaBuilder.addField(f);
-      materializedFieldList.add(f);
-    }
-    for (int i = 0; i < carryoverNames.length; i++) {
-      MaterializedField f = MaterializedField.create(carryoverNames[i], carryOverTypes[i]);
-      schemaBuilder.addField(f);
-      materializedFieldList.add(f);
+    for (ValueVector v : outputVectors) {
+      schemaBuilder.addField(v.getField());
     }
     batchSchema = schemaBuilder.build();
   }
 
-  private void writeOutPut() {
-    ValueVector v;
-    recordCount = aggValues.size();
+  private void upstream() {
     outputVectors.clear();
-    setupSchema();
-    for (MaterializedField f : materializedFieldList) {
-      v = TypeHelper.getNewVector(f, context.getAllocator());
-      AllocationHelper.allocate(v, recordCount, 8);
-      outputVectors.add(v);
-    }
-    int i = 0;
-    for (AggValue aggValue : aggValues.values()) {
-      for (int j = 0; j < outColumnsLength; j++) {
-        outputVectors.get(j).getMutator().setObject(i, aggValue.getObject(j));
-      }
-      i++;
-    }
+    upstreamAggValues();
+    upstreamCarryOvers();
     for (ValueVector vector : outputVectors) {
       vector.getMutator().setValueCount(recordCount);
+    }
+  }
+
+  private void upstreamAggValues() {
+    for (int i = 0; i < aggregatingEvaluators.length; i++) {
+      MaterializedField f = MaterializedField.create(config.getAggregations()[i].getRef(), Types.required(MinorType.BIGINT));
+      ValueVector in = aggregatingEvaluators[i].eval();
+      ValueVector out = TransferHelper.transferVector(in);
+      recordCount = out.getAccessor().getValueCount();
+      out.setField(f);
+      outputVectors.add(out);
+    }
+  }
+
+
+  private void upstreamCarryOvers() {
+    for (int i = 0; i < carryOversEvaluator.length; i++) {
+      MaterializedField f = MaterializedField.create(config.getCarryovers()[i], carryOverTypes[i]);
+      ValueVector v = TypeHelper.getNewVector(f, context.getAllocator());
+      AllocationHelper.allocate(v, recordCount, 4);
+      ValueVector.Mutator m = v.getMutator();
+      for (int j = 0; j < recordCount; j++) {
+        m.setObject(j, carryOversValues.get(j)[i]);
+      }
+      m.setValueCount(recordCount);
+      outputVectors.add(v);
     }
   }
 
@@ -223,36 +192,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   public void releaseAssets() {
     for (ValueVector v : outputVectors) {
       v.close();
-    }
-  }
-
-  private void mergeAggValues(int groupId, Long[] values, Object[] carryOvers) {
-    AggValue val = aggValues.get(groupId);
-    if (val == null) {
-      aggValues.put(groupId, new AggValue(values, carryOvers));
-    } else {
-      Long[] aggVals = val.aggValues;
-      for (int i = 0; i < aggVals.length; i++) {
-        aggVals[i] += values[i];
-      }
-    }
-  }
-
-  class AggValue {
-    Long[] aggValues;
-    Object[] carryOvers;
-
-    AggValue(Long[] aggValues, Object[] carryOvers) {
-      this.aggValues = aggValues;
-      this.carryOvers = carryOvers;
-    }
-
-    Object getObject(int i) {
-      if (i < aggValues.length) {
-        return aggValues[i];
-      } else {
-        return carryOvers[i - aggValues.length];
-      }
     }
   }
 

@@ -8,8 +8,7 @@ import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.common.types.Types;
-import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.AggregatingEvaluator;
-import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
+import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.AbstractAggregatingEvaluator;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionArguments;
 import org.apache.drill.exec.physical.impl.eval.fn.FunctionEvaluator;
 import org.apache.drill.exec.record.MaterializedField;
@@ -28,15 +27,9 @@ import java.util.Map;
  */
 
 @FunctionEvaluator("count_distinct")
-public class CountDistinctAggregator implements AggregatingEvaluator {
+public class CountDistinctAggregator extends AbstractAggregatingEvaluator {
 
-
-  private long l = 0;
-  private BasicEvaluator child;
-  private BasicEvaluator boundary;
-  private RecordBatch recordBatch;
   private Map<Integer, DistinctCounter> distinctCounters = Maps.newHashMap();
-  private BigIntVector value;
 
   public CountDistinctAggregator(RecordBatch recordBatch, FunctionArguments args) {
     this.child = args.getOnlyEvaluator();
@@ -47,9 +40,7 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   public void addBatch() {
     ValueVector v = child.eval();
     DistinctCounter distinctCounter;
-    IntVector boundaryVector = (IntVector) boundary.eval();
-    int boundaryKey = boundaryVector.getAccessor().get(0);
-    boundaryVector.close();
+    int boundaryKey = getBoundary();
     distinctCounter = distinctCounters.get(boundaryKey);
     if (distinctCounter == null) {
       distinctCounter = getDefaultDistinctCounter();
@@ -59,28 +50,23 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
       distinctCounters.put(boundaryKey, distinctCounter);
     }
     distinctCounter.add(v);
-    l = distinctCounter.gap();
     v.close();
   }
 
   @Override
   public ValueVector eval() {
-    if (value == null) {
-      value = new BigIntVector(MaterializedField.create(new SchemaPath("count_distinct", ExpressionPosition.UNKNOWN),
-        Types.required(TypeProtos.MinorType.BIGINT)),
-        recordBatch.getContext().getAllocator());
+    value = new BigIntVector(MaterializedField.create(new SchemaPath("count_distinct", ExpressionPosition.UNKNOWN),
+      Types.required(TypeProtos.MinorType.BIGINT)),
+      recordBatch.getContext().getAllocator());
+    int recordCount = distinctCounters.size();
+    value.allocateNew(recordCount);
+    BigIntVector.Mutator m = value.getMutator();
+    for (int i = 0; i < recordCount; i++) {
+      m.set(i, distinctCounters.get(i).cardinality());
     }
-    value.allocateNew(1);
-    value.getMutator().set(0, l);
-    value.getMutator().setValueCount(1);
-    l = 0;
+    m.setValueCount(recordCount);
     return value;
   }
-
-  public void setWithin(BasicEvaluator boundary) {
-    this.boundary = boundary;
-  }
-
 
   private DistinctCounter getDefaultDistinctCounter() {
     return new SetCounter();
@@ -95,18 +81,10 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   }
 
   abstract class DistinctCounter {
-    long previous;
-    long current;
 
     public abstract void add(ValueVector v);
 
-    public long size() {
-      return current;
-    }
-
-    public long gap() {
-      return current - previous;
-    }
+    public abstract long cardinality();
 
     public boolean needUpgrade() {
       return false;
@@ -118,17 +96,20 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
 
     @Override
     public void add(ValueVector v) {
-      IntVector.Accessor a = ( (IntVector) v).getAccessor();
+      IntVector.Accessor a = ((IntVector) v).getAccessor();
       for (int i = 0; i < a.getValueCount(); i++) {
         set.add(a.get(i));
       }
-      previous = current;
-      current = set.size();
+    }
+
+    @Override
+    public long cardinality() {
+      return set.size();
     }
 
     @Override
     public boolean needUpgrade() {
-      if (current > 8 * 1024) {
+      if (set.size() > 8 * 1024) {
         return true;
       }
       return false;
@@ -138,14 +119,13 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
   class HyperCounter extends DistinctCounter {
     HyperLogLog hyperLogLog = new HyperLogLog(16);
 
-    public HyperCounter() {}
+    public HyperCounter() {
+    }
 
     public HyperCounter(SetCounter setCounter) {
       for (IntCursor o : setCounter.set) {
         hyperLogLog.offer(o.value);
       }
-      previous = setCounter.previous;
-      current = setCounter.current;
     }
 
     @Override
@@ -154,8 +134,11 @@ public class CountDistinctAggregator implements AggregatingEvaluator {
       for (int i = 0; i < a.getValueCount(); i++) {
         hyperLogLog.offer(a.getObject(i));
       }
-      previous = current;
-      current = hyperLogLog.cardinality();
+    }
+
+    @Override
+    public long cardinality() {
+      return hyperLogLog.cardinality();
     }
   }
 }
