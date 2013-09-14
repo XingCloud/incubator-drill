@@ -76,7 +76,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private Map<String, ValueVector> vvMap;
 
   private OutputMutator outputMutator;
-  private int batchSize = 1024 * 16;
+  private int batchSize = 1024 * 63;
 
   private boolean newEntry = false;
 

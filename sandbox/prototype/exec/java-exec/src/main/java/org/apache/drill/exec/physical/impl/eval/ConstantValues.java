@@ -33,7 +33,6 @@ public class ConstantValues {
     public ValueVector eval() {
       if (intVector == null) {
         intVector = new IntVector(MaterializedField.create(new SchemaPath("constant", ExpressionPosition.UNKNOWN), Types.required(MinorType.INT)), recordBatch.getContext().getAllocator());
-
       }
       intVector.allocateNew(1);
       intVector.getMutator().set(0, i);

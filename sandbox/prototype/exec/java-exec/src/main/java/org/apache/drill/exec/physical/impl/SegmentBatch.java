@@ -191,7 +191,7 @@ public class SegmentBatch extends BaseRecordBatch {
       if(groupInfo.containsKey(groupByExprsValue)){
         groupNum = groupInfo.lget();
       }else{
-        groupNum = ++groupTotal;
+        groupNum = groupTotal ++;
         groupInfo.put(groupByExprsValue, groupNum);
       }
       IntArrayList group = groups.get(groupNum);

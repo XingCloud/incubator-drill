@@ -185,7 +185,7 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   public void decode(int position, Pair<Integer, Integer> pair) {
-    pair.setFirst(position >> 16);
+    pair.setFirst(position >>> 16);
     pair.setSecond(position & 0x0000ffff);
   }
 
@@ -263,7 +263,7 @@ public class JoinBatch extends BaseRecordBatch {
           continue;
         }
         ValueVector out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 8);
+        AllocationHelper.allocate(out, recordCount, 4);
         Mutator outMutator = out.getMutator();
         ValueVector.Accessor current = null;
         for (int i = 0; i < outRecords.size(); i++) {
@@ -279,7 +279,7 @@ public class JoinBatch extends BaseRecordBatch {
       for (int fieldId = 0; fieldId < rightFields.size(); fieldId++) {
         MaterializedField f = rightFields.get(fieldId);
         ValueVector out = TypeHelper.getNewVector(f, context.getAllocator());
-        AllocationHelper.allocate(out, recordCount, 8);
+        AllocationHelper.allocate(out, recordCount, 4);
         Mutator outMutator = out.getMutator();
         ValueVector.Accessor accessor = rightVectors.get(fieldId).getAccessor();
         for (int i = 0; i < outRecords.size(); i++) {
@@ -596,7 +596,6 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   public class VectorComparator implements Comparator<ValueVector> {
-
     @Override
     public int compare(ValueVector left, ValueVector right) {
       return left.getField().getName().compareTo(right.getField().getName());
