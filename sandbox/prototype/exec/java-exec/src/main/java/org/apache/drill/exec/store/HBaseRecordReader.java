@@ -55,7 +55,6 @@ public class HBaseRecordReader implements RecordReader {
   private Map<String, String> sourceRefMap;
   private List<KeyPart> primaryRowKeyParts;
   private Map<String, HBaseFieldInfo> fieldInfoMap;
-  private boolean parseRk = false;
 
   private DFARowKeyParser dfaParser;
 
