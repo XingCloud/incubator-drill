@@ -20,7 +20,7 @@ public abstract class BaseRecordBatch implements RecordBatch {
 
     protected List<ValueVector> outputVectors = Lists.newArrayList();
     protected VectorHolder vh ;
-    protected int recordCount ;
+    protected int recordCount = 0 ;
 
     public abstract void setupEvals();
 
