@@ -6,13 +6,22 @@ import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.drill.common.expression.ExpressionPosition;
+import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.common.types.TypeProtos;
+import org.apache.drill.common.types.Types;
+import org.apache.drill.exec.memory.DirectBufferAllocator;
+import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.util.parser.DFARowKeyParser;
+import org.apache.drill.exec.vector.AllocationHelper;
+import org.apache.drill.exec.vector.IntVector;
+import org.apache.drill.exec.vector.TypeHelper;
+import org.apache.drill.exec.vector.ValueVector;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -25,50 +34,24 @@ import java.util.*;
 public class TestParseRowkey {
     private static final Log LOG = LogFactory.getLog(TestParseRowkey.class);
 
-    //private int index=0;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap=new HashMap<>();
-    private Map<String, Object> rkObjectMap;
     private List<KeyPart> primaryRowKeyParts;
-    private List<KeyPart>[] propRowKeyParts;
-    private Map<String,HBaseFieldInfo>[] propRkFieldInfoMaps;
-    private String[] propertyNames={"grade","identifier","language",
-                                    "last_login_time","last_pay_time"};
+    private String tableName;
+    private DFARowKeyParser dfaRowKeyParser;
 
-    private void init() throws Exception {
-        String tableName="testtable_100W_deu";
-        String[]projections={"event0","uid","value"};
-        List<String> options=Arrays.asList(projections);
-        List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, options);
+    private static final int BATCH_SIZE = 16 * 1024;
+
+
+    @Before
+    public void init() throws Exception {
+        tableName="deu_age";
+        List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, null);
         for (HBaseFieldInfo col : cols) {
             rkFieldInfoMap.put(col.fieldSchema.getName(), col);
         }
-        primaryRowKeyParts=TableInfo.getRowKey(tableName,options);
-        rkObjectMap=new HashMap<>();
+        primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
+        dfaRowKeyParser = new DFARowKeyParser(primaryRowKeyParts, rkFieldInfoMap);
     }
-
-    private void initUserTable(String tableName) throws Exception{
-        propRkFieldInfoMaps=new Map[propertyNames.length];
-        propRowKeyParts=new List[propertyNames.length];
-        for(int i=0;i<propertyNames.length;i++){
-            //String[] projections={propertyNames[i],"uid"};
-            String[] projections={"uid"};
-            List<String> options=Arrays.asList(projections);
-            List<HBaseFieldInfo> cols=TableInfo.getCols(tableName,options);
-            propRkFieldInfoMaps[i]=new HashMap<>();
-            for(HBaseFieldInfo col: cols){
-                propRkFieldInfoMaps[i].put(col.fieldSchema.getName(),col);
-            }
-            propRowKeyParts[i]=TableInfo.getRowKey(tableName,options);
-        }
-        rkObjectMap=new HashMap<>();
-
-    }
-
-
-
-
-
-
 
 
 

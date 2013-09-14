@@ -22,14 +22,9 @@ import java.util.Map;
 public class DFARowKeyParser {
     private static Logger logger = LoggerFactory.getLogger(DFARowKeyParser.class);
 
-    private static final int INT_BYTE_SIZE = 4;
-    private static final int LONG_BYTE_SIZE = 8;
-    private static final int SMALLINT_BYTE_SIZE = 2;
-
-
     private DFA dfa;
     private List<KeyPart> primaryRowKeyParts;
-    private Map<String,HBaseFieldInfo> rkFieldInfoMap;
+    private Map<String, HBaseFieldInfo> rkFieldInfoMap;
 
     public DFARowKeyParser(List<KeyPart> primaryRowKeyParts, Map<String, HBaseFieldInfo> rkFieldInfoMap){
         this.primaryRowKeyParts = primaryRowKeyParts;
@@ -41,24 +36,21 @@ public class DFARowKeyParser {
         DFA.State prev = dfa.begin().directNext;
         DFA.State next;
         DFA.State end = dfa.end();
-        int[] offsets = new int[20];
-        KeyPart[] Kps = new KeyPart[20];
         //记录每个col name所对应的在原始row key中的位置和key part信息
-        Map<String, Pair<Pair<Integer, Integer>, KeyPart>> keyPartInfos = new HashMap<>();
+        Map<String, Pair<Integer, Integer>> keyPartInfos = new HashMap<>();
         int len = 1;
         int index = 0;
-        offsets[0] = 0;
+        int lastIndex = 0;
         while(index < rk.length) {
             next = dfa.next(prev,rk[index]);
             if (next != prev){
-                offsets[len] = index;
-                Kps[len++] = prev.kp;
+                len++;
                 if (len > 1 && prev.kp.getType() == KeyPart.Type.field) {
                     String colName = prev.kp.getField().getName();
-                    Pair<Integer, Integer> posPair = new Pair<>(offsets[len-2], offsets[len-1]);
-                    Pair<Pair<Integer, Integer>, KeyPart> keyPartInfo = new Pair<>(posPair, prev.kp);
-                    keyPartInfos.put(colName, keyPartInfo);
+                    Pair<Integer, Integer> posPair = new Pair<>(lastIndex, index);
+                    keyPartInfos.put(colName, posPair);
                 }
+                lastIndex = index;
                 //下次解析起始len为0
                 prev.len = 0;
                 index--;
@@ -76,14 +68,10 @@ public class DFARowKeyParser {
             }
         }
         if(prev != end){
-            offsets[len] = rk.length;
-            Kps[len] = prev.kp;
-
             if (len > 1 && prev.kp.getType() == KeyPart.Type.field) {
               String colName = prev.kp.getField().getName();
-              Pair<Integer, Integer> posPair = new Pair<>(offsets[len-1], offsets[len]);
-              Pair<Pair<Integer, Integer>, KeyPart> keyPartInfo = new Pair<>(posPair, prev.kp);
-              keyPartInfos.put(colName, keyPartInfo);
+              Pair<Integer, Integer> posPair = new Pair<>(lastIndex, rk.length);
+              keyPartInfos.put(colName, posPair);
             }
 
             //下次解析起始len为0
@@ -95,9 +83,7 @@ public class DFARowKeyParser {
           String colName = entry.getKey();
           HBaseFieldInfo info = entry.getValue();
 
-          Pair<Pair<Integer, Integer>, KeyPart> keyPart = keyPartInfos.get(colName);
-          Pair<Integer, Integer> posInfo = keyPart.getFirst();
-          KeyPart kp = keyPart.getSecond();
+          Pair<Integer, Integer> posInfo = keyPartInfos.get(colName);
 
           Object o = null;
           if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
@@ -126,51 +112,37 @@ public class DFARowKeyParser {
     }
 
     public static Object parseBytes(byte[] orig, HBaseFieldInfo.DataType type){
-        byte[] result;
-        int len = orig.length;
         switch (type) {
             case INT:
-              result = new byte[INT_BYTE_SIZE];
-              System.arraycopy(orig, 0, result, INT_BYTE_SIZE-len, len);
-              return Bytes.toInt(result);
+              return Bytes.toInt(orig);
             case SMALLINT:
-              result = new byte[SMALLINT_BYTE_SIZE];
-              System.arraycopy(orig, 0, result, SMALLINT_BYTE_SIZE-len, len);
-              return Bytes.toShort(result);
+              return Bytes.toShort(orig);
             case TINYINT:
-                return orig[0];
+              return orig[0];
             case STRING:
-                return orig;
+              return orig;
             case BIGINT:
-              result = new byte[LONG_BYTE_SIZE];
-              System.arraycopy(orig, 0, result, LONG_BYTE_SIZE-len, len);
-              return Bytes.toLong(result);
+              return Bytes.toLong(orig);
         }
         return null;
     }
 
     public static Object parseBytes(byte[] orig, int start, int end, HBaseFieldInfo.DataType type) {
-        byte[] result;
-        int len = end-start;
         switch (type) {
             case INT:
-                result = new byte[INT_BYTE_SIZE];
-                System.arraycopy(orig, start, result, INT_BYTE_SIZE-len, len);
-                return Bytes.toInt(result);
+              return Bytes.toInt(orig, start);
             case SMALLINT:
-                result = new byte[SMALLINT_BYTE_SIZE];
-                System.arraycopy(orig, start, result, SMALLINT_BYTE_SIZE-len, len);
-                return Bytes.toShort(result);
+              return Bytes.toShort(orig, start);
             case TINYINT:
-                return orig[0];
+              return orig[0];
             case STRING:
-                result = new byte[len];
-                System.arraycopy(orig, start, result, 0, len);
-                return result;
+              byte[] result;
+              int len = end-start;
+              result = new byte[len];
+              System.arraycopy(orig, start, result, 0, len);
+              return result;
             case BIGINT:
-                result = new byte[LONG_BYTE_SIZE];
-                System.arraycopy(orig, start, result, LONG_BYTE_SIZE-len, len);
-                return Bytes.toLong(result);
+              return Bytes.toLong(orig, start);
         }
         return null;
     }
