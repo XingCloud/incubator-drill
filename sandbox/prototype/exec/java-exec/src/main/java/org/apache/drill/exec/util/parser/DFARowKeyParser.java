@@ -26,6 +26,9 @@ public class DFARowKeyParser {
     private List<KeyPart> primaryRowKeyParts;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap;
 
+    public long parseDFACost = 0;
+    public long parseAndSetValCost = 0;
+
     public DFARowKeyParser(List<KeyPart> primaryRowKeyParts, Map<String, HBaseFieldInfo> rkFieldInfoMap){
         this.primaryRowKeyParts = primaryRowKeyParts;
         this.rkFieldInfoMap = rkFieldInfoMap;
@@ -33,6 +36,7 @@ public class DFARowKeyParser {
     }
 
     public void parseAndSet(byte[] rk, Map<String, HBaseFieldInfo> projs, Map<String, ValueVector> vvMap, int vvIndex) {
+        long st = System.nanoTime();
         DFA.State prev = dfa.begin().directNext;
         DFA.State next;
         DFA.State end = dfa.end();
@@ -77,7 +81,9 @@ public class DFARowKeyParser {
             //下次解析起始len为0
             prev.len = 0;
         }
+        parseDFACost += System.nanoTime() - st;
 
+        st = System.nanoTime();
         //如果需要此字段的投影才解析
         for (Map.Entry<String, HBaseFieldInfo> entry : projs.entrySet()) {
           String colName = entry.getKey();
@@ -100,6 +106,7 @@ public class DFARowKeyParser {
           ValueVector vv = vvMap.get(colName);
           vv.getMutator().setObject(vvIndex, o);
         }
+        parseAndSetValCost += System.nanoTime() - st;
     }
 
     static String decodeText(byte[] bytes, int start, int end){

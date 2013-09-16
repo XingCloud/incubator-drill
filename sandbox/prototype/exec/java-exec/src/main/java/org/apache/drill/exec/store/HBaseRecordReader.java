@@ -363,6 +363,7 @@ public class HBaseRecordReader implements RecordReader {
     } catch (Exception e) {
       logger.error("Scanners close failed : " + e.getMessage());
     }
+    logger.debug("parse dfa cost {} , parse value and set value vector cost {} ", dfaParser.parseDFACost/1000000, dfaParser.parseAndSetValCost/1000000);
     logger.debug("scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
   }
 
