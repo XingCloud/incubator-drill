@@ -163,7 +163,8 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
       case STOP:
         cleanupVectors(current);
         break;
-      default:
+      case NONE:
+        current.schema = incoming.getSchema();
         break;
     }
     

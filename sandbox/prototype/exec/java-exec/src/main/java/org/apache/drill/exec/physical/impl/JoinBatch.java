@@ -178,7 +178,7 @@ public class JoinBatch extends BaseRecordBatch {
 
   public int encode(int batch, int row) {
     if (batch > 0x0000ffff || row > 0x0000ffff) {
-      logger.error("Endcode batch batch & row failed . batch : {} , row {} ", batch, row);
+      logger.error("Encode batch batch & row failed . batch : {} , row {} ", batch, row);
       throw new DrillRuntimeException("Encode batch & row failed .");
     }
     return (batch << 16) | row;
