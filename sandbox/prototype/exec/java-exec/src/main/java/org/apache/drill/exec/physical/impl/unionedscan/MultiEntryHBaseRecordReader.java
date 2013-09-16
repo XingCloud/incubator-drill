@@ -89,7 +89,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private List<Boolean> useDFA = new ArrayList<>();
 
   private int currentEntry = 0;
-  private int nextEntry = 0 ;
+  private int nextEntry = 1 ;
 
   private long timeCost = 0 ;
   private long start = 0;
@@ -348,6 +348,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setUpNewEntry() throws SchemaChangeException{
     releaseEntry();
+    logger.info("SetupNewEntry , current {} , next {}",currentEntry,nextEntry);
+    if(currentEntry >= nextEntry){
+      logger.error("Overlap {} {}",currentEntry,nextEntry);
+      throw new DrillRuntimeException("Overlap") ;
+    }
     currentEntry = nextEntry ;
     setupEntry(currentEntry);
     newEntry = false;
