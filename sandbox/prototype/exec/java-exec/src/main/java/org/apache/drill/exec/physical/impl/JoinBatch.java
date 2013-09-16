@@ -213,7 +213,8 @@ public class JoinBatch extends BaseRecordBatch {
     protected IntVector rightJoinKey;
     protected List<MaterializedField> rightFields;
     protected int rightValueCount;
-    protected MaterializedField keyField;
+    protected MaterializedField leftKey;
+    protected MaterializedField rightKey ;
     protected List<ValueVector> leftOutPut;
     protected List<ValueVector> rightOutPut;
 
@@ -226,7 +227,8 @@ public class JoinBatch extends BaseRecordBatch {
       rightValueCount = tuple.getThird();
       rightFields = rightCache.getFields();
       leftValueMap = leftCache.getValuesIndexMap();
-      keyField = leftCache.keyField;
+      leftKey = leftCache.keyField;
+      rightKey = rightCache.keyField ;
     }
 
     public abstract boolean connect();
@@ -259,7 +261,9 @@ public class JoinBatch extends BaseRecordBatch {
     public void copyLeft() {
       for (int fieldId = 0; fieldId < leftFields.size(); fieldId++) {
         MaterializedField f = leftFields.get(fieldId);
-        if (f.equals(keyField)) {
+        if (f.equals(leftKey)) {
+          continue;
+        }else if(leftKey == null && f.getName().equals(rightKey.getName())){
           continue;
         }
         ValueVector out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
@@ -445,6 +449,7 @@ public class JoinBatch extends BaseRecordBatch {
   class Cache {
     Collection<List<ValueVector>> incomings;
     List<MaterializedField> fields;
+    MaterializedField keyField;
     boolean isSet;
 
     Cache() {
@@ -485,7 +490,6 @@ public class JoinBatch extends BaseRecordBatch {
 
   class LeftCache extends Cache {
     IntIntOpenHashMap valuesIndexMap = new IntIntOpenHashMap();
-    MaterializedField keyField;
 
     LeftCache() {
       super();
@@ -535,6 +539,7 @@ public class JoinBatch extends BaseRecordBatch {
       Collections.sort(incoming, new VectorComparator());
       ((LinkedList<List<ValueVector>>) incomings).addLast(incoming);
       joinKeys.addLast(joinKey);
+      keyField = joinKey.getField();
       recordCounts.addLast(recordCount);
     }
 
