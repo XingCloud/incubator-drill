@@ -26,16 +26,93 @@ public class DFARowKeyParser {
     private List<KeyPart> primaryRowKeyParts;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap;
 
+    //可确定的固定长度字段位置，不用DFA解析
+    private Map<String, Pair<Integer, Integer>> constField = new HashMap<>();
+
     public long parseDFACost = 0;
     public long parseAndSetValCost = 0;
 
     public DFARowKeyParser(List<KeyPart> primaryRowKeyParts, Map<String, HBaseFieldInfo> rkFieldInfoMap){
-        this.primaryRowKeyParts = primaryRowKeyParts;
-        this.rkFieldInfoMap = rkFieldInfoMap;
-        this.dfa = new DFA(this.primaryRowKeyParts, this.rkFieldInfoMap);
+      this.primaryRowKeyParts = primaryRowKeyParts;
+      this.rkFieldInfoMap = rkFieldInfoMap;
+      this.dfa = new DFA(this.primaryRowKeyParts, this.rkFieldInfoMap);
+      initConstField();
     }
 
-    public void parseAndSet(byte[] rk, Map<String, HBaseFieldInfo> projs, Map<String, ValueVector> vvMap, int vvIndex) {
+    public void initConstField() {
+      int i = 0;
+      int startPos = 0;
+      //正向扫描确定固定长度投影
+      for (; i<primaryRowKeyParts.size(); i++) {
+        KeyPart kp = primaryRowKeyParts.get(i);
+        if (kp.getField() == null) {
+          break;
+        }
+        String colName = kp.getField().getName();
+        HBaseFieldInfo info = rkFieldInfoMap.get(colName);
+        int len = info.serLength;
+        //遇到变长子段结束
+        if (len <= 0) {
+          break;
+        }
+        //在row key中表示一个投影字段，记录下来
+        if (kp.getType() == KeyPart.Type.field) {
+          Pair<Integer, Integer> posPair = new Pair<>(startPos, startPos + len);
+          constField.put(colName, posPair);
+        }
+        startPos = startPos + len;
+      }
+      //全部扫描结束
+      if (i == primaryRowKeyParts.size()) {
+        return;
+      }
+      //反向扫描确定固定长度投影
+      startPos = 0;
+      for (i=primaryRowKeyParts.size()-1; i>=0; i--) {
+        KeyPart kp = primaryRowKeyParts.get(i);
+        if (kp.getField() == null) {
+          break;
+        }
+        String colName = kp.getField().getName();
+        HBaseFieldInfo info = rkFieldInfoMap.get(colName);
+        int len = info.serLength;
+        if (len <= 0) {
+          break;
+        }
+        if (kp.getType() == KeyPart.Type.field) {
+          Pair<Integer, Integer> posPair = new Pair<>(startPos-len, startPos);
+          constField.put(colName, posPair);
+        }
+        startPos = startPos - len;
+      }
+
+    }
+
+    public void parseAndSet(byte[] rk, Map<String, HBaseFieldInfo> projs, Map<String, ValueVector> vvMap, int vvIndex, boolean useDFA) {
+      //不用dfa解析，row key中投影字段可直接完全解析
+      if (!useDFA) {
+        for (Map.Entry<String, HBaseFieldInfo> entry : projs.entrySet()) {
+          String colName = entry.getKey();
+          HBaseFieldInfo info = entry.getValue();
+          Pair<Integer, Integer> posInfo = constField.get(colName);
+          int startPos = posInfo.getFirst()<=0 ? posInfo.getFirst() + rk.length : posInfo.getFirst();
+          int endPos = posInfo.getSecond()<=0 ? posInfo.getSecond() + rk.length : posInfo.getSecond();
+          Object o = null;
+          if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
+            o = parseBytes(rk, startPos, endPos, info.getDataType());
+          } else {
+            if (info.getDataType() == HBaseFieldInfo.DataType.STRING) {
+              //string类型直接返回byte[]，提供给value vector存储
+              o = parseBytes(rk, startPos, endPos, info.getDataType());
+            } else {
+              o = parseString
+                      (decodeText(rk, startPos, endPos), info.getDataType());
+            }
+          }
+          ValueVector vv = vvMap.get(colName);
+          vv.getMutator().setObject(vvIndex, o);
+        }
+      } else {
         long st = System.nanoTime();
         DFA.State prev = dfa.begin().directNext;
         DFA.State next;
@@ -46,7 +123,7 @@ public class DFARowKeyParser {
         int index = 0;
         int lastIndex = 0;
         while(index < rk.length) {
-            next = dfa.next(prev,rk[index]);
+            next = dfa.next(prev, rk[index]);
             if (next != prev){
                 len++;
                 if (len > 1 && prev.kp.getType() == KeyPart.Type.field) {
@@ -107,6 +184,7 @@ public class DFARowKeyParser {
           vv.getMutator().setObject(vvIndex, o);
         }
         parseAndSetValCost += System.nanoTime() - st;
+      }
     }
 
     static String decodeText(byte[] bytes, int start, int end){
