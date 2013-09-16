@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class XARowKeyConditionFilterTest {
     public static Logger logger= LoggerFactory.getLogger(XARowKeyConditionFilterTest.class);
-     public static void main() throws IOException {
+     public static void main(String [] args) throws IOException {
 
          byte[] srk= Bytes.toBytesBinary("20121201");
          byte[] enk=Bytes.toBytesBinary("20130103visit.\\xFF");
