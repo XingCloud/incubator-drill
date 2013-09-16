@@ -452,7 +452,7 @@ public class JoinBatch extends BaseRecordBatch {
       isSet = false;
     }
 
-    List<MaterializedField> getFields() {
+    public List<MaterializedField> getFields() {
       return fields;
     }
 
@@ -502,6 +502,17 @@ public class JoinBatch extends BaseRecordBatch {
       }
       keyField = joinKey.getField();
       joinKey.close();
+    }
+
+    @Override
+    public List<MaterializedField> getFields() {
+      if(fields.size() == 0){
+        for(MaterializedField f : leftIncoming.getSchema()){
+          fields.add(f);
+          Collections.sort(fields,new MaterializedFieldComparator());
+        }
+      }
+      return super.getFields();
     }
 
     IntIntOpenHashMap getValuesIndexMap() {
