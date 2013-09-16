@@ -108,7 +108,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.fieldInfoMap = new HashMap<>();
 
     for (int i=0; i<entries.length; i++) {
-      useDFA.set(i, false);
+      useDFA.add(false);
     }
 
     try{
