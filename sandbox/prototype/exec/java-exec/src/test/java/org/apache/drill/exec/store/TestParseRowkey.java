@@ -53,6 +53,11 @@ public class TestParseRowkey {
         dfaRowKeyParser = new DFARowKeyParser(primaryRowKeyParts, rkFieldInfoMap);
     }
 
+    @Test
+    public void testInitConstField() {
+      dfaRowKeyParser.initConstField();
+    }
+
 
 
 

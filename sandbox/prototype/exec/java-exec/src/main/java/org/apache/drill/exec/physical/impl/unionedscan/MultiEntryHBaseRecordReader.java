@@ -84,7 +84,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private int valIndex = 0;
   private List<KeyValue> curRes = new ArrayList<>();
   private List<KeyPart> primaryRowKeyParts;
+
   private DFARowKeyParser dfaParser;
+  private List<Boolean> useDFA = new ArrayList<>();
 
   private int currentEntry = 0;
   private int nextEntry = 0 ;
@@ -104,6 +106,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
     this.fieldInfoMap = new HashMap<>();
+
+    for (int i=0; i<entries.length; i++) {
+      useDFA.add(false);
+    }
+
     try{
     List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, null);
     for (HBaseFieldInfo col : cols) {
@@ -129,6 +136,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
         if (infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey) {
           rkProjs.put(infos[j].fieldSchema.getName(), infos[j]);
+          if (infos[j].serLength <= 0) {
+            logger.debug("Need DFA parser to parse " + infos[j].fieldSchema.getName());
+            useDFA.set(i, true);
+          }
         } else {
           otherProjs.put(infos[j].fieldSchema.getName(), infos[j]);
         }
@@ -395,7 +406,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     Map<String, HBaseFieldInfo> rkProjs = entriesRowKeyProjs.get(currentEntry);
     //更新row key里的投影值
     if (rkProjs.size() != 0) {
-      dfaParser.parseAndSet(kv.getRow(), rkProjs, vvMap, index);
+      dfaParser.parseAndSet(kv.getRow(), rkProjs, vvMap, index, useDFA.get(currentEntry));
     }
     //更新family，qualifier，ts和value的投影值
     Map<String, HBaseFieldInfo> otherProjs = entriesOtherProjs.get(currentEntry);
@@ -425,6 +436,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    logger.debug("parse dfa cost {} , parse value and set value vector cost {} ", dfaParser.parseDFACost/1000000, dfaParser.parseAndSetValCost/1000000);
     logger.debug("Cost time " + timeCost + "mills");
     try {
       scanner.close();

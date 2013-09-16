@@ -57,6 +57,7 @@ public class HBaseRecordReader implements RecordReader {
   private Map<String, HBaseFieldInfo> fieldInfoMap;
 
   private DFARowKeyParser dfaParser;
+  private boolean useDFA = false; //是否需要DFA解析
 
   //记录row key中的投影
   private Map<String, HBaseFieldInfo> rowKeyProjs = new HashMap<>();
@@ -71,7 +72,7 @@ public class HBaseRecordReader implements RecordReader {
 
 
   private XAScanner scanner;
-  private List<KeyValue> curRes = new ArrayList<KeyValue>();
+  private List<KeyValue> curRes = new ArrayList<>();
   private int valIndex = 0;
   private int batchSize = 1024 * 63;
   private ValueVector[] valueVectors;
@@ -118,6 +119,10 @@ public class HBaseRecordReader implements RecordReader {
         projections.add(proInfo);
         if (proInfo.fieldType == HBaseFieldInfo.FieldType.rowkey) {
           rowKeyProjs.put(proInfo.fieldSchema.getName(), proInfo);
+          if (proInfo.serLength <= 0) {
+            logger.debug("Need DFA parser to parse " + proInfo.fieldSchema.getName());
+            useDFA = true;
+          }
         } else {
           otherProjs.put(proInfo.fieldSchema.getName(), proInfo);
         }
@@ -141,7 +146,7 @@ public class HBaseRecordReader implements RecordReader {
     FilterList filterList = new FilterList();
     if (filters != null) {
       List<RowKeyFilterCondition> conditions = new ArrayList<>();
-      List<String> patterns = new ArrayList<String>();
+      List<String> patterns = new ArrayList<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         Constants.FilterType type = entry.getFilterType();
         switch (type) {
@@ -319,7 +324,7 @@ public class HBaseRecordReader implements RecordReader {
     long parseStart = System.nanoTime();
     //填充row key中的投影
     if (rowKeyProjs.size() != 0) {
-      dfaParser.parseAndSet(kv.getRow(), rowKeyProjs, vvMap, index);
+      dfaParser.parseAndSet(kv.getRow(), rowKeyProjs, vvMap, index, useDFA);
     }
     parseCost += System.nanoTime() - parseStart;
 
@@ -363,6 +368,7 @@ public class HBaseRecordReader implements RecordReader {
     } catch (Exception e) {
       logger.error("Scanners close failed : " + e.getMessage());
     }
+    logger.debug("parse dfa cost {} , parse value and set value vector cost {} ", dfaParser.parseDFACost/1000000, dfaParser.parseAndSetValCost/1000000);
     logger.debug("scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
   }
 
