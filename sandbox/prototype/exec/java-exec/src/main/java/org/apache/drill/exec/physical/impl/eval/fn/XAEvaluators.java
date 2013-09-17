@@ -51,7 +51,7 @@ public class XAEvaluators {
       quotient.allocateNew(recordCount);
       IntVector.Mutator mutator = quotient.getMutator();
       for(int i = 0 ; i < recordCount ; i ++){
-         mutator.set(i, (int) accessor.get(i)/divisor);
+         mutator.set(i, (int) (accessor.get(i)/divisor));
       }
       bigIntVector.close();
       mutator.setValueCount(recordCount);
