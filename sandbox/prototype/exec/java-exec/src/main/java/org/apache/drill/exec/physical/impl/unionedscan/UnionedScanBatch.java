@@ -121,7 +121,7 @@ public class UnionedScanBatch implements RecordBatch {
   }
   
   private void schemaChanged() {
-    schema = null;
+    //schema = null;
     schemaChanged = true;
   }  
   
