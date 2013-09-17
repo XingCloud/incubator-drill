@@ -39,7 +39,11 @@ public class DFARowKeyParser {
       initConstField();
     }
 
-    public void initConstField() {
+  public Map<String, Pair<Integer, Integer>> getConstField() {
+    return constField;
+  }
+
+  public void initConstField() {
       int i = 0;
       int startPos = 0;
       //正向扫描确定固定长度投影
