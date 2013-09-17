@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
+import java.nio.file.FileSystemNotFoundException;
 import java.util.*;
 import static org.junit.Assert.assertEquals;
 
@@ -81,34 +82,59 @@ public class TestParseRowkey {
       try {
         br = new BufferedReader(new FileReader(file));
       } catch (FileNotFoundException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        e.printStackTrace();
       }
-      String line = null;
+      String line = br.readLine();
+      byte[] rk = Bytes.toBytesBinary(line);        
       int index = 0;
       long cost = 0;
-      while ((line=br.readLine()) != null) {
-        lineNum++;
-        byte[] rk = Bytes.toBytesBinary(line);
-        long st = System.nanoTime();
-        dfaRowKeyParser.parseAndSet(rk, projs, vvMap, index++, true);
-        cost += System.nanoTime() - st;
+      final int round = 10000000;
+      for (int i = 0; i < 100; i++) {//warm up 
+        dfaRowKeyParser.parseAndSet(rk, projs, vvMap, index, true);        
+      }
+      long t0 = System.nanoTime();
+      for (int i = 0; i < round; i++) {
+        dfaRowKeyParser.parseAndSet(rk, projs, vvMap, index, true);
         if (index == BATCH_SIZE - 1) {
           AllocationHelper.allocate(vv, BATCH_SIZE, 4);
           index = 0;
         }
+        lineNum++;        
       }
-      vv.getMutator().setValueCount(lineNum);
-      LOG.info("Total cost: " + cost/1.0e9 + " sec");
+     long t1 = System.nanoTime();
+      vv.getMutator().setValueCount(10);
+      LOG.info("Total speed: " + (int)(round/((t1-t0)/1e9)) + " line/sec");
       ValueVector.Accessor accessor = vv.getAccessor();
       Set<Integer> uidSet = new HashSet<>();
       for (int i=0; i<vv.getAccessor().getValueCount(); i++) {
         int uid = (Integer)accessor.getObject(i);
         uidSet.add(uid);
       }
-      assertEquals(3, uidSet.size());
+      assertEquals(2, uidSet.size());
     }
 
-
+  @Test
+    public void testToInt() throws Exception{
+      byte[] bytes = new byte[10];
+      Arrays.fill(bytes, (byte)2);
+      long sum = 0;
+      final int round = 100000000;
+      for (int i = 0; i < 10000; i++) {
+        sum+=Bytes.toInt(bytes, 4);
+        sum+=DFARowKeyParser.toInt(bytes, 4);
+      }
+      long t0 = System.nanoTime();
+      for (int i = 0; i < round; i++) {
+        sum += Bytes.toInt(bytes, i%5);
+      }
+      long t1 = System.nanoTime();
+      for (int i = 0; i < round; i++) {
+        sum += DFARowKeyParser.toInt(bytes, (i%5));
+      }
+      long t2 = System.nanoTime();
+      System.out.println("sum:"+sum);
+      System.out.println("time:"+(t1-t0)/1000+" vs "+(t2-t1)/1000);
+    }
 
 
 
