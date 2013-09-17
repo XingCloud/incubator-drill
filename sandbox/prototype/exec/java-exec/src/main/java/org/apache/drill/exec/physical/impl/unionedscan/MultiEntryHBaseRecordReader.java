@@ -1,13 +1,17 @@
 package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.xingcloud.hbase.util.Constants;
+import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import com.xingcloud.xa.hbase.filter.SkipScanFilter;
 import com.xingcloud.xa.hbase.filter.XARkConditionFilter;
 import com.xingcloud.xa.hbase.filter.XARkConditionFilter.*;
 import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
+import com.xingcloud.xa.hbase.model.KeyRange;
+import com.xingcloud.xa.hbase.util.EventTableUtil;
 import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
 import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
 import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterRange;
@@ -158,12 +162,15 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void initDirectScanner() throws IOException {
     FilterList filterList = new FilterList();
-    List<RowKeyFilterCondition> conditions = new ArrayList<>();
-    List<String> patterns=new ArrayList<>();
-    for(int i=0;i<entryFilters.size();i++){
-      List<HbaseScanPOP.RowkeyFilterEntry> filters=entryFilters.get(i);
-      if(filters==null || filters.size()==0){
-           conditions.add(new RowKeyFilterRange(entries[i].getStartRowKey(),entries[i].getEndRowKey()));
+    List<String> patterns = new ArrayList<>();
+    List<KeyRange> slot = new ArrayList<>();
+    for(int i=0; i<entryFilters.size(); i++){
+      List<HbaseScanPOP.RowkeyFilterEntry> filters = entryFilters.get(i);
+      if(filters == null || filters.size() == 0){
+        KeyRange range = new KeyRange(Bytes.toBytesBinary(entries[i].getStartRowKey()), true,
+                Bytes.toBytesBinary(entries[i].getEndRowKey()), true);
+        slot.add(range);
+        logger.debug("Add key range: " + range);
       }
       else {
         for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
@@ -176,7 +183,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                 }
                 String pattern = ((ValueExpressions.QuotedString)e).value;
                 if (!patterns.contains(pattern)){
-                  conditions.add(new RowKeyFilterPattern(pattern));
                   patterns.add(pattern);
                 }
               }
@@ -237,8 +243,21 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    if(conditions.size()>=1) {
-        filterList.addFilter(new XARowKeyPatternFilter(conditions));
+    if(patterns.size() > 0 || slot.size() > 0) {
+      if (patterns.size() > 0) {
+        List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
+        for (String event : sortedEvents) {
+          byte[] eventBytes = Bytes.toBytes(event);
+          byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTailWithSeparator(true));
+          byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTailWithSeparator(false));
+          KeyRange keyRange = new KeyRange(lowerRange, true, upperRange, true);
+          logger.debug("Add Key range: " + keyRange);
+          slot.add(keyRange);
+        }
+
+      }
+      Filter skipScanFilter = new SkipScanFilter(slot);
+      filterList.addFilter(skipScanFilter);
     }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     //test
