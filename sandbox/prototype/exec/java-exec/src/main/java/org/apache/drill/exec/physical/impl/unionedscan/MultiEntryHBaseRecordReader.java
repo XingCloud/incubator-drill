@@ -168,7 +168,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       List<HbaseScanPOP.RowkeyFilterEntry> filters = entryFilters.get(i);
       if(filters == null || filters.size() == 0){
         KeyRange range = new KeyRange(Bytes.toBytesBinary(entries[i].getStartRowKey()), true,
-                Bytes.toBytesBinary(entries[i].getEndRowKey()), true);
+                Bytes.toBytesBinary(entries[i].getEndRowKey()), false);
         slot.add(range);
         logger.debug("Add key range: " + range);
       }
