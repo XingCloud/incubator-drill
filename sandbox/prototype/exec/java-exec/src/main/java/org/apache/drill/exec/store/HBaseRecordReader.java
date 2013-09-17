@@ -219,8 +219,8 @@ public class HBaseRecordReader implements RecordReader {
         List<KeyRange> slot = new ArrayList<>();
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytes(event);
-          byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTailWithSeparator(true));
-          byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTailWithSeparator(false));
+          byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
+          byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
           KeyRange keyRange = new KeyRange(lowerRange, true, upperRange, true);
           logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
