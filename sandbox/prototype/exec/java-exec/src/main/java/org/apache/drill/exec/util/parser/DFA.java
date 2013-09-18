@@ -3,10 +3,7 @@ package org.apache.drill.exec.util.parser;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,18 +13,42 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class DFA {
+
+  private static boolean[] wordTable;
+  private static boolean[] textTable;
+  private static boolean[] binaryTable;
+  private static boolean[][] type2Table;
+  static{
+    wordTable = new boolean[256];
+    Arrays.fill(wordTable, false);
+    Arrays.fill(wordTable, 48, 58, true);
+    Arrays.fill(wordTable, 65, 91, true);
+    Arrays.fill(wordTable, 97, 123, true);
+    textTable = new boolean[256];
+    Arrays.fill(textTable, false);
+    Arrays.fill(textTable, 32, 127, true); 
+    binaryTable = new boolean[256];
+    Arrays.fill(binaryTable, true);
+    
+    type2Table = new boolean[3][];
+    type2Table[byteType.Word.ordinal()]=wordTable;
+    type2Table[byteType.Text.ordinal()]=textTable;
+    type2Table[byteType.Binary.ordinal()]=binaryTable;   
+    
+  }
+ 
     private State start;
     private State end;
     private List<KeyPart> keyParts;
     private Map<String,HBaseFieldInfo> infoMap;
     private Map<KeyPart,State> kpStateMap;
-    private byteType[] inputTypes;
+  
     public DFA(List<KeyPart> keyPartList, Map<String, HBaseFieldInfo> fieldInfoMap){
         this.keyParts=keyPartList;   //To change body of created methods use File | Settings | File Templates.
         this.infoMap=fieldInfoMap;
-        this.start=new State(null,null,false);
+        this.start=new State(null);
         this.start.name="start";
-        this.end=new State(start,null,true);
+        this.end=new State(null);
         this.end.name="end";
         kpStateMap=new HashMap<>();
         init();
@@ -38,146 +59,120 @@ public class DFA {
     public State end(){
         return end;
     }
+  
+  private void init() {
+    State state = start;
+    buildNexts(state, keyParts, 0, Arrays.asList(end));
+    buildStates(keyParts, Arrays.asList(end));
+  }
 
-    public State next(State curState, byte input){
-        curState.len++;
-        if(curState.len > curState.size) {
-            byteType type = getType(input);
-            return curState.nexts.get(type);
-        }
-        else return curState;
+  private void buildStates(List<KeyPart> list, List<State> possibleEnds) {
+    for (int i = 0; i < list.size(); i++) {
+      KeyPart curKp = list.get(i);
+      switch (curKp.getType()) {
+        case field:
+        case constant:
+          State state = getCreateStateFor(curKp);
+          buildNexts(state, list, i + 1, possibleEnds);
+          break;
+        case optionalgroup:
+          List<State> possibleNexts = new ArrayList<>();
+          gatherNextsFromList(list, i+1, possibleNexts);
+          buildStates(curKp.getOptionalGroup(), possibleNexts);
+      }
     }
 
-    private void init(){
-        State state=start;
-        for(int i=0;i<keyParts.size()-1;i++){
-             KeyPart curKp=keyParts.get(i);
-             KeyPart nextKp=keyParts.get(i+1);
-             state=insert(state,curKp,nextKp,false);
-        }
-        state=insert(state,keyParts.get(keyParts.size()-1),null,false);
-        setNext(state,end,null);
-        state.directNext=end;
-        state.size=
-          infoMap.get(keyParts.get(keyParts.size()-1).getField().getName()).serLength;
-        inputTypes=new byteType[256];
-        for(int input=0;input<256;input++){
-            if((input>=48&&input<=57)||(input>=65&&input<=90)||(input>=97&&input<=122)){
-                inputTypes[input]= byteType.Word;
-            }
-            else if(input>=32&&input<=126)
-                inputTypes[input]= byteType.Text;
-            else
-                inputTypes[input]= byteType.Binary;
-        }
+  }
 
+  private void buildNexts(State state, List<KeyPart> keyParts, int nextIndex, List<State> possibleEnds) {
+    List<State> possibleNexts = new ArrayList<>();
+    boolean includeEnd = gatherNextsFromList(keyParts, nextIndex, possibleNexts);
+    for (int i = 0; i < possibleNexts.size(); i++) {
+      State nextState = possibleNexts.get(i);
+      markTransition(state, nextState);
     }
-
-    private State insert(State state, KeyPart curKp,KeyPart nextKp,boolean isEnd) {
-        if(curKp.getType()!= KeyPart.Type.optionalgroup){
-            if(!kpStateMap.containsKey(curKp)){
-                State nextState=new State(state,curKp,isEnd);
-                if(curKp.getType()== KeyPart.Type.field)
-                {
-                    HBaseFieldInfo info=infoMap.get(curKp.getField().getName());
-                    nextState.size=info.serLength;
-                }
-                else{
-                    nextState.size=curKp.getSerializedConstant().length;
-                }
-                nextState.type=getType(curKp);
-                kpStateMap.put(curKp,nextState);
+    if(includeEnd){
+      for (int i = 0; i < possibleEnds.size(); i++) {
+        State end = possibleEnds.get(i);
+        if(end == DFA.this.end){
+          for (int j = 0; j < state.nexts.length; j++) {
+            if (state.nexts[j] == null) {
+              state.nexts[j] = end;
             }
-            State nextState=kpStateMap.get(curKp);
-            setNext(state,nextState,curKp);
-            state.directNext=nextState;
-            return nextState;
+          }
+        }else{
+          markTransition(state, end);
         }
-        else{
-            List<KeyPart> opKps=curKp.getOptionalGroup();
-
-            KeyPart firstKp=opKps.get(0);
-            State opState=new State(state,firstKp,isEnd);
-            if(firstKp.getType()== KeyPart.Type.field)
-            {
-                HBaseFieldInfo info=infoMap.get(firstKp.getField().getName());
-                opState.size=info.serLength;
-            }
-            else{
-                opState.size=curKp.getSerializedConstant().length;
-            }
-            opState.type=getType(firstKp);
-            if(!kpStateMap.containsKey(firstKp))
-                kpStateMap.put(firstKp,opState);
-
-            byteType opBt=opState.type;
-            state.nexts.put(opBt,opState);
-
-            State nextState;
-            if(nextKp==null)
-                 nextState=end;
-            else
-            {
-                if(!kpStateMap.containsKey(nextKp)){
-                    nextState =new State(state,nextKp,isEnd);
-                    if(nextKp.getType()== KeyPart.Type.constant)
-                        nextState.size=nextKp.getSerializedConstant().length;
-                    else {
-                        HBaseFieldInfo info=infoMap.get(nextKp.getField().getName());
-                        nextState.size=info.serLength;
-                    }
-                    kpStateMap.put(nextKp,nextState);
-                }
-                nextState=kpStateMap.get(nextKp);
-            }
-            for(byteType bt: getSideType(opBt)){
-                state.nexts.put(bt,nextState);
-            }
-
-
-            for(int i=1;i<opKps.size()-1;i++){
-                KeyPart opCurKp=opKps.get(i);
-                KeyPart opNextKp=opKps.get(i+1);
-                opState=insert(opState,opCurKp,opNextKp,false);
-            }
-            if(opKps.size()!=1)
-                opState=insert(opState,opKps.get(opKps.size()-1),nextKp,false);
-            return opState;
-        }
-
+      }
     }
+  }
 
-    private void setNext(State state,State nextState,KeyPart kp){
-        byteType bt=getType(kp);
-        setTypeNext(state,nextState,bt);
-        if(state.size==0&&state!=start){
-            byteType curBt=getType(state.kp);
-            setTypeNext(state,state,curBt);
+  private void markTransition(State state, State nextState) {
+    switch(nextState.kp.getType()){
+      case constant:
+        byte c = nextState.kp.getSerializedConstant()[0];
+        state.nexts[toUInt(c)] = nextState;
+        break;
+      case field:
+        boolean[] copyFrom = type2Table[nextState.type.ordinal()];
+        for (int j = 0; j < copyFrom.length; j++) {
+          boolean b = copyFrom[j];
+          if(state.nexts[j]!=null){
+            throw new IllegalArgumentException("state collapse! in state:"+state+";["+j+"], old:"+state.nexts[j]+",new:"+nextState);
+          }
+          if(b){
+            state.nexts[j] = nextState;
+          }
         }
-
+        break;
+      default:
+        throw new IllegalStateException("can not next to:"+nextState);
     }
+  }
 
-    private void setTypeNext(State state,State nextState,byteType bt){
-        switch (bt){
-            case Binary:
-                state.nexts.put(byteType.Binary,nextState);
-                state.nexts.put(byteType.Text,nextState);
-                state.nexts.put(byteType.Word,nextState);
-                break;
-            case Text:
-                state.nexts.put(byteType.Word,nextState);
-                state.nexts.put(byteType.Text,nextState);
-                break;
-            case Word:
-                state.nexts.put(byteType.Word,nextState);
-        }
-
+  private State getCreateStateFor(KeyPart keyPart) {
+    State state = kpStateMap.get(keyPart);
+    if(state == null){
+      state = new State(keyPart);
+      kpStateMap.put(keyPart, state);
     }
+    return state;
+  }
 
+  /**
+   * 
+   * @param list
+   * @param nextIndex
+   * @param possibleNexts
+   * @return 如果收集到list的结尾，有可能需要包括end状态，则返回true，否则返回false
+   */
+  private boolean gatherNextsFromList(List<KeyPart> list, int nextIndex, List<State> possibleNexts){
+    int i = nextIndex;
+    loop:
+    for(;i< list.size();i++){
+      KeyPart part = list.get(i);
+      switch (part.getType()){
+        case field:
+        case constant:
+          possibleNexts.add(getCreateStateFor(part));
+          break loop;//确定到这里，结束搜索
+        case optionalgroup:
+          gatherOptionalNexts(part, possibleNexts);
+          break;//可能可以选下一个, 继续搜索
+        default:
+          throw new IllegalStateException("cannot process:"+part.getType());
+      }
+    }
+    return i == list.size();
+  }
+  private void gatherOptionalNexts(KeyPart part, List<State> possibleNexts) {
+    List<KeyPart> optionalGroup = part.getOptionalGroup();
+    gatherNextsFromList(optionalGroup, 0, possibleNexts);
+  }
 
     private byteType getType(KeyPart kp){
         if(kp==null)return byteType.Binary;
-        if(kp.getType()== KeyPart.Type.constant)
+        if(kp.getType() == KeyPart.Type.constant)
             return byteType.Binary;
         else {
             switch (infoMap.get(kp.getField().getName()).serType){
@@ -193,63 +188,72 @@ public class DFA {
         }
     }
 
-    private byteType getType(byte input) {
-        if((input>=48&&input<=57)||(input>=65&&input<=90)||(input>=97&&input<=122)){
-            return byteType.Word;
-        }
-        else if(input>=32&&input<=126)
-            return byteType.Text;
-        else
-            return byteType.Binary;
-    }
-
-    private List<byteType> getSideType(byteType type){
-        List<byteType> typeList=new ArrayList<>();
-        switch (type){
-            case Word:
-                typeList.add(byteType.Text);
-                typeList.add(byteType.Binary);
-                break;
-            case Text:
-                typeList.add(byteType.Binary);
-                break;
-        }
-        return typeList;
-    }
-
-    public void reset() {
-        for(Map.Entry<KeyPart,State> entry: kpStateMap.entrySet()){
-          entry.getValue().len=0;
-        }
-    }
-
+  public DFAMatcher newMatcher(byte[] target){
+    return new DFAMatcher(target);
+  }
 
     public class State{
        public String name;
        public int size;
-       public int len;
        public byteType type;
-       public Map<byteType,State> nexts;
-       public State directNext;
-       public State prev;
-       public boolean isEnd;
+       public State[] nexts = new State[256];
        public KeyPart kp;
 
-       public State(State prev,KeyPart kp,boolean isEnd){
-           this.isEnd=isEnd;
-           this.prev=prev;
-           this.kp=kp;
-           if(kp!=null){
-               if(kp.getType()== KeyPart.Type.field)
-                   this.name=kp.getField().getName();
-               else if(kp.getType()== KeyPart.Type.constant)
-                   this.name=kp.getConstant();
-           }
-           this.size=this.len=0;
-           this.isEnd=isEnd;
-           nexts=new HashMap<>();
-       }
+      public State(KeyPart kp) {
+        //keypart
+        this.kp = kp;
+        //name
+        if (kp != null) {
+          if (kp.getType() == KeyPart.Type.field)
+            this.name = kp.getField().getName();
+          else if (kp.getType() == KeyPart.Type.constant)
+            this.name = kp.getConstant();
+        //size
+        switch (kp.getType()) {
+          case field:
+            HBaseFieldInfo info = infoMap.get(kp.getField().getName());
+            size = info.serLength;
+            break;
+          case constant:
+            size = kp.getSerializedConstant().length;
+            break;
+          default:
+            throw new IllegalArgumentException("do not support State for:" + kp.getType());
+        }
+        //type
+        type=getType(kp);        
+        
+        //build nexts for var length text/word/binary
+        if(kp.getType() == KeyPart.Type.field && size == 0){
+          boolean[] copyFrom = null;
+          switch (type){
+            case Binary:
+              copyFrom = binaryTable;
+              break;
+            case Text:
+              copyFrom = textTable;
+              break;
+            case Word:
+              copyFrom = wordTable;
+              break;
+            default:
+              throw new IllegalArgumentException("do not support State for:"+type);
+          }
+          for (int i = 0; i < copyFrom.length; i++) {
+            if(copyFrom[i]){
+              nexts[i] = this;
+            }
+          }
+        }
+        }
+          
+      }
 
+
+      @Override
+      public String toString() {
+        return "State["+name+"]";
+      }
     }
 
     public enum byteType{
@@ -259,11 +263,103 @@ public class DFA {
 
     }
 
-    public enum TypeName {
-        Text,
-        Word,
-        Binary
+  public class DFAMatcher{
+
+    State current;
+    int nextPosition;
+    byte[] target;
+
+    public DFAMatcher(byte[] target) {
+      resetTo(target, begin(), 0);
     }
 
+    
+    public void resetTo(byte[] target) {
+      resetTo(target, start, 0);
+    }
+    
+    public void resetTo(byte[] target, State state, int nextPosition){
+      this.target = target;
+      this.current = state;
+      this.nextPosition = nextPosition;
+    }
+    
+    public void resetTo(byte[] target, KeyPart keyPart, int nextPosition){
+      resetTo(target, kpStateMap.get(keyPart), nextPosition);
+    }
 
+    /**
+     * 
+     * @return 返回下一个Field对应的位置。不返回constant对应的位置
+     */
+    public FieldPosition nextField(){
+      FieldPosition ret = nextPart();
+      while(ret!=null && ret.fieldDef.getType()!= KeyPart.Type.field){
+        ret = nextPart();
+      }
+      return ret;
+    }
+
+    FieldPosition nextPart(){
+      if(current == end){
+        return null;
+      }
+      byte c = target[nextPosition];
+      if(current == start){
+        current = start.nexts[toUInt(c)];
+        if(current == end){
+          return null;
+        }
+      }
+      
+      if(current.size>0){
+        int start = nextPosition;
+        int end = nextPosition + current.size;
+        nextPosition += current.size;
+        FieldPosition ret = new FieldPosition(current.kp, start, end);
+        if(nextPosition>=target.length){
+          current = DFA.this.end;
+        }else{
+          c = target[end];
+          current = current.nexts[toUInt(c)];
+        }
+        return ret;
+      }else{
+        int start = nextPosition;
+        while(current == current.nexts[toUInt(c)]){
+          nextPosition++;
+          if(nextPosition >= target.length){
+            break;
+          }
+          c = target[nextPosition];
+        }
+        int end = nextPosition;
+        FieldPosition ret = new FieldPosition(current.kp, start, end);
+        if(nextPosition>=target.length){
+          current = DFA.this.end;
+        }else{
+          current = current.nexts[toUInt(c)];
+        }
+        return ret;
+
+      }
+    }
+
+  }
+  
+  static int toUInt(byte c){
+    return 0xff & c;
+  }
+  
+  public static class FieldPosition{
+    KeyPart fieldDef;
+    int start;
+    int end;
+
+    public FieldPosition(KeyPart fieldDef, int start, int end) {
+      this.fieldDef = fieldDef;
+      this.start = start;
+      this.end = end;
+    }
+  }
 }

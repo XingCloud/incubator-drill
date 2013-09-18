@@ -121,7 +121,7 @@ public class UnionedScanBatch implements RecordBatch {
   }
   
   private void schemaChanged() {
-    schema = null;
+    //schema = null;
     schemaChanged = true;
   }  
   
@@ -320,6 +320,8 @@ public class UnionedScanBatch implements RecordBatch {
         return IterOutcome.NONE;
       }
       if(lastReaderEntry < mySortedEntry){
+        if(outcome == IterOutcome.NONE)
+          return IterOutcome.NONE;
         //cannot reach this point!
         throw new IllegalStateException("reader:"+lastReaderEntry+" is behind this split:"+mySortedEntry);
       }

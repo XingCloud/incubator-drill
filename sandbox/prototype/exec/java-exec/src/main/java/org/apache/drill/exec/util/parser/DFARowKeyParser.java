@@ -23,6 +23,7 @@ public class DFARowKeyParser {
     private static Logger logger = LoggerFactory.getLogger(DFARowKeyParser.class);
 
     private DFA dfa;
+  private DFA.DFAMatcher matcher = null;
     private List<KeyPart> primaryRowKeyParts;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap;
 
@@ -36,10 +37,15 @@ public class DFARowKeyParser {
       this.primaryRowKeyParts = primaryRowKeyParts;
       this.rkFieldInfoMap = rkFieldInfoMap;
       this.dfa = new DFA(this.primaryRowKeyParts, this.rkFieldInfoMap);
+      this.matcher = dfa.newMatcher(null);
       initConstField();
     }
 
-    public void initConstField() {
+  public Map<String, Pair<Integer, Integer>> getConstField() {
+    return constField;
+  }
+
+  public void initConstField() {
       int i = 0;
       int startPos = 0;
       //正向扫描确定固定长度投影
@@ -113,77 +119,37 @@ public class DFARowKeyParser {
           vv.getMutator().setObject(vvIndex, o);
         }
       } else {
-        long st = System.nanoTime();
-        DFA.State prev = dfa.begin().directNext;
-        DFA.State next;
-        DFA.State end = dfa.end();
+        matcher.resetTo(rk);
         //记录每个col name所对应的在原始row key中的位置和key part信息
-        Map<String, Pair<Integer, Integer>> keyPartInfos = new HashMap<>();
-        int len = 1;
-        int index = 0;
-        int lastIndex = 0;
-        while(index < rk.length) {
-            next = dfa.next(prev, rk[index]);
-            if (next != prev){
-                len++;
-                if (len > 1 && prev.kp.getType() == KeyPart.Type.field) {
-                    String colName = prev.kp.getField().getName();
-                    Pair<Integer, Integer> posPair = new Pair<>(lastIndex, index);
-                    keyPartInfos.put(colName, posPair);
-                }
-                lastIndex = index;
-                //下次解析起始len为0
-                prev.len = 0;
-                index--;
-                prev = next;
-                if(prev == end){
-                    len--;
-                    break;
-                }
-            }
-            index++;
-            if(prev.size > prev.len)
-            {
-                index += (prev.size-prev.len);
-                prev.len = prev.size;
-            }
+        Map<String, DFA.FieldPosition> keyPartInfos = new HashMap<>();
+        DFA.FieldPosition nextField = matcher.nextField();
+        while (nextField != null){
+          keyPartInfos.put(nextField.fieldDef.getField().getName(), nextField);
+          nextField = matcher.nextField();
         }
-        if(prev != end){
-            if (len > 1 && prev.kp.getType() == KeyPart.Type.field) {
-              String colName = prev.kp.getField().getName();
-              Pair<Integer, Integer> posPair = new Pair<>(lastIndex, rk.length);
-              keyPartInfos.put(colName, posPair);
-            }
 
-            //下次解析起始len为0
-            prev.len = 0;
-        }
-        parseDFACost += System.nanoTime() - st;
-
-        st = System.nanoTime();
         //如果需要此字段的投影才解析
         for (Map.Entry<String, HBaseFieldInfo> entry : projs.entrySet()) {
           String colName = entry.getKey();
           HBaseFieldInfo info = entry.getValue();
 
-          Pair<Integer, Integer> posInfo = keyPartInfos.get(colName);
+          DFA.FieldPosition posInfo = keyPartInfos.get(colName);
 
           Object o = null;
           if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
-            o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), info.getDataType());
+            o = parseBytes(rk, posInfo.start, posInfo.end, info.getDataType());
           } else {
             if (info.getDataType() == HBaseFieldInfo.DataType.STRING) {
               //string类型直接返回byte[]，提供给value vector存储
-              o = parseBytes(rk, posInfo.getFirst(), posInfo.getSecond(), info.getDataType());
+              o = parseBytes(rk, posInfo.start, posInfo.end, info.getDataType());
             } else {
               o = parseString
-                    (decodeText(rk, posInfo.getFirst(), posInfo.getSecond()), info.getDataType());
+                    (decodeText(rk, posInfo.start, posInfo.end), info.getDataType());
             }
           }
           ValueVector vv = vvMap.get(colName);
           vv.getMutator().setObject(vvIndex, o);
         }
-        parseAndSetValCost += System.nanoTime() - st;
       }
     }
 
@@ -211,7 +177,17 @@ public class DFARowKeyParser {
         }
         return null;
     }
-
+  public static int toInt(byte[] bytes, int start){
+    int a = (0xff & bytes[start])<<24;
+    int b = (0xff & bytes[start+1])<<16;
+    int c = (0xff & bytes[start+2])<<8;
+    int d = (0xff & bytes[start+3]);
+//    a = a|b;
+//    c = c|d;
+    return a|b|c|d;
+//    return bytes[start]<<24 + bytes[start+1]<<16 + bytes[start+2]<<8 + bytes[start+3];
+  }
+  
     public static Object parseBytes(byte[] orig, int start, int end, HBaseFieldInfo.DataType type) {
         switch (type) {
             case INT:

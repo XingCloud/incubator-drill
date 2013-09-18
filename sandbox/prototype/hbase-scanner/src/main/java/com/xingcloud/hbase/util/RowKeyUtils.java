@@ -23,6 +23,14 @@ public class RowKeyUtils {
     }
   }
 
+  public static byte[] produceTailWithSeparator(boolean start) {
+    if (start) {
+      return new byte[]{-1, 0, 0, 0, 0, 0};
+    } else {
+      return new byte[]{-1, -1, -1, -1, -1, -1};
+    }
+  }
+
   public static String processRkBound(String rk,boolean start){
      if(start){
          if(rk.endsWith(".\\xFF\\x00\\x00\\x00\\x00\\x00"))

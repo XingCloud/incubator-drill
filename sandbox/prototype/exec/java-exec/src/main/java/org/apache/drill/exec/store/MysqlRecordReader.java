@@ -207,12 +207,11 @@ public class MysqlRecordReader implements RecordReader {
   @Override
   public void cleanup() {
     for (int i = 0; i < valueVectors.length; i++) {
-      /*
       try {
         output.removeField(valueVectors[i].getField());
       } catch (SchemaChangeException e) {
         logger.warn("Failure while trying to remove field.", e);
-      }*/
+      }
       valueVectors[i].close();
     }
     if (conn != null) {
