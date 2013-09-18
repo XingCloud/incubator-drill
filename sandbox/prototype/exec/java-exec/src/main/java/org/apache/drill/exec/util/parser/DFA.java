@@ -21,9 +21,14 @@ public class DFA {
   static{
     wordTable = new boolean[256];
     Arrays.fill(wordTable, false);
+    /*
     Arrays.fill(wordTable, 48, 58, true);
     Arrays.fill(wordTable, 65, 91, true);
-    Arrays.fill(wordTable, 97, 123, true);
+    Arrays.fill(wordTable, 97, 123, true);*/
+
+    Arrays.fill(wordTable,33,46,true);
+    Arrays.fill(wordTable,47,127,true);
+
     textTable = new boolean[256];
     Arrays.fill(textTable, false);
     Arrays.fill(textTable, 32, 127, true); 
