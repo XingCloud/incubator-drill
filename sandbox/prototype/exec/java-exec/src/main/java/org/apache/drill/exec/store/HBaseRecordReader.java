@@ -222,7 +222,7 @@ public class HBaseRecordReader implements RecordReader {
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
           byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
           KeyRange keyRange = new KeyRange(lowerRange, true, upperRange, true);
-          logger.info("Add Key range: " + keyRange);
+          logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
         Filter skipScanFilter = new SkipScanFilter(slot);
@@ -381,7 +381,6 @@ public class HBaseRecordReader implements RecordReader {
     } catch (Exception e) {
       logger.error("Scanners close failed : " + e.getMessage());
     }
-    logger.debug("parse dfa cost {} , parse value and set value vector cost {} ", dfaParser.parseDFACost/1000000, dfaParser.parseAndSetValCost/1000000);
     logger.debug("scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
   }
 

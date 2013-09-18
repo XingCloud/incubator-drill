@@ -251,7 +251,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
           byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
           KeyRange keyRange = new KeyRange(lowerRange, true, upperRange, true);
-          logger.info("Add Key range: " + keyRange);
+          logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
 
@@ -462,7 +462,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    logger.debug("parse dfa cost {} , parse value and set value vector cost {} ", dfaParser.parseDFACost/1000000, dfaParser.parseAndSetValCost/1000000);
     logger.debug("Cost time " + timeCost + "mills");
     try {
       scanner.close();
