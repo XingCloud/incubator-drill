@@ -64,6 +64,46 @@ public class TestParseRowkey {
       assertEquals(3, constField.size());
     }
 
+  @Test
+  public void testParseRowKey(){
+    String rowKey = "20130918response.agei.report.241427s.pend.2s5s.\\xFF[\\x00\\x00\\x00@"  ;
+    Map<String, ValueVector> vvMap = new HashMap<>();
+    MaterializedField f = MaterializedField.create(new SchemaPath("uid", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.INT));
+    ValueVector vv = TypeHelper.getNewVector(f, new DirectBufferAllocator());
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("uid", vv);
+
+    Map<String, HBaseFieldInfo> projs = new HashMap<>();
+    projs.put("uid", rkFieldInfoMap.get("uid"));
+
+    byte[] rk = Bytes.toBytesBinary(rowKey);
+    int index = 0;
+    long cost = 0;
+    final int round = 10000000;
+    for (int i = 0; i < 100; i++) {//warm up
+      dfaRowKeyParser.parseAndSet(rk, projs, vvMap, index, true);
+    }
+    long t0 = System.nanoTime();
+    for (int i = 0; i < round; i++) {
+      dfaRowKeyParser.parseAndSet(rk, projs, vvMap, index, true);
+      if (index == BATCH_SIZE - 1) {
+        AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+        index = 0;
+      }
+    }
+    long t1 = System.nanoTime();
+    vv.getMutator().setValueCount(10);
+    LOG.info("Total speed: " + (int)(round/((t1-t0)/1e9)) + " line/sec");
+    ValueVector.Accessor accessor = vv.getAccessor();
+    Set<Integer> uidSet = new HashSet<>();
+    for (int i=0; i<vv.getAccessor().getValueCount(); i++) {
+      int uid = (Integer)accessor.getObject(i);
+      uidSet.add(uid);
+    }
+    assertEquals(1, uidSet.size());
+
+  }
+
     @Test
     public void testParseAndSetUidOnly() throws IOException {
       Map<String, ValueVector> vvMap = new HashMap<>();
