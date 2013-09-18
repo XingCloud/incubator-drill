@@ -23,7 +23,7 @@ public class DFARowKeyParser {
     private static Logger logger = LoggerFactory.getLogger(DFARowKeyParser.class);
 
     private DFA dfa;
-  private DFA.DFAMatcher matcher = null;
+    private DFA.DFAMatcher matcher = null;
     private List<KeyPart> primaryRowKeyParts;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap;
 

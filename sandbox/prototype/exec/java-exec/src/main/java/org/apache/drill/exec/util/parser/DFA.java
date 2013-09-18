@@ -306,6 +306,9 @@ public class DFA {
       }
       byte c = target[nextPosition];
       if(current == start){
+        if(current.nexts[toUInt(c)] == null){
+          throw new NullPointerException("current state:"+current+", next char:"+c+", no next status!");
+        }          
         current = start.nexts[toUInt(c)];
         if(current == end){
           return null;
@@ -321,6 +324,9 @@ public class DFA {
           current = DFA.this.end;
         }else{
           c = target[end];
+          if(current.nexts[toUInt(c)] == null){
+            throw new NullPointerException("current state:"+current+", next char:"+c+", no next status!");
+          }
           current = current.nexts[toUInt(c)];
         }
         return ret;
@@ -338,6 +344,9 @@ public class DFA {
         if(nextPosition>=target.length){
           current = DFA.this.end;
         }else{
+          if(current.nexts[toUInt(c)] == null){
+            throw new NullPointerException("current state:"+current+", next char:"+c+", no next status!");
+          }          
           current = current.nexts[toUInt(c)];
         }
         return ret;
