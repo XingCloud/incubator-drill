@@ -1,11 +1,15 @@
 package org.apache.drill.exec.store;
 
 import com.xingcloud.hbase.util.Constants;
+import com.xingcloud.hbase.util.RowKeyUtils;
 import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
+import com.xingcloud.xa.hbase.filter.SkipScanFilter;
 import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
+import com.xingcloud.xa.hbase.model.KeyRange;
+import com.xingcloud.xa.hbase.util.EventTableUtil;
 import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
 import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
@@ -74,7 +78,7 @@ public class HBaseRecordReader implements RecordReader {
   private XAScanner scanner;
   private List<KeyValue> curRes = new ArrayList<>();
   private int valIndex = 0;
-  private int batchSize = 1024 * 63;
+  private int batchSize = 1024 * 64;
   private ValueVector[] valueVectors;
   private long scanCost = 0;
   private long parseCost = 0;
@@ -145,7 +149,6 @@ public class HBaseRecordReader implements RecordReader {
   private void initTableScanner() throws IOException {
     FilterList filterList = new FilterList();
     if (filters != null) {
-      List<RowKeyFilterCondition> conditions = new ArrayList<>();
       List<String> patterns = new ArrayList<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         Constants.FilterType type = entry.getFilterType();
@@ -154,7 +157,6 @@ public class HBaseRecordReader implements RecordReader {
             for (LogicalExpression e : entry.getFilterExpressions()) {
               String pattern = ((ValueExpressions.QuotedString) e).value;
               if (!patterns.contains(pattern)) {
-                conditions.add(new RowKeyFilterPattern(((ValueExpressions.QuotedString) e).value));
                 patterns.add(pattern);
               }
             }
@@ -212,9 +214,19 @@ public class HBaseRecordReader implements RecordReader {
             throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
-      if (conditions.size() >= 1) {
-        XARowKeyPatternFilter xaFilter = new XARowKeyPatternFilter(conditions);
-        filterList.addFilter(xaFilter);
+      if (patterns.size() >= 1) {
+        List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
+        List<KeyRange> slot = new ArrayList<>();
+        for (String event : sortedEvents) {
+          byte[] eventBytes = Bytes.toBytes(event);
+          byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
+          byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
+          KeyRange keyRange = new KeyRange(lowerRange, true, upperRange, true);
+          logger.debug("Add Key range: " + keyRange);
+          slot.add(keyRange);
+        }
+        Filter skipScanFilter = new SkipScanFilter(slot);
+        filterList.addFilter(skipScanFilter);
       }
     }
 
