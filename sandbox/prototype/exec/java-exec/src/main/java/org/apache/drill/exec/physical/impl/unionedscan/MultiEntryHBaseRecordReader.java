@@ -251,7 +251,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
           byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
           KeyRange keyRange = new KeyRange(lowerRange, true, upperRange, true);
-          logger.debug("Add Key range: " + keyRange);
+          logger.info("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
 
@@ -260,6 +260,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       filterList.addFilter(skipScanFilter);
     }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    logger.info("--------------Start key: " + Bytes.toStringBinary(startRowKey) + "\tEnd key: " + Bytes.toStringBinary(endRowKey) + " -----------------");
+
     //test
     //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
   }
