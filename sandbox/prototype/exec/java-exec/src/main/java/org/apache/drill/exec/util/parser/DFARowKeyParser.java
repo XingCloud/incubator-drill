@@ -134,7 +134,9 @@ public class DFARowKeyParser {
           HBaseFieldInfo info = entry.getValue();
 
           DFA.FieldPosition posInfo = keyPartInfos.get(colName);
-
+          if (posInfo == null) {
+            throw new NullPointerException(colName + "'s postion info is null! Row key: " + Bytes.toStringBinary(rk));
+          }
           Object o = null;
           if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
             o = parseBytes(rk, posInfo.start, posInfo.end, info.getDataType());
