@@ -96,7 +96,7 @@ public class CreateHBaseMeta {
         deu.getSd().addToCols(timestampField);
 
         TableInfo.setPrimaryKeyPattern(deu,
-                "${date}${event0}.[${event1}.[${event2}.[${event3}.[${event4}.[${event5}.]]]]]\\xFF${uhash}${uid}");
+                "${date}${event0}[.${event1}[.${event2}[.${event3}[.${event4}[.${event5}]]]]].\\xFF${uhash}${uid}");
         client.createTable(deu);
 
     }
