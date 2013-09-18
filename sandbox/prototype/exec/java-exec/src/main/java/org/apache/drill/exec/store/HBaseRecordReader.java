@@ -148,6 +148,7 @@ public class HBaseRecordReader implements RecordReader {
 
   private void initTableScanner() throws IOException {
     FilterList filterList = new FilterList();
+    List<KeyRange> slot = new ArrayList<>();
     if (filters != null) {
       List<String> patterns = new ArrayList<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
@@ -216,7 +217,7 @@ public class HBaseRecordReader implements RecordReader {
       }
       if (patterns.size() >= 1) {
         List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
-        List<KeyRange> slot = new ArrayList<>();
+
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
@@ -231,7 +232,8 @@ public class HBaseRecordReader implements RecordReader {
     }
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-    logger.info("--------------Start key: " + Bytes.toStringBinary(startRowKey) + "\tEnd key: " + Bytes.toStringBinary(endRowKey) + " -----------------");
+    logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
+            "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
     //test
     //scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
   }

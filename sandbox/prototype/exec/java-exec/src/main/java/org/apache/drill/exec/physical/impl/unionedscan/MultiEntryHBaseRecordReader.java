@@ -260,7 +260,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       filterList.addFilter(skipScanFilter);
     }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-    logger.info("--------------Start key: " + Bytes.toStringBinary(startRowKey) + "\tEnd key: " + Bytes.toStringBinary(endRowKey) + " -----------------");
+    logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
+            "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
 
     //test
     //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
