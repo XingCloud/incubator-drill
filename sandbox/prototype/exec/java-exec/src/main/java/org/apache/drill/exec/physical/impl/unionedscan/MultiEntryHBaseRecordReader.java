@@ -247,7 +247,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       if (patterns.size() > 0) {
         List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
         for (String event : sortedEvents) {
-          byte[] eventBytes = Bytes.toBytes(event);
+          byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
           byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
           KeyRange keyRange = new KeyRange(lowerRange, true, upperRange, true);
