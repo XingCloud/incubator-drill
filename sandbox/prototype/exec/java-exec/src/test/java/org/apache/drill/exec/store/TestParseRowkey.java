@@ -56,6 +56,9 @@ public class TestParseRowkey {
             rkFieldInfoMap.put(col.fieldSchema.getName(), col);
         }
         primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
+        for (KeyPart kp : primaryRowKeyParts) {
+          LOG.info(kp);
+        }
         dfaRowKeyParser = new DFARowKeyParser(primaryRowKeyParts, rkFieldInfoMap);
     }
 
@@ -66,7 +69,7 @@ public class TestParseRowkey {
       assertEquals(3, constField.size());
     }
   
-  public void assertParseRowKey(String rowKey, long date, String event0, String event1, String event2, String event3, String event4, String event5, int uhash, int uid){
+  public void assertParseRowKey(String rowKey, int date, String event0, String event1, String event2, String event3, String event4, String event5, int uhash, int uid){
     BufferAllocator allocator = new DirectBufferAllocator();
     Map<String, ValueVector> vvMap = new HashMap<>();
     MaterializedField f = MaterializedField.create(new SchemaPath("uid", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.INT));
@@ -122,39 +125,52 @@ public class TestParseRowkey {
     int index = 0;
     long cost = 0;
     dfaRowKeyParser.parseAndSet(rk, projs, vvMap, index, true);
+
+    LOG.info(vvMap.get("uid").getAccessor().getObject(index));
+    LOG.info(vvMap.get("uhash").getAccessor().getObject(index));
+    LOG.info(vvMap.get("date").getAccessor().getObject(index));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event0").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event1").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event2").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event3").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event4").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event5").getAccessor().getObject(index)));
+
     if(uid!=0){
       Assert.assertEquals(uid, vvMap.get("uid").getAccessor().getObject(index));
     }
     if(uhash!=0){
-      Assert.assertEquals(uhash, vvMap.get("uhash").getAccessor().getObject(index));
+      byte[] tmp = new byte[4];
+      tmp[3] = (Byte)vvMap.get("uhash").getAccessor().getObject(index);
+      Assert.assertEquals(uhash, Bytes.toInt(tmp));
     }
     if(date!=0){
       Assert.assertEquals(date, vvMap.get("date").getAccessor().getObject(index));
     }
     if(event0!=null){
-      Assert.assertEquals(event0.getBytes(), vvMap.get("event0").getAccessor().getObject(index));
+      Assert.assertEquals(event0, Bytes.toString((byte[])vvMap.get("event0").getAccessor().getObject(index)));
     }
     if(event1!=null){
-      Assert.assertEquals(event1.getBytes(), vvMap.get("event1").getAccessor().getObject(index));
+      Assert.assertEquals(event1, Bytes.toString((byte[])vvMap.get("event1").getAccessor().getObject(index)));
     }
     if(event2!=null){
-      Assert.assertEquals(event2.getBytes(), vvMap.get("event2").getAccessor().getObject(index));
+      Assert.assertEquals(event2, Bytes.toString((byte[])vvMap.get("event2").getAccessor().getObject(index)));
     }
     if(event3!=null){
-      Assert.assertEquals(event3.getBytes(), vvMap.get("event3").getAccessor().getObject(index));
+      Assert.assertEquals(event3, Bytes.toString((byte[])vvMap.get("event3").getAccessor().getObject(index)));
     }
     if(event4!=null){
-      Assert.assertEquals(event4.getBytes(), vvMap.get("event4").getAccessor().getObject(index));
+      Assert.assertEquals(event4, Bytes.toString((byte[])vvMap.get("event4").getAccessor().getObject(index)));
     }
     if(event5!=null){
-      Assert.assertEquals(event5.getBytes(), vvMap.get("event5").getAccessor().getObject(index));
+      Assert.assertEquals(event5, Bytes.toString((byte[])vvMap.get("event5").getAccessor().getObject(index)));
     }
   }
   
   @Test
   public void testParseRowKey(){
     String rowKey = "20130918response.agei.report.241427s.pend.2s5s.\\xFF[\\x00\\x00\\x00@"  ;
-    assertParseRowKey(rowKey, 20130918, "response", "agei", "report", "241427s", "pend", "2s5s", '[', '@');
+    assertParseRowKey(rowKey, 20130918, "response", "agei", "report", "241427s", "pend", "2s5s", 50, 64);
 
   }
 

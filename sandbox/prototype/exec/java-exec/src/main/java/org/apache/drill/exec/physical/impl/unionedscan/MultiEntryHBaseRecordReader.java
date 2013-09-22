@@ -162,7 +162,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void initDirectScanner() throws IOException {
     FilterList filterList = new FilterList();
-    List<String> patterns = new ArrayList<>();
+    Set<String> patterns = new HashSet<>();
     List<KeyRange> slot = new ArrayList<>();
     for(int i=0; i<entryFilters.size(); i++){
       List<HbaseScanPOP.RowkeyFilterEntry> filters = entryFilters.get(i);
@@ -243,9 +243,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    if(patterns.size() > 0 || slot.size() > 0) {
+    if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
-        List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
+        List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));

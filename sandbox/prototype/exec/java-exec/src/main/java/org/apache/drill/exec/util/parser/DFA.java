@@ -50,7 +50,7 @@ public class DFA {
   private Map<KeyPart, State> kpStateMap;
 
   public DFA(List<KeyPart> keyPartList, Map<String, HBaseFieldInfo> fieldInfoMap) {
-    this.keyParts = keyPartList;   //To change body of created methods use File | Settings | File Templates.
+    this.keyParts = keyPartList;
     this.infoMap = fieldInfoMap;
     this.start = new State(null);
     this.start.name = "start";
@@ -72,6 +72,7 @@ public class DFA {
     State state = start;
     buildNexts(state, keyParts, 0, Arrays.asList(end));
     buildStates(keyParts, Arrays.asList(end));
+
   }
 
   private void buildStates(List<KeyPart> list, List<State> possibleEnds) {
@@ -86,7 +87,9 @@ public class DFA {
         case optionalgroup:
           List<State> possibleNexts = new ArrayList<>();
           gatherNextsFromList(list, i + 1, possibleNexts);
-          buildStates(curKp.getOptionalGroup(), possibleNexts);
+          List<KeyPart> remainKP = curKp.getOptionalGroup();
+          remainKP.addAll(list.subList(i+1, list.size()));
+          buildStates(remainKP, possibleNexts);
       }
     }
 
@@ -125,7 +128,7 @@ public class DFA {
         boolean[] copyFrom = type2Table[nextState.type.ordinal()];
         for (int j = 0; j < copyFrom.length; j++) {
           boolean b = copyFrom[j];
-          if (state.nexts[j] != null) {
+          if (state.nexts[j] != null && state.nexts[j] != nextState) {
             throw new IllegalArgumentException("state collapse! in state:" + state + ";[" + j + "], old:" + state.nexts[j] + ",new:" + nextState);
           }
           if (b) {

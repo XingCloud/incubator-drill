@@ -150,7 +150,7 @@ public class HBaseRecordReader implements RecordReader {
     FilterList filterList = new FilterList();
     List<KeyRange> slot = new ArrayList<>();
     if (filters != null) {
-      List<String> patterns = new ArrayList<>();
+      Set<String> patterns = new HashSet<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         Constants.FilterType type = entry.getFilterType();
         switch (type) {
@@ -215,8 +215,8 @@ public class HBaseRecordReader implements RecordReader {
             throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
-      if (patterns.size() >= 1) {
-        List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
+      if (patterns.size() >= 1) {       //todo should depend on hbase schema to generate row key
+        List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
 
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);

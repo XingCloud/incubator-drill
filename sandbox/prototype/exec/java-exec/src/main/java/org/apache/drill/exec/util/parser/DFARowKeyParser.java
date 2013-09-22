@@ -135,7 +135,7 @@ public class DFARowKeyParser {
 
           DFA.FieldPosition posInfo = keyPartInfos.get(colName);
           if (posInfo == null) {
-            throw new NullPointerException(colName + "'s postion info is null! Row key: " + Bytes.toStringBinary(rk));
+            throw new NullPointerException(colName + "'s position info is null! Row key: " + Bytes.toStringBinary(rk));
           }
           Object o = null;
           if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
