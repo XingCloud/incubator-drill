@@ -98,7 +98,7 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
     }finally{
       t.stop();
     }
-    logger.debug("Fragment runner complete. {}:{},cost time {} mills", context.getHandle().getMajorFragmentId(), context.getHandle().getMinorFragmentId(),System.currentTimeMillis() - startTime);
+    logger.info("Fragment runner complete. {}:{},cost time {} mills", context.getHandle().getMajorFragmentId(), context.getHandle().getMinorFragmentId(),System.currentTimeMillis() - startTime);
   }
   
   private void internalFail(Throwable excep){
