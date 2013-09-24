@@ -80,7 +80,7 @@ public class CreateHBaseMeta {
         FieldSchema valueField = new FieldSchema("value","bigint", "BINARY:8");
         HBaseFieldInfo.setColumnType(deu, valueField, HBaseFieldInfo.FieldType.cellvalue,
                 "val", "val", HBaseFieldInfo.DataSerType.BINARY, 8);
-        FieldSchema timestampField = new FieldSchema("timestamp","int", "BINARY:4");
+        FieldSchema timestampField = new FieldSchema("timestamp","bigint", "BINARY:8");
         HBaseFieldInfo.setColumnType(deu, timestampField, HBaseFieldInfo.FieldType.cversion,
                 "val", "val", HBaseFieldInfo.DataSerType.BINARY, 8);
         deu.getSd().addToCols(dateField);

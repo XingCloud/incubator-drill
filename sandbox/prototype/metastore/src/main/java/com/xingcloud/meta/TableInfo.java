@@ -13,6 +13,7 @@ public class TableInfo {
   public static final String STORAGE_ENGINE = "drill.se";
   
   public static final String SE_HBASE = "hbase";
+  public static Table defaultTable ;
   
   
   public static List<KeyPart> getPrimaryKey(Table table) {
@@ -123,7 +124,18 @@ public class TableInfo {
     return table2;
   }
 
+  public static synchronized Table getDefaultTable() throws  Exception{
+    if(defaultTable == null){
+      DrillHiveMetaClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
+      defaultTable = client.getTable("deu_age");
+    }
+    return defaultTable ;
+  }
+
   public static Table getTable(String tableName, List<String> options) throws Exception {
+    return getDefaultTable();
+
+    /*
     DrillHiveMetaClient client = ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
     Table table = client.getTable(tableName);
     String regPropTableName;
@@ -150,6 +162,6 @@ public class TableInfo {
       }
 
     }
-    return table;
+    return table; */
   }
 }

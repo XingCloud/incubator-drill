@@ -98,6 +98,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private long timeCost = 0 ;
   private long start = 0;
 
+  private boolean hasMore = true ;
+  private int totalCount = 0 ;
+  private int entryCount = 0 ;
+
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
     this.entries = config;
@@ -269,6 +273,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
+    long start = System.nanoTime();
     this.outputMutator = output;
     try {
       initConfig();
@@ -278,6 +283,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       e.printStackTrace();
       throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
     }
+    logger.info("Setup cost {} mills.",(System.nanoTime() - start)/1000000);
   }
 
   private void setupEntry(int index) throws SchemaChangeException {
@@ -357,7 +363,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
             curRes.clear();
           }
         }
-        if (!scanner.next(curRes)) {
+        if(hasMore){
+          hasMore = scanner.next(curRes);
+        }
+        if (curRes.isEmpty()) {
+          hasMore = false ;
           valIndex = 0 ;
           return endNext(recordSetIndex);
         }
@@ -370,11 +380,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setUpNewEntry() throws SchemaChangeException{
     releaseEntry();
-    logger.info("SetupNewEntry , current {} , next {}",currentEntry,nextEntry);
     if(currentEntry >= nextEntry){
       logger.error("Overlap {} {}",currentEntry,nextEntry);
       throw new DrillRuntimeException("Overlap") ;
     }
+    logger.info("Record count for entry {} : {}",currentEntry,entryCount);
+    entryCount = 0 ;
     currentEntry = nextEntry ;
     setupEntry(currentEntry);
     newEntry = false;
@@ -382,6 +393,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private int endNext(int valueCount){
     timeCost += System.currentTimeMillis() - start ;
+    totalCount += valueCount ;
+    entryCount += valueCount ;
     if(valueCount == 0)
       return 0;
     setValueCount(valueCount);
@@ -463,6 +476,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    logger.info("Total count for all entry {}",totalCount);
     logger.debug("Cost time " + timeCost + "mills");
     try {
       scanner.close();
