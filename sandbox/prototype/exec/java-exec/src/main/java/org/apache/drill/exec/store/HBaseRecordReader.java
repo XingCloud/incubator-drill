@@ -241,6 +241,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
+    long start = System.nanoTime() ;
     this.output = output;
     try {
       initConfig();
@@ -259,6 +260,7 @@ public class HBaseRecordReader implements RecordReader {
     } catch (Exception e) {
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
+    logger.info("Setup cost {} mills .",(System.nanoTime() - start)/1000000);
   }
 
   public static MajorType getMajorType(HBaseFieldInfo info) {

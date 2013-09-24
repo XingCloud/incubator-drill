@@ -273,6 +273,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
+    long start = System.nanoTime();
     this.outputMutator = output;
     try {
       initConfig();
@@ -282,6 +283,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       e.printStackTrace();
       throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
     }
+    logger.info("Setup cost {} mills.",(System.nanoTime() - start)/1000000);
   }
 
   private void setupEntry(int index) throws SchemaChangeException {
