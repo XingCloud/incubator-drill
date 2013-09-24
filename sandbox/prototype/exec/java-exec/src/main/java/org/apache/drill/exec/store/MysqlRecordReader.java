@@ -49,7 +49,10 @@ public class MysqlRecordReader implements RecordReader {
   private OutputMutator output;
   private Map<String, UserProp> propMap = Maps.newHashMap();
   private List<Pair<String, String>> projections;
+  private String project ;
   private final int batchSize = 16 * 1024;
+
+  private static PropManager propManager = new PropManager();
 
   public static synchronized Connection getConnection() throws Exception {
     if (cpds == null) {
@@ -67,6 +70,7 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
+    long start = System.nanoTime() ;
     this.output = output;
     try {
       initConfig();
@@ -88,13 +92,19 @@ public class MysqlRecordReader implements RecordReader {
       logger.error("Mysql record reader setup failed : " + e.getMessage());
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
+    logger.info("Setup cost {} mills." ,(System.nanoTime() - start)/1000000);
   }
 
-  private MajorType getMajorType(String propertyName) {
-    if("uid".equals(propertyName)){
+  private MajorType getMajorType(String propertyName) throws SQLException{
+    if ("uid".equals(propertyName)) {
       return Types.required(MinorType.INT);
     }
     UserProp userProp = propMap.get(propertyName);
+    // if propertyName not exist ,update cache
+    if(userProp == null){
+      propMap = propManager.update(project);
+      userProp = propMap.get(propertyName);
+    }
     if (userProp != null) {
       switch (userProp.getPropType()) {
         case sql_bigint:
@@ -168,11 +178,8 @@ public class MysqlRecordReader implements RecordReader {
 
   private void initConfig() throws Exception {
     String fields[] = config.getTableName().split("\\.");
-    String project = fields[0];
-    List<UserProp> propList = MySql_16seqid.getInstance().getUserProps(project) ;
-    for(UserProp userProp : propList){
-      propMap.put(userProp.getPropName(),userProp);
-    }
+    project = fields[0];
+    propMap = propManager.getUserProp(project);
     String dbName = "16_" + project;
     String tableName = fields[1];
     projections = new ArrayList<>();
@@ -227,6 +234,58 @@ public class MysqlRecordReader implements RecordReader {
 
   private int getInnerUidFromSamplingUid(long suid) {
     return (int) (0xffffffffl & suid);
+  }
+
+  static class PropManager {
+
+    PropCache cache = new PropCache();
+
+    public synchronized Map<String,UserProp> update(String pID) throws SQLException{
+      removeUserProp(pID);
+      Map<String,UserProp> userPropMap = getUserPropMap(pID);
+      cache.putCache(pID,userPropMap);
+      return userPropMap;
+    }
+
+    public synchronized Map<String, UserProp> getUserProp(String pID) throws SQLException {
+      Map<String, UserProp> userPropMap = cache.getCache(pID);
+      if (userPropMap == null) {
+        userPropMap = getUserPropMap(pID);
+        cache.putCache(pID, userPropMap);
+      }
+      return userPropMap;
+    }
+
+    private Map<String,UserProp> getUserPropMap(String pID) throws SQLException{
+      List<UserProp> userPropList = MySql_16seqid.getInstance().getUserProps(pID);
+      Map<String, UserProp> userPropMap = Maps.newHashMap();
+      for (UserProp userProp : userPropList) {
+        userPropMap.put(userProp.getPropName(), userProp);
+      }
+      return userPropMap;
+    }
+
+    private  void removeUserProp(String pID) {
+      cache.removeCache(pID);
+    }
+
+    class PropCache {
+      Map<String, Map<String, UserProp>> cache = Maps.newHashMap();
+
+      public Map<String, UserProp> getCache(String pID) throws SQLException {
+        return cache.get(pID);
+      }
+
+      public void putCache(String pID, Map<String, UserProp> userPropMap) {
+        cache.put(pID, userPropMap);
+      }
+
+      public void removeCache(String pID) {
+        if(cache.containsKey(pID))
+          cache.remove(pID);
+      }
+
+    }
   }
 
 }
