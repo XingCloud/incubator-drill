@@ -49,7 +49,7 @@ public class MysqlRecordReader implements RecordReader {
   private OutputMutator output;
   private Map<String, UserProp> propMap = Maps.newHashMap();
   private List<Pair<String, String>> projections;
-  private String project ;
+  private String project;
   private final int batchSize = 16 * 1024;
 
   private static PropManager propManager = new PropManager();
@@ -70,11 +70,11 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
-    long start = System.nanoTime() ;
+    long start = System.nanoTime();
     this.output = output;
     try {
       initConfig();
-      initStmtExecutor();
+      //initStmtExecutor();
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i).getFirst());
@@ -92,16 +92,16 @@ public class MysqlRecordReader implements RecordReader {
       logger.error("Mysql record reader setup failed : " + e.getMessage());
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
-    logger.info("Setup cost {} mills." ,(System.nanoTime() - start)/1000000);
+    logger.info("Setup cost {} mills.", (System.nanoTime() - start) / 1000000);
   }
 
-  private MajorType getMajorType(String propertyName) throws SQLException{
+  private MajorType getMajorType(String propertyName) throws SQLException {
     if ("uid".equals(propertyName)) {
       return Types.required(MinorType.INT);
     }
     UserProp userProp = propMap.get(propertyName);
     // if propertyName not exist ,update cache
-    if(userProp == null){
+    if (userProp == null) {
       propMap = propManager.update(project);
       userProp = propMap.get(propertyName);
     }
@@ -126,6 +126,14 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public int next() {
+    if (conn == null) {
+      try {
+        initStmtExecutor();
+      } catch (Exception e) {
+        logger.error("Get mysql connection failed .");
+        throw new DrillRuntimeException("Get mysql connection failed .");
+      }
+    }
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 8);
     }
@@ -223,6 +231,7 @@ public class MysqlRecordReader implements RecordReader {
     }
     if (conn != null) {
       try {
+        logger.info("Recycle connection resource . ");
         rs.close();
         stmt.close();
         conn.close();
@@ -240,10 +249,10 @@ public class MysqlRecordReader implements RecordReader {
 
     PropCache cache = new PropCache();
 
-    public synchronized Map<String,UserProp> update(String pID) throws SQLException{
+    public synchronized Map<String, UserProp> update(String pID) throws SQLException {
       removeUserProp(pID);
-      Map<String,UserProp> userPropMap = getUserPropMap(pID);
-      cache.putCache(pID,userPropMap);
+      Map<String, UserProp> userPropMap = getUserPropMap(pID);
+      cache.putCache(pID, userPropMap);
       return userPropMap;
     }
 
@@ -256,7 +265,7 @@ public class MysqlRecordReader implements RecordReader {
       return userPropMap;
     }
 
-    private Map<String,UserProp> getUserPropMap(String pID) throws SQLException{
+    private Map<String, UserProp> getUserPropMap(String pID) throws SQLException {
       List<UserProp> userPropList = MySql_16seqid.getInstance().getUserProps(pID);
       Map<String, UserProp> userPropMap = Maps.newHashMap();
       for (UserProp userProp : userPropList) {
@@ -265,7 +274,7 @@ public class MysqlRecordReader implements RecordReader {
       return userPropMap;
     }
 
-    private  void removeUserProp(String pID) {
+    private void removeUserProp(String pID) {
       cache.removeCache(pID);
     }
 
@@ -281,7 +290,7 @@ public class MysqlRecordReader implements RecordReader {
       }
 
       public void removeCache(String pID) {
-        if(cache.containsKey(pID))
+        if (cache.containsKey(pID))
           cache.remove(pID);
       }
 
