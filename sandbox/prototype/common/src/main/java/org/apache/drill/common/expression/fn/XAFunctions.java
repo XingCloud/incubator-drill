@@ -34,6 +34,10 @@ public class XAFunctions implements CallProvider {
         .operator("div300", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "div300"),
       FunctionDefinition
         .operator("div3600", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "div3600"),
+      FunctionDefinition
+        .operator("sgmt300", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "sgmt300"),
+      FunctionDefinition
+        .operator("sgmt3600", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "sgmt3600"),
       FunctionDefinition.operator("date", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsAnySoft(), "date"),
       FunctionDefinition
         .operator("hid2inner", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "hid2inner")
