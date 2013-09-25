@@ -90,7 +90,7 @@ class RunningFragmentManager implements FragmentStatusListener{
       rootRunner = new FragmentRunner(rootContext, rootExec, new RootFragmentManager(rootContext, rootFragment));
       LocalFragmentHandler handler = new LocalFragmentHandler(rootFragment.getHandle(), buffers, rootRunner);
       long t4 = System.nanoTime();       
-      logger.debug("t1\t"+(t1-t0)+"\tt2\t"+(t2-t1)+"\tt3\t"+(t3-t2)+"\tt4\t"+(t4-t3));
+      logger.info("t1\t"+(t1-t0)+"\tt2\t"+(t2-t1)+"\tt3\t"+(t3-t2)+"\tt4\t"+(t4-t3));
       if(buffers.isDone()){
         bee.addFragmentRunner(handler.getRunnable());
       }else{

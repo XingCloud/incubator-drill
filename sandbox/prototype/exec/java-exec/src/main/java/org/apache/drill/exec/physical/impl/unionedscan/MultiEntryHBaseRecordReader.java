@@ -9,12 +9,8 @@ import com.xingcloud.meta.TableInfo;
 import com.xingcloud.xa.hbase.filter.SkipScanFilter;
 import com.xingcloud.xa.hbase.filter.XARkConditionFilter;
 import com.xingcloud.xa.hbase.filter.XARkConditionFilter.*;
-import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import com.xingcloud.xa.hbase.model.KeyRange;
 import com.xingcloud.xa.hbase.util.EventTableUtil;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterRange;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
@@ -98,6 +94,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private long timeCost = 0 ;
   private long start = 0;
 
+  private boolean hasMore = true ;
+  private int totalCount = 0 ;
+  private int entryCount = 0 ;
+
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
     this.entries = config;
@@ -161,8 +161,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initDirectScanner() throws IOException {
+    long initStart = System.nanoTime() ;
     FilterList filterList = new FilterList();
-    List<String> patterns = new ArrayList<>();
+    Set<String> patterns = new HashSet<>();
     List<KeyRange> slot = new ArrayList<>();
     for(int i=0; i<entryFilters.size(); i++){
       List<HbaseScanPOP.RowkeyFilterEntry> filters = entryFilters.get(i);
@@ -243,9 +244,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    if(patterns.size() > 0 || slot.size() > 0) {
+    if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
-        List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
+        List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
@@ -260,8 +261,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       filterList.addFilter(skipScanFilter);
     }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
+            "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
+
     //test
     //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    logger.info("Init scanner cost {} mills .",(System.nanoTime() - initStart)/1000000);
   }
 
   @Override
@@ -269,7 +274,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.outputMutator = output;
     try {
       initConfig();
-      initDirectScanner();
       setupEntry(currentEntry);
     } catch (Exception e) {
       e.printStackTrace();
@@ -325,6 +329,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   public int next() {
+    if(scanner == null){
+      try{
+        initDirectScanner();
+      } catch (Exception e){
+        e.printStackTrace();
+        throw new DrillRuntimeException("Init scanner failed .",e) ;
+      }
+    }
     start = System.currentTimeMillis();
     try {
       if (newEntry) setUpNewEntry();
@@ -354,7 +366,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
             curRes.clear();
           }
         }
-        if (!scanner.next(curRes)) {
+        if(hasMore){
+          hasMore = scanner.next(curRes);
+        }
+        if (curRes.isEmpty()) {
+          hasMore = false ;
           valIndex = 0 ;
           return endNext(recordSetIndex);
         }
@@ -367,11 +383,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setUpNewEntry() throws SchemaChangeException{
     releaseEntry();
-    logger.info("SetupNewEntry , current {} , next {}",currentEntry,nextEntry);
     if(currentEntry >= nextEntry){
       logger.error("Overlap {} {}",currentEntry,nextEntry);
       throw new DrillRuntimeException("Overlap") ;
     }
+    logger.info("Record count for entry {} : {}",currentEntry,entryCount);
+    entryCount = 0 ;
     currentEntry = nextEntry ;
     setupEntry(currentEntry);
     newEntry = false;
@@ -379,6 +396,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private int endNext(int valueCount){
     timeCost += System.currentTimeMillis() - start ;
+    totalCount += valueCount ;
+    entryCount += valueCount ;
     if(valueCount == 0)
       return 0;
     setValueCount(valueCount);
@@ -460,7 +479,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    logger.debug("parse dfa cost {} , parse value and set value vector cost {} ", dfaParser.parseDFACost/1000000, dfaParser.parseAndSetValCost/1000000);
+    logger.info("Total count for all entry {}",totalCount);
     logger.debug("Cost time " + timeCost + "mills");
     try {
       scanner.close();

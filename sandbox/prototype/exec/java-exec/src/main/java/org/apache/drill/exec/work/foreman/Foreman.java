@@ -158,8 +158,10 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
 
   private void parseAndRunLogicalPlan(String json) {
     try {
+      long parseStart = System.nanoTime() ;
       LogicalPlan logicalPlan = context.getPlanReader().readLogicalPlan(json);
       PhysicalPlan physicalPlan = convert(logicalPlan);
+      logger.info("Parse logical plan cost {} mills ." ,(System.nanoTime() - parseStart)/1000000);
       runPhysicalPlan(physicalPlan);
     } catch (IOException e) {
       e.printStackTrace();
@@ -182,9 +184,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
     MakeFragmentsVisitor makeFragmentsVisitor = new MakeFragmentsVisitor();
     Fragment rootFragment;
     try {
-      long startTime = System.currentTimeMillis() ;
       rootFragment = rootOperator.accept(makeFragmentsVisitor, null);
-      logger.debug("Setup cost : {} mills." , System.currentTimeMillis() - startTime);
     } catch (FragmentSetupException e) {
       fail("Failure while fragmenting query.", e);
       return;

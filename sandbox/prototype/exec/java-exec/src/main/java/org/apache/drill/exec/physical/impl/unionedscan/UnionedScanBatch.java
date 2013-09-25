@@ -230,8 +230,8 @@ public class UnionedScanBatch implements RecordBatch {
   
     private final UnionedScanSplitPOP pop;
     private final FragmentContext context;
+    private int totalCount ;
     
-    public int currentEntryIndex = 0;
 
     public int mySortedEntry = 0;
     public UnionedScanSplitBatch(FragmentContext context, UnionedScanSplitPOP config) {
@@ -309,21 +309,23 @@ public class UnionedScanBatch implements RecordBatch {
       }
       IterOutcome outcome = nextReaderOutput();
       if(lastReaderEntry == -1){
-        return IterOutcome.NONE;
+        outcome = IterOutcome.NONE;
       }
-      if(outcome == null){
+      else if(outcome == null){
         throw new NullPointerException("null outcome received from nextReaderOutput()!");
       }
-      if(lastReaderEntry > mySortedEntry){
+      else if(lastReaderEntry > mySortedEntry){
         //reader run passed this split
         stallOutcome(outcome);
-        return IterOutcome.NONE;
+        outcome = IterOutcome.NONE;
       }
-      if(lastReaderEntry < mySortedEntry){
-        if(outcome == IterOutcome.NONE)
-          return IterOutcome.NONE;
-        //cannot reach this point!
-        throw new IllegalStateException("reader:"+lastReaderEntry+" is behind this split:"+mySortedEntry);
+      else if(lastReaderEntry < mySortedEntry){
+        if(outcome != IterOutcome.NONE)
+          throw new IllegalStateException("reader:"+lastReaderEntry+" is behind this split:"+mySortedEntry);
+      }
+      totalCount += UnionedScanBatch.this.recordCount ;
+      if(outcome == IterOutcome.NONE){
+        logger.info("Record count for entry {} : {}",mySortedEntry,totalCount);
       }
       return outcome;
     }

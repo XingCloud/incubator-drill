@@ -58,6 +58,7 @@ public class WritableBatch {
   }
 
   public static WritableBatch getBatchNoSV(int recordCount, Iterable<ValueVector> vectors) {
+    logger.info("Batch size : {}",recordCount );
     List<ByteBuf> buffers = Lists.newArrayList();
     List<FieldMetadata> metadata = Lists.newArrayList();
 

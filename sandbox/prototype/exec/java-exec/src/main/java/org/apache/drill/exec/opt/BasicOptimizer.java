@@ -171,22 +171,19 @@ public class BasicOptimizer extends Optimizer {
         if (filters != null) {
           filterEntries = new ArrayList<>(filters.size());
           for (JsonNode filterNode : filters) {
-            filterType = filterNode.get(SELECTION_KEY_WORD_FILTER_TYPE).textValue();
-            if ("ROWKEY".equals(filterType)) {
-              JsonNode includes = filterNode.get(SELECTION_KEY_WORD_ROWKEY_INCLUDES);
-              if (includes == null || includes.size() == 0) {
-                throw new OptimizerException("Rowkey filter must have at least one include.");
-              }
-              filterList = new ArrayList<>(includes.size());
-              for (JsonNode include : includes) {
-                filterString = include.textValue();
-                filterString = filterString.substring(1, filterString.length() - 1);
-                filterList.add(new ValueExpressions.QuotedString(filterString, ExpressionPosition.UNKNOWN));
-              }
-              filterTypeFR = Constants.FilterType.XaRowKeyPattern;
-              rowkeyFilterEntry = new HbaseScanPOP.RowkeyFilterEntry(filterTypeFR, filterList);
-              filterEntries.add(rowkeyFilterEntry);
+            JsonNode includes = filterNode.get(SELECTION_KEY_WORD_ROWKEY_INCLUDES);
+            if (includes == null || includes.size() == 0) {
+              throw new OptimizerException("Rowkey filter must have at least one include.");
             }
+            filterList = new ArrayList<>(includes.size());
+            for (JsonNode include : includes) {
+              filterString = include.textValue();
+              filterString = filterString.substring(1, filterString.length() - 1);
+              filterList.add(new ValueExpressions.QuotedString(filterString, ExpressionPosition.UNKNOWN));
+            }
+            filterTypeFR = Constants.FilterType.XaRowKeyPattern;
+            rowkeyFilterEntry = new HbaseScanPOP.RowkeyFilterEntry(filterTypeFR, filterList);
+            filterEntries.add(rowkeyFilterEntry);
           }
         } else {
           filterEntries = null;

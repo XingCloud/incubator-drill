@@ -7,11 +7,8 @@ import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import com.xingcloud.xa.hbase.filter.SkipScanFilter;
-import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import com.xingcloud.xa.hbase.model.KeyRange;
 import com.xingcloud.xa.hbase.util.EventTableUtil;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
@@ -147,9 +144,11 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initTableScanner() throws IOException {
+    long start = System.nanoTime();
     FilterList filterList = new FilterList();
+    List<KeyRange> slot = new ArrayList<>();
     if (filters != null) {
-      List<String> patterns = new ArrayList<>();
+      Set<String> patterns = new HashSet<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         Constants.FilterType type = entry.getFilterType();
         switch (type) {
@@ -214,9 +213,9 @@ public class HBaseRecordReader implements RecordReader {
             throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
-      if (patterns.size() >= 1) {
-        List<String> sortedEvents = EventTableUtil.sortEventList(patterns);
-        List<KeyRange> slot = new ArrayList<>();
+      if (patterns.size() >= 1) {       //todo should depend on hbase schema to generate row key
+        List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
+
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
@@ -231,8 +230,11 @@ public class HBaseRecordReader implements RecordReader {
     }
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
+      "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
     //test
     //scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    logger.info("Init scanner cost {} mills .", (System.nanoTime() - start) / 1000000);
   }
 
 
@@ -241,7 +243,6 @@ public class HBaseRecordReader implements RecordReader {
     this.output = output;
     try {
       initConfig();
-      initTableScanner();
       valueVectors = new ValueVector[projections.size()];
       vvMap = new HashMap<>(valueVectors.length);
       for (int i = 0; i < projections.size(); i++) {
@@ -284,6 +285,14 @@ public class HBaseRecordReader implements RecordReader {
 
 
   public int next() {
+    if (scanner == null) {
+      try {
+        initTableScanner();
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new DrillRuntimeException("Init scanner failed .", e);
+      }
+    }
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 4);
     }
@@ -305,14 +314,14 @@ public class HBaseRecordReader implements RecordReader {
         if (hasMore) {
           long scannerStart = System.currentTimeMillis();
           hasMore = scanner.next(curRes);
-          scanCost += System.currentTimeMillis() - scannerStart ;
+          scanCost += System.currentTimeMillis() - scannerStart;
         }
         if (curRes.size() == 0) {
           return endNext(recordSetIndex);
         }
       } catch (IOException e) {
         e.printStackTrace();
-        throw new DrillRuntimeException("Scanner failed");
+        throw new DrillRuntimeException("Scanner failed .", e);
       }
     }
   }
@@ -380,7 +389,6 @@ public class HBaseRecordReader implements RecordReader {
     } catch (Exception e) {
       logger.error("Scanners close failed : " + e.getMessage());
     }
-    logger.debug("parse dfa cost {} , parse value and set value vector cost {} ", dfaParser.parseDFACost/1000000, dfaParser.parseAndSetValCost/1000000);
     logger.debug("scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
   }
 

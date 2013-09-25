@@ -80,7 +80,7 @@ public class CreateHBaseMeta {
         FieldSchema valueField = new FieldSchema("value","bigint", "BINARY:8");
         HBaseFieldInfo.setColumnType(deu, valueField, HBaseFieldInfo.FieldType.cellvalue,
                 "val", "val", HBaseFieldInfo.DataSerType.BINARY, 8);
-        FieldSchema timestampField = new FieldSchema("timestamp","int", "BINARY:4");
+        FieldSchema timestampField = new FieldSchema("timestamp","bigint", "BINARY:8");
         HBaseFieldInfo.setColumnType(deu, timestampField, HBaseFieldInfo.FieldType.cversion,
                 "val", "val", HBaseFieldInfo.DataSerType.BINARY, 8);
         deu.getSd().addToCols(dateField);
@@ -96,7 +96,7 @@ public class CreateHBaseMeta {
         deu.getSd().addToCols(timestampField);
 
         TableInfo.setPrimaryKeyPattern(deu,
-                "${date}${event0}.[${event1}.[${event2}.[${event3}.[${event4}.[${event5}]]]]]\\xFF${uhash}${uid}");
+                "${date}${event0}.[${event1}.[${event2}.[${event3}.[${event4}.[${event5}.]]]]]\\xFF${uhash}${uid}");
         client.createTable(deu);
 
     }

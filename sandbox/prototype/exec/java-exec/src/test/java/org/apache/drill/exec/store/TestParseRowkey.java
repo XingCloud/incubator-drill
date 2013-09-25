@@ -11,6 +11,7 @@ import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.common.util.FileUtils;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.util.parser.DFARowKeyParser;
@@ -20,6 +21,7 @@ import org.apache.drill.exec.vector.TypeHelper;
 import org.apache.drill.exec.vector.ValueVector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,6 +56,9 @@ public class TestParseRowkey {
             rkFieldInfoMap.put(col.fieldSchema.getName(), col);
         }
         primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
+        for (KeyPart kp : primaryRowKeyParts) {
+          LOG.info(kp);
+        }
         dfaRowKeyParser = new DFARowKeyParser(primaryRowKeyParts, rkFieldInfoMap);
     }
 
@@ -63,6 +68,111 @@ public class TestParseRowkey {
       Map<String, Pair<Integer, Integer>> constField = dfaRowKeyParser.getConstField();
       assertEquals(3, constField.size());
     }
+  
+  public void assertParseRowKey(String rowKey, int date, String event0, String event1, String event2, String event3, String event4, String event5, int uhash, int uid){
+    BufferAllocator allocator = new DirectBufferAllocator();
+    Map<String, ValueVector> vvMap = new HashMap<>();
+    MaterializedField f = MaterializedField.create(new SchemaPath("uid", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.INT));
+    ValueVector vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("uid", vv);
+    f = MaterializedField.create(new SchemaPath("uhash", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.UINT1));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("uhash", vv);
+    f = MaterializedField.create(new SchemaPath("date", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.INT));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("date", vv);
+
+    f = MaterializedField.create(new SchemaPath("event0", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("event0", vv);
+    f = MaterializedField.create(new SchemaPath("event1", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("event1", vv);
+    f = MaterializedField.create(new SchemaPath("event2", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("event2", vv);
+    f = MaterializedField.create(new SchemaPath("event3", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("event3", vv);
+    f = MaterializedField.create(new SchemaPath("event4", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("event4", vv);
+    f = MaterializedField.create(new SchemaPath("event5", ExpressionPosition.UNKNOWN), Types.required(TypeProtos.MinorType.VARCHAR));
+    vv = TypeHelper.getNewVector(f, allocator);
+    AllocationHelper.allocate(vv, BATCH_SIZE, 4);
+    vvMap.put("event5", vv);
+
+    Map<String, HBaseFieldInfo> projs = new HashMap<>();
+    projs.put("uid", rkFieldInfoMap.get("uid"));
+    projs.put("uhash", rkFieldInfoMap.get("uhash"));
+    projs.put("date", rkFieldInfoMap.get("date"));
+    projs.put("event0", rkFieldInfoMap.get("event0"));
+    projs.put("event1", rkFieldInfoMap.get("event1"));
+    projs.put("event2", rkFieldInfoMap.get("event2"));
+    projs.put("event3", rkFieldInfoMap.get("event3"));
+    projs.put("event4", rkFieldInfoMap.get("event4"));
+    projs.put("event5", rkFieldInfoMap.get("event5"));
+    
+    byte[] rk = Bytes.toBytesBinary(rowKey);
+    int index = 0;
+    long cost = 0;
+    dfaRowKeyParser.parseAndSet(rk, projs, vvMap, index, true);
+
+    LOG.info(vvMap.get("uid").getAccessor().getObject(index));
+    LOG.info(vvMap.get("uhash").getAccessor().getObject(index));
+    LOG.info(vvMap.get("date").getAccessor().getObject(index));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event0").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event1").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event2").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event3").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event4").getAccessor().getObject(index)));
+    LOG.info(Bytes.toString((byte[])vvMap.get("event5").getAccessor().getObject(index)));
+
+    if(uid!=0){
+      Assert.assertEquals(uid, vvMap.get("uid").getAccessor().getObject(index));
+    }
+    if(uhash!=0){
+      byte[] tmp = new byte[4];
+      tmp[3] = (Byte)vvMap.get("uhash").getAccessor().getObject(index);
+      Assert.assertEquals(uhash, Bytes.toInt(tmp));
+    }
+    if(date!=0){
+      Assert.assertEquals(date, vvMap.get("date").getAccessor().getObject(index));
+    }
+    if(event0!=null){
+      Assert.assertEquals(event0, Bytes.toString((byte[])vvMap.get("event0").getAccessor().getObject(index)));
+    }
+    if(event1!=null){
+      Assert.assertEquals(event1, Bytes.toString((byte[])vvMap.get("event1").getAccessor().getObject(index)));
+    }
+    if(event2!=null){
+      Assert.assertEquals(event2, Bytes.toString((byte[])vvMap.get("event2").getAccessor().getObject(index)));
+    }
+    if(event3!=null){
+      Assert.assertEquals(event3, Bytes.toString((byte[])vvMap.get("event3").getAccessor().getObject(index)));
+    }
+    if(event4!=null){
+      Assert.assertEquals(event4, Bytes.toString((byte[])vvMap.get("event4").getAccessor().getObject(index)));
+    }
+    if(event5!=null){
+      Assert.assertEquals(event5, Bytes.toString((byte[])vvMap.get("event5").getAccessor().getObject(index)));
+    }
+  }
+  
+  @Test
+  public void testParseRowKey(){
+    String rowKey = "20130918response.agei.report.241427s.pend.2s5s.\\xFF[\\x00\\x00\\x00@"  ;
+    assertParseRowKey(rowKey, 20130918, "response", "agei", "report", "241427s", "pend", "2s5s", 50, 64);
+
+  }
 
     @Test
     public void testParseAndSetUidOnly() throws IOException {

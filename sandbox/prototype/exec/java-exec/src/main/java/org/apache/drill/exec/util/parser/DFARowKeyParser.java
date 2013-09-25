@@ -23,7 +23,7 @@ public class DFARowKeyParser {
     private static Logger logger = LoggerFactory.getLogger(DFARowKeyParser.class);
 
     private DFA dfa;
-  private DFA.DFAMatcher matcher = null;
+    private DFA.DFAMatcher matcher = null;
     private List<KeyPart> primaryRowKeyParts;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap;
 
@@ -134,7 +134,9 @@ public class DFARowKeyParser {
           HBaseFieldInfo info = entry.getValue();
 
           DFA.FieldPosition posInfo = keyPartInfos.get(colName);
-
+          if (posInfo == null) {
+            throw new NullPointerException(colName + "'s position info is null! Row key: " + Bytes.toStringBinary(rk));
+          }
           Object o = null;
           if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
             o = parseBytes(rk, posInfo.start, posInfo.end, info.getDataType());
