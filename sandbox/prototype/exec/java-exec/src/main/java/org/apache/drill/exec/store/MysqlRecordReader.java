@@ -70,11 +70,9 @@ public class MysqlRecordReader implements RecordReader {
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
-    long start = System.nanoTime();
     this.output = output;
     try {
       initConfig();
-      //initStmtExecutor();
       valueVectors = new ValueVector[projections.size()];
       for (int i = 0; i < projections.size(); i++) {
         MajorType type = getMajorType(projections.get(i).getFirst());
@@ -92,7 +90,6 @@ public class MysqlRecordReader implements RecordReader {
       logger.error("Mysql record reader setup failed : " + e.getMessage());
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
-    logger.info("Setup cost {} mills.", (System.nanoTime() - start) / 1000000);
   }
 
   private MajorType getMajorType(String propertyName) throws SQLException {
@@ -130,15 +127,15 @@ public class MysqlRecordReader implements RecordReader {
       try {
         initStmtExecutor();
       } catch (Exception e) {
-        logger.error("Get mysql connection failed .");
-        throw new DrillRuntimeException("Get mysql connection failed .");
+        e.printStackTrace();
+        throw new DrillRuntimeException("Init mysql connection failed : " + e.getMessage());
       }
     }
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 8);
     }
-    int recordSetIndex = 0;
     try {
+      int recordSetIndex = 0;
       while (rs.next()) {
         boolean next = setValues(rs, valueVectors, recordSetIndex);
         recordSetIndex++;
@@ -147,8 +144,8 @@ public class MysqlRecordReader implements RecordReader {
       }
       setValueCount(recordSetIndex);
       return recordSetIndex;
-    } catch (SQLException e) {
-      logger.error("Scan mysql failed : " + e.getMessage());
+    } catch (Exception e) {
+      e.printStackTrace();
       throw new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
     }
   }
@@ -213,9 +210,11 @@ public class MysqlRecordReader implements RecordReader {
   }
 
   private void initStmtExecutor() throws SQLException, Exception {
+    long start = System.nanoTime();
     conn = getConnection();
     stmt = conn.createStatement();
     rs = stmt.executeQuery(sql);
+    logger.info("Init connection cost {} mills .", (System.nanoTime() - start) / 1000000);
   }
 
 

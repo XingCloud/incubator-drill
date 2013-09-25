@@ -9,12 +9,8 @@ import com.xingcloud.meta.TableInfo;
 import com.xingcloud.xa.hbase.filter.SkipScanFilter;
 import com.xingcloud.xa.hbase.filter.XARkConditionFilter;
 import com.xingcloud.xa.hbase.filter.XARkConditionFilter.*;
-import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import com.xingcloud.xa.hbase.model.KeyRange;
 import com.xingcloud.xa.hbase.util.EventTableUtil;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterRange;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
@@ -165,6 +161,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initDirectScanner() throws IOException {
+    long initStart = System.nanoTime() ;
     FilterList filterList = new FilterList();
     Set<String> patterns = new HashSet<>();
     List<KeyRange> slot = new ArrayList<>();
@@ -269,21 +266,19 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
     //test
     //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    logger.info("Init scanner cost {} mills .",(System.nanoTime() - initStart)/1000000);
   }
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
-    long start = System.nanoTime();
     this.outputMutator = output;
     try {
       initConfig();
-      initDirectScanner();
       setupEntry(currentEntry);
     } catch (Exception e) {
       e.printStackTrace();
       throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
     }
-    logger.info("Setup cost {} mills.",(System.nanoTime() - start)/1000000);
   }
 
   private void setupEntry(int index) throws SchemaChangeException {
@@ -334,6 +329,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   public int next() {
+    if(scanner == null){
+      try{
+        initDirectScanner();
+      } catch (Exception e){
+        e.printStackTrace();
+        throw new DrillRuntimeException("Init scanner failed .",e) ;
+      }
+    }
     start = System.currentTimeMillis();
     try {
       if (newEntry) setUpNewEntry();

@@ -7,11 +7,8 @@ import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import com.xingcloud.xa.hbase.filter.SkipScanFilter;
-import com.xingcloud.xa.hbase.filter.XARowKeyPatternFilter;
 import com.xingcloud.xa.hbase.model.KeyRange;
 import com.xingcloud.xa.hbase.util.EventTableUtil;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterCondition;
-import com.xingcloud.xa.hbase.util.rowkeyCondition.RowKeyFilterPattern;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.*;
@@ -147,6 +144,7 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initTableScanner() throws IOException {
+    long start = System.nanoTime();
     FilterList filterList = new FilterList();
     List<KeyRange> slot = new ArrayList<>();
     if (filters != null) {
@@ -233,19 +231,18 @@ public class HBaseRecordReader implements RecordReader {
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
-            "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
+      "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
     //test
     //scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    logger.info("Init scanner cost {} mills .", (System.nanoTime() - start) / 1000000);
   }
 
 
   @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
-    long start = System.nanoTime() ;
     this.output = output;
     try {
       initConfig();
-      initTableScanner();
       valueVectors = new ValueVector[projections.size()];
       vvMap = new HashMap<>(valueVectors.length);
       for (int i = 0; i < projections.size(); i++) {
@@ -260,7 +257,6 @@ public class HBaseRecordReader implements RecordReader {
     } catch (Exception e) {
       throw new ExecutionSetupException("Failure while setting up fields", e);
     }
-    logger.info("Setup cost {} mills .",(System.nanoTime() - start)/1000000);
   }
 
   public static MajorType getMajorType(HBaseFieldInfo info) {
@@ -289,6 +285,14 @@ public class HBaseRecordReader implements RecordReader {
 
 
   public int next() {
+    if (scanner == null) {
+      try {
+        initTableScanner();
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new DrillRuntimeException("Init scanner failed .", e);
+      }
+    }
     for (ValueVector v : valueVectors) {
       AllocationHelper.allocate(v, batchSize, 4);
     }
@@ -310,14 +314,14 @@ public class HBaseRecordReader implements RecordReader {
         if (hasMore) {
           long scannerStart = System.currentTimeMillis();
           hasMore = scanner.next(curRes);
-          scanCost += System.currentTimeMillis() - scannerStart ;
+          scanCost += System.currentTimeMillis() - scannerStart;
         }
         if (curRes.size() == 0) {
           return endNext(recordSetIndex);
         }
       } catch (IOException e) {
         e.printStackTrace();
-        throw new DrillRuntimeException("Scanner failed");
+        throw new DrillRuntimeException("Scanner failed .", e);
       }
     }
   }
