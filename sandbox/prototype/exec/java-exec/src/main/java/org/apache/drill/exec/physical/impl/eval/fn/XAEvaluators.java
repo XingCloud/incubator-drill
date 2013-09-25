@@ -323,7 +323,7 @@ public class XAEvaluators {
     String[] yhm = sf1.format(timestamp).split(" ");
     String[] hm = yhm[1].split(":");
     int minutes = Integer.parseInt(hm[1]);
-    int val = minutes % period;
+    int val = minutes % (period/60000);
     if (val != 0) {
       minutes = minutes - val;
     }
