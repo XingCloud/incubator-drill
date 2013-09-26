@@ -290,7 +290,7 @@ public class BasicOptimizer extends Optimizer {
                 FieldReference within = collapsingAggregate.getWithin();
                 FieldReference[] carryovers = collapsingAggregate.getCarryovers();
                 NamedExpression[] aggregations = collapsingAggregate.getAggregations();
-                System.out.println(next);
+                //logger.info(next);
                 pop = new CollapsingAggregatePOP(next.accept(this, value), within, target, carryovers, aggregations);
                 operatorMap.put(collapsingAggregate, pop);
             }
