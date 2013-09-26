@@ -487,7 +487,6 @@ public class BasicOptimizer extends Optimizer {
             }
             return result;
         }
-
         public  class UnitFunc {
             private String field;
             private String op;

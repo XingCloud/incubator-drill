@@ -1,5 +1,6 @@
 package org.apache.drill.exec.util.operation;
 
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.vector.*;
 
@@ -65,7 +66,34 @@ public class Comparator {
   }
 
   private static IntVector V2V(ValueVector left, ValueVector right, BufferAllocator allocator) {
-    return null;
+    IntVector v = new IntVector(left.getField(), allocator);
+    int recordCount = right.getAccessor().getValueCount();
+    v.allocateNew(recordCount);
+    IntVector.Mutator mutator = v.getMutator();
+
+    if (left instanceof IntVector && right instanceof IntVector) {
+      IntVector.Accessor leftAccessor = ((IntVector) left).getAccessor();
+      IntVector.Accessor rightAccessor = ((IntVector) right).getAccessor();
+      int leftValue, rightValue;
+      for (int i = 0; i < recordCount; i++) {
+        leftValue = leftAccessor.get(i);
+        rightValue = rightAccessor.get(i);
+        mutator.set(i, leftValue == rightValue ? 0 : leftValue > rightValue ? 1 : -1);
+      }
+      mutator.setValueCount(recordCount);
+    } else if (left instanceof VarCharVector && right instanceof VarCharVector) {
+      VarCharVector.Accessor leftAccessor = ((VarCharVector) left).getAccessor();
+      VarCharVector.Accessor rightAccessor = ((VarCharVector) right).getAccessor();
+      int compareValue;
+      for (int i = 0; i < recordCount; i++) {
+        compareValue = new String(leftAccessor.get(i)).compareTo(new String(rightAccessor.get(i)));
+        mutator.set(i, compareValue == 0 ? 0 : compareValue > 0 ? 1 : -1);
+      }
+      mutator.setValueCount(recordCount);
+    } else {
+      throw new DrillRuntimeException("V2V not support between  " + left.getClass() + ":" + right.getClass());
+    }
+    return v;
   }
 
   private static IntVector O2V(ValueVector left, ValueVector right, BufferAllocator allocator) {
@@ -78,37 +106,37 @@ public class Comparator {
     int j = 0;
     byte b = 0;
     long leftValue = 0;
-    
-    if(left instanceof FixedWidthVector){
-      if(left instanceof IntVector){
+
+    if (left instanceof FixedWidthVector) {
+      if (left instanceof IntVector) {
         leftValue = ((IntVector) left).getAccessor().get(0);
-      }else if(left instanceof BigIntVector){
+      } else if (left instanceof BigIntVector) {
         leftValue = ((BigIntVector) left).getAccessor().get(0);
       }
-      if(right instanceof IntVector){
+      if (right instanceof IntVector) {
         IntVector.Accessor ints = ((IntVector) right).getAccessor();
         for (j = 0; j < recordCount; j++) {
           int rightValue = ints.get(j);
           b = (byte) (leftValue == rightValue ? 0 : leftValue > rightValue ? 1 : -1);
           mutator.set(j, b);
         }
-      }else if(right instanceof BigIntVector){
+      } else if (right instanceof BigIntVector) {
         BigIntVector.Accessor longs = ((BigIntVector) right).getAccessor();
         long i = 0;
         for (j = 0; j < recordCount; j++) {
           long rightValue = longs.get(j);
           b = (byte) (leftValue == rightValue ? 0 : leftValue > rightValue ? 1 : -1);
           mutator.set(j, b);
-        } 
+        }
       }
     } else if (left instanceof VarCharVector) {
       String leftString = new String(((VarCharVector) left).getAccessor().get(0));
       VarCharVector.Accessor strs = ((VarCharVector) right).getAccessor();
-      int i ;
+      int i;
       for (j = 0; j < recordCount; j++) {
-        i =  leftString.compareTo(new String(strs.get(j))) ;
-        i = i == 0 ? 0 : i > 0 ? 1 : -1 ;
-        mutator.set(j, i );
+        i = leftString.compareTo(new String(strs.get(j)));
+        i = i == 0 ? 0 : i > 0 ? 1 : -1;
+        mutator.set(j, i);
       }
     }
     mutator.setValueCount(recordCount);

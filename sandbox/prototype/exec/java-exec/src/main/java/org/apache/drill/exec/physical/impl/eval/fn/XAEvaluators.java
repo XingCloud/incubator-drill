@@ -15,7 +15,6 @@ import org.apache.drill.exec.vector.VarCharVector;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -26,10 +25,19 @@ import java.util.TimeZone;
  */
 public class XAEvaluators {
 
+  private static SimpleDateFormat sf1;
+  private static SimpleDateFormat sf2;
 
-  public static abstract class DivEvaluator extends BaseBasicEvaluator{
-    protected BasicEvaluator child ;
-    private IntVector quotient ;
+  static {
+    sf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    sf1.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+    sf2 = new SimpleDateFormat("yyyyMMddHHmmss");
+    sf2.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+  }
+
+  public static abstract class DivEvaluator extends BaseBasicEvaluator {
+    protected BasicEvaluator child;
+    private IntVector quotient;
 
     public DivEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
@@ -38,20 +46,20 @@ public class XAEvaluators {
 
     @Override
     public IntVector eval() {
-      int divisor  = getDivisor() ;
-      if(quotient == null){
-         quotient = new IntVector(MaterializedField.create(new SchemaPath("XA",ExpressionPosition.UNKNOWN),
-           Types.required(TypeProtos.MinorType.INT)),
-           recordBatch.getContext().getAllocator());
+      int divisor = getDivisor();
+      if (quotient == null) {
+        quotient = new IntVector(MaterializedField.create(new SchemaPath("XA", ExpressionPosition.UNKNOWN),
+          Types.required(TypeProtos.MinorType.INT)),
+          recordBatch.getContext().getAllocator());
       }
 
       BigIntVector bigIntVector = (BigIntVector) child.eval();
       BigIntVector.Accessor accessor = bigIntVector.getAccessor();
-      int recordCount = accessor.getValueCount() ;
+      int recordCount = accessor.getValueCount();
       quotient.allocateNew(recordCount);
       IntVector.Mutator mutator = quotient.getMutator();
-      for(int i = 0 ; i < recordCount ; i ++){
-         mutator.set(i, (int) (accessor.get(i)/divisor));
+      for (int i = 0; i < recordCount; i++) {
+        mutator.set(i, (int) (accessor.get(i) / divisor));
       }
       bigIntVector.close();
       mutator.setValueCount(recordCount);
@@ -63,7 +71,7 @@ public class XAEvaluators {
 
 
   @FunctionEvaluator("div300")
-  public static  class Div300Evaluator extends DivEvaluator{
+  public static class Div300Evaluator extends DivEvaluator {
 
     public Div300Evaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(recordBatch, args);
@@ -71,13 +79,13 @@ public class XAEvaluators {
 
     @Override
     public int getDivisor() {
-      return 300_000;
+      return 5 * 60 * 1000;
     }
   }
 
 
   @FunctionEvaluator("div3600")
-  public static class Div3600Evaluator extends  DivEvaluator{
+  public static class Div3600Evaluator extends DivEvaluator {
 
     public Div3600Evaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(recordBatch, args);
@@ -85,7 +93,64 @@ public class XAEvaluators {
 
     @Override
     public int getDivisor() {
-      return 3600_000;
+      return 60 * 60 * 1000;
+    }
+  }
+
+  public static abstract class SgmtEvaluator extends BaseBasicEvaluator {
+    protected BasicEvaluator child;
+    private IntVector value;
+
+    protected SgmtEvaluator(RecordBatch recordBatch, FunctionArguments args) {
+      super(args.isOnlyConstants(), recordBatch);
+      child = args.getOnlyEvaluator();
+    }
+
+    @Override
+    public IntVector eval() {
+      if (value == null) {
+        value = new IntVector(MaterializedField.create(new SchemaPath("XA", ExpressionPosition.UNKNOWN),
+          Types.required(TypeProtos.MinorType.INT)), recordBatch.getContext().getAllocator());
+      }
+      BigIntVector bigIntVector = (BigIntVector) child.eval();
+      BigIntVector.Accessor accessor = bigIntVector.getAccessor();
+      int period = getPeriod();
+      int recordCount = accessor.getValueCount();
+      value.allocateNew(recordCount);
+      IntVector.Mutator mutator = value.getMutator();
+      for (int i = 0; i < recordCount; i++) {
+        mutator.set(i, getIntKeySpecificPeriod(accessor.get(i), period));
+      }
+      bigIntVector.close();
+      mutator.setValueCount(recordCount);
+      return value;
+    }
+
+    public abstract int getPeriod();
+  }
+
+
+  @FunctionEvaluator("sgmt3600")
+  public static class Sgmt3600Evaluator extends SgmtEvaluator {
+    public Sgmt3600Evaluator(RecordBatch recordBatch, FunctionArguments args) {
+      super(recordBatch, args);
+    }
+
+    @Override
+    public int getPeriod() {
+      return 60 * 60 * 1000;
+    }
+  }
+
+  @FunctionEvaluator("sgmt300")
+  public static class Sgmt300Evaluator extends SgmtEvaluator {
+    public Sgmt300Evaluator(RecordBatch recordBatch, FunctionArguments args) {
+      super(recordBatch, args);
+    }
+
+    @Override
+    public int getPeriod() {
+      return 5 * 60 * 1000;
     }
   }
 
@@ -109,7 +174,7 @@ public class XAEvaluators {
           , recordBatch.getContext().getAllocator());
       }
 
-      IntVector intVector =   (IntVector) child.eval() ;
+      IntVector intVector = (IntVector) child.eval();
       IntVector.Accessor accessor = intVector.getAccessor();
       int recordCount = accessor.getValueCount();
       timeStr.allocateNew(10 * recordCount, recordCount);
@@ -117,7 +182,7 @@ public class XAEvaluators {
 
 
       for (int i = 0; i < recordCount; i++) {
-        mutator.set(i, getKeyBySpecificPeriod(accessor.get(i), period).getBytes());
+        mutator.set(i, getStrKeyBySpecificPeriod(accessor.get(i), period).getBytes());
       }
 
       intVector.close();
@@ -139,7 +204,7 @@ public class XAEvaluators {
 
     @Override
     public int getPeriod() {
-      return 5;
+      return 5 * 60 * 1000;
     }
   }
 
@@ -152,7 +217,7 @@ public class XAEvaluators {
 
     @Override
     public int getPeriod() {
-      return 60;
+      return 60 * 60 * 1000;
     }
 
   }
@@ -178,18 +243,18 @@ public class XAEvaluators {
           recordBatch.getContext().getAllocator());
       }
       // BigIntVector or NullableBigIntVector
-      ValueVector valueVector =  child.eval();
+      ValueVector valueVector = child.eval();
       ValueVector.Accessor accessor = valueVector.getAccessor();
       int recordCount = accessor.getValueCount();
       varCharVector.allocateNew(8 * recordCount, recordCount);
       VarCharVector.Mutator mutator = varCharVector.getMutator();
-      Object obj = null ;
+      Object obj = null;
       for (int i = 0; i < recordCount; i++) {
-        obj = accessor.getObject(i) ;
-        if(obj == null){
-          mutator.set(i,"XA-NA".getBytes());
-        }else{
-          mutator.set(i, getDateString((Long)obj).getBytes());
+        obj = accessor.getObject(i);
+        if (obj == null) {
+          mutator.set(i, "XA-NA".getBytes());
+        } else {
+          mutator.set(i, getDateString((Long) obj).getBytes());
         }
       }
       mutator.setValueCount(recordCount);
@@ -198,8 +263,8 @@ public class XAEvaluators {
     }
 
     private String getDateString(long l) {
-      String sqlDate = String.valueOf(l) ;
-      return sqlDate.substring(0,4) + "-" + sqlDate.substring(4,6) + "-" + sqlDate.substring(6,8);
+      String sqlDate = String.valueOf(l);
+      return sqlDate.substring(0, 4) + "-" + sqlDate.substring(4, 6) + "-" + sqlDate.substring(6, 8);
     }
   }
 
@@ -242,29 +307,31 @@ public class XAEvaluators {
   }
 
 
-  public static String getKeyBySpecificPeriod(long quotient, int period) {
+  public static int getIntKeySpecificPeriod(long sqldate, int period) {
+    try {
+      Date date = sf2.parse(String.valueOf(sqldate));
+      return (int) (date.getTime() / period);
+    } catch (Exception e) {
+      e.printStackTrace();
+      // Do nothing
+    }
+    return 0;
+  }
 
-    String ID = "GMT+8";
-    TimeZone tz = TimeZone.getTimeZone(ID);
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-    sf.setTimeZone(tz);
 
-    long timestamp = quotient * period * 60_000 ;
-
-    String[] yhm = sf.format(timestamp).split(" ");
+  public static String getStrKeyBySpecificPeriod(long quotient, int period) {
+    long timestamp = quotient * period;
+    String[] yhm = sf1.format(timestamp).split(" ");
     String[] hm = yhm[1].split(":");
     int minutes = Integer.parseInt(hm[1]);
-
-    int val = minutes % period;
+    int val = minutes % (period/60000);
     if (val != 0) {
       minutes = minutes - val;
     }
-
     String minutesStr = String.valueOf(minutes);
     if (minutes < 10) {
       minutesStr = "0" + minutesStr;
     }
-
     return yhm[0] + " " + hm[0] + ":" + minutesStr;
   }
 }
