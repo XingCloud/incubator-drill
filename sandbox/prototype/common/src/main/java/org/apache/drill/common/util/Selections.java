@@ -15,6 +15,9 @@ public class Selections {
   public static final String SELECTION_KEY_WORD_ROWKEY = "rowkey";
   public static final String SELECTION_KEY_WORD_ROWKEY_START = "start";
   public static final String SELECTION_KEY_WORD_ROWKEY_END = "end";
+  public static final String SELECTION_KEY_ROWKEY_TAIL_RANGE= "tailrange";
+  public static final String SELECTION_KEY_ROWKEY_TAIL_START= "tailstart";
+  public static final String SELECTION_KEY_ROWKEY_TAIL_END ="tailend";
   public static final String SELECTION_KEY_WORD_ROWKEY_INCLUDES = "includes";
   public static final String SELECTION_KEY_WORD_ROWKEY_EVENT_MAPPING = "mapping";
   public static final String SELECTION_KEY_WORD_FILTERS = "filters";
