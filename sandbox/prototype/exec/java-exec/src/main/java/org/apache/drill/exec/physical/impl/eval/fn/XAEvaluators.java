@@ -103,6 +103,7 @@ public class XAEvaluators {
 
     protected SgmtEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
+      child = args.getOnlyEvaluator();
     }
 
     @Override
