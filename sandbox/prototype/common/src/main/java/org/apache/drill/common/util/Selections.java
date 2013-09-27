@@ -23,6 +23,7 @@ public class Selections {
   public static final String SELECTION_KEY_WORD_FILTERS = "filters";
   public static final String SELECTION_KEY_WORD_FILTER_TYPE = "type";
   public static final String SELECTION_KEY_WORD_FILTER = "filter";
+  public static final String SELECTION_KEY_WORD_FILTER_EXPRESSION= "expression";
   public static final String SELECTION_KEY_WORD_PROJECTIONS = "projections";
 
   public static final String SELECTION_KEY_WORD_B_DATE = "start_date";

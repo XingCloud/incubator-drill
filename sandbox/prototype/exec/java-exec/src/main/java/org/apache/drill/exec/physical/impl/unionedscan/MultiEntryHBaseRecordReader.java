@@ -49,6 +49,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 public class MultiEntryHBaseRecordReader implements RecordReader {
@@ -248,6 +249,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
+
         List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
           // Test
         String path = "/data/log/drill/includes" + System.nanoTime() ;
@@ -255,8 +257,13 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         fw.write(sortedEvents.toString());
         fw.flush();
         fw.close();
+        //sortedEvents =Arrays.sort(sortedEvents);
+//        File patternFile=new File("/home/yb/workspace/data/log/drill/patterns.log");
+//        Writer writer=new FileWriter(patternFile);
 
         for (String event : sortedEvents) {
+//          writer.write(event+" ");
+//          logger.info(event);
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
           byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
@@ -264,6 +271,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
+//        writer.flush();
+//        writer.close();
 
       }
       Filter skipScanFilter = new SkipScanFilter(slot);
