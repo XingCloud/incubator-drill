@@ -446,6 +446,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   public void setValues(KeyValue kv, int index) {
+    logger.info(Bytes.toString(kv.getRow()));
     Map<String, HBaseFieldInfo> rkProjs = entriesRowKeyProjs.get(currentEntry);
     //更新row key里的投影值
     if (rkProjs.size() != 0) {
