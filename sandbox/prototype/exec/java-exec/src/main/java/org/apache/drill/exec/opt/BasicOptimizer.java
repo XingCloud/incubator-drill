@@ -404,7 +404,10 @@ public class BasicOptimizer extends Optimizer {
                     logger.info(" or funccall "+config.getMapper().writeValueAsString(filterExpr));
                     for(LogicalExpression le : (FunctionCall)filterExpr){
                         logger.info("get patterns from "+config.getMapper().writeValueAsString(le));
-                        patterns.addAll(getPatternsFromExpr(le,tableName,config));
+                        Set<LogicalExpression> tmpPatterns=getPatternsFromExpr(le, tableName, config);
+                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
+                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
+                        patterns.addAll(tmpPatterns);
                     }
                     return patterns;
                 }
