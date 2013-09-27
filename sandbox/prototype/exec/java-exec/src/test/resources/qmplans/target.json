@@ -11,9 +11,113 @@
   query : [ {
     op : "unioned-scan",
     @id : 1,
-    memo : "[deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927]",
+    memo : "[deu_xaa:20130926, 20130926, deu_xaa:20130926, 20130926, deu_xaa:20130926, 20130926, deu_xaa:20130926, 20130926, deu_xaa:20130926, 20130926, deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927, deu_xaa:20130927, 20130927]",
     storageengine : "hbase",
     selection : [ {
+      rowkey : {
+        start : "20130926response.1gai.summary.1gai.responsetime.1s-2s.\\xFF\\x00\\x00\\x00\\x00\\x00",
+        end : "20130926response.1gai.summary.1gai.show.1s-2s.\\xFF\\x00\\x00\\x00\\x00\\x00"
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      } ],
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('responsetime') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) "
+      }
+    }, {
+      rowkey : {
+        start : "20130926response.1gai.summary.1gai.show.1s-2s.\\xFF\\x00\\x00\\x00\\x00\\x00",
+        end : "20130926response.22find.report.1287/1687/s.pend.gte_1min.\\xFF\\x00\\x00\\x00\\x00\\x00"
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      }, {
+        ref : "event4",
+        expr : "event4"
+      } ],
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) ) "
+      }
+    }, {
+      rowkey : {
+        start : "20130926response.22find.report.1287/1687/s.pend.gte_1min.\\xFF\\x00\\x00\\x00\\x00\\x00",
+        end : "20130926response.zzzw.summary.zzzw.pend.5s-10s.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      }, {
+        ref : "event4",
+        expr : "event4"
+      } ],
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('pend') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) ) "
+      }
+    }, {
+      rowkey : {
+        start : "20130926response.zzzw.summary.zzzw.pend.5s-10s.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
+        end : "20130926response.zzzw.widget.155.responsetime.0.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      }, {
+        ref : "event4",
+        expr : "event4"
+      } ],
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) ) "
+      }
+    }, {
+      rowkey : {
+        start : "20130926response.zzzw.widget.155.responsetime.0.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF",
+        end : "20130926response.zzzw.widget.155.show.0.\\xFF\\xFF\\xFF\\xFF\\xFF\\xFF"
+      },
+      projections : [ {
+        ref : "uid",
+        expr : "uid"
+      }, {
+        ref : "value",
+        expr : "value"
+      }, {
+        ref : "timestamp",
+        expr : "timestamp"
+      } ],
+      table : "deu_xaa",
+      filter : {
+        expression : " ( ( (event4)  == ('show') )  && ( (date)  == ('20130926') ) )  && ( (event0)  == ('response') ) "
+      }
+    }, {
       rowkey : {
         start : "20130927response.1gai.summary.1gai.responsetime.1s-2s.\\xFF\\x00\\x00\\x00\\x00\\x00",
         end : "20130927response.1gai.summary.1gai.show.1s-2s.\\xFF\\x00\\x00\\x00\\x00\\x00"
@@ -52,7 +156,7 @@
       } ],
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  &&  ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) ) "
+        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) ) "
       }
     }, {
       rowkey : {
@@ -74,7 +178,7 @@
       } ],
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  &&  ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('pend') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) ) "
+        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('pend') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) ) "
       }
     }, {
       rowkey : {
@@ -96,7 +200,7 @@
       } ],
       table : "deu_xaa",
       filter : {
-        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  &&  ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) ) "
+        expression : " ( ( ( (event4)  == ('show') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) )  || ( ( ( (event4)  == ('responsetime') )  && ( (date)  == ('20130927') ) )  && ( (event0)  == ('response') ) ) "
       }
     }, {
       rowkey : {
@@ -122,98 +226,105 @@
   }, {
     op : "unioned-scan-split",
     @id : 2,
-    memo : "[1]",
+    memo : "[5]",
     input : 1,
-    entries : [ 1 ]
+    entries : [ 5 ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 3,
+    memo : "[6]",
+    input : 1,
+    entries : [ 6 ]
   }, {
     op : "filter",
-    @id : 3,
-    input : 2,
-    expr : " (event4)  == ('show') "
-  }, {
-    op : "project",
     @id : 4,
     input : 3,
+    expr : " (event4)  == ('responsetime') "
+  }, {
+    op : "project",
+    @id : 5,
+    input : 4,
     projections : [ {
       ref : "uid",
       expr : "uid"
     }, {
       ref : "value",
       expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
     } ]
   }, {
     op : "unioned-scan-split",
-    @id : 5,
-    memo : "[2]",
+    @id : 6,
+    memo : "[7]",
     input : 1,
-    entries : [ 2 ]
+    entries : [ 7 ]
   }, {
     op : "filter",
-    @id : 6,
-    input : 5,
-    expr : " (event4)  == ('show') "
-  }, {
-    op : "project",
     @id : 7,
     input : 6,
+    expr : " (event4)  == ('responsetime') "
+  }, {
+    op : "project",
+    @id : 8,
+    input : 7,
     projections : [ {
       ref : "uid",
       expr : "uid"
     }, {
       ref : "value",
       expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
     } ]
   }, {
     op : "unioned-scan-split",
-    @id : 8,
-    memo : "[3]",
+    @id : 9,
+    memo : "[8]",
     input : 1,
-    entries : [ 3 ]
+    entries : [ 8 ]
   }, {
     op : "filter",
-    @id : 9,
-    input : 8,
-    expr : " (event4)  == ('show') "
-  }, {
-    op : "project",
     @id : 10,
     input : 9,
-    projections : [ {
-      ref : "uid",
-      expr : "uid"
-    }, {
-      ref : "value",
-      expr : "value"
-    } ]
-  }, {
-    op : "unioned-scan-split",
-    @id : 11,
-    memo : "[4]",
-    input : 1,
-    entries : [ 4 ]
+    expr : " (event4)  == ('responsetime') "
   }, {
     op : "project",
-    @id : 12,
-    input : 11,
+    @id : 11,
+    input : 10,
     projections : [ {
       ref : "uid",
       expr : "uid"
     }, {
       ref : "value",
       expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
     } ]
   }, {
     op : "union",
-    @id : 13,
-    inputs : [ 4, 7, 10, 12 ],
+    @id : 12,
+    inputs : [ 2, 5, 8, 11 ],
     distinct : false
+  }, {
+    op : "segment",
+    @id : 13,
+    input : 12,
+    exprs : [ {
+      ref : "dimension",
+      expr : "div300(timestamp)"
+    } ],
+    name : "sgmt"
   }, {
     op : "collapsingaggregate",
     @id : 14,
     input : 13,
-    within : null,
+    within : "sgmt",
     target : null,
-    carryovers : null,
+    carryovers : [ "dimension" ],
     aggregations : [ {
       ref : "count",
       expr : "count(uid) "
@@ -228,210 +339,6 @@
     op : "project",
     @id : 15,
     input : 14,
-    projections : [ {
-      ref : "query_id",
-      expr : "'COMMON,xaa,2013-09-27,2013-09-27,response.*.*.*.show.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
-    }, {
-      ref : "count",
-      expr : "count"
-    }, {
-      ref : "user_num",
-      expr : "user_num"
-    }, {
-      ref : "sum",
-      expr : "sum"
-    } ]
-  }, {
-    op : "project",
-    @id : 16,
-    input : 3,
-    projections : [ {
-      ref : "uid",
-      expr : "uid"
-    }, {
-      ref : "value",
-      expr : "value"
-    }, {
-      ref : "timestamp",
-      expr : "timestamp"
-    } ]
-  }, {
-    op : "project",
-    @id : 17,
-    input : 6,
-    projections : [ {
-      ref : "uid",
-      expr : "uid"
-    }, {
-      ref : "value",
-      expr : "value"
-    }, {
-      ref : "timestamp",
-      expr : "timestamp"
-    } ]
-  }, {
-    op : "project",
-    @id : 18,
-    input : 9,
-    projections : [ {
-      ref : "uid",
-      expr : "uid"
-    }, {
-      ref : "value",
-      expr : "value"
-    }, {
-      ref : "timestamp",
-      expr : "timestamp"
-    } ]
-  }, {
-    op : "union",
-    @id : 19,
-    inputs : [ 16, 17, 18, 11 ],
-    distinct : false
-  }, {
-    op : "segment",
-    @id : 20,
-    input : 19,
-    exprs : [ {
-      ref : "dimension",
-      expr : "div300(timestamp)"
-    } ],
-    name : "sgmt"
-  }, {
-    op : "collapsingaggregate",
-    @id : 21,
-    input : 20,
-    within : "sgmt",
-    target : null,
-    carryovers : [ "dimension" ],
-    aggregations : [ {
-      ref : "count",
-      expr : "count(uid) "
-    }, {
-      ref : "user_num",
-      expr : "count_distinct(uid) "
-    }, {
-      ref : "sum",
-      expr : "sum(value) "
-    } ]
-  }, {
-    op : "project",
-    @id : 22,
-    input : 21,
-    projections : [ {
-      ref : "query_id",
-      expr : "'COMMON,xaa,2013-09-27,2013-09-27,response.*.*.*.show.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
-    }, {
-      ref : "dimension",
-      expr : "min5(dimension)"
-    }, {
-      ref : "count",
-      expr : "count"
-    }, {
-      ref : "user_num",
-      expr : "user_num"
-    }, {
-      ref : "sum",
-      expr : "sum"
-    } ]
-  }, {
-    op : "unioned-scan-split",
-    @id : 23,
-    memo : "[0]",
-    input : 1,
-    entries : [ 0 ]
-  }, {
-    op : "filter",
-    @id : 24,
-    input : 2,
-    expr : " (event4)  == ('responsetime') "
-  }, {
-    op : "project",
-    @id : 25,
-    input : 24,
-    projections : [ {
-      ref : "uid",
-      expr : "uid"
-    }, {
-      ref : "value",
-      expr : "value"
-    }, {
-      ref : "timestamp",
-      expr : "timestamp"
-    } ]
-  }, {
-    op : "filter",
-    @id : 26,
-    input : 5,
-    expr : " (event4)  == ('responsetime') "
-  }, {
-    op : "project",
-    @id : 27,
-    input : 26,
-    projections : [ {
-      ref : "uid",
-      expr : "uid"
-    }, {
-      ref : "value",
-      expr : "value"
-    }, {
-      ref : "timestamp",
-      expr : "timestamp"
-    } ]
-  }, {
-    op : "filter",
-    @id : 28,
-    input : 8,
-    expr : " (event4)  == ('responsetime') "
-  }, {
-    op : "project",
-    @id : 29,
-    input : 28,
-    projections : [ {
-      ref : "uid",
-      expr : "uid"
-    }, {
-      ref : "value",
-      expr : "value"
-    }, {
-      ref : "timestamp",
-      expr : "timestamp"
-    } ]
-  }, {
-    op : "union",
-    @id : 30,
-    inputs : [ 23, 25, 27, 29 ],
-    distinct : false
-  }, {
-    op : "segment",
-    @id : 31,
-    input : 30,
-    exprs : [ {
-      ref : "dimension",
-      expr : "div300(timestamp)"
-    } ],
-    name : "sgmt"
-  }, {
-    op : "collapsingaggregate",
-    @id : 32,
-    input : 31,
-    within : "sgmt",
-    target : null,
-    carryovers : [ "dimension" ],
-    aggregations : [ {
-      ref : "count",
-      expr : "count(uid) "
-    }, {
-      ref : "user_num",
-      expr : "count_distinct(uid) "
-    }, {
-      ref : "sum",
-      expr : "sum(value) "
-    } ]
-  }, {
-    op : "project",
-    @id : 33,
-    input : 32,
     projections : [ {
       ref : "query_id",
       expr : "'COMMON,xaa,2013-09-27,2013-09-27,response.*.*.*.responsetime.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
@@ -450,13 +357,13 @@
     } ]
   }, {
     op : "filter",
-    @id : 34,
-    input : 5,
+    @id : 16,
+    input : 6,
     expr : " (event4)  == ('pend') "
   }, {
     op : "project",
-    @id : 35,
-    input : 34,
+    @id : 17,
+    input : 16,
     projections : [ {
       ref : "uid",
       expr : "uid"
@@ -467,6 +374,203 @@
       ref : "timestamp",
       expr : "timestamp"
     } ]
+  }, {
+    op : "segment",
+    @id : 18,
+    input : 17,
+    exprs : [ {
+      ref : "dimension",
+      expr : "div300(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 19,
+    input : 18,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 20,
+    input : 19,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-09-27,2013-09-27,response.*.*.*.pend.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
+    }, {
+      ref : "dimension",
+      expr : "min5(dimension)"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "filter",
+    @id : 21,
+    input : 3,
+    expr : " (event4)  == ('show') "
+  }, {
+    op : "project",
+    @id : 22,
+    input : 21,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "filter",
+    @id : 23,
+    input : 6,
+    expr : " (event4)  == ('show') "
+  }, {
+    op : "project",
+    @id : 24,
+    input : 23,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "filter",
+    @id : 25,
+    input : 9,
+    expr : " (event4)  == ('show') "
+  }, {
+    op : "project",
+    @id : 26,
+    input : 25,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 27,
+    memo : "[9]",
+    input : 1,
+    entries : [ 9 ]
+  }, {
+    op : "project",
+    @id : 28,
+    input : 27,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "union",
+    @id : 29,
+    inputs : [ 22, 24, 26, 28 ],
+    distinct : false
+  }, {
+    op : "collapsingaggregate",
+    @id : 30,
+    input : 29,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 31,
+    input : 30,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-09-27,2013-09-27,response.*.*.*.show.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "project",
+    @id : 32,
+    input : 21,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "project",
+    @id : 33,
+    input : 23,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "project",
+    @id : 34,
+    input : 25,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "union",
+    @id : 35,
+    inputs : [ 32, 33, 34, 27 ],
+    distinct : false
   }, {
     op : "segment",
     @id : 36,
@@ -499,7 +603,7 @@
     input : 37,
     projections : [ {
       ref : "query_id",
-      expr : "'COMMON,xaa,2013-09-27,2013-09-27,response.*.*.*.pend.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
+      expr : "'COMMON,xaa,2013-09-27,2013-09-27,response.*.*.*.show.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
     }, {
       ref : "dimension",
       expr : "min5(dimension)"
@@ -516,14 +620,419 @@
   }, {
     op : "union",
     @id : 39,
-    inputs : [ 15, 22, 33, 38 ],
+    inputs : [ 15, 20, 31, 38 ],
+    distinct : false
+  }, {
+    op : "unioned-scan-split",
+    @id : 40,
+    memo : "[2]",
+    input : 1,
+    entries : [ 2 ]
+  }, {
+    op : "filter",
+    @id : 41,
+    input : 40,
+    expr : " (event4)  == ('pend') "
+  }, {
+    op : "project",
+    @id : 42,
+    input : 41,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "segment",
+    @id : 43,
+    input : 42,
+    exprs : [ {
+      ref : "dimension",
+      expr : "div300(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 44,
+    input : 43,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 45,
+    input : 44,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-09-26,2013-09-26,response.*.*.*.pend.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
+    }, {
+      ref : "dimension",
+      expr : "min5(dimension)"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 46,
+    memo : "[1]",
+    input : 1,
+    entries : [ 1 ]
+  }, {
+    op : "filter",
+    @id : 47,
+    input : 46,
+    expr : " (event4)  == ('show') "
+  }, {
+    op : "project",
+    @id : 48,
+    input : 47,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "filter",
+    @id : 49,
+    input : 40,
+    expr : " (event4)  == ('show') "
+  }, {
+    op : "project",
+    @id : 50,
+    input : 49,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 51,
+    memo : "[3]",
+    input : 1,
+    entries : [ 3 ]
+  }, {
+    op : "filter",
+    @id : 52,
+    input : 51,
+    expr : " (event4)  == ('show') "
+  }, {
+    op : "project",
+    @id : 53,
+    input : 52,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 54,
+    memo : "[4]",
+    input : 1,
+    entries : [ 4 ]
+  }, {
+    op : "project",
+    @id : 55,
+    input : 54,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    } ]
+  }, {
+    op : "union",
+    @id : 56,
+    inputs : [ 48, 50, 53, 55 ],
+    distinct : false
+  }, {
+    op : "collapsingaggregate",
+    @id : 57,
+    input : 56,
+    within : null,
+    target : null,
+    carryovers : null,
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 58,
+    input : 57,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-09-26,2013-09-26,response.*.*.*.show.*,TOTAL_USER,VF-ALL-0-0,PERIOD'"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "unioned-scan-split",
+    @id : 59,
+    memo : "[0]",
+    input : 1,
+    entries : [ 0 ]
+  }, {
+    op : "filter",
+    @id : 60,
+    input : 46,
+    expr : " (event4)  == ('responsetime') "
+  }, {
+    op : "project",
+    @id : 61,
+    input : 60,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "filter",
+    @id : 62,
+    input : 40,
+    expr : " (event4)  == ('responsetime') "
+  }, {
+    op : "project",
+    @id : 63,
+    input : 62,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "filter",
+    @id : 64,
+    input : 51,
+    expr : " (event4)  == ('responsetime') "
+  }, {
+    op : "project",
+    @id : 65,
+    input : 64,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "union",
+    @id : 66,
+    inputs : [ 59, 61, 63, 65 ],
+    distinct : false
+  }, {
+    op : "segment",
+    @id : 67,
+    input : 66,
+    exprs : [ {
+      ref : "dimension",
+      expr : "div300(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 68,
+    input : 67,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 69,
+    input : 68,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-09-26,2013-09-26,response.*.*.*.responsetime.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
+    }, {
+      ref : "dimension",
+      expr : "min5(dimension)"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "project",
+    @id : 70,
+    input : 47,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "project",
+    @id : 71,
+    input : 49,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "project",
+    @id : 72,
+    input : 52,
+    projections : [ {
+      ref : "uid",
+      expr : "uid"
+    }, {
+      ref : "value",
+      expr : "value"
+    }, {
+      ref : "timestamp",
+      expr : "timestamp"
+    } ]
+  }, {
+    op : "union",
+    @id : 73,
+    inputs : [ 70, 71, 72, 54 ],
+    distinct : false
+  }, {
+    op : "segment",
+    @id : 74,
+    input : 73,
+    exprs : [ {
+      ref : "dimension",
+      expr : "div300(timestamp)"
+    } ],
+    name : "sgmt"
+  }, {
+    op : "collapsingaggregate",
+    @id : 75,
+    input : 74,
+    within : "sgmt",
+    target : null,
+    carryovers : [ "dimension" ],
+    aggregations : [ {
+      ref : "count",
+      expr : "count(uid) "
+    }, {
+      ref : "user_num",
+      expr : "count_distinct(uid) "
+    }, {
+      ref : "sum",
+      expr : "sum(value) "
+    } ]
+  }, {
+    op : "project",
+    @id : 76,
+    input : 75,
+    projections : [ {
+      ref : "query_id",
+      expr : "'COMMON,xaa,2013-09-26,2013-09-26,response.*.*.*.show.*,TOTAL_USER,VF-ALL-0-0,MIN5'"
+    }, {
+      ref : "dimension",
+      expr : "min5(dimension)"
+    }, {
+      ref : "count",
+      expr : "count"
+    }, {
+      ref : "user_num",
+      expr : "user_num"
+    }, {
+      ref : "sum",
+      expr : "sum"
+    } ]
+  }, {
+    op : "union",
+    @id : 77,
+    inputs : [ 45, 58, 69, 76 ],
+    distinct : false
+  }, {
+    op : "union",
+    @id : 78,
+    inputs : [ 39, 77 ],
     distinct : false
   }, {
     op : "store",
-    @id : 40,
-    input : 39,
+    @id : 79,
+    input : 78,
     target : null,
     partition : null,
     storageEngine : "output"
   } ]
 }
+

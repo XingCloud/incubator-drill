@@ -54,7 +54,10 @@ import org.apache.drill.exec.physical.config.UnionedScanPOP;
 import org.apache.drill.exec.physical.config.UnionedScanSplitPOP;
 import org.apache.drill.exec.util.logicalplan.LogicalPlanUtil;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 /**
@@ -170,8 +173,18 @@ public class BasicOptimizer extends Optimizer {
                 // Filters
                 List<HbaseScanPOP.RowkeyFilterEntry> filterEntries=new ArrayList<>();
                 filter = selection.get(SELECTION_KEY_WORD_FILTER);
+                File sourcedir=new File("/data/log/drill/sourcePatterns");
                 if (filter != null && LogicalPlanUtil.needIncludes(filter,config,table)) {
                     List<LogicalExpression> patterns=getPatterns(filter,table,config);
+                    String filterExpression=filter.get("expression").textValue();
+                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"/"+filterExpression);
+                    try {
+                        Writer writer=new FileWriter(sourcepttFile);
+                        writer.write(patterns.toString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        throw  new OptimizerException(e.getMessage());
+                    }
                     HbaseScanPOP.RowkeyFilterEntry filterEntry=new HbaseScanPOP.RowkeyFilterEntry(Constants.FilterType.XaRowKeyPattern,patterns);
                     filterEntries.add(filterEntry);
                 } else {

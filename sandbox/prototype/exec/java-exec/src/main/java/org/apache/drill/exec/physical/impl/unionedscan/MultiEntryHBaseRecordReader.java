@@ -252,7 +252,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
         List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
           // Test
-        String path = "/data/log/drill/includes" + System.nanoTime() ;
+        String path = "/home/yb/workspace/data/log/drill/includes" + System.nanoTime() ;
         FileWriter fw = new FileWriter(new File(path));
         fw.write(sortedEvents.toString());
         fw.flush();
