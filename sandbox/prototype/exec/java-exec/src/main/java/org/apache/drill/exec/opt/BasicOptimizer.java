@@ -177,7 +177,7 @@ public class BasicOptimizer extends Optimizer {
                 if (filter != null && LogicalPlanUtil.needIncludes(filter,config,table)) {
                     List<LogicalExpression> patterns=getPatterns(filter,table,config);
                     String filterExpression=filter.get("expression").textValue();
-                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"/"+filterExpression);
+                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"_"+filterExpression);
                     try {
                         Writer writer=new FileWriter(sourcepttFile);
                         writer.write(patterns.toString());
