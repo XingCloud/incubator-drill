@@ -323,7 +323,9 @@ public class UnionedScanBatch implements RecordBatch {
         if(outcome != IterOutcome.NONE)
           throw new IllegalStateException("reader:"+lastReaderEntry+" is behind this split:"+mySortedEntry);
       }
-      totalCount += UnionedScanBatch.this.recordCount ;
+      if(outcome != IterOutcome.NONE){
+        totalCount += UnionedScanBatch.this.recordCount ;
+      }
       if(outcome == IterOutcome.NONE){
         logger.info("Record count for entry {} : {}",mySortedEntry,totalCount);
       }
