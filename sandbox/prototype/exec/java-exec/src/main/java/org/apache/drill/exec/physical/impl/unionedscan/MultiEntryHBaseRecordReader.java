@@ -46,6 +46,8 @@ import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -247,6 +249,13 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
         List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
+          // Test
+        String path = "/data/log/drill/includes" + System.nanoTime() ;
+        FileWriter fw = new FileWriter(new File(path));
+        fw.write(sortedEvents.toString());
+        fw.flush();
+        fw.close();
+
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
