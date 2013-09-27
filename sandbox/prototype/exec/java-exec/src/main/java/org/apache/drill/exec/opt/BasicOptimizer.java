@@ -386,7 +386,9 @@ public class BasicOptimizer extends Optimizer {
         }
         private Set<LogicalExpression> getPatternsFromExpr(LogicalExpression filterExpr,String tableName,DrillConfig config) throws OptimizerException {
             if(!(filterExpr instanceof FunctionCall))return null;
+
             try{
+                logger.info("enter get Patterns "+config.getMapper().writeValueAsString(filterExpr));
                 Set<LogicalExpression> patterns=new HashSet<>();
                 List<KeyPart> kps = null;
                 kps = TableInfo.getRowKey(tableName, null);
@@ -395,11 +397,13 @@ public class BasicOptimizer extends Optimizer {
                 if(!((FunctionCall)filterExpr).getDefinition().getName().contains("or"))
                 {
                     Map<String, UnitFunc> fieldFunc = null;
-
+                    logger.info(" not or funccall "+config.getMapper().writeValueAsString(filterExpr));
                     fieldFunc = parseFunctionCall((FunctionCall)filterExpr);
                     return new HashSet<>(getPatternsFromColVals(fieldFunc,kps,projectId));
                 }else {
+                    logger.info(" or funccall "+config.getMapper().writeValueAsString(filterExpr));
                     for(LogicalExpression le : (FunctionCall)filterExpr){
+                        logger.info("get patterns from "+config.getMapper().writeValueAsString(le));
                         patterns.addAll(getPatternsFromExpr(le,tableName,config));
                     }
                     return patterns;
