@@ -390,7 +390,7 @@ public class BasicOptimizer extends Optimizer {
             if(!(filterExpr instanceof FunctionCall))return null;
 
             try{
-                logger.info("enter get Patterns "+config.getMapper().writeValueAsString(filterExpr));
+//                logger.info("enter get Patterns "+config.getMapper().writeValueAsString(filterExpr));
                 Set<LogicalExpression> patterns=new HashSet<>();
                 List<KeyPart> kps = null;
                 kps = TableInfo.getRowKey(tableName, null);
@@ -399,28 +399,28 @@ public class BasicOptimizer extends Optimizer {
                 if(!((FunctionCall)filterExpr).getDefinition().getName().contains("or"))
                 {
                     Map<String, UnitFunc> fieldFunc = null;
-                    logger.info(" not or funccall "+config.getMapper().writeValueAsString(filterExpr));
+//                    logger.info(" not or funccall "+config.getMapper().writeValueAsString(filterExpr));
                     fieldFunc = parseFunctionCall((FunctionCall)filterExpr);
                     Set<LogicalExpression> tmpPatterns=new  HashSet<>(getPatternsFromColVals(fieldFunc,kps,projectId));
-                    if(tmpPatterns.size()!=0){
-                        logger.info("get patterns . patterns size is "+tmpPatterns.size());
-                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
-                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
-                    }else {
-                        logger.info("do not get patterns from "+config.getMapper().writeValueAsString(filterExpr));
-                    }
+//                    if(tmpPatterns.size()!=0){
+//                        logger.info("get patterns . patterns size is "+tmpPatterns.size());
+//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
+//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
+//                    }else {
+//                        logger.info("do not get patterns from "+config.getMapper().writeValueAsString(filterExpr));
+//                    }
                     return tmpPatterns;
                 }else {
-                    logger.info(" or funccall "+config.getMapper().writeValueAsString(filterExpr));
+//                    logger.info(" or funccall "+config.getMapper().writeValueAsString(filterExpr));
                     for(LogicalExpression le : (FunctionCall)filterExpr){
-                        logger.info("get patterns from "+config.getMapper().writeValueAsString(le));
+//                        logger.info("get patterns from "+config.getMapper().writeValueAsString(le));
                         Set<LogicalExpression> tmpPatterns=getPatternsFromExpr(le, tableName, config);
-                        if(tmpPatterns.size()!=0){
-                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
-                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
-                        }else {
-                            logger.info("do not get patterns from "+config.getMapper().writeValueAsString(le));
-                        }
+//                        if(tmpPatterns.size()!=0){
+//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
+//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
+//                        }else {
+//                            logger.info("do not get patterns from "+config.getMapper().writeValueAsString(le));
+//                        }
                         patterns.addAll(tmpPatterns);
                     }
                     return patterns;
@@ -432,15 +432,15 @@ public class BasicOptimizer extends Optimizer {
         }
 
         private List<LogicalExpression> getPatternsFromColVals(Map<String,UnitFunc> fieldValueMap,List<KeyPart> kps,String projectId) throws OptimizerException {
-            logger.info("get patterns From Col Vals");
-            for(UnitFunc func:fieldValueMap.values()){
-                try {
-                    logger.info(config.getMapper().writeValueAsString(func.getFunc()));
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
-                    throw new OptimizerException(e.getMessage());
-                }
-            }
+//            logger.info("get patterns From Col Vals");
+//            for(UnitFunc func:fieldValueMap.values()){
+//                try {
+//                    logger.info(config.getMapper().writeValueAsString(func.getFunc()));
+//                } catch (JsonProcessingException e) {
+//                    e.printStackTrace();
+//                    throw new OptimizerException(e.getMessage());
+//                }
+//            }
             List<LogicalExpression> patterns=new ArrayList<>();
             List<KeyPart> workKps = kps;
             Deque<KeyPart> toWorkKps = new ArrayDeque<>(workKps);
@@ -481,7 +481,7 @@ public class BasicOptimizer extends Optimizer {
                 workKps = Arrays.asList(toWorkKps.toArray(new KeyPart[toWorkKps.size()]));
             }
             if(event.endsWith("."))event=event.substring(0,event.length()-1);
-            logger.info(" get Events from event "+projectId+" "+event);
+//            logger.info(" get Events from event "+projectId+" "+event);
             List<XEvent> events = null;
             try {
                 events = XEventOperation.getInstance().getEvents(projectId, event);
@@ -506,7 +506,7 @@ public class BasicOptimizer extends Optimizer {
             for(String resultEvent :resultEvents){
                 patterns.add(new ValueExpressions.QuotedString(rkHead+resultEvent+"\\xFF",ExpressionPosition.UNKNOWN));
             }
-            logger.info("out get patterns from col vals ");
+//            logger.info("out get patterns from col vals ");
             return  patterns;
         }
 

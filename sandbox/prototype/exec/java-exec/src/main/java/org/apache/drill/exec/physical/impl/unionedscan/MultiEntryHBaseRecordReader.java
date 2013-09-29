@@ -250,12 +250,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
 
-        List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
+        //List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
         //sortedEvents =Arrays.sort(sortedEvents);
 //        File patternFile=new File("/home/yb/workspace/data/log/drill/patterns.log");
 //        Writer writer=new FileWriter(patternFile);
 
-        for (String event : sortedEvents) {
+        for (String event : patterns) {
 //          writer.write(event+" ");
 //          logger.info(event);
           byte[] eventBytes = Bytes.toBytesBinary(event);
@@ -269,6 +269,11 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 //        writer.close();
 
       }
+      logger.info("slot before sort "+"first "+Bytes.toStringBinary(slot.get(0).getLowerRange())+
+                " end "+Bytes.toStringBinary(slot.get(slot.size()-1).getLowerRange()));
+      Collections.sort(slot,keyRangeComparator);
+      logger.info("slot sorted "+"first "+Bytes.toStringBinary(slot.get(0).getLowerRange())+
+              " end "+Bytes.toStringBinary(slot.get(slot.size()-1).getLowerRange()));
       Filter skipScanFilter = new SkipScanFilter(slot);
       filterList.addFilter(skipScanFilter);
     }
@@ -281,7 +286,19 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     logger.info("Init scanner cost {} mills .",(System.nanoTime() - initStart)/1000000);
   }
 
-  @Override
+  private static Comparator keyRangeComparator = new Comparator() {
+        @Override
+        public int compare(Object o1, Object o2) {
+            KeyRange range1 = (KeyRange)o1;
+            byte[] lowerRange1 = range1.getLowerRange();
+            KeyRange range2 = (KeyRange)o2;
+            byte[] lowerRange2 = range2.getLowerRange();
+            return Bytes.compareTo(lowerRange1, lowerRange2);
+        }
+  };
+
+
+    @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
     this.outputMutator = output;
     try {
