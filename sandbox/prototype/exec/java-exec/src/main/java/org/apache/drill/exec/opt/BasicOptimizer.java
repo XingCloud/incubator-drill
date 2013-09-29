@@ -402,6 +402,7 @@ public class BasicOptimizer extends Optimizer {
                     fieldFunc = parseFunctionCall((FunctionCall)filterExpr);
                     Set<LogicalExpression> tmpPatterns=new  HashSet<>(getPatternsFromColVals(fieldFunc,kps,projectId));
                     if(tmpPatterns.size()!=0){
+                        logger.info("get patterns . patterns size is "+tmpPatterns.size());
                         logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
                         logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
                     }else {
