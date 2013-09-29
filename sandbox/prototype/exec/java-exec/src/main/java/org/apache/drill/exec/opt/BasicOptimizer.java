@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.Maps;
 import com.xingcloud.events.XEvent;
+import com.xingcloud.events.XEventException;
 import com.xingcloud.events.XEventOperation;
 import com.xingcloud.hbase.util.Constants;
 import com.xingcloud.meta.KeyPart;
@@ -48,6 +49,7 @@ import org.apache.drill.common.logical.data.Union;
 import org.apache.drill.common.logical.data.UnionedScan;
 import org.apache.drill.common.logical.data.UnionedScanSplit;
 import org.apache.drill.common.logical.data.visitors.AbstractLogicalVisitor;
+import org.apache.drill.common.util.DrillConstants;
 import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
@@ -414,36 +416,16 @@ public class BasicOptimizer extends Optimizer {
         return null;
 
       try {
-//                logger.info("enter get Patterns "+config.getMapper().writeValueAsString(filterExpr));
         Set<LogicalExpression> patterns = new HashSet<>();
-        List<KeyPart> kps = null;
-        kps = TableInfo.getRowKey(tableName, null);
         String projectId = tableName.contains("deu_") ? tableName.substring(4, tableName.length()) : tableName;
-        projectId = projectId.contains("_deu") ? projectId.substring(0, projectId.length() - 4) : projectId;
         if (!((FunctionCall) filterExpr).getDefinition().getName().contains("or")) {
-          Map<String, UnitFunc> fieldFunc = null;
-//                    logger.info(" not or funccall "+config.getMapper().writeValueAsString(filterExpr));
-          fieldFunc = parseFunctionCall((FunctionCall) filterExpr);
-          Set<LogicalExpression> tmpPatterns = new HashSet<>(getPatternsFromColVals(fieldFunc, kps, projectId));
-//                    if(tmpPatterns.size()!=0){
-//                        logger.info("get patterns . patterns size is "+tmpPatterns.size());
-//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
-//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
-//                    }else {
-//                        logger.info("do not get patterns from "+config.getMapper().writeValueAsString(filterExpr));
-//                    }
+          Map<String, UnitFunc> fieldFunc = parseFunctionCall((FunctionCall) filterExpr);
+          Set<LogicalExpression> tmpPatterns = new HashSet<>(getPatternsFromColVals(fieldFunc, projectId));
+
           return tmpPatterns;
         } else {
-//                    logger.info(" or funccall "+config.getMapper().writeValueAsString(filterExpr));
           for (LogicalExpression le : (FunctionCall) filterExpr) {
-//                        logger.info("get patterns from "+config.getMapper().writeValueAsString(le));
             Set<LogicalExpression> tmpPatterns = getPatternsFromExpr(le, tableName, config);
-//                        if(tmpPatterns.size()!=0){
-//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(0)).value);
-//                        logger.info(((ValueExpressions.QuotedString)(new ArrayList<>(tmpPatterns)).get(tmpPatterns.size()-1)).value);
-//                        }else {
-//                            logger.info("do not get patterns from "+config.getMapper().writeValueAsString(le));
-//                        }
             patterns.addAll(tmpPatterns);
           }
           return patterns;
@@ -454,93 +436,36 @@ public class BasicOptimizer extends Optimizer {
       }
     }
 
-    private List<LogicalExpression> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap, List<KeyPart> kps,
+    private List<LogicalExpression> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap,
                                                            String projectId) throws OptimizerException {
-//            logger.info("get patterns From Col Vals");
-//            for(UnitFunc func:fieldValueMap.values()){
-//                try {
-//                    logger.info(config.getMapper().writeValueAsString(func.getFunc()));
-//                } catch (JsonProcessingException e) {
-//                    e.printStackTrace();
-//                    throw new OptimizerException(e.getMessage());
-//                }
-//            }
       List<LogicalExpression> patterns = new ArrayList<>();
-      List<KeyPart> workKps = kps;
-      Deque<KeyPart> toWorkKps = new ArrayDeque<>(workKps);
-      String event = "";
-      String rkHead = "";
-      loop:
-      while (workKps.size() > 0) {
-        for (KeyPart kp : workKps) {
-          if (kp.getType() == KeyPart.Type.field) {
-            String value;
-            UnitFunc unitFunc = fieldValueMap.get(kp.getField().getName());
-            if (unitFunc != null)
-              value = unitFunc.getValue();
-            else
-              value = "*";
-            if (kp.getField().getName().contains("event")) {
-              event += value;
-            } else {
-              if (event.length() > 0)
-                break loop;
-              rkHead += value;
-            }
-            toWorkKps.removeFirst();
-          } else if (kp.getType() == KeyPart.Type.constant) {
-            if (kp.getConstant().equals("\\xFF"))
-              break loop;
-            if (event.length() != 0) {
-              event += kp.getConstant();
-            }
-            toWorkKps.removeFirst();
-          } else {
-            toWorkKps.removeFirst();
-            for (int i = kp.getOptionalGroup().size() - 1; i >= 0; i--) {
-              toWorkKps.addFirst(kp.getOptionalGroup().get(i));
-            }
-            break;
-          }
-        }
-        workKps = Arrays.asList(toWorkKps.toArray(new KeyPart[toWorkKps.size()]));
+
+      String eventFilter = getEventFilter(fieldValueMap);
+      UnitFunc dateUF = fieldValueMap.get(DrillConstants.DATE);
+      if (dateUF == null) {
+        throw new IllegalArgumentException("No date info in expression!");
       }
-      if (event.endsWith("."))
-        event = event.substring(0, event.length() - 1);
-//            logger.info(" get Events from event "+projectId+" "+event);
+      String date = dateUF.getValue();
       List<XEvent> events = null;
       long t1 = System.currentTimeMillis(), t2;
       try {
-        events = XEventOperation.getInstance().getEvents(projectId, event);
+        events = XEventOperation.getInstance().getEvents(projectId, eventFilter);
       } catch (Exception e) {
         throw new OptimizerException("Cannot get events list.");
       } finally {
         t2 = System.currentTimeMillis();
       }
-      System.out.println("[BASIC-OPTIMIZER] - Get event(" + event + ") in thread(" + Thread.currentThread()
+      logger.info("[BASIC-OPTIMIZER] - Get event(" + eventFilter + ") in thread(" + Thread.currentThread()
                                                                                            .getName() + ") using " + (t2 - t1) + " milliseconds.");
-      List<String> resultEvents = new ArrayList<>();
-      for (XEvent childEvent : events) {
-        String resultEvent = "";
-        for (int i = 0; i < childEvent.getEventArray().length; i++) {
-          String levelEvent = childEvent.getEventArray()[i];
-          if (levelEvent == null)
-            break;
-          resultEvent += levelEvent + ".";
+      try {
+        for (XEvent childEvent : events) {
+          patterns.add(new ValueExpressions.QuotedString(date + childEvent.nameRowkeyStyle() + "\\xFF", ExpressionPosition.UNKNOWN));
         }
-        resultEvents.add(resultEvent);
+      } catch (XEventException e) {
+        throw new OptimizerException(e.getMessage());
       }
-      for (String resultEvent : resultEvents) {
-        patterns.add(new ValueExpressions.QuotedString(rkHead + resultEvent + "\\xFF", ExpressionPosition.UNKNOWN));
-      }
-//            logger.info("out get patterns from col vals ");
-      return patterns;
-    }
 
-    public Map<String, UnitFunc> parseFilterExpr(JsonNode origExpr, DrillConfig config) throws IOException {
-      Map<String, UnitFunc> resultMap = new HashMap<>();
-      LogicalExpression func = config.getMapper().readValue(origExpr.traverse(), LogicalExpression.class);
-      return parseFunctionCall((FunctionCall) func);
+      return patterns;
     }
 
     public Map<String, UnitFunc> parseFunctionCall(FunctionCall func) {
@@ -560,6 +485,52 @@ public class BasicOptimizer extends Optimizer {
         result.put(field, value);
       }
       return result;
+    }
+
+    private String getEventFilter(Map<String, UnitFunc> fieldFunc) {
+      StringBuilder eventFilter = new StringBuilder();
+      UnitFunc uf = fieldFunc.get(DrillConstants.EVENT0);
+      if (uf != null) {
+        eventFilter.append(uf.getValue());
+      } else {
+        eventFilter.append("*");
+      }
+      eventFilter.append(".");
+      uf = fieldFunc.get(DrillConstants.EVENT1);
+      if (uf != null) {
+        eventFilter.append(uf.getValue());
+      } else {
+        eventFilter.append("*");
+      }
+      eventFilter.append(".");
+      uf = fieldFunc.get(DrillConstants.EVENT2);
+      if (uf != null) {
+        eventFilter.append(uf.getValue());
+      } else {
+        eventFilter.append("*");
+      }
+      eventFilter.append(".");
+      uf = fieldFunc.get(DrillConstants.EVENT3);
+      if (uf != null) {
+        eventFilter.append(uf.getValue());
+      } else {
+        eventFilter.append("*");
+      }
+      eventFilter.append(".");
+      uf = fieldFunc.get(DrillConstants.EVENT4);
+      if (uf != null) {
+        eventFilter.append(uf.getValue());
+      } else {
+        eventFilter.append("*");
+      }
+      eventFilter.append(".");
+      uf = fieldFunc.get(DrillConstants.EVENT5);
+      if (uf != null) {
+        eventFilter.append(uf.getValue());
+      } else {
+        eventFilter.append("*");
+      }
+      return eventFilter.toString();
     }
 
     public class UnitFunc {
@@ -607,4 +578,8 @@ public class BasicOptimizer extends Optimizer {
       }
     }
   }
+
+
+
+
 }
