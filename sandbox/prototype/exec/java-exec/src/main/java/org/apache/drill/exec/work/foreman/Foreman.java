@@ -161,7 +161,7 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
       long t1 = System.nanoTime() ;
       LogicalPlan logicalPlan = context.getPlanReader().readLogicalPlan(json);
       long t2 = System.nanoTime();
-      logger.info("Parse logical plan cost{} mills ." ,(t2 -t1)/1000_000);
+      logger.info("Parse logical plan cost {} mills ." ,(t2 -t1)/1000_000);
       PhysicalPlan physicalPlan = convert(logicalPlan);
       logger.info("Covert logical plan to physical plan cost {} mills ." ,(System.nanoTime() - t2)/1000000);
       runPhysicalPlan(physicalPlan);

@@ -132,7 +132,9 @@ public class BasicOptimizer extends Optimizer {
           throw new OptimizerException("Selection is null");
         }
         List<HbaseScanEntry> entries = new ArrayList<>();
+        long start = System.nanoTime() ;
         createHbaseScanEntry(selection, ref, entries);
+        logger.info("Create scanEntry cost {} mills .",(System.nanoTime() - start)/1000000);
         pop = new UnionedScanPOP(entries);
         operatorMap.put(scan, pop);
       }
