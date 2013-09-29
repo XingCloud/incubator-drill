@@ -2,30 +2,37 @@ package org.apache.drill.exec.opt;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
-import static org.apache.drill.common.util.Selections.*;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_END;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_RANGE;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_START;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_START;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
 
 import com.beust.jcommander.internal.Lists;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.Maps;
 import com.xingcloud.events.XEvent;
-import com.xingcloud.events.XEventException;
 import com.xingcloud.events.XEventOperation;
 import com.xingcloud.hbase.util.Constants;
-import com.xingcloud.hbase.util.RowKeyUtils;
-import com.xingcloud.memcache.MemCacheException;
-import com.xingcloud.meta.HBaseFieldInfo;
-
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import org.apache.drill.common.JSONOptions;
 import org.apache.drill.common.PlanProperties;
 import org.apache.drill.common.config.DrillConfig;
-import org.apache.drill.common.expression.*;
+import org.apache.drill.common.expression.ExpressionPosition;
+import org.apache.drill.common.expression.FieldReference;
+import org.apache.drill.common.expression.FunctionCall;
+import org.apache.drill.common.expression.LogicalExpression;
+import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.common.expression.ValueExpressions;
 import org.apache.drill.common.logical.LogicalPlan;
 import org.apache.drill.common.logical.data.CollapsingAggregate;
 import org.apache.drill.common.logical.data.Filter;
@@ -56,10 +63,17 @@ import org.apache.drill.exec.physical.config.UnionedScanSplitPOP;
 import org.apache.drill.exec.util.logicalplan.LogicalPlanUtil;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA. User: jaltekruse Date: 6/11/13 Time: 5:32 PM To change this template use File | Settings
@@ -132,9 +146,9 @@ public class BasicOptimizer extends Optimizer {
           throw new OptimizerException("Selection is null");
         }
         List<HbaseScanEntry> entries = new ArrayList<>();
-        long start = System.nanoTime() ;
+        long start = System.nanoTime();
         createHbaseScanEntry(selection, ref, entries);
-        logger.info("Create scanEntry cost {} mills .",(System.nanoTime() - start)/1000000);
+        logger.info("Create scanEntry cost {} mills .", (System.nanoTime() - start) / 1000000);
         pop = new UnionedScanPOP(entries);
         operatorMap.put(scan, pop);
       }
@@ -191,7 +205,8 @@ public class BasicOptimizer extends Optimizer {
 //                        e.printStackTrace();
 //                        throw  new OptimizerException(e.getMessage());
 //                    }
-          HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(Constants.FilterType.XaRowKeyPattern, patterns);
+          HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
+            Constants.FilterType.XaRowKeyPattern, patterns);
           filterEntries.add(filterEntry);
         } else {
           filterEntries = null;
@@ -236,9 +251,9 @@ public class BasicOptimizer extends Optimizer {
             throw new OptimizerException("Selection is null");
           }
           List<HbaseScanEntry> entries = new ArrayList<>(selections.getRoot().size());
-          long start = System.nanoTime() ;
+          long start = System.nanoTime();
           createHbaseScanEntry(selections, scan.getOutputReference(), entries);
-          logger.info("Create scanEntry cost {} mills .",(System.nanoTime() - start)/1000_000);
+          logger.info("Create scanEntry cost {} mills .", (System.nanoTime() - start) / 1000_000);
           pop = new HbaseScanPOP(entries);
         } else if (SE_MYSQL.equals(storageEngine)) {
           JSONOptions root = scan.getSelection();
@@ -262,7 +277,8 @@ public class BasicOptimizer extends Optimizer {
       return pop;
     }
 
-    private MysqlScanPOP.MysqlReadEntry getMysqlEntry(JsonNode selectionNode, DrillConfig config) throws OptimizerException {
+    private MysqlScanPOP.MysqlReadEntry getMysqlEntry(JsonNode selectionNode, DrillConfig config) throws
+      OptimizerException {
       String tableName, filter = null;
       JsonNode projections;
       List<NamedExpression> projectionList = Lists.newArrayList();
@@ -295,7 +311,7 @@ public class BasicOptimizer extends Optimizer {
       PhysicalOperator pop = operatorMap.get(project);
       if (pop == null) {
         pop = new org.apache.drill.exec.physical.config.Project(Arrays.asList(project.getSelections()),
-          project.getInput().accept(this, obj));
+                                                                project.getInput().accept(this, obj));
         operatorMap.put(project, pop);
       }
       return pop;
@@ -380,7 +396,8 @@ public class BasicOptimizer extends Optimizer {
       return pop;
     }
 
-    public List<LogicalExpression> getPatterns(JsonNode filter, String tableName, DrillConfig config) throws OptimizerException {
+    public List<LogicalExpression> getPatterns(JsonNode filter, String tableName, DrillConfig config) throws
+      OptimizerException {
       LogicalExpression filterExpr = null;
       try {
         filterExpr = config.getMapper().readValue(filter.get("expression").traverse(), LogicalExpression.class);
@@ -391,8 +408,10 @@ public class BasicOptimizer extends Optimizer {
       return new ArrayList<>(getPatternsFromExpr(filterExpr, tableName, config));
     }
 
-    private Set<LogicalExpression> getPatternsFromExpr(LogicalExpression filterExpr, String tableName, DrillConfig config) throws OptimizerException {
-      if (!(filterExpr instanceof FunctionCall)) return null;
+    private Set<LogicalExpression> getPatternsFromExpr(LogicalExpression filterExpr, String tableName,
+                                                       DrillConfig config) throws OptimizerException {
+      if (!(filterExpr instanceof FunctionCall))
+        return null;
 
       try {
 //                logger.info("enter get Patterns "+config.getMapper().writeValueAsString(filterExpr));
@@ -435,7 +454,8 @@ public class BasicOptimizer extends Optimizer {
       }
     }
 
-    private List<LogicalExpression> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap, List<KeyPart> kps, String projectId) throws OptimizerException {
+    private List<LogicalExpression> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap, List<KeyPart> kps,
+                                                           String projectId) throws OptimizerException {
 //            logger.info("get patterns From Col Vals");
 //            for(UnitFunc func:fieldValueMap.values()){
 //                try {
@@ -469,7 +489,8 @@ public class BasicOptimizer extends Optimizer {
             }
             toWorkKps.removeFirst();
           } else if (kp.getType() == KeyPart.Type.constant) {
-            if (kp.getConstant().equals("\\xFF")) break loop;
+            if (kp.getConstant().equals("\\xFF"))
+              break loop;
             if (event.length() != 0) {
               event += kp.getConstant();
             }
@@ -484,18 +505,19 @@ public class BasicOptimizer extends Optimizer {
         }
         workKps = Arrays.asList(toWorkKps.toArray(new KeyPart[toWorkKps.size()]));
       }
-      if (event.endsWith(".")) event = event.substring(0, event.length() - 1);
+      if (event.endsWith("."))
+        event = event.substring(0, event.length() - 1);
 //            logger.info(" get Events from event "+projectId+" "+event);
       List<XEvent> events = null;
+      long t1 = System.currentTimeMillis(), t2;
       try {
         events = XEventOperation.getInstance().getEvents(projectId, event);
-      } catch (XEventException e) {
-        e.printStackTrace();
-        throw new OptimizerException(e.getMessage());
-      } catch (MemCacheException e) {
-        e.printStackTrace();
-        throw new OptimizerException(e.getMessage());
+      } catch (Exception e) {
+        throw new OptimizerException("Cannot get events list.");
+      } finally {
+        t2 = System.currentTimeMillis();
       }
+      System.out.println("[BASIC-OPTIMIZER] - Get event using " + (t2 - t1) + " milliseconds.");
       List<String> resultEvents = new ArrayList<>();
       for (XEvent childEvent : events) {
         String resultEvent = "";
