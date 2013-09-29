@@ -517,7 +517,7 @@ public class BasicOptimizer extends Optimizer {
       } finally {
         t2 = System.currentTimeMillis();
       }
-      System.out.println("[BASIC-OPTIMIZER] - Get event using " + (t2 - t1) + " milliseconds.");
+      System.out.println("[BASIC-OPTIMIZER] - Get event(" + event + ") using " + (t2 - t1) + " milliseconds.");
       List<String> resultEvents = new ArrayList<>();
       for (XEvent childEvent : events) {
         String resultEvent = "";
