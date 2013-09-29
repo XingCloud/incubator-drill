@@ -251,12 +251,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       if (patterns.size() > 0) {
 
         List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
-          // Test
-        String path = "data/log/drill/includes" + System.nanoTime() ;
-        FileWriter fw = new FileWriter(new File(path));
-        fw.write(sortedEvents.toString());
-        fw.flush();
-        fw.close();
+//          // Test
+//        String path = "data/log/drill/includes" + System.nanoTime() ;
+//        FileWriter fw = new FileWriter(new File(path));
+//        fw.write(sortedEvents.toString());
+//        fw.flush();
+//        fw.close();
         //sortedEvents =Arrays.sort(sortedEvents);
 //        File patternFile=new File("/home/yb/workspace/data/log/drill/patterns.log");
 //        Writer writer=new FileWriter(patternFile);

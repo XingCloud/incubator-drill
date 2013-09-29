@@ -176,17 +176,18 @@ public class BasicOptimizer extends Optimizer {
                 File sourcedir=new File("/data/log/drill/sourcePatterns");
                 if (filter != null && LogicalPlanUtil.needIncludes(filter,config,table)) {
                     List<LogicalExpression> patterns=getPatterns(filter,table,config);
-                    //String filterExpression=filter.get("expression").textValue();
-                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"_"+System.nanoTime());
-                    try {
-                        Writer writer=new FileWriter(sourcepttFile);
-                        for(int i=0;i<patterns.size();i++){
-                            writer.write(((ValueExpressions.QuotedString)patterns.get(i)).value+" ");
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        throw  new OptimizerException(e.getMessage());
-                    }
+
+                    String filterExpression=filter.get("expression").textValue();
+//                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"_"+System.nanoTime());
+//                    try {
+//                        Writer writer=new FileWriter(sourcepttFile);
+//                        for(int i=0;i<patterns.size();i++){
+//                            writer.write(((ValueExpressions.QuotedString)patterns.get(i)).value+" ");
+//                        }
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                        throw  new OptimizerException(e.getMessage());
+//                    }
                     HbaseScanPOP.RowkeyFilterEntry filterEntry=new HbaseScanPOP.RowkeyFilterEntry(Constants.FilterType.XaRowKeyPattern,patterns);
                     filterEntries.add(filterEntry);
                 } else {
