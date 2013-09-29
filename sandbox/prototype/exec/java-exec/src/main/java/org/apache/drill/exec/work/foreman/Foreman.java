@@ -158,10 +158,12 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
 
   private void parseAndRunLogicalPlan(String json) {
     try {
-      long parseStart = System.nanoTime() ;
+      long t1 = System.nanoTime() ;
       LogicalPlan logicalPlan = context.getPlanReader().readLogicalPlan(json);
+      long t2 = System.nanoTime();
+      logger.info("Parse logical plan cost{} mills ." ,(t2 -t1)/1000_000);
       PhysicalPlan physicalPlan = convert(logicalPlan);
-      logger.info("Parse logical plan cost {} mills ." ,(System.nanoTime() - parseStart)/1000000);
+      logger.info("Covert logical plan to physical plan cost {} mills ." ,(System.nanoTime() - t2)/1000000);
       runPhysicalPlan(physicalPlan);
     } catch (IOException e) {
       e.printStackTrace();

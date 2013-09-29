@@ -73,7 +73,7 @@ public class UserServer extends BasicServer<RpcType, UserServer.UserClientConnec
     case RpcType.RUN_QUERY_VALUE:
       // logger.debug("Received query to run.  Returning query handle.");
       try {
-        logger.info("Receive query at {}",System.currentTimeMillis());
+        logger.debug("Receive query at {}",System.currentTimeMillis());
         RunQuery query = RunQuery.PARSER.parseFrom(new ByteBufInputStream(pBody));
         return new Response(RpcType.QUERY_HANDLE, worker.submitWork(connection, query));
       } catch (InvalidProtocolBufferException e) {
