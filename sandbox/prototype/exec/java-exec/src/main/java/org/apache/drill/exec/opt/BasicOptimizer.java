@@ -457,14 +457,15 @@ public class BasicOptimizer extends Optimizer {
       }
       logger.info("[BASIC-OPTIMIZER] - Get event(" + eventFilter + ") in thread(" + Thread.currentThread()
                                                                                            .getName() + ") using " + (t2 - t1) + " milliseconds.");
-      try {
-        for (XEvent childEvent : events) {
-          patterns.add(new ValueExpressions.QuotedString(date + childEvent.nameRowkeyStyle() + "\\xFF", ExpressionPosition.UNKNOWN));
+      if (events != null) {
+        try {
+          for (XEvent childEvent : events) {
+            patterns.add(new ValueExpressions.QuotedString(date + childEvent.nameRowkeyStyle() + "\\xFF", ExpressionPosition.UNKNOWN));
+          }
+        } catch (XEventException e) {
+          throw new OptimizerException(e.getMessage());
         }
-      } catch (XEventException e) {
-        throw new OptimizerException(e.getMessage());
       }
-
       return patterns;
     }
 
