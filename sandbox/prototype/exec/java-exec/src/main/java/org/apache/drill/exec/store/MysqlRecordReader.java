@@ -54,10 +54,11 @@ public class MysqlRecordReader implements RecordReader {
 
   private static PropManager propManager = new PropManager();
 
-  public static synchronized Connection getConnection() throws Exception {
-    if (cpds == null) {
-      cpds = new ComboPooledDataSource();
-    }
+  static{
+    cpds = new ComboPooledDataSource() ;
+  }
+
+  public static  Connection getConnection() throws Exception {
     return cpds.getConnection();
   }
 
