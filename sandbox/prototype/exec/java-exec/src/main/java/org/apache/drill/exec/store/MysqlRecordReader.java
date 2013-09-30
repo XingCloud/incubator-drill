@@ -236,6 +236,7 @@ public class MysqlRecordReader implements RecordReader {
         rs.close();
         stmt.close();
         conn.close();
+        conn = null ;
       } catch (Exception e) {
         logger.error("Mysql connection close failed : " + e.getMessage());
       }
