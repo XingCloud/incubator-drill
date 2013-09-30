@@ -511,7 +511,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     logger.info("Total count for all entry {}",totalCount);
     logger.debug("Cost time " + timeCost + "mills");
     try {
-      scanner.close();
+      if(scanner != null){
+        scanner.close();
+        scanner = null ;
+      }
     } catch (IOException e) {
       logger.info("closing scanner failed", e);
     }

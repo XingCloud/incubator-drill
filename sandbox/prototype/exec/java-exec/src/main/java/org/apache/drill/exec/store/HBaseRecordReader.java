@@ -385,7 +385,10 @@ public class HBaseRecordReader implements RecordReader {
       valueVectors[i].close();
     }
     try {
-      scanner.close();
+      if(scanner != null){
+        scanner.close();
+        scanner = null ;
+      }
     } catch (Exception e) {
       logger.error("Scanners close failed : " + e.getMessage());
     }
