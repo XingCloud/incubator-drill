@@ -5,7 +5,7 @@ import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_END;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_RANGE;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_START;
-import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER;
+import static org.apache.drill.common.util.Selections.*;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_PROJECTIONS;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_ROWKEY_END;
@@ -286,7 +286,7 @@ public class BasicOptimizer extends Optimizer {
       List<NamedExpression> projectionList = Lists.newArrayList();
       tableName = selectionNode.get(SELECTION_KEY_WORD_TABLE).textValue();
       if (selectionNode.get(SELECTION_KEY_WORD_FILTER) != null)
-        filter = selectionNode.get(SELECTION_KEY_WORD_FILTER).textValue();
+        filter = selectionNode.get(SELECTION_KEY_WORD_FILTER).get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
       projections = selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
       ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
       for (JsonNode projection : projections) {
