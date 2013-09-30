@@ -207,6 +207,7 @@ public class MysqlRecordReader implements RecordReader {
       selection += " WHERE " + filter;
     }
     sql = selection;
+    logger.info("SQL : {}",sql);
   }
 
   private void initStmtExecutor() throws SQLException, Exception {
