@@ -62,7 +62,7 @@ public class MysqlRecordReader implements RecordReader {
   }
 
   public static  Connection getConnection() throws Exception {
-    logger.info("Get new connection , Pooled size : {},{} ",pooledSize.incrementAndGet(),sql);
+    logger.info("Get new connection , Pooled size : {},{} ",pooledSize.incrementAndGet());
     return cpds.getConnection();
   }
 
@@ -236,7 +236,7 @@ public class MysqlRecordReader implements RecordReader {
     }
     if (conn != null) {
       try {
-        logger.info("Recycle connection resource . Pooled size : {} ",pooledSize.decrementAndGet());
+        logger.info("Recycle connection resource . Pooled size : {}，SQL {} ",pooledSize.decrementAndGet(),sql);
         rs.close();
         stmt.close();
         conn.close();
