@@ -40,7 +40,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   private BasicEvaluator[] carryOversEvaluator = new BasicEvaluator[0];
   private Map<Integer, Object[]> carryOversValues = Maps.newHashMap();
   private MajorType[] carryOverTypes = new MajorType[0];
-  private boolean newSchema = false ;
+  private boolean newSchema = false;
 
   public CollapsingAggregateBatch(FragmentContext context, CollapsingAggregatePOP config, RecordBatch incoming) {
     this.context = context;
@@ -115,10 +115,15 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       case STOP:
         return IterOutcome.STOP;
       case NONE:
-        if(!newSchema){
-          return IterOutcome.NONE;
+        if (!newSchema) {
+          if (carryOversEvaluator.length == 0) {
+            upstreamZero();
+          } else {
+            return IterOutcome.NONE;
+          }
+        } else {
+          upstream();
         }
-        upstream();
         setupSchema();
         hasMore = false;
         return IterOutcome.OK_NEW_SCHEMA;
@@ -185,6 +190,18 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       }
       m.setValueCount(recordCount);
       outputVectors.add(v);
+    }
+  }
+
+  private void upstreamZero() {
+    for (int i = 0; i < aggregatingEvaluators.length; i++) {
+      MaterializedField f = MaterializedField.create(config.getAggregations()[i].getRef(), Types.required(MinorType.BIGINT));
+      BigIntVector out = new BigIntVector(f, context.getAllocator());
+      out.allocateNew(1);
+      out.getMutator().set(0, 0);
+      out.getMutator().setValueCount(1);
+      outputVectors.add(out);
+      recordCount = 1;
     }
   }
 

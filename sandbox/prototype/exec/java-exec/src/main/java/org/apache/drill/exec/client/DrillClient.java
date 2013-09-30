@@ -80,6 +80,7 @@ public class DrillClient implements Closeable{
     this.clusterCoordinator = coordinator;
     this.reconnectTimes = config.getInt(ExecConstants.BIT_RETRY_TIMES);
     this.reconnectDelay = config.getInt(ExecConstants.BIT_RETRY_DELAY);
+    this.client = new UserClient(new PooledByteBufAllocator(true), new NioEventLoopGroup(1, new NamedThreadFactory("Client-")));
   }
 
 
@@ -93,14 +94,11 @@ public class DrillClient implements Closeable{
       this.clusterCoordinator = new ZKClusterCoordinator(this.config);
       this.clusterCoordinator.start(10000);
     }
-
     Collection<DrillbitEndpoint> endpoints = clusterCoordinator.getAvailableEndpoints();
     logger.debug("Endpoints size {}" , endpoints.size());
     checkState(!endpoints.isEmpty(), "No DrillbitEndpoint can be found");
     // just use the first endpoint for now
     DrillbitEndpoint endpoint = endpoints.iterator().next();
-    ByteBufAllocator bb = new PooledByteBufAllocator(true);
-    this.client = new UserClient(bb, new NioEventLoopGroup(1, new NamedThreadFactory("Client-")));
     try {
       logger.debug("Connecting to server {}:{}", endpoint.getAddress(), endpoint.getUserPort());
       FutureHandler f = new FutureHandler();
