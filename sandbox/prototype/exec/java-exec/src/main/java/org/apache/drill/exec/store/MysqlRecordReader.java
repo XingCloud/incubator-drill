@@ -28,6 +28,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -52,6 +53,8 @@ public class MysqlRecordReader implements RecordReader {
   private String project;
   private final int batchSize = 16 * 1024;
 
+  private static AtomicInteger pooledSize = new AtomicInteger(0) ;
+
   private static PropManager propManager = new PropManager();
 
   static{
@@ -59,6 +62,7 @@ public class MysqlRecordReader implements RecordReader {
   }
 
   public static  Connection getConnection() throws Exception {
+    logger.info("Get new connection , Pooled size : ",pooledSize.addAndGet(1));
     return cpds.getConnection();
   }
 
@@ -232,7 +236,7 @@ public class MysqlRecordReader implements RecordReader {
     }
     if (conn != null) {
       try {
-        logger.info("Recycle connection resource . ");
+        logger.info("Recycle connection resource . Pooled size : {} ",pooledSize.decrementAndGet());
         rs.close();
         stmt.close();
         conn.close();
