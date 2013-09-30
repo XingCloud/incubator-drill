@@ -236,7 +236,7 @@ public class MysqlRecordReader implements RecordReader {
     }
     if (conn != null) {
       try {
-        logger.info("Recycle connection resource . Pooled size : {},{} ",pooledSize.decrementAndGet(),sql);
+        logger.info("Recycle connection resource . Pooled size : {} ",pooledSize.decrementAndGet());
         rs.close();
         stmt.close();
         conn.close();
