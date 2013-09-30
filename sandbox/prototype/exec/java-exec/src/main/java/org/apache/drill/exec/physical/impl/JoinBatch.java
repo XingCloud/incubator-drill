@@ -130,6 +130,7 @@ public class JoinBatch extends BaseRecordBatch {
       if (rightCache.size() == 0) {
         if (rightFinished) {
           clearCache();
+          logger.info("Join finished . ");
           return IterOutcome.NONE;
         } else {
           return IterOutcome.NOT_YET;
