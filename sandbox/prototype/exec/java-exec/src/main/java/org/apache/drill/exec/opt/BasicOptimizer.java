@@ -287,6 +287,7 @@ public class BasicOptimizer extends Optimizer {
       tableName = selectionNode.get(SELECTION_KEY_WORD_TABLE).textValue();
       if (selectionNode.get(SELECTION_KEY_WORD_FILTER) != null)
         filter = selectionNode.get(SELECTION_KEY_WORD_FILTER).get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
+      filter = formatToSql(filter);
       projections = selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
       ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
       for (JsonNode projection : projections) {
@@ -532,6 +533,10 @@ public class BasicOptimizer extends Optimizer {
         eventFilter.append("*");
       }
       return eventFilter.toString();
+    }
+
+    public String formatToSql(String filter){
+      return filter.replaceAll("==","=");
     }
 
     public class UnitFunc {
