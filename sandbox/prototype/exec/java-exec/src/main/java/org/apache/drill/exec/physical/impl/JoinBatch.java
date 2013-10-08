@@ -151,7 +151,7 @@ public class JoinBatch extends BaseRecordBatch {
           return IterOutcome.OK;
         }
       }
-      if(rightFinished){
+      if (rightFinished) {
         return IterOutcome.NONE;
       }
       return IterOutcome.NOT_YET;
@@ -217,7 +217,7 @@ public class JoinBatch extends BaseRecordBatch {
     protected List<MaterializedField> rightFields;
     protected int rightValueCount;
     protected MaterializedField leftKey;
-    protected MaterializedField rightKey ;
+    protected MaterializedField rightKey;
     protected List<ValueVector> leftOutPut;
     protected List<ValueVector> rightOutPut;
 
@@ -231,7 +231,7 @@ public class JoinBatch extends BaseRecordBatch {
       rightFields = rightCache.getFields();
       leftValueMap = leftCache.getValuesIndexMap();
       leftKey = leftCache.keyField;
-      rightKey = rightCache.keyField ;
+      rightKey = rightCache.keyField;
     }
 
     public abstract boolean connect();
@@ -266,7 +266,7 @@ public class JoinBatch extends BaseRecordBatch {
         MaterializedField f = leftFields.get(fieldId);
         if (f.equals(leftKey)) {
           continue;
-        }else if(leftKey == null && f.getName().equals(rightKey.getName())){
+        } else if (leftKey == null && f.getName().equals(rightKey.getName())) {
           continue;
         }
         ValueVector out = TypeHelper.getNewVector(getMaterializedField(f), context.getAllocator());
@@ -513,10 +513,12 @@ public class JoinBatch extends BaseRecordBatch {
 
     @Override
     public List<MaterializedField> getFields() {
-      if(fields.size() == 0){
-        for(MaterializedField f : leftIncoming.getSchema()){
-          fields.add(f);
-          Collections.sort(fields,new MaterializedFieldComparator());
+      if (fields.size() == 0) {
+        if (leftIncoming.getSchema() != null) {
+          for (MaterializedField f : leftIncoming.getSchema()) {
+            fields.add(f);
+            Collections.sort(fields, new MaterializedFieldComparator());
+          }
         }
       }
       return super.getFields();
