@@ -106,7 +106,6 @@ public class ScanBatch implements RecordBatch {
         if (!readers.hasNext()) {
           currentReader.cleanup();
           releaseAssets();
-          logger.info("Scan finished .");
           return IterOutcome.NONE;
         }
         currentReader.cleanup();

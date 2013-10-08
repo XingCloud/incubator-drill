@@ -95,7 +95,6 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
   @Override
   public IterOutcome next() {
     if (!hasMore) {
-      logger.info("Aggregate finished .");
       return IterOutcome.NONE;
     }
     IterOutcome o = incoming.next();

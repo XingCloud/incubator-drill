@@ -62,7 +62,7 @@ public class MysqlRecordReader implements RecordReader {
   }
 
   public static  Connection getConnection() throws Exception {
-    logger.info("Get new connection , Pooled size : {},{} ",pooledSize.incrementAndGet());
+    logger.info("Get new connection , Pooled size : {} ",pooledSize.incrementAndGet());
     return cpds.getConnection();
   }
 

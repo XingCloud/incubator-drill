@@ -62,7 +62,6 @@ public class FilterBatch extends BaseRecordBatch {
     IterOutcome o = incoming.next();
     switch (o) {
       case NONE:
-        logger.info("Filter finished .");
       case STOP:
       case NOT_YET:
         return o;

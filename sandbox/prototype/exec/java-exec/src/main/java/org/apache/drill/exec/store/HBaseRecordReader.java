@@ -376,6 +376,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    logger.info("HbaseRecordReader finished . ");
     for (int i = 0; i < valueVectors.length; i++) {
       try {
         output.removeField(valueVectors[i].getField());

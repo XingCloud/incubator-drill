@@ -508,6 +508,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    logger.info("MultiEntryHBaseRecordReader finished . ");
     logger.info("Total count for all entry {}",totalCount);
     logger.debug("Cost time " + timeCost + "mills");
     try {
