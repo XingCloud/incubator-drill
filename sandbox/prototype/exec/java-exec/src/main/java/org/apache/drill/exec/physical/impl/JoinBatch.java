@@ -107,6 +107,7 @@ public class JoinBatch extends BaseRecordBatch {
         case NOT_YET:
           break;
         case NONE:
+          logger.info("Left Cache finished .");
           leftFinished = true;
       }
     }
@@ -123,6 +124,7 @@ public class JoinBatch extends BaseRecordBatch {
         case NOT_YET:
           break;
         case NONE:
+          logger.info("Right Cache finished .");
           rightFinished = true;
       }
     }
@@ -130,6 +132,7 @@ public class JoinBatch extends BaseRecordBatch {
       if (rightCache.size() == 0) {
         if (rightFinished) {
           clearCache();
+          logger.info("Join finished .");
           return IterOutcome.NONE;
         } else {
           return IterOutcome.NOT_YET;
