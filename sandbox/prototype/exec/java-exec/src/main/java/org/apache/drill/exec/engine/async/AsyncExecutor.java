@@ -314,6 +314,7 @@ public class AsyncExecutor {
 
   private void driverStopped(LeafDriver driver) {
     driversStopped.countDown();
+    logger.info("Running drivers : {} ",driversStopped.getCount());
   }
 
   private RecordBatch.IterOutcome nextUpward(RecordBatch batch, boolean sync) {
