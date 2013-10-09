@@ -81,6 +81,7 @@ public class HBaseRecordReader implements RecordReader {
   private long parseCost = 0;
   private long setVectorCost = 0;
   boolean hasMore = true;
+  int totalCount = 0 ;
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
     this.context = context;
@@ -334,6 +335,7 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   public int endNext(int valueCount) {
+    totalCount += valueCount ;
     if (valueCount == 0)
       return 0;
     setValueCount(valueCount);
@@ -376,6 +378,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
+    logger.info("Record count for entry [keyRange:[{}:{}],count:{}]",startRowKey,endRowKey,totalCount);
     logger.info("HbaseRecordReader finished . ");
     for (int i = 0; i < valueVectors.length; i++) {
       try {
