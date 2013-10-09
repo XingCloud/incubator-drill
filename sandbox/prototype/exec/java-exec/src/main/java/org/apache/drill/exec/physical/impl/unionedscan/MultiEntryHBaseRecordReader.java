@@ -98,8 +98,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private long start = 0;
 
   private boolean hasMore = true ;
-  private int totalCount = 0 ;
-  private int entryCount = 0 ;
 
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
@@ -416,8 +414,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       logger.error("Overlap {} {}",currentEntry,nextEntry);
       throw new DrillRuntimeException("Overlap") ;
     }
-    logger.info("Record count for entry {} : {}",currentEntry,entryCount);
-    entryCount = 0 ;
     currentEntry = nextEntry ;
     setupEntry(currentEntry);
     newEntry = false;
@@ -425,8 +421,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private int endNext(int valueCount){
     timeCost += System.currentTimeMillis() - start ;
-    totalCount += valueCount ;
-    entryCount += valueCount ;
     if(valueCount == 0)
       return 0;
     setValueCount(valueCount);
@@ -509,7 +503,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   @Override
   public void cleanup() {
     logger.info("MultiEntryHBaseRecordReader finished . ");
-    logger.info("Total count for all entry {}",totalCount);
     logger.debug("Cost time " + timeCost + "mills");
     try {
       if(scanner != null){

@@ -231,7 +231,7 @@ public class UnionedScanBatch implements RecordBatch {
     private final UnionedScanSplitPOP pop;
     private final FragmentContext context;
     private int totalCount ;
-    
+
 
     public int mySortedEntry = 0;
     public UnionedScanSplitBatch(FragmentContext context, UnionedScanSplitPOP config) {
@@ -327,7 +327,8 @@ public class UnionedScanBatch implements RecordBatch {
         totalCount += UnionedScanBatch.this.recordCount ;
       }
       if(outcome == IterOutcome.NONE){
-        logger.info("Record count for entry {} : {}",mySortedEntry,totalCount);
+        HbaseScanPOP.HbaseScanEntry scanEntry =  sortedEntries.get(mySortedEntry) ;
+        logger.info("Record count for entry [id:{},keyRange:[{}:{}],count: {}]", mySortedEntry,scanEntry.getStartRowKey(),scanEntry.getEndRowKey(), totalCount);
       }
       return outcome;
     }
