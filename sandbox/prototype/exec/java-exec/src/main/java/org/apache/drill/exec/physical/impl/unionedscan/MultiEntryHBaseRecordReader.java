@@ -105,8 +105,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    this.startRowKey = Bytes.toBytesBinary(entries[0].getStartRowKey());
-    this.endRowKey = Bytes.toBytesBinary(entries[entries.length - 1].getEndRowKey());
+    this.startRowKey = entries[0].getStartRowKey();
+    this.endRowKey = entries[entries.length - 1].getEndRowKey();
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
@@ -122,7 +122,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       fieldInfoMap.put(col.fieldSchema.getName(), col);
     }
     for (int i = 0; i < entries.length; i++) {
-      entryKeys[i] = new Pair<>(ByteUtils.toBytesBinary(entries[i].getStartRowKey()),ByteUtils.toBytesBinary(entries[i].getEndRowKey())) ;
+      entryKeys[i] = new Pair<>(entries[i].getStartRowKey(),entries[i].getEndRowKey()) ;
       this.entryFilters.add(entries[i].getFilters());
       List<NamedExpression> exprs = entries[i].getProjections();
       NamedExpression[] exprArr = new NamedExpression[exprs.size()];
@@ -169,8 +169,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     for(int i=0; i<entryFilters.size(); i++){
       List<HbaseScanPOP.RowkeyFilterEntry> filters = entryFilters.get(i);
       if(filters == null || filters.size() == 0){
-        KeyRange range = new KeyRange(Bytes.toBytesBinary(entries[i].getStartRowKey()), true,
-                Bytes.toBytesBinary(entries[i].getEndRowKey()), false);
+        KeyRange range = new KeyRange(entries[i].getStartRowKey(), true,
+                entries[i].getEndRowKey(), false);
         slot.add(range);
         logger.debug("Add key range: " + range);
       }

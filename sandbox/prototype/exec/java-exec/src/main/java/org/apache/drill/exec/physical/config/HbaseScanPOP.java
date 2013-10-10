@@ -16,6 +16,7 @@ import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.Scan;
 import org.apache.drill.exec.physical.base.Size;
 import org.apache.drill.exec.proto.CoordinationProtos;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Collections;
 import java.util.List;
@@ -79,8 +80,8 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
 
     public static class HbaseScanEntry implements ReadEntry {
         private String tableName;
-        private String startRowKey;
-        private String endRowKey;
+        private byte[] startRowKey;
+        private byte[] endRowKey;
         private List<RowkeyFilterEntry> filters;
         private List<NamedExpression>   projections;
 
@@ -89,8 +90,8 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
                               @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<RowkeyFilterEntry> filters,
                               @JsonProperty("projections") List<NamedExpression> projections){
             this.tableName=tableName;
-            this.startRowKey=startRowKey;
-            this.endRowKey=endRowKey;
+            this.startRowKey= Bytes.toBytesBinary(startRowKey);
+            this.endRowKey= Bytes.toBytesBinary(endRowKey);
             this.filters=filters;
             this.projections=projections;
         }
@@ -108,11 +109,11 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             return tableName;
         }
 
-        public String getStartRowKey() {
+        public byte[] getStartRowKey() {
             return startRowKey;
         }
 
-        public String getEndRowKey() {
+        public byte[] getEndRowKey() {
             return endRowKey;
         }
 
