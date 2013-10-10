@@ -378,7 +378,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    logger.info("Record count for entry [keyRange:[{}:{}],count:{}]",config.getStartRowKey(),config.getEndRowKey(),totalCount);
+    logger.info("Record count for entry [tableName:{},keyRange:[{}:{}],count:{}]",config.getTableName(),config.getStartRowKey(),config.getEndRowKey(),totalCount);
     logger.info("HbaseRecordReader finished . ");
     for (int i = 0; i < valueVectors.length; i++) {
       try {

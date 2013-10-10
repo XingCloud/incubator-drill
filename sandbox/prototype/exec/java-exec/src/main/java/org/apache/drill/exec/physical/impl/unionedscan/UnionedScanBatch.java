@@ -328,7 +328,7 @@ public class UnionedScanBatch implements RecordBatch {
       }
       if(outcome == IterOutcome.NONE){
         HbaseScanPOP.HbaseScanEntry scanEntry =  sortedEntries.get(mySortedEntry) ;
-        logger.info("Record count for entry [id:{},keyRange:[{}:{}],count: {}]", mySortedEntry,scanEntry.getStartRowKey(),scanEntry.getEndRowKey(), totalCount);
+        logger.info("Record count for entry [id:{},tableName:{},keyRange:[{}:{}],count: {}]", mySortedEntry,scanEntry.getTableName(),scanEntry.getStartRowKey(),scanEntry.getEndRowKey(), totalCount);
       }
       return outcome;
     }
