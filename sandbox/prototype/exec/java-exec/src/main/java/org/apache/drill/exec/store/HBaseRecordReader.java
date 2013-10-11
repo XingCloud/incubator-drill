@@ -89,8 +89,8 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = ByteUtils.toBytesBinary(config.getStartRowKey());
-    endRowKey = ByteUtils.toBytesBinary(config.getEndRowKey());
+    startRowKey =config.getStartRowKey();
+    endRowKey = config.getEndRowKey();
     if (Arrays.equals(startRowKey, endRowKey))
       increaseBytesByOne(endRowKey);
     String tableFields[] = config.getTableName().split("\\.");
@@ -378,7 +378,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    logger.info("Record count for entry [keyRange:[{}:{}],count:{}]",config.getStartRowKey(),config.getEndRowKey(),totalCount);
+    logger.info("Record count for entry [tableName:{},keyRange:[{}:{}],count:{}]",config.getTableName(),Bytes.toStringBinary(config.getStartRowKey()),Bytes.toStringBinary(config.getEndRowKey()),totalCount);
     logger.info("HbaseRecordReader finished . ");
     for (int i = 0; i < valueVectors.length; i++) {
       try {

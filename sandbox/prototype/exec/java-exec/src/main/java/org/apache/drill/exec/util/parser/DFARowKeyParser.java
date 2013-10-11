@@ -27,6 +27,8 @@ public class DFARowKeyParser {
     private List<KeyPart> primaryRowKeyParts;
     private Map<String, HBaseFieldInfo> rkFieldInfoMap;
 
+    private final static byte[] NA = Bytes.toBytes("XA-NA");
+
     //可确定的固定长度字段位置，不用DFA解析
     private Map<String, Pair<Integer, Integer>> constField = new HashMap<>();
 
@@ -134,21 +136,28 @@ public class DFARowKeyParser {
           HBaseFieldInfo info = entry.getValue();
 
           DFA.FieldPosition posInfo = keyPartInfos.get(colName);
-          if (posInfo == null) {
-            throw new NullPointerException(colName + "'s position info is null! Row key: " + Bytes.toStringBinary(rk));
-          }
           Object o = null;
-          if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
-            o = parseBytes(rk, posInfo.start, posInfo.end, info.getDataType());
+          if (posInfo == null) {
+            if (info.serType != HBaseFieldInfo.DataSerType.WORD) {
+              throw new NullPointerException(colName + "'s position info is null! Row key: " + Bytes.toStringBinary(rk));
+            }
+            //如果是事件某一层级有可能不存在，例如 a.* a.*.b 需要解析第二层是否为b，但不是所有a.*都存在第二层。填冲XA-NA
+            o = NA;
           } else {
-            if (info.getDataType() == HBaseFieldInfo.DataType.STRING) {
-              //string类型直接返回byte[]，提供给value vector存储
+            if(info.serType == HBaseFieldInfo.DataSerType.BINARY) {
               o = parseBytes(rk, posInfo.start, posInfo.end, info.getDataType());
             } else {
-              o = parseString
-                    (decodeText(rk, posInfo.start, posInfo.end), info.getDataType());
+              if (info.getDataType() == HBaseFieldInfo.DataType.STRING) {
+                //string类型直接返回byte[]，提供给value vector存储
+                o = parseBytes(rk, posInfo.start, posInfo.end, info.getDataType());
+              } else {
+                o = parseString
+                        (decodeText(rk, posInfo.start, posInfo.end), info.getDataType());
+              }
             }
           }
+
+
           ValueVector vv = vvMap.get(colName);
           vv.getMutator().setObject(vvIndex, o);
         }
