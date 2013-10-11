@@ -84,9 +84,10 @@ Identifier
   :  ('a'..'z' | 'A'..'Z' | '_') ('a'..'z' | 'A'..'Z' | '_' | Digit)* ('.' ('a'..'z' | 'A'..'Z' | '_') ('a'..'z' | 'A'..'Z' | '_' | Digit)*)*
   ;
 
+// setText(getText().substring(1, getText().length()-1).replaceAll("\\\\(.)", "$1"));
 String
 @after {
-  setText(getText().substring(1, getText().length()-1).replaceAll("\\\\(.)", "$1"));
+  setText(getText().substring(1, getText().length()-1));
 }
   :  '"'  (~('"' | '\\')  | '\\' ('\\' | '"'))* '"'
   |  '\'' (~('\'' | '\\') | '\\' ('\\' | '\'' | '"' ))* '\''
