@@ -205,7 +205,8 @@ public class ValueExpressions {
 
     @Override
     protected String parseValue(String s) {
-      return s.replace("\\", DrillConstants.DOUBLE_SLASH_PLACEHOLDER);
+      return s ;
+      //return s.replace("\\", DrillConstants.DOUBLE_SLASH_PLACEHOLDER);
     }
 
     @Override

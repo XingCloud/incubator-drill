@@ -1,8 +1,9 @@
 package org.apache.drill.exec.physical.impl.eval;
 
+/*
 import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH;
 import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH_PLACEHOLDER;
-
+ */
 import org.apache.drill.common.expression.FunctionCall;
 import org.apache.drill.common.expression.IfExpression;
 import org.apache.drill.common.expression.LogicalExpression;
@@ -80,7 +81,8 @@ public class SimpleEvaluatorVistor extends SimpleExprVisitor<BasicEvaluator> {
 
   @Override
   public BasicEvaluator visitQuotedStringConstant(ValueExpressions.QuotedString e) {
-    return new StringScalar(e.value.replace(DOUBLE_SLASH_PLACEHOLDER, DOUBLE_SLASH), recordBatch);
+    //return new StringScalar(e.value.replace(DOUBLE_SLASH_PLACEHOLDER, DOUBLE_SLASH), recordBatch);
+    return new StringScalar(e.value,recordBatch);
   }
 
   @Override

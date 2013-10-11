@@ -1,7 +1,9 @@
 package org.apache.drill.common.expression;
 
+/*
 import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH;
 import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH_PLACEHOLDER;
+*/
 
 import com.google.common.collect.ImmutableList;
 import org.apache.drill.common.expression.IfExpression.IfCondition;
@@ -95,7 +97,8 @@ public class ExpressionStringBuilder extends AbstractExprVisitor<Void, StringBui
   @Override
   public Void visitQuotedStringConstant(QuotedString e, StringBuilder sb) throws RuntimeException {
     sb.append("'");
-    sb.append(e.value.replace(DOUBLE_SLASH_PLACEHOLDER, DOUBLE_SLASH));
+    //sb.append(e.value.replace(DOUBLE_SLASH_PLACEHOLDER, DOUBLE_SLASH));
+    sb.append(e.value);
     sb.append("'");
     return null;
   }

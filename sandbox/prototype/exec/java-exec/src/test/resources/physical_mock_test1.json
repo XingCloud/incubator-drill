@@ -15,21 +15,28 @@
             	{records: 100, types: [
             	  {name: "blue", type: "BIGINT", mode: "REQUIRED"},
             	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "BIGINT", mode: "REQUIRED"}
+            	  {name: "green", type: "BIGINT", mode: "REQUIRED"} ,
+            	  {name: "str", type: "VARCHAR", mode: "REQUIRED"}
             	]}
             ]
         },
         {
+            pop: "filter",
+            @id: 2,
+            child :1,
+            expr: "str == '\"null\"'"
+        } ,
+        {
               pop: "segment",
-              @id:2,
-              child : 1,
+              @id:3,
+              child : 2,
               ref: "segment",
               exprs :[ { ref: "blue", expr: "blue"}]
             },
         {
               pop: "PhysicalCollapsingAggregate",
-              @id: 3,
-              child: 2,
+              @id: 4,
+              child: 3,
               within: "segment",
               carryovers: [
                 "blue"
@@ -50,8 +57,8 @@
               ]
         },
         {
-            @id: 4,
-            child: 3,
+            @id: 5,
+            child: 4,
             pop: "screen"
         }
     ]
