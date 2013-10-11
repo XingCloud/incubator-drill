@@ -57,8 +57,27 @@
               ]
         },
         {
-            @id: 5,
-            child: 4,
+            op : "project",
+            @id : 5,
+            input : 4,
+            projections : [ {
+              ref : "query_id",
+              expr : "'COMMON,ram,2013-10-01,2013-10-02,visit.*,{\"identifier\":\"\\\"null\\\"\"},VF-ALL-0-0,PERIOD'"
+            }, {
+              ref : "count",
+              expr : "count"
+            }, {
+              ref : "user_num",
+              expr : "count_distinct"
+            }, {
+              ref : "sum",
+              expr : "sum"
+            } ]
+          },
+
+        {
+            @id: 6,
+            child: 5,
             pop: "screen"
         }
     ]
