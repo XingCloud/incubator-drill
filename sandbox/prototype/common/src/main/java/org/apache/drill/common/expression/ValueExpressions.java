@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,10 @@
 package org.apache.drill.common.expression;
 
 import org.apache.drill.common.expression.visitors.ExprVisitor;
-import org.apache.drill.common.types.TypeProtos.DataMode;
 import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
+import org.apache.drill.common.util.DrillConstants;
 
 public class ValueExpressions {
 
@@ -40,8 +40,8 @@ public class ValueExpressions {
 
     }
 
-    throw new IllegalArgumentException(String.format("Unable to parse string %s as integer or floating point number.",
-        s));
+    throw new IllegalArgumentException(
+      String.format("Unable to parse string %s as integer or floating point number.", s));
 
   }
 
@@ -57,12 +57,15 @@ public class ValueExpressions {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
 
       ValueExpression that = (ValueExpression) o;
 
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
+      if (value != null ? !value.equals(that.value) : that.value != null)
+        return false;
 
       return true;
     }
@@ -74,8 +77,7 @@ public class ValueExpressions {
   }
 
   public static class BooleanExpression extends ValueExpression<Boolean> {
-    
-    
+
     public BooleanExpression(String value, ExpressionPosition pos) {
       super(value, pos);
     }
@@ -127,12 +129,15 @@ public class ValueExpressions {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
 
       DoubleExpression that = (DoubleExpression) o;
 
-      if (Double.compare(that.d, d) != 0) return false;
+      if (Double.compare(that.d, d) != 0)
+        return false;
 
       return true;
     }
@@ -171,12 +176,15 @@ public class ValueExpressions {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
 
       LongExpression that = (LongExpression) o;
 
-      if (l != that.l) return false;
+      if (l != that.l)
+        return false;
 
       return true;
     }
@@ -197,7 +205,7 @@ public class ValueExpressions {
 
     @Override
     protected String parseValue(String s) {
-      return s;
+      return s.replace("\\", DrillConstants.DOUBLE_SLASH_PLACEHOLDER);
     }
 
     @Override
@@ -216,11 +224,11 @@ public class ValueExpressions {
     FAIL("!"), // give up on the record
     REPLACE("+"), // replace the old value with the new value.
     ARRAYIFY("]"), // replace the current position with an array. Then place the
-                   // old and new value in the array.
+    // old and new value in the array.
     OBJECTIFY("}"), // replace the current position with a map. Give the two
-                    // values names of 'old' and 'new'.
+    // values names of 'old' and 'new'.
     MERGE_OVERRIDE("%"); // do your best to do a deep merge of the old and new
-                         // values.
+    // values.
 
     private String identifier;
 
