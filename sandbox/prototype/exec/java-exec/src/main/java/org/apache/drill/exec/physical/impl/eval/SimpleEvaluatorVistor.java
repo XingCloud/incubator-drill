@@ -1,5 +1,8 @@
 package org.apache.drill.exec.physical.impl.eval;
 
+import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH;
+import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH_PLACEHOLDER;
+
 import org.apache.drill.common.expression.FunctionCall;
 import org.apache.drill.common.expression.IfExpression;
 import org.apache.drill.common.expression.LogicalExpression;
@@ -8,7 +11,6 @@ import org.apache.drill.common.expression.ValueExpressions;
 import org.apache.drill.common.expression.visitors.AggregateChecker;
 import org.apache.drill.common.expression.visitors.ConstantChecker;
 import org.apache.drill.common.expression.visitors.SimpleExprVisitor;
-import org.apache.drill.common.util.DrillConstants;
 import org.apache.drill.exec.physical.impl.eval.ConstantValues.BooleanScalar;
 import org.apache.drill.exec.physical.impl.eval.ConstantValues.DoubleScalar;
 import org.apache.drill.exec.physical.impl.eval.ConstantValues.LongScalar;
@@ -78,7 +80,7 @@ public class SimpleEvaluatorVistor extends SimpleExprVisitor<BasicEvaluator> {
 
   @Override
   public BasicEvaluator visitQuotedStringConstant(ValueExpressions.QuotedString e) {
-    return new StringScalar(e.value.replace(DrillConstants.DOUBLE_SLASH_PLACEHOLDER, "\\"), recordBatch);
+    return new StringScalar(e.value.replace(DOUBLE_SLASH_PLACEHOLDER, DOUBLE_SLASH), recordBatch);
   }
 
   @Override

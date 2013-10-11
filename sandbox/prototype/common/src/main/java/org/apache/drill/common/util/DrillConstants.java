@@ -5,6 +5,7 @@ package org.apache.drill.common.util;
  */
 public class DrillConstants {
   public static final String DOUBLE_SLASH_PLACEHOLDER = "XA_DRILL_DSP";
+  public static final String DOUBLE_SLASH = "\\";
   public static final String SE_HBASE = "hbase";
   public static final String SE_MYSQL = "mysql";
 

@@ -1,5 +1,9 @@
 package org.apache.drill.common.expression;
 
+import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH;
+import static org.apache.drill.common.util.DrillConstants.DOUBLE_SLASH_PLACEHOLDER;
+
+import com.google.common.collect.ImmutableList;
 import org.apache.drill.common.expression.IfExpression.IfCondition;
 import org.apache.drill.common.expression.ValueExpressions.BooleanExpression;
 import org.apache.drill.common.expression.ValueExpressions.DoubleExpression;
@@ -7,9 +11,7 @@ import org.apache.drill.common.expression.ValueExpressions.LongExpression;
 import org.apache.drill.common.expression.ValueExpressions.QuotedString;
 import org.apache.drill.common.expression.visitors.AbstractExprVisitor;
 
-import com.google.common.collect.ImmutableList;
-
-public class ExpressionStringBuilder extends AbstractExprVisitor<Void, StringBuilder, RuntimeException>{
+public class ExpressionStringBuilder extends AbstractExprVisitor<Void, StringBuilder, RuntimeException> {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ExpressionStringBuilder.class);
 
   @Override
@@ -38,7 +40,8 @@ public class ExpressionStringBuilder extends AbstractExprVisitor<Void, StringBui
       func.addRegisteredName(sb);
       sb.append("(");
       for (int i = 0; i < args.size(); i++) {
-        if (i != 0) sb.append(", ");
+        if (i != 0)
+          sb.append(", ");
         args.get(i).accept(this, sb);
       }
       sb.append(") ");
@@ -50,9 +53,10 @@ public class ExpressionStringBuilder extends AbstractExprVisitor<Void, StringBui
   public Void visitIfExpression(IfExpression ifExpr, StringBuilder sb) throws RuntimeException {
     ImmutableList<IfCondition> conditions = ifExpr.conditions;
     sb.append(" ( ");
-    for(int i =0; i < conditions.size(); i++){
+    for (int i = 0; i < conditions.size(); i++) {
       IfCondition c = conditions.get(i);
-      if(i !=0) sb.append(" else ");
+      if (i != 0)
+        sb.append(" else ");
       sb.append("if (");
       c.condition.accept(this, sb);
       sb.append(" ) then (");
@@ -91,10 +95,9 @@ public class ExpressionStringBuilder extends AbstractExprVisitor<Void, StringBui
   @Override
   public Void visitQuotedStringConstant(QuotedString e, StringBuilder sb) throws RuntimeException {
     sb.append("'");
-    sb.append(e.value);
+    sb.append(e.value.replace(DOUBLE_SLASH_PLACEHOLDER, DOUBLE_SLASH));
     sb.append("'");
     return null;
   }
-  
-  
+
 }
