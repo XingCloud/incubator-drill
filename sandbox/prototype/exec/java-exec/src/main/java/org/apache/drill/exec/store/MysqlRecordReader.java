@@ -52,6 +52,7 @@ public class MysqlRecordReader implements RecordReader {
   private List<Pair<String, String>> projections;
   private String project;
   private final int batchSize = 16 * 1024;
+  private int count = 0 ;
 
   private static AtomicInteger pooledSize = new AtomicInteger(0) ;
 
@@ -148,6 +149,7 @@ public class MysqlRecordReader implements RecordReader {
           break;
       }
       setValueCount(recordSetIndex);
+      count += recordSetIndex ;
       return recordSetIndex;
     } catch (Exception e) {
       e.printStackTrace();
@@ -236,7 +238,7 @@ public class MysqlRecordReader implements RecordReader {
     }
     if (conn != null) {
       try {
-        logger.info("MysqlRecordReader finished ,sql : {}",sql);
+        logger.info("MysqlRecordReader finished ,[sql:{},count:{}]",sql,count);
         logger.info("Recycle connection resource . Pooled size : {}",pooledSize.decrementAndGet());
         rs.close();
         stmt.close();
