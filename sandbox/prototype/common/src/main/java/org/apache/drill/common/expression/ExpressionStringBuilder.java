@@ -95,7 +95,7 @@ public class ExpressionStringBuilder extends AbstractExprVisitor<Void, StringBui
   @Override
   public Void visitQuotedStringConstant(QuotedString e, StringBuilder sb) throws RuntimeException {
     sb.append("'");
-    sb.append(e.value.replace(DOUBLE_SLASH_PLACEHOLDER, DOUBLE_SLASH));
+    sb.append(e.value);
     sb.append("'");
     return null;
   }
