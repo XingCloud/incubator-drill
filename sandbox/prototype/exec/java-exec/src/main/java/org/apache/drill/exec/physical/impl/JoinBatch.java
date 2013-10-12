@@ -13,6 +13,7 @@ import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.*;
+import org.apache.drill.exec.util.hash.OffHeapIntIntOpenHashMap;
 import org.apache.drill.exec.vector.*;
 import org.apache.drill.exec.vector.ValueVector.*;
 import org.slf4j.Logger;
@@ -152,6 +153,7 @@ public class JoinBatch extends BaseRecordBatch {
         }
       }
       if (rightFinished) {
+        clearCache();
         return IterOutcome.NONE;
       }
       return IterOutcome.NOT_YET;
@@ -209,7 +211,7 @@ public class JoinBatch extends BaseRecordBatch {
   abstract class Connector {
 
     protected List<int[]> outRecords = Lists.newArrayList();
-    IntIntOpenHashMap leftValueMap;
+    OffHeapIntIntOpenHashMap leftValueMap;
     protected List<List<ValueVector>> leftIncomings;
     protected List<MaterializedField> leftFields;
     protected List<ValueVector> rightVectors;
@@ -492,7 +494,7 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   class LeftCache extends Cache {
-    IntIntOpenHashMap valuesIndexMap = new IntIntOpenHashMap();
+    OffHeapIntIntOpenHashMap valuesIndexMap = new OffHeapIntIntOpenHashMap(context.getAllocator());
 
     LeftCache() {
       super();
@@ -524,8 +526,16 @@ public class JoinBatch extends BaseRecordBatch {
       return super.getFields();
     }
 
-    IntIntOpenHashMap getValuesIndexMap() {
+    OffHeapIntIntOpenHashMap getValuesIndexMap() {
       return valuesIndexMap;
+    }
+
+    @Override
+    public void clear() {
+      if(valuesIndexMap != null){
+        valuesIndexMap.release();
+      }
+      super.clear();
     }
   }
 
