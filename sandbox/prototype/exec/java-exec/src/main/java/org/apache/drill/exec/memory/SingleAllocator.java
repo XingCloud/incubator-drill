@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SingleAllocator extends BufferAllocator {
 
   BufferAllocator buffer;
-  AtomicInteger allocatedSize = new AtomicInteger(0) ;
+  AtomicInteger allocatedSize = new AtomicInteger(0);
 
   public SingleAllocator(BufferAllocator buffer) {
     this.buffer = buffer;
@@ -25,7 +25,7 @@ public class SingleAllocator extends BufferAllocator {
   public ByteBuf buffer(int size) {
     ByteBuf byteBuf = buffer.buffer(size);
     allocatedSize.addAndGet(size);
-    return new WrappedByteBuf(byteBuf,this);
+    return new WrappedByteBuf(byteBuf, this);
   }
 
   @Override
@@ -35,7 +35,7 @@ public class SingleAllocator extends BufferAllocator {
 
   @Override
   public BufferAllocator getChildAllocator(long initialReservation, long maximumReservation) {
-    return buffer.getChildAllocator(initialReservation,maximumReservation);
+    return buffer.getChildAllocator(initialReservation, maximumReservation);
   }
 
   @Override
@@ -45,11 +45,11 @@ public class SingleAllocator extends BufferAllocator {
 
   @Override
   public void close() {
-    logger.info("Direct memory allocated size : {} ",buffer.getAllocatedMemory());
-    int size = allocatedSize.get() ;
-     if(size != 0){
-       logger.error("Memory leak exist , {} bytes is not free ." , size);
-     }
+    logger.info("Direct memory allocated size : {} ", buffer.getAllocatedMemory());
+    int size = allocatedSize.get();
+    if (size != 0) {
+      logger.error("Memory leak exist , {} bytes is not free .", size);
+    }
   }
 
   @Override
@@ -59,7 +59,9 @@ public class SingleAllocator extends BufferAllocator {
 
   @Override
   public long free(ByteBuf byteBuf) {
+    int size = byteBuf.capacity();
+    allocatedSize.addAndGet(-size);
     buffer.free(byteBuf);
-    return allocatedSize.addAndGet(-byteBuf.capacity());
+    return size;
   }
 }
