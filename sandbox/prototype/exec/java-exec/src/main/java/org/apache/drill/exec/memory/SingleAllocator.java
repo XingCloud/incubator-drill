@@ -45,6 +45,7 @@ public class SingleAllocator extends BufferAllocator {
 
   @Override
   public void close() {
+    logger.info("Direct memory allocated size : {} ",buffer.getAllocatedMemory());
     int size = allocatedSize.get() ;
      if(size != 0){
        logger.error("Memory leak exist , {} bytes is not free ." , size);
