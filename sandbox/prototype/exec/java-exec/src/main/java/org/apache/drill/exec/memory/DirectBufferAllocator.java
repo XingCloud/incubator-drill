@@ -21,21 +21,20 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class DirectBufferAllocator extends BufferAllocator{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DirectBufferAllocator.class);
 
   private final PooledByteBufAllocator buffer = new PooledByteBufAllocator(true);
-  private int allocateSize  = 0 ;
+  private AtomicInteger allocateSize  = new AtomicInteger(0) ;
 
   @Override
   public ByteBuf buffer(int size) {
-    // TODO: wrap it
-    allocateSize += size ;
-    return new WrappedByteBuf(buffer.directBuffer(size),this);
+    allocateSize.addAndGet(size) ;
+    return buffer.directBuffer(size);
   }
   
-  
-
   @Override
   protected boolean pre(int bytes) {
     // TODO: check allocation
@@ -44,13 +43,12 @@ public class DirectBufferAllocator extends BufferAllocator{
 
   @Override
   public long free(ByteBuf byteBuf) {
-    allocateSize -= byteBuf.capacity() ;
-    return allocateSize;
+    return allocateSize.addAndGet(-byteBuf.capacity()) ;
   }
 
   @Override
   public long getAllocatedMemory() {
-    return allocateSize;
+    return allocateSize.get();
   }
 
   @Override
@@ -62,13 +60,13 @@ public class DirectBufferAllocator extends BufferAllocator{
 
   @Override
   public BufferAllocator getChildAllocator(long initialReservation, long maximumReservation) {
-    //TODO: Add child account allocator.
+    //TODO: Add child account buffer.
     return this;
   }
 
   @Override
   public void close() {
-    if(allocateSize != 0){
+    if(allocateSize.get() != 0){
       logger.debug("Memory leak exists . " + allocateSize + " allocated bytes not released .");
     }
     // TODO: collect all buffers and release them away using a weak hashmap so we don't impact pool work

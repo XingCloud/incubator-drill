@@ -129,9 +129,9 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
 
   private void initBuffers(int capacity){
     // capacity must be a power of two
-    this.keys =  bufferAllocator.buffer(capacity << 2).order(ByteOrder.nativeOrder());
-    this.values =  bufferAllocator.buffer(capacity << 2).order(ByteOrder.nativeOrder());
-    this.allocated =  bufferAllocator.buffer(capacity).order(ByteOrder.nativeOrder());
+    this.keys =  bufferAllocator.buffer(capacity << 2);//.order(ByteOrder.nativeOrder());
+    this.values =  bufferAllocator.buffer(capacity << 2); //.order(ByteOrder.nativeOrder());
+    this.allocated =  bufferAllocator.buffer(capacity);// .order(ByteOrder.nativeOrder());
     this.allocated.setZero(0, capacity);
     this.resizeAt = Math.max(2, (int) Math.ceil(capacity * loadFactor)) - 1;
   }
@@ -235,9 +235,9 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
     // Try to allocate new buffers first. If we OOM, it'll be now without
     // leaving the data structure in an inconsistent state.
     int nextCapacity = HashMapUtils.nextCapacity(allocated.capacity());
-    ByteBuf newKeys =  bufferAllocator.buffer(nextCapacity << 2).order(ByteOrder.nativeOrder());
-    ByteBuf newValues =  bufferAllocator.buffer(nextCapacity << 2).order(ByteOrder.nativeOrder());
-    ByteBuf newAllocated =  bufferAllocator.buffer(nextCapacity).order(ByteOrder.nativeOrder());
+    ByteBuf newKeys =  bufferAllocator.buffer(nextCapacity << 2);//.order(ByteOrder.nativeOrder());
+    ByteBuf newValues =  bufferAllocator.buffer(nextCapacity << 2);//.order(ByteOrder.nativeOrder());
+    ByteBuf newAllocated =  bufferAllocator.buffer(nextCapacity);//.order(ByteOrder.nativeOrder());
     // initialize to 0(false)
     newAllocated.setZero(0, newAllocated.capacity());
     int newResizeAt = Math.max(2, (int) Math.ceil(nextCapacity * loadFactor)) - 1;

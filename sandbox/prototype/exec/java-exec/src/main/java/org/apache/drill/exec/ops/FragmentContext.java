@@ -27,6 +27,7 @@ import org.apache.drill.exec.exception.ClassTransformationException;
 import org.apache.drill.exec.expr.CodeGenerator;
 import org.apache.drill.exec.expr.fn.FunctionImplementationRegistry;
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.memory.SingleAllocator;
 import org.apache.drill.exec.metrics.SingleThreadNestedCounter;
 import org.apache.drill.exec.physical.impl.FilteringRecordBatchTransformer;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -65,6 +66,7 @@ public class FragmentContext {
   private final FunctionImplementationRegistry funcRegistry;
   private final QueryClassLoader loader;
   private final ClassTransformer transformer;
+  private final BufferAllocator allocator ;
   
   public FragmentContext(DrillbitContext dbContext, FragmentHandle handle, UserClientConnection connection, IncomingBuffers buffers, FunctionImplementationRegistry funcRegistry) {
     this.loader = new QueryClassLoader(true);
@@ -74,6 +76,7 @@ public class FragmentContext {
     this.recordsCompleted = new SingleThreadNestedCounter(dbContext, METRIC_RECORDS_COMPLETED);
     this.dataProcessed = new SingleThreadNestedCounter(dbContext, METRIC_DATA_PROCESSED);
     this.context = dbContext;
+    this.allocator = new SingleAllocator(context.getAllocator());
     this.connection = connection;
     this.handle = handle;
     this.buffers = buffers;
@@ -100,7 +103,7 @@ public class FragmentContext {
 
   public BufferAllocator getAllocator(){
     // TODO: A local query allocator to ensure memory limits and accurately gauge memory usage.
-    return context.getAllocator();
+    return this.allocator;
   }
 
   public <T> T getImplementationClass(CodeGenerator<T> cg) throws ClassTransformationException, IOException{

@@ -18,6 +18,7 @@
 package org.apache.drill.exec.work;
 
 import com.yammer.metrics.Timer;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.impl.RootExec;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus;
@@ -72,7 +73,8 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
     }
     
     Timer.Context t = context.fragmentTime.time();
-    
+    BufferAllocator allocator = context.getAllocator() ;
+
     // run the query until root.next returns false.
     try{
       while(state.get() == FragmentState.RUNNING_VALUE){
@@ -96,6 +98,7 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
       logger.debug("Caught exception while running fragment: {} ", ex);
       internalFail(ex);
     }finally{
+      allocator.close();
       t.stop();
     }
     long endTime = System.currentTimeMillis() ;

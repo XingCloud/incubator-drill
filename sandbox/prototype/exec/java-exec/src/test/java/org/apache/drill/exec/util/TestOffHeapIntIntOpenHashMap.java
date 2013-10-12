@@ -2,6 +2,7 @@ package org.apache.drill.exec.util;
 
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.memory.DirectBufferAllocator;
+import org.apache.drill.exec.memory.SingleAllocator;
 import org.apache.drill.exec.util.hash.OffHeapIntIntOpenHashMap;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -19,7 +20,8 @@ public class TestOffHeapIntIntOpenHashMap {
   @Test
   public void testPutAndGet(){
     final int NUM_KEYS = 1000000;
-    OffHeapIntIntOpenHashMap map = new OffHeapIntIntOpenHashMap(bufferAllocator);
+    SingleAllocator singleAllocator = new SingleAllocator(bufferAllocator);
+    OffHeapIntIntOpenHashMap map = new OffHeapIntIntOpenHashMap(singleAllocator);
 
     assertTrue(map.isEmpty());
 
@@ -42,11 +44,13 @@ public class TestOffHeapIntIntOpenHashMap {
     }
 
     map.release();
+    singleAllocator.close();
   }
 
   @Test
   public void testClear(){
-    OffHeapIntIntOpenHashMap map = new OffHeapIntIntOpenHashMap(bufferAllocator);
+    SingleAllocator singleAllocator = new SingleAllocator(bufferAllocator);
+    OffHeapIntIntOpenHashMap map = new OffHeapIntIntOpenHashMap(singleAllocator);
 
     final int size = 10;
     for (int i = 0; i < size; i++) {
@@ -72,6 +76,7 @@ public class TestOffHeapIntIntOpenHashMap {
     assertEquals(map.size(), size * 2);
 
     map.release();
+    singleAllocator.close();
   }
 
   public static void main(String[] args){
