@@ -1,9 +1,5 @@
 package org.apache.drill.exec.util.hash;
 
-import io.netty.buffer.ByteBuf;
-import org.apache.drill.exec.memory.BufferAllocator;
-
-import java.nio.ByteOrder;
 import java.util.Iterator;
 
 /**
@@ -11,9 +7,7 @@ import java.util.Iterator;
  * Date: 13-9-9
  * Time: 下午3:52
  */
-public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
-
-  private final BufferAllocator bufferAllocator;
+public class IntIntOpenHashMap implements Iterable<IntIntCursor> {
 
   /**
    * Minimum capacity for the map.
@@ -32,26 +26,23 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
 
   /**
    * Hash-indexed array holding all keys.
-   * interpret this bytebuf as an int array
    * @see #values
    */
-  public ByteBuf keys;
+  public int[] keys;
 
   /**
    * Hash-indexed array holding all values associated to the keys
    * stored in {@link #keys}.
-   * interpret this bytebuf as an int array.
    * @see #keys
    */
-  public ByteBuf values;
+  public int[] values;
 
   /**
    * Information if an entry (slot) in the {@link #values} table is allocated
    * or empty.
-   * interpret this bytebuf as a boolean array
    * @see #assigned
    */
-  public ByteBuf allocated;
+  public boolean[] allocated;
 
   /**
    * Cached number of assigned slots in {@link #allocated}.
@@ -84,8 +75,8 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    *
    * <p>See class notes about hash distribution importance.</p>
    */
-  public OffHeapIntIntOpenHashMap(BufferAllocator allocator){
-    this(DEFAULT_CAPACITY, allocator);
+  public IntIntOpenHashMap(){
+    this(DEFAULT_CAPACITY);
   }
 
   /**
@@ -97,8 +88,8 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    * @param initialCapacity Initial capacity (greater than zero and automatically
    *            rounded to the next power of two).
    */
-  public OffHeapIntIntOpenHashMap(int initialCapacity, BufferAllocator allocator){
-    this(initialCapacity, DEFAULT_LOAD_FACTOR, allocator);
+  public IntIntOpenHashMap(int initialCapacity){
+    this(initialCapacity, DEFAULT_LOAD_FACTOR);
   }
 
   /**
@@ -112,7 +103,7 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    *
    * @param loadFactor The load factor (greater than zero and smaller than 1).
    */
-  public OffHeapIntIntOpenHashMap(int initialCapacity, float loadFactor, BufferAllocator allocator){
+  public IntIntOpenHashMap(int initialCapacity, float loadFactor){
     initialCapacity = Math.max(initialCapacity, MIN_CAPACITY);
 
     assert initialCapacity > 0
@@ -121,7 +112,6 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
         : "Load factor must be between (0, 1].";
 
     this.loadFactor = loadFactor;
-    this.bufferAllocator = allocator;
 
     // Allocate internal buffers for a given capacity.
     initBuffers(HashMapUtils.roundCapacity(initialCapacity));
@@ -129,10 +119,9 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
 
   private void initBuffers(int capacity){
     // capacity must be a power of two
-    this.keys =  bufferAllocator.buffer(capacity << 2).order(ByteOrder.nativeOrder());
-    this.values =  bufferAllocator.buffer(capacity << 2).order(ByteOrder.nativeOrder());
-    this.allocated =  bufferAllocator.buffer(capacity).order(ByteOrder.nativeOrder());
-    this.allocated.setZero(0, capacity);
+    this.keys = new int[capacity];
+    this.values = new int[capacity];
+    this.allocated = new boolean[capacity];
     this.resizeAt = Math.max(2, (int) Math.ceil(capacity * loadFactor)) - 1;
   }
 
@@ -146,13 +135,13 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    * </pre>
    */
   public int get(int key){
-    final int mask = allocated.capacity() - 1;
+    final int mask = allocated.length - 1;
     int slot = HashMapUtils.hash(key) & mask;
     final int wrappedAround = slot;
 
-    while (allocated.getBoolean(slot)){
-      if (key == keys.getInt(slot << 2)){
-        return values.getInt(slot << 2);
+    while (allocated[slot]){
+      if (key == keys[slot]){
+        return values[slot];
       }
 
       slot = (slot + 1) & mask;
@@ -168,9 +157,9 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    */
   public int lget(){
     assert lastSlot >= 0 : "Call containsKey() first.";
-    assert allocated.getBoolean(lastSlot): "Last call to exists did not have any associated value.";
+    assert allocated[lastSlot]: "Last call to exists did not have any associated value.";
 
-    return values.getInt(lastSlot << 2);
+    return values[lastSlot];
   }
 
   /**
@@ -181,12 +170,12 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    * </pre>
    */
   public boolean containsKey(int key){
-    final int mask = allocated.capacity() - 1;
+    final int mask = allocated.length - 1;
     int slot = HashMapUtils.hash(key) & mask;
     final int wrappedAround = slot;
 
-    while (allocated.getBoolean(slot)){
-      if (key == keys.getInt(slot << 2)){
+    while (allocated[slot]){
+      if (key == keys[slot]){
         lastSlot = slot;
         return true;
       }
@@ -198,15 +187,15 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
   }
 
   public int put(int key, int value){
-    assert assigned < allocated.capacity();
+    assert assigned < allocated.length;
 
-    final int mask = allocated.capacity() - 1;
+    final int mask = allocated.length - 1;
     int slot = HashMapUtils.hash(key) & mask;
 
-    while (allocated.getBoolean(slot)){
-      if (key == keys.getInt(slot << 2)){
-        final int oldValue = values.getInt(slot << 2);
-        values.setInt(slot << 2, value);
+    while (allocated[slot]){
+      if (key == keys[slot]){
+        final int oldValue = values[slot];
+        values[slot] = value;
         return oldValue;
       }
 
@@ -218,9 +207,9 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
       expandAndPut(key, value, slot);
     } else {
       assigned++;
-      allocated.setBoolean(slot, true);
-      keys.setInt(slot << 2, key);
-      values.setInt(slot << 2, value);
+      allocated[slot] = true;
+      keys[slot] = key;
+      values[slot] = value;
     }
     return 0;
   }
@@ -230,16 +219,14 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    */
   private void expandAndPut(int pendingKey, int pendingValue, int freeSlot){
     assert assigned == resizeAt;
-    assert !allocated.getBoolean(freeSlot);
+    assert !allocated[freeSlot];
 
     // Try to allocate new buffers first. If we OOM, it'll be now without
     // leaving the data structure in an inconsistent state.
-    int nextCapacity = HashMapUtils.nextCapacity(allocated.capacity());
-    ByteBuf newKeys =  bufferAllocator.buffer(nextCapacity << 2).order(ByteOrder.nativeOrder());
-    ByteBuf newValues =  bufferAllocator.buffer(nextCapacity << 2).order(ByteOrder.nativeOrder());
-    ByteBuf newAllocated =  bufferAllocator.buffer(nextCapacity).order(ByteOrder.nativeOrder());
-    // initialize to 0(false)
-    newAllocated.setZero(0, newAllocated.capacity());
+    int nextCapacity = HashMapUtils.nextCapacity(allocated.length);
+    int[] newKeys = new int[nextCapacity];
+    int[] newValues = new int[nextCapacity];
+    boolean[] newAllocated = new boolean[nextCapacity];
     int newResizeAt = Math.max(2, (int) Math.ceil(nextCapacity * loadFactor)) - 1;
 
     // We have succeeded at allocating new data so insert the pending key/value at
@@ -247,57 +234,40 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
     lastSlot = -1;
     assigned++;
 
-    allocated.setBoolean(freeSlot, true);
-    keys.setInt(freeSlot << 2, pendingKey);
-    values.setInt(freeSlot << 2, pendingValue);
+    allocated[freeSlot] = true;
+    keys[freeSlot] = pendingKey;
+    values[freeSlot] = pendingValue;
 
     // Rehash all stored keys into the new buffers.
-    final int mask = newAllocated.capacity() - 1;
-    for (int i = allocated.capacity(); --i >= 0;){
-      if (allocated.getBoolean(i)){
-        final int k = keys.getInt(i << 2);
-        final int v = values.getInt(i << 2);
+    final int mask = newAllocated.length - 1;
+    for (int i = allocated.length; --i >= 0;){
+      if (allocated[i]){
+        final int k = keys[i];
+        final int v = values[i];
 
         int slot = HashMapUtils.hash(k) & mask;
-        while (newAllocated.getBoolean(slot)){
+        while (newAllocated[slot]){
           slot = (slot + 1) & mask;
         }
 
-        newAllocated.setBoolean(slot, true);
-        newKeys.setInt(slot << 2, k);
-        newValues.setInt(slot << 2, v);
+        newAllocated[slot] = true;
+        newKeys[slot] = k;
+        newValues[slot] = v;
       }
     }
 
-    releaseByteBuf(allocated, keys, values);
     this.allocated = newAllocated;
     this.keys = newKeys;
     this.values = newValues;
     this.resizeAt = newResizeAt;
   }
 
-  private void releaseByteBuf(ByteBuf... bbs){
-    for (ByteBuf bb : bbs){
-      bb.release();
-    }
-  }
-
   /**
    * clear the mappings
-   * this does not mean the internal direct buffer is released.
-   * to release the direct buffer, use {@link #release} method instead.
    */
   public void clear(){
     assigned = 0;
-    releaseByteBuf(allocated, keys, values);
     initBuffers(DEFAULT_CAPACITY);
-  }
-
-  /**
-   * release the internal direct buffer
-   */
-  public void release(){
-    releaseByteBuf(allocated, keys, values);
   }
 
   public int size(){
@@ -372,8 +342,8 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
 
     private IntIntCursor fetch(){
       int i = cursor.index + 1;
-      final int max = allocated.capacity();
-      while (i < max && !allocated.getBoolean(i)){
+      final int max = allocated.length;
+      while (i < max && !allocated[i]){
         i++;
       }
 
@@ -381,8 +351,8 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
         return null;
 
       cursor.index = i;
-      cursor.key = keys.getInt(i << 2);
-      cursor.value = values.getInt(i << 2);
+      cursor.key = keys[i];
+      cursor.value = values[i];
 
       return cursor;
     }
@@ -409,4 +379,3 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
   }
 
 }
-
