@@ -226,13 +226,11 @@ public class XAEvaluators {
   @FunctionEvaluator("date")
   public static class DateEvaluator extends BaseBasicEvaluator {
 
-    RecordBatch recordBatch;
     BasicEvaluator child;
     private VarCharVector varCharVector;
 
     public DateEvaluator(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
-      this.recordBatch = recordBatch;
       child = args.getOnlyEvaluator();
     }
 
@@ -271,13 +269,11 @@ public class XAEvaluators {
 
   @FunctionEvaluator("hid2inner")
   public static class Hid2Inner extends BaseBasicEvaluator {
-    RecordBatch recordBatch;
     BasicEvaluator child;
     private IntVector intVector;
 
     public Hid2Inner(RecordBatch recordBatch, FunctionArguments args) {
       super(args.isOnlyConstants(), recordBatch);
-      this.recordBatch = recordBatch;
       child = args.getOnlyEvaluator();
     }
 
