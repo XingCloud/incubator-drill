@@ -25,10 +25,11 @@ public class TestCreateHBaseMeta {
     String userRegPropName="register_template_prop_index";
     @Test
     public void createEventMeta() throws TException {
+      /*
         CreateHBaseMeta.createDEUTable(dbName, tableName);
         DrillHiveMetaClient client= ProxyMetaClientFactory.getInstance().newProxiedPooledClient();
         Table table = client.getTable(dbName, tableName);
-        printColumns(table);
+        printColumns(table);  */
     }
     @Test
     public void createUserMeta() throws TException{
