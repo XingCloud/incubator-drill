@@ -156,8 +156,6 @@ public class DFARowKeyParser {
               }
             }
           }
-
-
           ValueVector vv = vvMap.get(colName);
           vv.getMutator().setObject(vvIndex, o);
         }
