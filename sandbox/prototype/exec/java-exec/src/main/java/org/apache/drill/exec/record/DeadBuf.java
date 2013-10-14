@@ -39,7 +39,11 @@ public class DeadBuf extends ByteBuf {
 
   private DeadBuf(){}
 
-  
+  @Override
+  public long getId() {
+    throw new UnsupportedOperationException(ERROR_MESSAGE);
+  }
+
   @Override
   public boolean isReadable(int size) {
     throw new UnsupportedOperationException(ERROR_MESSAGE);

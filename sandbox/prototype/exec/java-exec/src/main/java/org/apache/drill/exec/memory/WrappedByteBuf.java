@@ -36,6 +36,11 @@ public class WrappedByteBuf extends ByteBuf {
   }
 
   @Override
+  public long getId() {
+    return byteBuf.getId();
+  }
+
+    @Override
   public int capacity() {
     return byteBuf.capacity();
   }

@@ -304,5 +304,6 @@
         <module>sqlparser</module>
         <module>hbase-scanner</module>
         <module>metastore</module>
+        <module>netty-buffer</module>
     </modules>
 </project>
