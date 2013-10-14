@@ -15,69 +15,13 @@
             	{records: 100, types: [
             	  {name: "blue", type: "BIGINT", mode: "REQUIRED"},
             	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "BIGINT", mode: "REQUIRED"} ,
-            	  {name: "str", type: "VARCHAR", mode: "REQUIRED"}
+            	  {name: "green", type: "BIGINT", mode: "REQUIRED"}
             	]}
             ]
         },
         {
-            pop: "filter",
             @id: 2,
-            child :1,
-            expr: "str == '\"null\"'"
-        } ,
-        {
-              pop: "segment",
-              @id:3,
-              child : 2,
-              ref: "segment",
-              exprs :[ { ref: "blue", expr: "blue"}]
-            },
-        {
-              pop: "PhysicalCollapsingAggregate",
-              @id: 4,
-              child: 3,
-              within: "segment",
-              carryovers: [
-                "blue"
-              ],
-              aggregations: [
-                {
-                  ref: "count",
-                  expr: "count(blue) "
-                },
-                {
-                  ref: "count_distinct",
-                  expr: "count_distinct(blue) "
-                },
-                {
-                  ref: "sum",
-                  expr: "sum(blue) "
-                }
-              ]
-        },
-        {
-            op : "project",
-            @id : 5,
-            input : 4,
-            projections : [ {
-              ref : "query_id",
-              expr : "'COMMON,ram,2013-10-01,2013-10-02,visit.*,{\"identifier\":\"\\\"null\\\"\"},VF-ALL-0-0,PERIOD'"
-            }, {
-              ref : "count",
-              expr : "count"
-            }, {
-              ref : "user_num",
-              expr : "count_distinct"
-            }, {
-              ref : "sum",
-              expr : "sum"
-            } ]
-          },
-
-        {
-            @id: 6,
-            child: 5,
+            child: 1,
             pop: "screen"
         }
     ]
