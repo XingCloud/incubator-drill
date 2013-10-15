@@ -2,6 +2,7 @@ package org.apache.drill.exec.util.hash;
 
 import io.netty.buffer.ByteBuf;
 import org.apache.drill.exec.memory.BufferAllocator;
+import org.apache.drill.exec.record.DeadBuf;
 
 import java.nio.ByteOrder;
 import java.util.Iterator;
@@ -282,7 +283,8 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
 
   private void releaseByteBuf(ByteBuf... bbs){
     for (ByteBuf bb : bbs){
-      bb.release();
+      if(bb != DeadBuf.DEAD_BUFFER)
+        bb.release();
     }
   }
 
@@ -302,6 +304,9 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    */
   public void release(){
     releaseByteBuf(allocated, keys, values);
+    allocated = DeadBuf.DEAD_BUFFER ;
+    keys = DeadBuf.DEAD_BUFFER;
+    values = DeadBuf.DEAD_BUFFER;
   }
 
   public int size(){

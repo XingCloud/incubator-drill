@@ -44,6 +44,8 @@ public class TestOffHeapIntIntOpenHashMap {
     }
 
     map.release();
+    map.release();
+    map.release();
     singleAllocator.close();
   }
 
