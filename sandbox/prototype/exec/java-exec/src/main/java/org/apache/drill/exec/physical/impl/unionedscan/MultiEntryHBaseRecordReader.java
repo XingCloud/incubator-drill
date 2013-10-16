@@ -179,11 +179,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           Constants.FilterType type = entry.getFilterType();
           switch (type) {
             case XaRowKeyPattern:
-              for (LogicalExpression e : entry.getFilterExpressions()) {
-                if(!(e instanceof ValueExpressions.QuotedString)){
-                   throw new IOException("include logicalExpression is not quotedString");
-                }
-                String pattern = ((ValueExpressions.QuotedString)e).value;
+              for (String pattern : entry.getFilterExpressions()) {
                 if (!patterns.contains(pattern)){
                   patterns.add(pattern);
                 }
@@ -191,7 +187,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
               break;
             case HbaseOrig:
               RowKeyRange range=new RowKeyRange(entries[i].getStartRowKey(),entries[i].getEndRowKey());
-              for (LogicalExpression e : entry.getFilterExpressions()) {
+              for (String filterExpr : entry.getFilterExpressions()) {
+                LogicalExpression e=
+                  context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr,LogicalExpression.class);
                 if (e instanceof FunctionCall) {
                   FunctionCall c = (FunctionCall) e;
                   Iterator iter = ((FunctionCall) e).iterator();
@@ -245,7 +243,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
-    if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
+    if(patterns.size() > 0 || slot.size() > 0) {  //
+    // todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
 
         //List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));

@@ -154,15 +154,16 @@ public class HBaseRecordReader implements RecordReader {
         Constants.FilterType type = entry.getFilterType();
         switch (type) {
           case XaRowKeyPattern:
-            for (LogicalExpression e : entry.getFilterExpressions()) {
-              String pattern = ((ValueExpressions.QuotedString) e).value;
+            for (String pattern : entry.getFilterExpressions()) {
               if (!patterns.contains(pattern)) {
                 patterns.add(pattern);
               }
             }
             break;
           case HbaseOrig:
-            for (LogicalExpression e : entry.getFilterExpressions()) {
+            for (String  filterExpr : entry.getFilterExpressions()) {
+              LogicalExpression e=
+                context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr,LogicalExpression.class);
               if (e instanceof FunctionCall) {
                 FunctionCall c = (FunctionCall) e;
                 Iterator iter = ((FunctionCall) e).iterator();
