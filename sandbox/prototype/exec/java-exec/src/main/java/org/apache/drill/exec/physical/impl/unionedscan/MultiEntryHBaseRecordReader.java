@@ -155,6 +155,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
+
+
     }catch (Exception e){
         e.printStackTrace();
         throw e;
@@ -245,17 +247,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
+    //Release JVM memory
+    entryFilters = null;
     if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
 
-        //List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
-        //sortedEvents =Arrays.sort(sortedEvents);
-//        File patternFile=new File("/home/yb/workspace/data/log/drill/patterns.log");
-//        Writer writer=new FileWriter(patternFile);
-
         for (String event : patterns) {
-//          writer.write(event+" ");
-//          logger.info(event);
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
           byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
@@ -263,10 +260,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
-//        writer.flush();
-//        writer.close();
-
       }
+      patterns = null;
       logger.info("slot before sort "+"first "+Bytes.toStringBinary(slot.get(0).getLowerRange())+
                 " end "+Bytes.toStringBinary(slot.get(slot.size()-1).getLowerRange()));
       Collections.sort(slot,keyRangeComparator);
