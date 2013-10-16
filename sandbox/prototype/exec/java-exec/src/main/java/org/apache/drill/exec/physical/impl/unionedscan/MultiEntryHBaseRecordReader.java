@@ -124,6 +124,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     for (int i = 0; i < entries.length; i++) {
       entryKeys[i] = new Pair<>(entries[i].getStartRowKey(),entries[i].getEndRowKey()) ;
       this.entryFilters.add(entries[i].getFilters());
+
+      entries[i].setFilters(null);
+
       List<NamedExpression> exprs = entries[i].getProjections();
       NamedExpression[] exprArr = new NamedExpression[exprs.size()];
       HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];
@@ -155,6 +158,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
     primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
+
+
     }catch (Exception e){
         e.printStackTrace();
         throw e;
@@ -179,11 +184,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           Constants.FilterType type = entry.getFilterType();
           switch (type) {
             case XaRowKeyPattern:
-              for (LogicalExpression e : entry.getFilterExpressions()) {
-                if(!(e instanceof ValueExpressions.QuotedString)){
-                   throw new IOException("include logicalExpression is not quotedString");
-                }
-                String pattern = ((ValueExpressions.QuotedString)e).value;
+              for (String pattern : entry.getFilterExpressions()) {
                 if (!patterns.contains(pattern)){
                   patterns.add(pattern);
                 }
@@ -191,7 +192,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
               break;
             case HbaseOrig:
               RowKeyRange range=new RowKeyRange(entries[i].getStartRowKey(),entries[i].getEndRowKey());
-              for (LogicalExpression e : entry.getFilterExpressions()) {
+              for (String filterExpr : entry.getFilterExpressions()) {
+                LogicalExpression e=
+                  context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr,LogicalExpression.class);
                 if (e instanceof FunctionCall) {
                   FunctionCall c = (FunctionCall) e;
                   Iterator iter = ((FunctionCall) e).iterator();
@@ -245,17 +248,13 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
     }
+
+    //Release JVM memory
+    entryFilters = null;
     if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
 
-        //List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
-        //sortedEvents =Arrays.sort(sortedEvents);
-//        File patternFile=new File("/home/yb/workspace/data/log/drill/patterns.log");
-//        Writer writer=new FileWriter(patternFile);
-
         for (String event : patterns) {
-//          writer.write(event+" ");
-//          logger.info(event);
           byte[] eventBytes = Bytes.toBytesBinary(event);
           byte[] lowerRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(true));
           byte[] upperRange = Bytes.add(eventBytes, RowKeyUtils.produceTail(false));
@@ -263,10 +262,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
-//        writer.flush();
-//        writer.close();
-
       }
+      patterns = null;
       logger.info("slot before sort "+"first "+Bytes.toStringBinary(slot.get(0).getLowerRange())+
                 " end "+Bytes.toStringBinary(slot.get(slot.size()-1).getLowerRange()));
       Collections.sort(slot,keyRangeComparator);

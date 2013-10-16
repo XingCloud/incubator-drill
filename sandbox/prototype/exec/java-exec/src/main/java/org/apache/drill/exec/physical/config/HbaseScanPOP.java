@@ -59,10 +59,10 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
 
 
         private Constants.FilterType filterType;
-        private List<LogicalExpression> filterExpressions;
+        private List<String> filterExpressions;
         @JsonCreator
         public RowkeyFilterEntry(@JsonProperty("type") Constants.FilterType filterType,
-                                 @JsonProperty("exprs") List<LogicalExpression> filterExpressions) {
+                                 @JsonProperty("exprs") List<String> filterExpressions) {
             this.filterType = filterType;
             this.filterExpressions = filterExpressions;
         }
@@ -71,7 +71,7 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
             return filterType;
         }
 
-        public List<LogicalExpression> getFilterExpressions() {
+        public List<String> getFilterExpressions() {
             return filterExpressions;
         }
 
@@ -123,6 +123,10 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
 
         public List<NamedExpression> getProjections() {
             return projections;
+        }
+
+        public void setFilters(List<RowkeyFilterEntry> filters) {
+            this.filters = filters;
         }
     }
 }

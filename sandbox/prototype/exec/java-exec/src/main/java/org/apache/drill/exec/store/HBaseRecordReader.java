@@ -68,7 +68,6 @@ public class HBaseRecordReader implements RecordReader {
   private Map<String, ValueVector> vvMap;
 
 
-  private List<HbaseScanPOP.RowkeyFilterEntry> filters;
   private OutputMutator output;
 
 
@@ -130,7 +129,6 @@ public class HBaseRecordReader implements RecordReader {
         }
       }
     }
-    filters = config.getFilters();
 
     primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
@@ -148,21 +146,24 @@ public class HBaseRecordReader implements RecordReader {
     long start = System.nanoTime();
     FilterList filterList = new FilterList();
     List<KeyRange> slot = new ArrayList<>();
+
+    List<HbaseScanPOP.RowkeyFilterEntry> filters = config.getFilters();
     if (filters != null) {
       Set<String> patterns = new HashSet<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         Constants.FilterType type = entry.getFilterType();
         switch (type) {
           case XaRowKeyPattern:
-            for (LogicalExpression e : entry.getFilterExpressions()) {
-              String pattern = ((ValueExpressions.QuotedString) e).value;
+            for (String pattern : entry.getFilterExpressions()) {
               if (!patterns.contains(pattern)) {
                 patterns.add(pattern);
               }
             }
             break;
           case HbaseOrig:
-            for (LogicalExpression e : entry.getFilterExpressions()) {
+            for (String  filterExpr : entry.getFilterExpressions()) {
+              LogicalExpression e=
+                context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr,LogicalExpression.class);
               if (e instanceof FunctionCall) {
                 FunctionCall c = (FunctionCall) e;
                 Iterator iter = ((FunctionCall) e).iterator();
@@ -214,8 +215,10 @@ public class HBaseRecordReader implements RecordReader {
             throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
+      filters = null;
       if (patterns.size() >= 1) {       //todo should depend on hbase schema to generate row key
         List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
+        patterns = null;
 
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);
@@ -227,8 +230,10 @@ public class HBaseRecordReader implements RecordReader {
         }
         Filter skipScanFilter = new SkipScanFilter(slot);
         filterList.addFilter(skipScanFilter);
+        sortedEvents = null;
       }
     }
+    config.setFilters(null);
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +

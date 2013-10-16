@@ -192,9 +192,21 @@ public class BasicOptimizer extends Optimizer {
         // Filters
         List<HbaseScanPOP.RowkeyFilterEntry> filterEntries = new ArrayList<>();
         filter = selection.get(SELECTION_KEY_WORD_FILTER);
+        File sourcedir = new File("/data/log/drill/sourcePatterns");
         if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
-          List<LogicalExpression> patterns = getPatterns(filter, table, config);
+          List<String> patterns = getPatterns(filter, table, config);
 
+          String filterExpression = filter.get("expression").textValue();
+//                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"_"+System.nanoTime());
+//                    try {
+//                        Writer writer=new FileWriter(sourcepttFile);
+//                        for(int i=0;i<patterns.size();i++){
+//                            writer.write(((ValueExpressions.QuotedString)patterns.get(i)).value+" ");
+//                        }
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                        throw  new OptimizerException(e.getMessage());
+//                    }
           HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
             Constants.FilterType.XaRowKeyPattern, patterns);
           filterEntries.add(filterEntry);
@@ -388,7 +400,7 @@ public class BasicOptimizer extends Optimizer {
       return pop;
     }
 
-    public List<LogicalExpression> getPatterns(JsonNode filter, String tableName, DrillConfig config) throws
+    public List<String> getPatterns(JsonNode filter, String tableName, DrillConfig config) throws
       OptimizerException {
       LogicalExpression filterExpr = null;
       try {
@@ -400,21 +412,22 @@ public class BasicOptimizer extends Optimizer {
       return new ArrayList<>(getPatternsFromExpr(filterExpr, tableName, config));
     }
 
-    private Set<LogicalExpression> getPatternsFromExpr(LogicalExpression filterExpr, String tableName,
+    private Set<String> getPatternsFromExpr(LogicalExpression filterExpr, String tableName,
                                                        DrillConfig config) throws OptimizerException {
       if (!(filterExpr instanceof FunctionCall))
         return null;
 
       try {
-        Set<LogicalExpression> patterns = new HashSet<>();
+        Set<String> patterns = new HashSet<>();
         String projectId = tableName.contains("deu_") ? tableName.substring(4, tableName.length()) : tableName;
         if (!((FunctionCall) filterExpr).getDefinition().getName().contains("or")) {
           Map<String, UnitFunc> fieldFunc = parseFunctionCall((FunctionCall) filterExpr);
-          Set<LogicalExpression> tmpPatterns = new HashSet<>(getPatternsFromColVals(fieldFunc, projectId));
+          Set<String> tmpPatterns = new HashSet<>(getPatternsFromColVals(fieldFunc, projectId));
+
           return tmpPatterns;
         } else {
           for (LogicalExpression le : (FunctionCall) filterExpr) {
-            Set<LogicalExpression> tmpPatterns = getPatternsFromExpr(le, tableName, config);
+            Set<String> tmpPatterns = getPatternsFromExpr(le, tableName, config);
             patterns.addAll(tmpPatterns);
           }
           return patterns;
@@ -425,9 +438,9 @@ public class BasicOptimizer extends Optimizer {
       }
     }
 
-    private List<LogicalExpression> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap,
+    private List<String> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap,
                                                            String projectId) throws OptimizerException {
-      List<LogicalExpression> patterns = new ArrayList<>();
+      List<String> patterns = new ArrayList<>();
 
       String eventFilter = getEventFilter(fieldValueMap);
       UnitFunc dateUF = fieldValueMap.get(DrillConstants.DATE);
@@ -449,7 +462,7 @@ public class BasicOptimizer extends Optimizer {
       if (events != null) {
         try {
           for (XEvent childEvent : events) {
-            patterns.add(new ValueExpressions.QuotedString(date + childEvent.nameRowkeyStyle() + "\\xFF", ExpressionPosition.UNKNOWN));
+            patterns.add(date + childEvent.nameRowkeyStyle() + "\\xFF");
           }
         } catch (XEventException e) {
           throw new OptimizerException(e.getMessage());
