@@ -140,7 +140,7 @@ public class TestHBaseRecordReader {
                 return entry;
            case "event":
 
-               List<LogicalExpression> includes=new ArrayList<>();
+               List<String> includes=new ArrayList<>();
                /*
                FunctionDefinition funcDef=new BooleanFunctions().getFunctionDefintions()[3];
                List<LogicalExpression> funcArgs=new ArrayList<>();
@@ -149,7 +149,7 @@ public class TestHBaseRecordReader {
                FunctionCall func=new FunctionCall(funcDef,funcArgs,ExpressionPosition.UNKNOWN);
                includes.add(func);
                */
-               includes.add(new ValueExpressions.QuotedString("20130101visit.auto",null));
+               includes.add("20130101visit.auto");
                Constants.FilterType type= Constants.FilterType.XaRowKeyPattern;
                HbaseScanPOP.RowkeyFilterEntry filterEntry=new HbaseScanPOP.RowkeyFilterEntry(type,includes);
                filters.add(filterEntry);
