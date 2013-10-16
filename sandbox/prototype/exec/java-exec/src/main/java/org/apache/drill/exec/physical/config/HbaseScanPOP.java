@@ -124,5 +124,9 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         public List<NamedExpression> getProjections() {
             return projections;
         }
+
+        public void setFilters(List<RowkeyFilterEntry> filters) {
+            this.filters = filters;
+        }
     }
 }

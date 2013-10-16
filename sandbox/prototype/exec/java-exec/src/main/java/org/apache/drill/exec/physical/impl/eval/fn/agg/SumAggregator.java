@@ -64,6 +64,7 @@ public class SumAggregator extends AbstractAggregatingEvaluator {
       m.set(i, sums.get(i));
     }
     m.setValueCount(recordCount);
+    sums = null ;
     return value;
   }
 }
