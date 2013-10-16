@@ -124,6 +124,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     for (int i = 0; i < entries.length; i++) {
       entryKeys[i] = new Pair<>(entries[i].getStartRowKey(),entries[i].getEndRowKey()) ;
       this.entryFilters.add(entries[i].getFilters());
+
+      entries[i].setFilters(null);
+
       List<NamedExpression> exprs = entries[i].getProjections();
       NamedExpression[] exprArr = new NamedExpression[exprs.size()];
       HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];

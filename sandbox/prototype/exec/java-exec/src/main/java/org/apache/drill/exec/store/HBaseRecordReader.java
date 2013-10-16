@@ -232,6 +232,7 @@ public class HBaseRecordReader implements RecordReader {
         sortedEvents = null;
       }
     }
+    config.setFilters(null);
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
