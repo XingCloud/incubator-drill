@@ -58,6 +58,7 @@ public class CountAggregator extends AbstractAggregatingEvaluator {
       m.set(i, counts.get(i));
     }
     m.setValueCount(recordCount);
+    counts = null ;
     return value;
   }
 }
