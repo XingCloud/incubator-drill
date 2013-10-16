@@ -192,21 +192,9 @@ public class BasicOptimizer extends Optimizer {
         // Filters
         List<HbaseScanPOP.RowkeyFilterEntry> filterEntries = new ArrayList<>();
         filter = selection.get(SELECTION_KEY_WORD_FILTER);
-        File sourcedir = new File("/data/log/drill/sourcePatterns");
         if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
           List<LogicalExpression> patterns = getPatterns(filter, table, config);
 
-          String filterExpression = filter.get("expression").textValue();
-//                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"_"+System.nanoTime());
-//                    try {
-//                        Writer writer=new FileWriter(sourcepttFile);
-//                        for(int i=0;i<patterns.size();i++){
-//                            writer.write(((ValueExpressions.QuotedString)patterns.get(i)).value+" ");
-//                        }
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                        throw  new OptimizerException(e.getMessage());
-//                    }
           HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
             Constants.FilterType.XaRowKeyPattern, patterns);
           filterEntries.add(filterEntry);
@@ -423,7 +411,6 @@ public class BasicOptimizer extends Optimizer {
         if (!((FunctionCall) filterExpr).getDefinition().getName().contains("or")) {
           Map<String, UnitFunc> fieldFunc = parseFunctionCall((FunctionCall) filterExpr);
           Set<LogicalExpression> tmpPatterns = new HashSet<>(getPatternsFromColVals(fieldFunc, projectId));
-
           return tmpPatterns;
         } else {
           for (LogicalExpression le : (FunctionCall) filterExpr) {
