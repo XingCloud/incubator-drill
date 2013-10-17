@@ -195,6 +195,7 @@ public class AsyncExecutor {
     } catch (InterruptedException e) {
       e.printStackTrace();  //e:
     }
+    /*
     for (Map.Entry<PhysicalOperator, RecordBatch> entry : pop2OriginalBatch.entrySet()) {
       PhysicalOperator operator = entry.getKey();
       RecordBatch batch = entry.getValue();
@@ -204,7 +205,7 @@ public class AsyncExecutor {
       }catch(Exception e){
         logger.warn("error when killing batch:"+batch, e);
       }
-    }
+    }*/
   }
 
 
@@ -388,7 +389,9 @@ public class AsyncExecutor {
         if (parentRelay instanceof BlockingRelayRecordBatch) {
           //do nothing
         } else {
-          nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true);
+          if(nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true)== RecordBatch.IterOutcome.STOP){
+            return RecordBatch.IterOutcome.STOP;
+          }
         }
       }
       if (errorCause != null || outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {

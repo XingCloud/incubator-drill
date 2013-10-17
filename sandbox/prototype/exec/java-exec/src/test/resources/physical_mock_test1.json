@@ -1,28 +1,78 @@
 {
-    head:{
-        type:"APACHE_DRILL_PHYSICAL",
-        version:"1",
-        generator:{
-            type:"manual"
-        }
-    },
-	graph:[
+  head: {
+    type: "APACHE_DRILL_PHYSICAL",
+    version: "1",
+    generator: {
+      type: "manual"
+    }
+  },
+  graph: [
+    {
+      @id: 1,
+      pop: "mock-scan",
+      url: "http://apache.org",
+      entries: [
         {
-            @id:1,
-            pop:"mock-scan",
-            url: "http://apache.org",
-            entries:[
-            	{records: 100, types: [
-            	  {name: "blue", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "BIGINT", mode: "REQUIRED"}
-            	]}
-            ]
+          records: 100,
+          types: [
+            {
+              name: "blue",
+              type: "BIGINT",
+              mode: "REQUIRED"
+            },
+            {
+              name: "red",
+              type: "BIGINT",
+              mode: "REQUIRED"
+            },
+            {
+              name: "green",
+              type: "BIGINT",
+              mode: "REQUIRED"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      pop: "segment",
+      @id: 2,
+      child: 1,
+      ref: "segment",
+      exprs: [
+        {
+          ref: "green",
+          expr: "green"
+        }
+      ]
+    },
+    {
+      @id: 3,
+      pop: "project",
+      child: 2,
+      exprs: [
+        {
+          ref: "count",
+          expr: "green"
         },
         {
-            @id: 2,
-            child: 1,
-            pop: "screen"
+          ref: "user_num",
+          expr: "red"
+        },
+        {
+          ref: "sum",
+          expr: "sum"
+        },
+        {
+          ref: "query_id",
+          expr: "'1'"
         }
-    ]
+      ]
+    },
+    {
+      @id: 4,
+      child: 3,
+      pop: "screen"
+    }
+  ]
 }

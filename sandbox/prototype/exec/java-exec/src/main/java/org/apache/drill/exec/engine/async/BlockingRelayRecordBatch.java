@@ -58,6 +58,7 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
     //this method would block, until all drivers stopped, and all batches killed.
     executor.submitKill();
     this.postCleanup();
+    incoming.kill();
   }
 
   @Override
