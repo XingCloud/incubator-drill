@@ -176,37 +176,15 @@ public class BasicOptimizer extends Optimizer {
         table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
         // Rowkey range
         rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
-        String filterExpr = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
         rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
         rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-        JsonNode tail = selection.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
-        if (tail != null && !(tail instanceof NullNode)) {
-          tailSrt = tail.get(SELECTION_KEY_ROWKEY_TAIL_START).textValue();
-          tailEnd = tail.get(SELECTION_KEY_ROWKEY_TAIL_END).textValue();
-        } else {
-          tailSrt = "\\x00\\x00\\x00\\x00\\x00";
-          tailEnd = "\\xFF\\xFF\\xFF\\xFF\\xFF";
-        }
-        //rowkeyStart+=tailSrt;
-        //rowkeyEnd+=tailEnd;
+
         // Filters
         List<HbaseScanPOP.RowkeyFilterEntry> filterEntries = new ArrayList<>();
         filter = selection.get(SELECTION_KEY_WORD_FILTER);
-        File sourcedir = new File("/data/log/drill/sourcePatterns");
+
         if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
           List<String> patterns = getPatterns(filter, table, config);
-
-          String filterExpression = filter.get("expression").textValue();
-//                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"_"+System.nanoTime());
-//                    try {
-//                        Writer writer=new FileWriter(sourcepttFile);
-//                        for(int i=0;i<patterns.size();i++){
-//                            writer.write(((ValueExpressions.QuotedString)patterns.get(i)).value+" ");
-//                        }
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                        throw  new OptimizerException(e.getMessage());
-//                    }
           HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
             Constants.FilterType.XaRowKeyPattern, patterns);
           filterEntries.add(filterEntry);

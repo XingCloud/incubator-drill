@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.*;
@@ -67,9 +68,7 @@ public class HBaseRecordReader implements RecordReader {
 
   private Map<String, ValueVector> vvMap;
 
-
   private OutputMutator output;
-
 
   private XAScanner scanner;
   private List<KeyValue> curRes = new ArrayList<>();
@@ -82,6 +81,8 @@ public class HBaseRecordReader implements RecordReader {
   boolean hasMore = true;
   int totalCount = 0 ;
 
+  private Pair<byte[], byte[]> uidRange = new Pair<>();
+
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
     this.context = context;
     this.config = config;
@@ -90,8 +91,9 @@ public class HBaseRecordReader implements RecordReader {
   private void initConfig() throws Exception {
     startRowKey =config.getStartRowKey();
     endRowKey = config.getEndRowKey();
-    if (Arrays.equals(startRowKey, endRowKey))
-      increaseBytesByOne(endRowKey);
+    uidRange.setFirst(Arrays.copyOfRange(startRowKey, startRowKey.length-5, startRowKey.length));
+    uidRange.setSecond(Arrays.copyOfRange(endRowKey, endRowKey.length-5, endRowKey.length));
+
     String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
     projections = new ArrayList<>();
@@ -228,7 +230,7 @@ public class HBaseRecordReader implements RecordReader {
           logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
-        Filter skipScanFilter = new SkipScanFilter(slot);
+        Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
         filterList.addFilter(skipScanFilter);
         sortedEvents = null;
       }

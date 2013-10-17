@@ -92,12 +92,14 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   private List<Boolean> useDFA = new ArrayList<>();
 
   private int currentEntry = 0;
-  private int nextEntry = 1 ;
+  private int nextEntry = 1;
 
-  private long timeCost = 0 ;
+  private long timeCost = 0;
   private long start = 0;
 
-  private boolean hasMore = true ;
+  private boolean hasMore = true;
+
+  private Pair<byte[], byte[]> uidRange = new Pair<>();
 
   public MultiEntryHBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry[] config) {
     this.context = context;
@@ -105,12 +107,21 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
+    //起始和结束hbase的start key和end key
     this.startRowKey = entries[0].getStartRowKey();
     this.endRowKey = entries[entries.length - 1].getEndRowKey();
+    //起始和结束uid的限制（hbase的最后5字节）
+    uidRange.setFirst(Arrays.copyOfRange(startRowKey, startRowKey.length-5, startRowKey.length));
+    uidRange.setSecond(Arrays.copyOfRange(endRowKey, endRowKey.length-5, endRowKey.length));
+
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
     this.entryFilters = new ArrayList<>();
     this.fieldInfoMap = new HashMap<>();
+
+    logger.info("Init config in MultiEntryHBaseRecordReader. Start key: " + Bytes.toStringBinary(startRowKey) +
+      "---End key: " + Bytes.toStringBinary(endRowKey) + "\tStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "---End uid: " +
+      Bytes.toStringBinary(uidRange.getSecond()));
 
     for (int i=0; i<entries.length; i++) {
       useDFA.add(false);
@@ -269,7 +280,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       Collections.sort(slot,keyRangeComparator);
       logger.info("slot sorted "+"first "+Bytes.toStringBinary(slot.get(0).getLowerRange())+
               " end "+Bytes.toStringBinary(slot.get(slot.size()-1).getLowerRange()));
-      Filter skipScanFilter = new SkipScanFilter(slot);
+      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
       filterList.addFilter(skipScanFilter);
     }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
