@@ -125,4 +125,16 @@ public class Helper {
     }
     return tail;
   }
+
+  public static Pair<byte[], byte[]> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
+    long endBucket = 0;
+    if (startBucketPos + offsetBucketLen >= 255) {
+      endBucket = (1l << 40) - 1l;
+    } else {
+      endBucket = startBucketPos + offsetBucketLen;
+      endBucket = endBucket << 32;
+    }
+    long startBucket = startBucketPos << 32;
+    return new Pair(Bytes.toBytes(startBucket), Bytes.toBytes(endBucket));
+  }
 }

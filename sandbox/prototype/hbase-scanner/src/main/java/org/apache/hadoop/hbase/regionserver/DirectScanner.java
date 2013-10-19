@@ -1,12 +1,15 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import com.xingcloud.hbase.manager.*;
+import com.xingcloud.xa.hbase.filter.SkipScanFilter;
+import com.xingcloud.xa.hbase.model.KeyRange;
 import com.xingcloud.xa.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.SkipFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
@@ -127,16 +130,27 @@ public class DirectScanner implements XAScanner {
     String tableName = args[0];
     byte[] srkPre = Bytes.toBytes(args[1]);
     byte[] erkPre = Bytes.toBytes(args[2]);
-    byte[] tailStart = Helper.produceTail(true);
-    byte[] tailEnd = Helper.produceTail(false);
+    int buckets = Integer.parseInt(args[3]);
+    int len = Integer.parseInt(args[4]);
+    Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
+    byte[] MAX = {-1};
 
-    byte[] srk = Helper.bytesCombine(srkPre, tailStart);
-    byte[] erk = Helper.bytesCombine(erkPre, tailEnd);
+    byte[] srk = Helper.bytesCombine(srkPre, MAX, Arrays.copyOfRange(uidRange.getFirst(),
+            3, uidRange.getFirst().length));
+    byte[] erk = Helper.bytesCombine(erkPre, MAX, Arrays.copyOfRange(uidRange.getSecond(),
+            3, uidRange.getSecond().length));
 
     LOG.info("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
-    boolean isFileOnly = Boolean.parseBoolean(args[3]);
-    boolean isMemOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(srk, erk, tableName, isFileOnly, isMemOnly);
+    boolean isFileOnly = false;
+    boolean isMemOnly = false;
+
+    buckets += len;
+    List<KeyRange> slot = new ArrayList<>();
+    KeyRange range = new KeyRange(srk, true, erk, false);
+    slot.add(range);
+    Filter filter = new SkipScanFilter(slot, uidRange);
+
+    DirectScanner scanner = new DirectScanner(srk, erk, tableName, filter, isFileOnly, isMemOnly);
     long counter = 0;
     long sum = 0;
     long st = System.nanoTime();
@@ -169,4 +183,6 @@ public class DirectScanner implements XAScanner {
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
     LOG.info("Uids number: " + uids.size() + "\tCount: " + counter + "\tSum: " + sum);
   }
+
+
 }
