@@ -133,14 +133,15 @@ public class DirectScanner implements XAScanner {
     int buckets = Integer.parseInt(args[3]);
     int len = Integer.parseInt(args[4]);
     Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
+    uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(),3, uidRange.getFirst().length));
+    uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(),
+            3, uidRange.getSecond().length));
     byte[] MAX = {-1};
 
-    byte[] srk = Helper.bytesCombine(srkPre, MAX, Arrays.copyOfRange(uidRange.getFirst(),
-            3, uidRange.getFirst().length));
-    byte[] erk = Helper.bytesCombine(erkPre, MAX, Arrays.copyOfRange(uidRange.getSecond(),
-            3, uidRange.getSecond().length));
+    byte[] srk = Helper.bytesCombine(srkPre, MAX, uidRange.getFirst());
+    byte[] erk = Helper.bytesCombine(erkPre, MAX, uidRange.getSecond());
 
-    LOG.info("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
+    System.out.println("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
     boolean isFileOnly = false;
     boolean isMemOnly = false;
 
