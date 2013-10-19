@@ -157,13 +157,13 @@ public class DirectScanner implements XAScanner {
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
     boolean done = false;
-    Set<Long> uids = new HashSet<>();
+    Set<Integer> uids = new HashSet<>();
     try {
       do {
         results.clear();
         done = scanner.next(results);
         for (KeyValue kv : results) {
-          long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(kv.getRow());
+          int uid = Helper.getUidOfIntFromDEURowKey(kv.getRow());
           uids.add(uid);
           counter++;
           sum += Bytes.toLong(kv.getValue());

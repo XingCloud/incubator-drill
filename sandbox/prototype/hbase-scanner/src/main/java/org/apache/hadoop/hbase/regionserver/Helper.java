@@ -137,4 +137,9 @@ public class Helper {
     long startBucket = startBucketPos << 32;
     return new Pair(Bytes.toBytes(startBucket), Bytes.toBytes(endBucket));
   }
+
+  public static int getUidOfIntFromDEURowKey(byte[] rk) {
+    byte[] uid = Arrays.copyOfRange(rk, rk.length-4, rk.length);
+    return Bytes.toInt(uid);
+  }
 }
