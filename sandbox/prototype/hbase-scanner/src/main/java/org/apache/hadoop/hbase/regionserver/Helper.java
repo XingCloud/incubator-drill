@@ -142,4 +142,14 @@ public class Helper {
     byte[] uid = Arrays.copyOfRange(rk, rk.length-4, rk.length);
     return Bytes.toInt(uid);
   }
+
+  public static int getBucketNum(byte[] rk) {
+    byte[] prefix = {0,0,0};
+    byte[] bucket = Arrays.copyOfRange(rk, rk.length-6, rk.length-5);
+    return Bytes.toInt(bytesCombine(prefix, bucket));
+  }
+
+  public static String getEvent(byte[] rk) {
+    return Bytes.toString(Arrays.copyOfRange(rk, 8, rk.length-6));
+  }
 }

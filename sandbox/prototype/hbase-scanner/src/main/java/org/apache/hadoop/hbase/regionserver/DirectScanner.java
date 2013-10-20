@@ -15,6 +15,9 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -132,6 +135,9 @@ public class DirectScanner implements XAScanner {
     byte[] erkPre = Bytes.toBytes(args[2]);
     int buckets = Integer.parseInt(args[3]);
     int len = Integer.parseInt(args[4]);
+    File file = new File("/tmp/ds.txt");
+    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+
     Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
     uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
     uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(),
@@ -166,7 +172,12 @@ public class DirectScanner implements XAScanner {
           int uid = Helper.getUidOfIntFromDEURowKey(kv.getRow());
           uids.add(uid);
           counter++;
-          sum += Bytes.toLong(kv.getValue());
+          long sumTmp = Bytes.toLong(kv.getValue());
+          sum += sumTmp;
+          String event = Helper.getEvent(kv.getRow());
+          int bucket = Helper.getBucketNum(kv.getRow());
+          writer.write(event + "\t" + bucket + "\t" + uid + "\t"
+                  + sumTmp + "\t" + kv.getTimestamp() + "\n");
         }
 
       } while (done);
@@ -181,6 +192,8 @@ public class DirectScanner implements XAScanner {
         }
       }
     }
+    writer.flush();
+    writer.close();
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
     LOG.info("Uids number: " + uids.size() + "\tCount: " + counter + "\tSum: " + sum);
   }
