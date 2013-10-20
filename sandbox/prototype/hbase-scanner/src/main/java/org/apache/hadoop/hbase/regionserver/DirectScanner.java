@@ -133,7 +133,7 @@ public class DirectScanner implements XAScanner {
     int buckets = Integer.parseInt(args[3]);
     int len = Integer.parseInt(args[4]);
     Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
-    uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(),3, uidRange.getFirst().length));
+    uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
     uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(),
             3, uidRange.getSecond().length));
     byte[] MAX = {-1};
