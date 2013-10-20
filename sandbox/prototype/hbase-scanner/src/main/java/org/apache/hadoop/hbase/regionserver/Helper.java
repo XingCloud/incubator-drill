@@ -145,7 +145,7 @@ public class Helper {
 
   public static int getBucketNum(byte[] rk) {
     byte[] prefix = {0,0,0};
-    byte[] bucket = Arrays.copyOfRange(rk, rk.length-6, rk.length-5);
+    byte[] bucket = Arrays.copyOfRange(rk, rk.length-5, rk.length-4);
     return Bytes.toInt(bytesCombine(prefix, bucket));
   }
 
