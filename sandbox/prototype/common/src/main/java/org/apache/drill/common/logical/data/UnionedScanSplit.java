@@ -34,4 +34,8 @@ public class UnionedScanSplit extends SingleInputOperator {
   public Iterator<LogicalOperator> iterator() {
     return Iterators.singletonIterator(getInput());
   }
+
+  public void setEntries(int[] entries) {
+    this.entries = entries;
+  }
 }
