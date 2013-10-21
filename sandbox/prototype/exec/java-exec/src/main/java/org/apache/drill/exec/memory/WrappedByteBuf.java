@@ -3,6 +3,7 @@ package org.apache.drill.exec.memory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufProcessor;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -758,7 +759,8 @@ public class WrappedByteBuf extends ByteBuf {
     if(refCount == 0){
       allocator.free(byteBuf);
     }else if(refCount < 0){
-      logger.error("Ref count less than zero .");
+      logger.error("Ref count zero .");
+      throw new DrillRuntimeException("Ref count zero") ;
     }
     return byteBuf.release();
   }
