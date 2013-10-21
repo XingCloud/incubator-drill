@@ -18,15 +18,15 @@ import java.util.Iterator;
 
 public class SingleRelayRecordBatch implements RelayRecordBatch {
 
-  static final Logger logger = LoggerFactory.getLogger(SingleRelayRecordBatch.class);  
+  static final Logger logger = LoggerFactory.getLogger(SingleRelayRecordBatch.class);
 
   RecordBatch incoming;
   RecordBatch parent;
-  
+
   RecordFrame my = new RecordFrame();
- 
+
   boolean killed = false;
-  
+
   private VectorHolder vh = null;
 
   @Override
@@ -47,7 +47,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   @Override
   public void kill() {
     postCleanup();
-//    incoming.kill();
+    incoming.kill();
   }
 
   @Override
@@ -76,15 +76,15 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public IterOutcome next() {
-    if(null != getCurrent().nextErrorCause){
+    if (null != getCurrent().nextErrorCause) {
       throw getCurrent().nextErrorCause;
     }
-    if(null==getCurrent().outcome){
+    if (null == getCurrent().outcome) {
       return IterOutcome.NOT_YET;
     }
     IterOutcome ret = getCurrent().outcome;
     getCurrent().outcome = null;
-    if(ret == null){
+    if (ret == null) {
       throw new NullPointerException("next null, and returned!!");
     }
     return ret;
@@ -102,16 +102,16 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public void markNextFailed(RuntimeException cause) {
-    logger.debug("throwing up errors:{}",cause);
+    logger.debug("throwing up errors:{}", cause);
     getCurrent().nextErrorCause = cause;
   }
 
   @Override
-  public void mirrorResultFromIncoming(IterOutcome incomingOutcome, boolean needTransfer){
+  public void mirrorResultFromIncoming(IterOutcome incomingOutcome, boolean needTransfer) {
     //logger.debug("mirroring results...");
 
     mirrorResultFromIncoming(incomingOutcome, incoming, getCurrent(), needTransfer);
-    if(incomingOutcome == IterOutcome.OK_NEW_SCHEMA){
+    if (incomingOutcome == IterOutcome.OK_NEW_SCHEMA) {
       vh = new VectorHolder(getCurrent().vectors);
     }
     //logger.info("Vector size : " + getCurrent().vectors.size() + " : " + incoming.getClass() );
@@ -120,7 +120,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   @Override
   public void postCleanup() {
     killed = true;
-    cleanupVectors(getCurrent());    
+    cleanupVectors(getCurrent());
   }
 
   @Override
@@ -167,11 +167,11 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
         current.schema = incoming.getSchema();
         break;
     }
-    
+
   }
 
-  public void cleanupVectors(RecordFrame current){
-    if(current.vectors!=null){
+  public void cleanupVectors(RecordFrame current) {
+    if (current.vectors != null) {
       for (int i = 0; i < current.vectors.size(); i++) {
         ValueVector vector = current.vectors.get(i);
         vector.clear();
@@ -179,11 +179,11 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
       current.vectors.clear();
     }
     current.vectors = new ArrayList<>();
-    if(current.sv2 != null){
+    if (current.sv2 != null) {
       current.sv2.clear();
       current.sv2 = null;
     }
-    if(current.sv4 != null){
+    if (current.sv4 != null) {
       //todo sv4 clear
       current.sv4 = null;
     }
