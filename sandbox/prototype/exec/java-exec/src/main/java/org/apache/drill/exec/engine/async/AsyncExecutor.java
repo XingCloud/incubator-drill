@@ -321,7 +321,7 @@ public class AsyncExecutor {
   private RecordBatch.IterOutcome nextUpward(RecordBatch batch, boolean sync) {
     Object syncer = null;
     if(sync){
-      syncer = batch;
+      syncer = AsyncExecutor.this;
     }else{
       syncer = new Object();
     }
