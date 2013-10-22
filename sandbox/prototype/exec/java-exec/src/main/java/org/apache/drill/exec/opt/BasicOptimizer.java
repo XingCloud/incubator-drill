@@ -145,7 +145,7 @@ public class BasicOptimizer extends Optimizer {
         JSONOptions selection = scan.getSelection();
         FieldReference ref = scan.getOutputReference();
         if (selection == null) {
-          throw new OptimizerException("Selection is null");
+          throw new OptimizerException("UnionedScan's selection is null");
         }
         List<HbaseScanEntry> entries = new ArrayList<>();
         long start = System.nanoTime();
@@ -161,16 +161,12 @@ public class BasicOptimizer extends Optimizer {
       OptimizerException {
       //TODO where is ref?
       ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
-      JsonNode root = selections.getRoot(), filter, rowkey, projections, filters;
-      String table, rowkeyStart, rowkeyEnd, tailSrt, tailEnd, projectionString, filterString, filterType;
-      int selectionSize = root.size();
+      JsonNode root = selections.getRoot(), filter, rowkey, projections;
+      String table, rowkeyStart, rowkeyEnd, projectionString;
       HbaseScanPOP.HbaseScanEntry entry;
-      List<LogicalExpression> filterList;
       List<NamedExpression> projectionList;
       NamedExpression ne;
 
-      HbaseScanPOP.RowkeyFilterEntry rowkeyFilterEntry;
-      Constants.FilterType filterTypeFR;
       for (JsonNode selection : root) {
         // Table name
         table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
@@ -204,7 +200,11 @@ public class BasicOptimizer extends Optimizer {
           }
           projectionList.add(ne);
         }
-        entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterEntries, projectionList);
+        JsonNode tailRange = selection.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
+        String startUid = tailRange.get(SELECTION_KEY_ROWKEY_TAIL_START).textValue();
+        String endUid = tailRange.get(SELECTION_KEY_ROWKEY_TAIL_END).textValue();
+
+        entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterEntries, projectionList, startUid, endUid);
         entries.add(entry);
       }
     }

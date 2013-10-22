@@ -111,8 +111,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     this.startRowKey = entries[0].getStartRowKey();
     this.endRowKey = entries[entries.length - 1].getEndRowKey();
     //起始和结束uid的限制（hbase的最后5字节）
-    uidRange.setFirst(Arrays.copyOfRange(startRowKey, startRowKey.length-5, startRowKey.length));
-    uidRange.setSecond(Arrays.copyOfRange(endRowKey, endRowKey.length-5, endRowKey.length));
+    uidRange.setFirst(entries[0].getStartUid());
+    uidRange.setSecond(entries[0].getEndUid());
 
     this.tableName = entries[0].getTableName();
     this.entryKeys = new Pair[entries.length];
@@ -275,17 +275,15 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
       patterns = null;
-      logger.info("slot before sort "+"first "+Bytes.toStringBinary(slot.get(0).getLowerRange())+
-                " end "+Bytes.toStringBinary(slot.get(slot.size()-1).getLowerRange()));
       Collections.sort(slot,keyRangeComparator);
-      logger.info("slot sorted "+"first "+Bytes.toStringBinary(slot.get(0).getLowerRange())+
-              " end "+Bytes.toStringBinary(slot.get(slot.size()-1).getLowerRange()));
       Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
       filterList.addFilter(skipScanFilter);
     }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     StringBuilder summary = new StringBuilder("Start key: " + Bytes.toStringBinary(startRowKey) +
-            "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size()+"\n");
+            "\tEnd key: " + Bytes.toStringBinary(endRowKey) +
+            "Start uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
+                    + "\nKey range size: " + slot.size()+"\n");
     for (KeyRange range : slot) {
       summary.append(range).append("\n");
     }

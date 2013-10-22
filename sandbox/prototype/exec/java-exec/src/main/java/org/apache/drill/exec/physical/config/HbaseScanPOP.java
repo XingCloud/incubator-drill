@@ -84,16 +84,21 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
         private byte[] endRowKey;
         private List<RowkeyFilterEntry> filters;
         private List<NamedExpression>   projections;
+        private byte[] startUid;
+        private byte[] endUid;
 
         @JsonCreator
         public HbaseScanEntry(@JsonProperty("table") String tableName, @JsonProperty("startRowKey") String startRowKey,
                               @JsonProperty("endRowKey") String endRowKey, @JsonProperty("filters") List<RowkeyFilterEntry> filters,
-                              @JsonProperty("projections") List<NamedExpression> projections){
+                              @JsonProperty("projections") List<NamedExpression> projections,
+                              @JsonProperty("startUid") String startUid, @JsonProperty("endUid") String endUid){
             this.tableName=tableName;
             this.startRowKey= Bytes.toBytesBinary(startRowKey);
             this.endRowKey= Bytes.toBytesBinary(endRowKey);
             this.filters=filters;
             this.projections=projections;
+            this.startUid = Bytes.toBytesBinary(startUid);
+            this.endUid = Bytes.toBytesBinary(endUid);
         }
 
         @Override
@@ -127,6 +132,14 @@ public class HbaseScanPOP extends AbstractScan<HbaseScanPOP.HbaseScanEntry> {
 
         public void setFilters(List<RowkeyFilterEntry> filters) {
             this.filters = filters;
+        }
+
+        public byte[] getStartUid() {
+          return startUid;
+        }
+
+        public byte[] getEndUid() {
+          return endUid;
         }
     }
 }
