@@ -233,7 +233,7 @@ public class AsyncExecutor {
           loopNext:
           while (!stopped) {
             try {
-              RecordBatch.IterOutcome outcome = nextUpward(split, false);
+              RecordBatch.IterOutcome outcome = nextUpward(split);
               switch (outcome) {
                 case NONE:
                   break loopNext;
@@ -289,7 +289,7 @@ public class AsyncExecutor {
         loop:
         while (!stopped) {
           try {
-            RecordBatch.IterOutcome outcome = nextUpward(scanBatch, false);
+            RecordBatch.IterOutcome outcome = nextUpward(scanBatch);
             switch (outcome) {
               case NONE:
               case STOP:
@@ -318,7 +318,7 @@ public class AsyncExecutor {
     logger.info("Running drivers : {} ", driversStopped.getCount());
   }
 
-  private RecordBatch.IterOutcome nextUpward(RecordBatch batch, boolean sync) {
+  private RecordBatch.IterOutcome nextUpward(RecordBatch batch) {
 
     RecordBatch.IterOutcome outcome = null;
     Throwable errorCause = null;
@@ -396,7 +396,7 @@ public class AsyncExecutor {
           if (parentRelay instanceof BlockingRelayRecordBatch) {
             //do nothing
           } else {
-            if (nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true) == RecordBatch.IterOutcome.STOP) {
+            if (nextUpward(((SingleRelayRecordBatch) parentRelay).parent) == RecordBatch.IterOutcome.STOP) {
               return RecordBatch.IterOutcome.STOP;
             }
           }
