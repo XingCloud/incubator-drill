@@ -327,8 +327,6 @@ public class AsyncExecutor {
       outcome = batch.next();
     } catch (Throwable e) {
       errorCause = e;
-    } finally {
-      first = false;
     }
 
     synchronized (AsyncExecutor.this) {
@@ -341,6 +339,8 @@ public class AsyncExecutor {
           } catch (Throwable e) {
             errorCause = e;
           }
+        }else{
+          first = false;
         }
         //wrap errorCause in RuntimeException if not
         if (errorCause != null && !(errorCause instanceof RuntimeException)) {
