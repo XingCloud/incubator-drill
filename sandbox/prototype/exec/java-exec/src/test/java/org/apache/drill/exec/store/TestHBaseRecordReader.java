@@ -26,6 +26,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class TestHBaseRecordReader {
+  public static final String MIN_UID = "\\x00\\x00\\x00\\x00\\x00";
+  public static final String MAX_UID = "\\xFF\\xFF\\xFF\\xFF\\xFF";
+
    @Test
    public void  readEventTable(){
        String startKey = System.getProperty("hbase.start");
@@ -136,7 +139,7 @@ public class TestHBaseRecordReader {
                 projections.add(ue1);
                 projections.add(ue2);
                 projections.add(ue3);
-                entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,null,projections);
+                entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,null,projections, MAX_UID, MIN_UID);
                 return entry;
            case "event":
 
@@ -160,7 +163,7 @@ public class TestHBaseRecordReader {
                projections.add(e1);
                projections.add(e2);
                projections.add(e3);
-               entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,filters,projections);
+               entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,filters,projections, MAX_UID, MIN_UID);
                return entry;
 
     }
