@@ -1,5 +1,6 @@
 package org.apache.drill.exec.engine.async;
 
+import com.google.common.collect.Lists;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.impl.VectorHolder;
@@ -84,6 +85,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
       return IterOutcome.NOT_YET;
     } else {
       my = resultQueue.poll();
+      vh = new VectorHolder(my.vectors);
       return my.outcome;
     }
   }
@@ -109,14 +111,12 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
     //logger.debug("mirroring results...");
 
     RecordFrame recordFrame = new RecordFrame();
+    recordFrame.vectors = Lists.newArrayList();
     mirrorResultFromIncoming(incomingOutcome, incoming, recordFrame, needTransfer);
     try {
       resultQueue.offer(recordFrame, Long.MAX_VALUE, TimeUnit.SECONDS);
     } catch (Exception e) {
        e.printStackTrace();
-    }
-    if (incomingOutcome == IterOutcome.OK_NEW_SCHEMA) {
-      vh = new VectorHolder(getCurrent().vectors);
     }
     //logger.info("Vector size : " + getCurrent().vectors.size() + " : " + incoming.getClass() );
   }
