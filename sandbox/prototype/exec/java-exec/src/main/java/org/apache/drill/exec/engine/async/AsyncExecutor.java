@@ -319,21 +319,28 @@ public class AsyncExecutor {
   }
 
   private RecordBatch.IterOutcome nextUpward(RecordBatch batch, boolean sync) {
-    Object syncer = null;
-    if(sync){
-      syncer = AsyncExecutor.this;
-    }else{
-      syncer = new Object();
-    }
-    synchronized (syncer){
+
     RecordBatch.IterOutcome outcome = null;
     Throwable errorCause = null;
+    boolean first = true ;
+    try{
+      outcome = batch.next();
+    } catch (Throwable e){
+      errorCause = e;
+    } finally {
+      first = false ;
+    }
+
+    synchronized (AsyncExecutor.this){
+
     while (true) {
       boolean parentKilled = false;
-      try {
-        outcome = batch.next();
-      } catch (Throwable e) {
-        errorCause = e;
+      if (!first) {
+        try {
+          outcome = batch.next();
+        } catch (Throwable e) {
+          errorCause = e;
+        }
       }
       //wrap errorCause in RuntimeException if not
       if(errorCause != null && !(errorCause instanceof RuntimeException)){
