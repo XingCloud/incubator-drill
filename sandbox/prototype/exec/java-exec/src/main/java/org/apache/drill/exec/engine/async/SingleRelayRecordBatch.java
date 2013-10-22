@@ -15,10 +15,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   static final Logger logger = LoggerFactory.getLogger(SingleRelayRecordBatch.class);
+
+  ArrayBlockingQueue<RecordFrame> resultQueue = new ArrayBlockingQueue<RecordFrame>(8);
 
   RecordBatch incoming;
   RecordBatch parent;
@@ -76,18 +80,12 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public IterOutcome next() {
-    if (null != getCurrent().nextErrorCause) {
-      throw getCurrent().nextErrorCause;
-    }
-    if (null == getCurrent().outcome) {
+    if (resultQueue.isEmpty()) {
       return IterOutcome.NOT_YET;
+    } else {
+      my = resultQueue.poll();
+      return my.outcome;
     }
-    IterOutcome ret = getCurrent().outcome;
-    getCurrent().outcome = null;
-    if (ret == null) {
-      throw new NullPointerException("next null, and returned!!");
-    }
-    return ret;
   }
 
   @Override
@@ -110,7 +108,13 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   public void mirrorResultFromIncoming(IterOutcome incomingOutcome, boolean needTransfer) {
     //logger.debug("mirroring results...");
 
-    mirrorResultFromIncoming(incomingOutcome, incoming, getCurrent(), needTransfer);
+    RecordFrame recordFrame = new RecordFrame();
+    mirrorResultFromIncoming(incomingOutcome, incoming, recordFrame, needTransfer);
+    try {
+      resultQueue.offer(recordFrame, Long.MAX_VALUE, TimeUnit.SECONDS);
+    } catch (Exception e) {
+       e.printStackTrace();
+    }
     if (incomingOutcome == IterOutcome.OK_NEW_SCHEMA) {
       vh = new VectorHolder(getCurrent().vectors);
     }
@@ -120,6 +124,9 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   @Override
   public void postCleanup() {
     killed = true;
+    RecordFrame recordFrame = null ;
+    while((recordFrame = resultQueue.poll()) != null)
+    cleanupVectors(recordFrame);
     cleanupVectors(getCurrent());
   }
 

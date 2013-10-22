@@ -322,91 +322,78 @@ public class AsyncExecutor {
 
     RecordBatch.IterOutcome outcome = null;
     Throwable errorCause = null;
-    boolean first = true;
-    try {
-      outcome = batch.next();
-    } catch (Throwable e) {
-      errorCause = e;
-    }
-
-    synchronized (AsyncExecutor.this) {
-
-      while (true) {
-        boolean parentKilled = false;
-        if (!first) {
-          try {
-            outcome = batch.next();
-          } catch (Throwable e) {
-            errorCause = e;
-          }
-        }else{
-          first = false;
-        }
-        //wrap errorCause in RuntimeException if not
-        if (errorCause != null && !(errorCause instanceof RuntimeException)) {
-          errorCause = new RuntimeException(errorCause);
-        }
-        //check whether outcome is null
-        if (errorCause == null && outcome == null) {
-          errorCause = new NullPointerException("batch returns outcome NULL:" + batch);
-        }
-        if (outcome == RecordBatch.IterOutcome.NOT_YET) {
-          //data not ready yet, no need to continue upward
-          return outcome;
-        }
-        List<RelayRecordBatch> parents = getParentRelaysFor(batch);
-        if (parents.size() == 1 && parents.get(0) instanceof BlockingRelayRecordBatch) {
-          //it's Root up there. so transfer vectors early.
-          BlockingRelayRecordBatch blockingRelay = (BlockingRelayRecordBatch) parents.get(0);
-          if (blockingRelay.isKilled()) {
-            parentKilled = true;
+    while (true) {
+      boolean parentKilled = false;
+      try {
+        outcome = batch.next();
+      } catch (Throwable e) {
+        errorCause = e;
+      }
+      //wrap errorCause in RuntimeException if not
+      if (errorCause != null && !(errorCause instanceof RuntimeException)) {
+        errorCause = new RuntimeException(errorCause);
+      }
+      //check whether outcome is null
+      if (errorCause == null && outcome == null) {
+        errorCause = new NullPointerException("batch returns outcome NULL:" + batch);
+      }
+      if (outcome == RecordBatch.IterOutcome.NOT_YET) {
+        //data not ready yet, no need to continue upward
+        return outcome;
+      }
+      List<RelayRecordBatch> parents = getParentRelaysFor(batch);
+      if (parents.size() == 1 && parents.get(0) instanceof BlockingRelayRecordBatch) {
+        //it's Root up there. so transfer vectors early.
+        BlockingRelayRecordBatch blockingRelay = (BlockingRelayRecordBatch) parents.get(0);
+        if (blockingRelay.isKilled()) {
+          parentKilled = true;
+        } else {
+          if (errorCause != null) {
+            blockingRelay.markNextFailed((RuntimeException) errorCause);
           } else {
-            if (errorCause != null) {
-              blockingRelay.markNextFailed((RuntimeException) errorCause);
-            } else {
-              blockingRelay.mirrorResultFromIncoming(outcome, true);
-            }
-          }
-        } else {// not BlockingRelayRecordBatch
-          for (int i = 0; i < parents.size(); i++) {
-            RelayRecordBatch parentRelay = parents.get(i);
-            if (parentRelay.isKilled()) {
-              parentKilled = true;
-              break;
-            } else {
-              if (errorCause != null) {
-                parentRelay.markNextFailed((RuntimeException) errorCause);
-              } else {
-                parentRelay.mirrorResultFromIncoming(outcome, false);
-              }
-            }
-          }
-          if (outcome == RecordBatch.IterOutcome.OK_NEW_SCHEMA || outcome == RecordBatch.IterOutcome.OK) {
-            for (ValueVector v : batch) {
-              v.clear();
-            }
+            blockingRelay.mirrorResultFromIncoming(outcome, true);
           }
         }
-
-        if (parentKilled) {
-          return RecordBatch.IterOutcome.STOP;
-        }
+      } else {// not BlockingRelayRecordBatch
         for (int i = 0; i < parents.size(); i++) {
           RelayRecordBatch parentRelay = parents.get(i);
-          if (parentRelay instanceof BlockingRelayRecordBatch) {
-            //do nothing
+          if (parentRelay.isKilled()) {
+            parentKilled = true;
+            break;
           } else {
-            if (nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true) == RecordBatch.IterOutcome.STOP) {
-              return RecordBatch.IterOutcome.STOP;
+            if (errorCause != null) {
+              parentRelay.markNextFailed((RuntimeException) errorCause);
+            } else {
+              parentRelay.mirrorResultFromIncoming(outcome, false);
             }
           }
         }
-        if (errorCause != null || outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
-          break;
+        if (outcome == RecordBatch.IterOutcome.OK_NEW_SCHEMA || outcome == RecordBatch.IterOutcome.OK) {
+          for (ValueVector v : batch) {
+            v.clear();
+          }
         }
-      }//while(true)
-      return outcome;
-    }
+      }
+
+      if (parentKilled) {
+        return RecordBatch.IterOutcome.STOP;
+      }
+      for (int i = 0; i < parents.size(); i++) {
+        RelayRecordBatch parentRelay = parents.get(i);
+        if (parentRelay instanceof BlockingRelayRecordBatch) {
+          //do nothing
+        } else {
+          if (nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true) == RecordBatch.IterOutcome.STOP) {
+            return RecordBatch.IterOutcome.STOP;
+          }
+        }
+      }
+      if (errorCause != null || outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
+        break;
+      }
+    }//while(true)
+    return outcome;
+
   }
 
 }
