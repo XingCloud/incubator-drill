@@ -10,12 +10,17 @@ import org.apache.drill.exec.physical.impl.RootExec;
 import org.apache.drill.exec.physical.impl.ScanBatch;
 import org.apache.drill.exec.physical.impl.unionedscan.UnionedScanBatch;
 import org.apache.drill.exec.record.RecordBatch;
+import org.apache.drill.exec.record.RecordBatch.IterOutcome;
+import org.apache.drill.exec.rpc.NamedThreadFactory;
 import org.apache.drill.exec.vector.ValueVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class AsyncExecutor {
 
@@ -34,6 +39,8 @@ public class AsyncExecutor {
   private List<LeafDriver> drivers = new ArrayList<>();
 
   private CountDownLatch driversStopped = null;
+
+  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(10), new NamedThreadFactory("Executor-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
@@ -182,32 +189,14 @@ public class AsyncExecutor {
       LeafDriver driver = drivers.get(i);
       driver.stop();
     }
-
-    cleanupBatches();
-  }
-
-  /**
-   * wait all drivers to stop, and clean every batches
-   */
-  private void cleanupBatches() {
+    executor.shutdown();
     try {
       driversStopped.await();
+      executor.awaitTermination(10,TimeUnit.MINUTES);
     } catch (InterruptedException e) {
-      e.printStackTrace();  //e:
+      e.printStackTrace();
     }
-    /*
-    for (Map.Entry<PhysicalOperator, RecordBatch> entry : pop2OriginalBatch.entrySet()) {
-      PhysicalOperator operator = entry.getKey();
-      RecordBatch batch = entry.getValue();
-      try{
-        batch.kill();
-        //kill batches should kill its incoming, that's all relay batches
-      }catch(Exception e){
-        logger.warn("error when killing batch:"+batch, e);
-      }
-    }*/
   }
-
 
   public class UnionedScanDriver implements LeafDriver {
     UnionedScanBatch unionedScanBatch;
@@ -226,27 +215,19 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.info("UnionedScanBatch driver[" + unionedScanBatch + "] start");
+        logger.info("UnionedScanBatch driver[{}] start",unionedScanBatch);
         loopSplit:
         for (int i = 0; i < splits.size(); i++) {
           UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
           loopNext:
           while (!stopped) {
-            try {
-              RecordBatch.IterOutcome outcome = nextUpward(split, false);
-              switch (outcome) {
-                case NONE:
-                  break loopNext;
-                case STOP:
-                  break loopSplit;
-              }
-            } catch (Exception e) {
-              logger.warn("driver failed.", e);
-              break loopSplit;
-            }
+            RecordBatch.IterOutcome o = split.next();
+            upward(split, o);
+            if (o == IterOutcome.NONE)
+              break loopNext;
           }
         }
-        logger.info("UnionedScanBatch driver[" + unionedScanBatch + "] exit");
+        logger.info("UnionedScanBatch driver[{}] exit",unionedScanBatch);
       } finally {
         driverStopped(this);
       }
@@ -285,23 +266,14 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.info("ScanBatch driver[" + scanBatch + "] start");
-        loop:
+        logger.info("ScanBatch driver[{}] start .",scanBatch);
         while (!stopped) {
-          try {
-            RecordBatch.IterOutcome outcome = nextUpward(scanBatch, false);
-            switch (outcome) {
-              case NONE:
-              case STOP:
-                break loop;
-            }
-          } catch (Exception e) {
-            logger.warn("driver failed:", e);
+          IterOutcome o = scanBatch.next();
+          upward(scanBatch, o);
+          if (o == IterOutcome.NONE)
             break;
-          }
-
         }
-        logger.info("ScanBatch driver[" + scanBatch + "] exit");
+        logger.info("ScanBatch driver[{}] exit .",scanBatch);
       } finally {
         driverStopped(this);
       }
@@ -318,94 +290,55 @@ public class AsyncExecutor {
     logger.info("Running drivers : {} ", driversStopped.getCount());
   }
 
-  private RecordBatch.IterOutcome nextUpward(RecordBatch batch, boolean sync) {
+  public void upward(RecordBatch recordBatch, IterOutcome o) {
+    List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
+    for (RelayRecordBatch parent : parents) {
+      parent.mirrorAndStash(o);
+      if (parent instanceof SingleRelayRecordBatch) {
+        addTask(((SingleRelayRecordBatch) parent).parent);
+      }
+    }
+    if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
+      for (ValueVector v : recordBatch) {
+        v.clear();
+      }
+    }
+  }
 
-    RecordBatch.IterOutcome outcome = null;
-    Throwable errorCause = null;
-    boolean first = true;
-    try {
-      outcome = batch.next();
-    } catch (Throwable e) {
-      errorCause = e;
+  public void addTask(RecordBatch recordBatch) {
+    Task task = new Task(recordBatch);
+    executor.submit(task);
+  }
+
+  class Task implements Runnable {
+    RecordBatch recordBatch;
+
+    Task(RecordBatch recordBatch) {
+      this.recordBatch = recordBatch;
     }
 
-    synchronized (AsyncExecutor.this) {
-
-      while (true) {
-        boolean parentKilled = false;
-        if (!first) {
-          try {
-            outcome = batch.next();
-          } catch (Throwable e) {
-            errorCause = e;
-          }
-        }else{
-          first = false;
-        }
-        //wrap errorCause in RuntimeException if not
-        if (errorCause != null && !(errorCause instanceof RuntimeException)) {
-          errorCause = new RuntimeException(errorCause);
-        }
-        //check whether outcome is null
-        if (errorCause == null && outcome == null) {
-          errorCause = new NullPointerException("batch returns outcome NULL:" + batch);
-        }
-        if (outcome == RecordBatch.IterOutcome.NOT_YET) {
-          //data not ready yet, no need to continue upward
-          return outcome;
-        }
-        List<RelayRecordBatch> parents = getParentRelaysFor(batch);
-        if (parents.size() == 1 && parents.get(0) instanceof BlockingRelayRecordBatch) {
-          //it's Root up there. so transfer vectors early.
-          BlockingRelayRecordBatch blockingRelay = (BlockingRelayRecordBatch) parents.get(0);
-          if (blockingRelay.isKilled()) {
-            parentKilled = true;
-          } else {
-            if (errorCause != null) {
-              blockingRelay.markNextFailed((RuntimeException) errorCause);
-            } else {
-              blockingRelay.mirrorResultFromIncoming(outcome, true);
-            }
-          }
-        } else {// not BlockingRelayRecordBatch
-          for (int i = 0; i < parents.size(); i++) {
-            RelayRecordBatch parentRelay = parents.get(i);
-            if (parentRelay.isKilled()) {
-              parentKilled = true;
-              break;
-            } else {
-              if (errorCause != null) {
-                parentRelay.markNextFailed((RuntimeException) errorCause);
-              } else {
-                parentRelay.mirrorResultFromIncoming(outcome, false);
+    @Override
+    public void run() {
+      synchronized (recordBatch) {
+        while (true) {
+          IterOutcome o = recordBatch.next();
+          switch (o) {
+            case OK_NEW_SCHEMA:
+            case OK:
+            case NONE:
+              upward(recordBatch, o);
+              if (o == IterOutcome.NONE) {
+                return;
               }
-            }
-          }
-          if (outcome == RecordBatch.IterOutcome.OK_NEW_SCHEMA || outcome == RecordBatch.IterOutcome.OK) {
-            for (ValueVector v : batch) {
-              v.clear();
-            }
-          }
-        }
-
-        if (parentKilled) {
-          return RecordBatch.IterOutcome.STOP;
-        }
-        for (int i = 0; i < parents.size(); i++) {
-          RelayRecordBatch parentRelay = parents.get(i);
-          if (parentRelay instanceof BlockingRelayRecordBatch) {
-            //do nothing
-          } else {
-            if (nextUpward(((SingleRelayRecordBatch) parentRelay).parent, true) == RecordBatch.IterOutcome.STOP) {
-              return RecordBatch.IterOutcome.STOP;
-            }
+              break;
+            case NOT_YET:
+              return;
+            case STOP:
+              submitKill();
+              return;
           }
         }
-        if (errorCause != null || outcome == RecordBatch.IterOutcome.NONE || outcome == RecordBatch.IterOutcome.STOP || outcome == RecordBatch.IterOutcome.NOT_YET) {
-          break;
-        }
-      }//while(true)
-      return outcome;
+      }
     }
   }
 

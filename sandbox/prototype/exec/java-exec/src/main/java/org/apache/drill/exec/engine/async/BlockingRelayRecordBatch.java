@@ -22,8 +22,6 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
   
   AsyncExecutor executor = null;
   
-  RecordFrame current = null;
-
   public BlockingRelayRecordBatch(AsyncExecutor executor) {
     this.executor = executor;
   }
@@ -54,8 +52,6 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
 
   @Override
   public void kill() {
-    //clean up after driver shutdown
-    //this method would block, until all drivers stopped, and all batches killed.
     executor.submitKill();
     this.postCleanup();
     incoming.kill();
@@ -69,9 +65,6 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
     }
   }
 
-  public RecordFrame getCurrent() {
-    return current;
-  }
 
   @Override
   public void markNextFailed(RuntimeException cause) {
@@ -84,13 +77,7 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
   }
 
   @Override
-  public void mirrorResultFromIncoming(IterOutcome incomingOutcome, boolean needTransfer) {
-    logger.debug("mirroring results...{}",incomingOutcome);
-    RecordFrame frame = new RecordFrame();
-    super.mirrorResultFromIncoming(incomingOutcome, incoming, frame, needTransfer);
-    resultQueue.add(frame);
-    if(incomingOutcome == null){
-      logger.warn("incomingOutcome null!", new NullPointerException());      
-    }
+  public void stash(RecordFrame recordFrame) {
+    resultQueue.add(recordFrame);
   }
 }
