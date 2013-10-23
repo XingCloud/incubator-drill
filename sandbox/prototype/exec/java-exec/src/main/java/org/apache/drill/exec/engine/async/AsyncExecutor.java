@@ -222,6 +222,7 @@ public class AsyncExecutor {
           loopNext:
           while (!stopped) {
             RecordBatch.IterOutcome o = split.next();
+            logger.info("{} , {}",this.getClass(),o);
             upward(split, o);
             if (o == IterOutcome.NONE)
               break loopNext;
