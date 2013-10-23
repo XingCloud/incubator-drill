@@ -261,9 +261,10 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public int getRecordCount() {
+      /*
       if(lastReaderEntry != mySortedEntry){
         throw new IllegalStateException("last reader entry:"+lastReaderEntry+", current split index:"+original2sorted[pop.getEntries()[0]]);
-      }
+      }*/
       return recordCount;
       
     }
