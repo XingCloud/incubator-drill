@@ -294,6 +294,8 @@ public class AsyncExecutor {
     List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
     for (RelayRecordBatch parent : parents) {
       parent.mirrorAndStash(o);
+    }
+    for(RelayRecordBatch parent : parents){
       if (parent instanceof SingleRelayRecordBatch) {
         addTask(((SingleRelayRecordBatch) parent).parent);
       }
