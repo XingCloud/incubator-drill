@@ -293,7 +293,6 @@ public class AsyncExecutor {
   public void upward(RecordBatch recordBatch, IterOutcome o) {
     List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
     for (RelayRecordBatch parent : parents) {
-      logger.info("Mirror and stash to {}",parent.getClass());
       parent.mirrorAndStash(o);
     }
     for(RelayRecordBatch parent : parents){
@@ -309,7 +308,6 @@ public class AsyncExecutor {
   }
 
   public void addTask(RecordBatch recordBatch) {
-    logger.info("Add task {}",recordBatch.getClass());
     Task task = new Task(recordBatch);
     executor.submit(task);
   }
@@ -332,10 +330,12 @@ public class AsyncExecutor {
             case NONE:
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
+                logger.info("End by None . ");
                 return;
               }
               break;
             case NOT_YET:
+              logger.info("End by Not_Yet .");
               return;
             case STOP:
               submitKill();
