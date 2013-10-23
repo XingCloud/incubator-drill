@@ -296,23 +296,27 @@ public class AsyncExecutor {
   }
 
   public void upward(RecordBatch recordBatch, IterOutcome o) {
-    List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
-    for (RelayRecordBatch parent : parents) {
-      logger.info("Mirror {} to {}", o, parent);
-      parent.mirrorAndStash(o);
-    }
-    for (RelayRecordBatch parent : parents) {
-      if (parent instanceof SingleRelayRecordBatch) {
-        logger.info("{} to {} , {}", recordBatch.getClass().getName(), ((SingleRelayRecordBatch) parent).parent.getClass().getName(), o);
-        addTask(((SingleRelayRecordBatch) parent).parent);
-      } else {
-        logger.info("Output to BlockRelayRecordBatch .");
+    try {
+      List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
+      for (RelayRecordBatch parent : parents) {
+        logger.info("Mirror {} to {}", o, parent);
+        parent.mirrorAndStash(o);
       }
-    }
-    if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
-      for (ValueVector v : recordBatch) {
-        v.clear();
+      for (RelayRecordBatch parent : parents) {
+        if (parent instanceof SingleRelayRecordBatch) {
+          logger.info("{} to {} , {}", recordBatch.getClass().getName(), ((SingleRelayRecordBatch) parent).parent.getClass().getName(), o);
+          addTask(((SingleRelayRecordBatch) parent).parent);
+        } else {
+          logger.info("Output to BlockRelayRecordBatch .");
+        }
       }
+      if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
+        for (ValueVector v : recordBatch) {
+          v.clear();
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
