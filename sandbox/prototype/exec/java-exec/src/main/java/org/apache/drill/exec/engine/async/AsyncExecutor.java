@@ -298,6 +298,8 @@ public class AsyncExecutor {
     for(RelayRecordBatch parent : parents){
       if (parent instanceof SingleRelayRecordBatch) {
         addTask(((SingleRelayRecordBatch) parent).parent);
+      }else{
+        logger.info("Output to BlockRelayRecordBatch .");
       }
     }
     if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
@@ -330,12 +332,12 @@ public class AsyncExecutor {
             case NONE:
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
-                logger.info("End by None . ");
+                logger.info("{} end with None . ",recordBatch.getClass().getName());
                 return;
               }
               break;
             case NOT_YET:
-              logger.info("End by Not_Yet .");
+              logger.info("{} end with Not_Yet .",recordBatch.getClass().getName());
               return;
             case STOP:
               submitKill();
