@@ -299,12 +299,10 @@ public class AsyncExecutor {
     try {
       List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
       for (RelayRecordBatch parent : parents) {
-        logger.info("Mirror {} to {}", o, parent);
         parent.mirrorAndStash(o);
       }
       for (RelayRecordBatch parent : parents) {
         if (parent instanceof SingleRelayRecordBatch) {
-          logger.info("{} to {} , {}", recordBatch.getClass().getName(), ((SingleRelayRecordBatch) parent).parent.getClass().getName(), o);
           addTask(((SingleRelayRecordBatch) parent).parent);
         } else {
           logger.info("Output to BlockRelayRecordBatch .");
