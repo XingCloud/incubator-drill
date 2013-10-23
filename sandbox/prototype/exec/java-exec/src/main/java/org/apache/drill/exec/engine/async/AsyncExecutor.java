@@ -40,7 +40,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(24), new NamedThreadFactory("Executor-"));
+  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(1024), new NamedThreadFactory("Executor-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
@@ -222,6 +222,7 @@ public class AsyncExecutor {
           loopNext:
           while (!stopped) {
             RecordBatch.IterOutcome o = split.next();
+            logger.info("{} , {}",this.getClass(),o);
             upward(split, o);
             if (o == IterOutcome.NONE)
               break loopNext;
@@ -293,12 +294,15 @@ public class AsyncExecutor {
   public void upward(RecordBatch recordBatch, IterOutcome o) {
     List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
     for (RelayRecordBatch parent : parents) {
-      logger.info("Mirror and stash to {}",parent.getClass());
+      logger.info("Mirror {} to {}",o,parent);
       parent.mirrorAndStash(o);
     }
     for(RelayRecordBatch parent : parents){
       if (parent instanceof SingleRelayRecordBatch) {
+         logger.info("{} to {} , {}",recordBatch.getClass().getName(),((SingleRelayRecordBatch) parent).parent.getClass().getName(),o);
         addTask(((SingleRelayRecordBatch) parent).parent);
+      }else{
+        logger.info("Output to BlockRelayRecordBatch .");
       }
     }
     if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
@@ -309,7 +313,6 @@ public class AsyncExecutor {
   }
 
   public void addTask(RecordBatch recordBatch) {
-    logger.info("Add task {}",recordBatch.getClass());
     Task task = new Task(recordBatch);
     executor.submit(task);
   }
@@ -332,10 +335,12 @@ public class AsyncExecutor {
             case NONE:
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
+                logger.info("{} end with None . ",recordBatch.getClass().getName());
                 return;
               }
               break;
             case NOT_YET:
+              logger.info("{} end with Not_Yet .",recordBatch.getClass().getName());
               return;
             case STOP:
               submitKill();
