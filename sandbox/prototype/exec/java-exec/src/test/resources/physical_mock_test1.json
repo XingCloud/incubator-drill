@@ -58,14 +58,6 @@
         {
           ref: "user_num",
           expr: "red"
-        },
-        {
-          ref: "sum",
-          expr: "sum"
-        },
-        {
-          ref: "query_id",
-          expr: "'1'"
         }
       ]
     },
