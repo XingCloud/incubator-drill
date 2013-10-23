@@ -40,7 +40,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(10), new NamedThreadFactory("Executor-"));
+  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(24), new NamedThreadFactory("Executor-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
@@ -293,7 +293,10 @@ public class AsyncExecutor {
   public void upward(RecordBatch recordBatch, IterOutcome o) {
     List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
     for (RelayRecordBatch parent : parents) {
+      logger.info("Mirror and stash to {}",parent.getClass());
       parent.mirrorAndStash(o);
+    }
+    for(RelayRecordBatch parent : parents){
       if (parent instanceof SingleRelayRecordBatch) {
         addTask(((SingleRelayRecordBatch) parent).parent);
       }
@@ -306,6 +309,7 @@ public class AsyncExecutor {
   }
 
   public void addTask(RecordBatch recordBatch) {
+    logger.info("Add task {}",recordBatch.getClass());
     Task task = new Task(recordBatch);
     executor.submit(task);
   }
