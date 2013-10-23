@@ -76,6 +76,7 @@ public class DirectScanner implements XAScanner {
     scan.setCaching(Helper.CACHE_SIZE);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
+    scan.setCacheBlocks(false);
     if (filter != null)
       scan.setFilter(filter);
     if (family != null && qualifier != null) {

@@ -84,6 +84,9 @@ public class StoresScanner implements XAScanner {
     }
 
     this.conf = HBaseConfiguration.create();
+    //Disable hbase block cache,因为会出现两个UnionedScan同时初始化一个StoreFile，两个不同的reader却有一个CacheConfig(Singleton)。
+    //导致更新LruCache时异常 Cached an already cached block
+    this.conf.set("hfile.block.cache.size", "0");
     this.cacheConf = new CacheConfig(this.conf);
     this.fs = FileSystem.get(conf);
     this.filter = scan.getFilter();
