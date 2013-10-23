@@ -131,6 +131,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
 
   public RecordFrame mirror(IterOutcome o) {
+    logger.info("Mirror {} to {}",o,parent.getClass().getName());
     RecordFrame recordFrame = new RecordFrame();
     recordFrame.outcome = o;
     switch (o) {
