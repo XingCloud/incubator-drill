@@ -124,6 +124,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   }
 
   public void stash(RecordFrame recordFrame) {
+    logger.info("Stash to {} ",this.getClass());
     try {
       resultQueue.offer(recordFrame, Long.MAX_VALUE, TimeUnit.SECONDS);
     } catch (Exception e) {
@@ -140,7 +141,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
     switch (o) {
       case OK_NEW_SCHEMA:
       case OK:
-        recordFrame.vectors = TransferHelper.transferVectors(incoming);
+        recordFrame.vectors = TransferHelper.mirrorVectors(incoming);
         break;
       case NONE:
       case NOT_YET:
