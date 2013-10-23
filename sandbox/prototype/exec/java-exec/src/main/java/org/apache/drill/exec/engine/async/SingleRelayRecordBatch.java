@@ -78,12 +78,10 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public IterOutcome next() {
-    if (resultQueue.isEmpty()) {
-      return IterOutcome.NOT_YET;
-    } else {
-      current = resultQueue.poll();
-      return current.outcome;
-    }
+    current = resultQueue.poll();
+    if(current == null)
+      return IterOutcome.NOT_YET ;
+    return current.outcome ;
   }
 
   @Override
