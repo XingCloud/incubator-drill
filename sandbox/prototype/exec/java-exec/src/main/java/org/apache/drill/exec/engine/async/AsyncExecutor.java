@@ -294,6 +294,7 @@ public class AsyncExecutor {
   public void upward(RecordBatch recordBatch, IterOutcome o) {
     List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
     for (RelayRecordBatch parent : parents) {
+      logger.info("Mirror {} to {}",o,parent);
       parent.mirrorAndStash(o);
     }
     for(RelayRecordBatch parent : parents){
