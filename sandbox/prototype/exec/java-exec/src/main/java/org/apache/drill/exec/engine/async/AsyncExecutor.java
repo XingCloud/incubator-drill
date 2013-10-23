@@ -40,7 +40,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(24), new NamedThreadFactory("Executor-"));
+  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(1024), new NamedThreadFactory("Executor-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
