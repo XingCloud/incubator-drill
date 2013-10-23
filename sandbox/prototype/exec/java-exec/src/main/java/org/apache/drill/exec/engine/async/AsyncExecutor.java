@@ -192,7 +192,7 @@ public class AsyncExecutor {
     executor.shutdown();
     try {
       driversStopped.await();
-      executor.awaitTermination(10,TimeUnit.MINUTES);
+      executor.awaitTermination(10, TimeUnit.MINUTES);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -215,20 +215,22 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.info("UnionedScanBatch driver[{}] start",unionedScanBatch);
+        logger.info("UnionedScanBatch driver[{}] start", unionedScanBatch);
         loopSplit:
         for (int i = 0; i < splits.size(); i++) {
           UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
           loopNext:
           while (!stopped) {
             RecordBatch.IterOutcome o = split.next();
-            logger.info("{} , {}",this.getClass(),o);
+            logger.info("{} , {}", this.getClass(), o);
             upward(split, o);
             if (o == IterOutcome.NONE)
               break loopNext;
           }
         }
-        logger.info("UnionedScanBatch driver[{}] exit",unionedScanBatch);
+        logger.info("UnionedScanBatch driver[{}] exit", unionedScanBatch);
+      } catch (Exception e) {
+        e.printStackTrace();
       } finally {
         driverStopped(this);
       }
@@ -267,14 +269,16 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.info("ScanBatch driver[{}] start .",scanBatch);
+        logger.info("ScanBatch driver[{}] start .", scanBatch);
         while (!stopped) {
           IterOutcome o = scanBatch.next();
           upward(scanBatch, o);
           if (o == IterOutcome.NONE)
             break;
         }
-        logger.info("ScanBatch driver[{}] exit .",scanBatch);
+        logger.info("ScanBatch driver[{}] exit .", scanBatch);
+      } catch (Exception e) {
+        e.printStackTrace();
       } finally {
         driverStopped(this);
       }
@@ -294,14 +298,14 @@ public class AsyncExecutor {
   public void upward(RecordBatch recordBatch, IterOutcome o) {
     List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
     for (RelayRecordBatch parent : parents) {
-      logger.info("Mirror {} to {}",o,parent);
+      logger.info("Mirror {} to {}", o, parent);
       parent.mirrorAndStash(o);
     }
-    for(RelayRecordBatch parent : parents){
+    for (RelayRecordBatch parent : parents) {
       if (parent instanceof SingleRelayRecordBatch) {
-         logger.info("{} to {} , {}",recordBatch.getClass().getName(),((SingleRelayRecordBatch) parent).parent.getClass().getName(),o);
+        logger.info("{} to {} , {}", recordBatch.getClass().getName(), ((SingleRelayRecordBatch) parent).parent.getClass().getName(), o);
         addTask(((SingleRelayRecordBatch) parent).parent);
-      }else{
+      } else {
         logger.info("Output to BlockRelayRecordBatch .");
       }
     }
@@ -335,12 +339,12 @@ public class AsyncExecutor {
             case NONE:
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
-                logger.info("{} end with None . ",recordBatch.getClass().getName());
+                logger.info("{} end with None . ", recordBatch.getClass().getName());
                 return;
               }
               break;
             case NOT_YET:
-              logger.info("{} end with Not_Yet .",recordBatch.getClass().getName());
+              logger.info("{} end with Not_Yet .", recordBatch.getClass().getName());
               return;
             case STOP:
               submitKill();
