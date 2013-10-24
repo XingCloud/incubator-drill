@@ -341,12 +341,12 @@ public class AsyncExecutor {
             case NONE:
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
-                logger.info("{} end with None . ", recordBatch.getClass().getName());
+                logger.info("{} end with NONE . ", recordBatch.getClass().getName());
                 return;
               }
               break;
             case NOT_YET:
-              logger.info("{} end with Not_Yet .", recordBatch.getClass().getName());
+              logger.info("{} end with NOT_YET .", recordBatch.getClass().getName());
               return;
             case STOP:
               submitKill();
