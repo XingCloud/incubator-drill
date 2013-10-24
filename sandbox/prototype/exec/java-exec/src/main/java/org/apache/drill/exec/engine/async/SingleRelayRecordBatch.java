@@ -118,7 +118,6 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public void mirrorAndStash(IterOutcome o) {
-    logger.info("Mirror {} to {}",o,parent.getClass());
     RecordFrame recordFrame = mirror(o);
     stash(recordFrame);
   }
@@ -126,7 +125,6 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   public void stash(RecordFrame recordFrame) {
     try {
       resultQueue.offer(recordFrame, Long.MAX_VALUE, TimeUnit.SECONDS);
-      logger.info("Stash {} to {}",recordFrame.outcome,parent.getClass());
     } catch (Exception e) {
       e.printStackTrace();
     }
