@@ -738,14 +738,18 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf retain(int increment) {
-    refCount += increment;
-    return byteBuf.retain(increment);
+    synchronized (this){
+      refCount += increment;
+      return byteBuf.retain(increment);
+    }
   }
 
   @Override
   public ByteBuf retain() {
-    refCount++;
-    return byteBuf.retain();
+    synchronized (this){
+      refCount++;
+      return byteBuf.retain();
+    }
   }
 
   @Override
@@ -769,7 +773,9 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public boolean release(int decrement) {
-    refCount -= decrement;
-    return byteBuf.release(decrement);
+    synchronized (this){
+      refCount -= decrement;
+      return byteBuf.release(decrement);
+    }
   }
 }
