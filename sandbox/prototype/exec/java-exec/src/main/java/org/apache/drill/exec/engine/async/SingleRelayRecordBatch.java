@@ -118,6 +118,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   @Override
   public void mirrorAndStash(IterOutcome o) {
+    logger.info("Mirror {} to {}",o,parent.getClass());
     RecordFrame recordFrame = mirror(o);
     stash(recordFrame);
   }
