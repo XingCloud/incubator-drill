@@ -102,11 +102,13 @@ public class UnionRecordBatch implements RecordBatch {
       switch (upstream) {
         case OK_NEW_SCHEMA:
         case OK:
-          doTransfer();
           if (upstream == IterOutcome.OK_NEW_SCHEMA || recordBatch != current) {
             current = recordBatch;
             upstream = IterOutcome.OK_NEW_SCHEMA;
+            doTransfer();
             setupSchema();
+          } else{
+            doTransfer();
           }
           return upstream;
         case NOT_YET:
