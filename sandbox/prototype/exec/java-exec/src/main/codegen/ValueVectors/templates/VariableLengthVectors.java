@@ -161,7 +161,6 @@ public final class ${minor.class}Vector extends BaseDataValueVector implements V
   }
 
   public void allocateNew(int totalBytes, int valueCount) {
-    clear();
     assert totalBytes >= 0;
     data = allocator.buffer(totalBytes);
     data.readerIndex(0);
