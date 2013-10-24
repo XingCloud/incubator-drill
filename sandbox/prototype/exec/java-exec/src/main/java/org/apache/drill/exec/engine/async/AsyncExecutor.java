@@ -334,12 +334,19 @@ public class AsyncExecutor {
     public void run() {
       synchronized (recordBatch) {
         while (true) {
-          IterOutcome o = recordBatch.next();
+          IterOutcome o;
+          try {
+            o = recordBatch.next();
+          } catch (Exception e) {
+            e.printStackTrace();
+            upward(recordBatch, IterOutcome.STOP);
+            return;
+          }
           switch (o) {
             case OK_NEW_SCHEMA:
             case OK:
             case NONE:
-              logger.info("{} upward {}",recordBatch.getClass(),o);
+              logger.info("{} upward {}", recordBatch.getClass(), o);
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
                 return;

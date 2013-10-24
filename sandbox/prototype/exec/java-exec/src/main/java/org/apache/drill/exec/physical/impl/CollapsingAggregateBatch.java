@@ -115,21 +115,16 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       case STOP:
         return IterOutcome.STOP;
       case NONE:
-        try {
-          if (!newSchema) {
-            if (carryOversEvaluator.length == 0) {
-              upstreamZero();
-            } else {
-              return IterOutcome.NONE;
-            }
+        if (!newSchema) {
+          if (carryOversEvaluator.length == 0) {
+            upstreamZero();
           } else {
-            upstream();
+            return IterOutcome.NONE;
           }
-          setupSchema();
-        } catch (Exception e) {
-          e.printStackTrace();
-          return IterOutcome.NONE;
+        } else {
+          upstream();
         }
+        setupSchema();
         hasMore = false;
         return IterOutcome.OK_NEW_SCHEMA;
     }
