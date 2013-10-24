@@ -204,14 +204,8 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   private void clearCache() {
-    if (leftCache != null) {
-      leftCache.clear();
-      leftCache = null;
-    }
-    if (rightCache != null) {
-      rightCache.clear();
-      rightCache = null;
-    }
+    leftCache.clear();
+    rightCache.clear();
   }
 
   abstract class Connector {
