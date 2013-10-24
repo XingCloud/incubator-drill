@@ -17,10 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class AsyncExecutor {
 
@@ -40,7 +37,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(1024), new NamedThreadFactory("Executor-"));
+  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>(),new NamedThreadFactory("Executor-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
