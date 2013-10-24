@@ -760,7 +760,8 @@ public class WrappedByteBuf extends ByteBuf {
       allocator.free(byteBuf);
     }else if(refCount < 0){
       logger.error("Ref count zero .");
-      throw new DrillRuntimeException("Ref count zero") ;
+      return  true ;
+      //throw new DrillRuntimeException("Ref count zero") ;
     }
     return byteBuf.release();
   }
