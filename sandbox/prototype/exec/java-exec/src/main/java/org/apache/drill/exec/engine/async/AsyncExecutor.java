@@ -219,7 +219,6 @@ public class AsyncExecutor {
           loopNext:
           while (!stopped) {
             RecordBatch.IterOutcome o = split.next();
-            logger.info("{} , {}", this.getClass(), o);
             upward(split, o);
             if (o == IterOutcome.NONE)
               break loopNext;
@@ -301,8 +300,6 @@ public class AsyncExecutor {
       for (RelayRecordBatch parent : parents) {
         if (parent instanceof SingleRelayRecordBatch) {
           addTask(((SingleRelayRecordBatch) parent).parent);
-        } else {
-          logger.info("Output to BlockRelayRecordBatch .");
         }
       }
       if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
@@ -317,7 +314,8 @@ public class AsyncExecutor {
 
   public void addTask(RecordBatch recordBatch) {
     Task task = new Task(recordBatch);
-    executor.submit(task);
+    if(!executor.isShutdown())
+      executor.submit(task);
   }
 
   class Task implements Runnable {

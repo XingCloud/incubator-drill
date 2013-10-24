@@ -204,8 +204,14 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   private void clearCache() {
-    leftCache.clear();
-    rightCache.clear();
+    if (leftCache != null) {
+      leftCache.clear();
+      leftCache = null;
+    }
+    if (rightCache != null) {
+      rightCache.clear();
+      rightCache = null;
+    }
   }
 
   abstract class Connector {
@@ -532,7 +538,7 @@ public class JoinBatch extends BaseRecordBatch {
 
     @Override
     public void clear() {
-      if(valuesIndexMap != null){
+      if (valuesIndexMap != null) {
         valuesIndexMap.release();
       }
       super.clear();
