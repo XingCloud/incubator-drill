@@ -343,14 +343,12 @@ public class AsyncExecutor {
             case OK_NEW_SCHEMA:
             case OK:
             case NONE:
-              logger.info("{} upward {}", recordBatch.getClass(), o);
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
                 return;
               }
               break;
             case NOT_YET:
-              logger.info("{} end with NOT_YET .", recordBatch.getClass().getName());
               return;
             case STOP:
               submitKill();

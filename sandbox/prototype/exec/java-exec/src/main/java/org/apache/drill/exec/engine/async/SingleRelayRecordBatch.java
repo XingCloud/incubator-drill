@@ -24,7 +24,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   RecordBatch incoming;
   RecordBatch parent;
 
-  LinkedBlockingDeque<RecordFrame> resultQueue = new LinkedBlockingDeque<>(1024);
+  LinkedBlockingDeque<RecordFrame> resultQueue = new LinkedBlockingDeque<>();
 
   RecordFrame current = new RecordFrame();
 
