@@ -115,10 +115,12 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
       case STOP:
         return IterOutcome.STOP;
       case NONE:
+        logger.info("CollaspingAgg get NONE");
         if (!newSchema) {
           if (carryOversEvaluator.length == 0) {
             upstreamZero();
           } else {
+            logger.info("CollaspingAgg return NONE");
             return IterOutcome.NONE;
           }
         } else {
@@ -126,6 +128,7 @@ public class CollapsingAggregateBatch extends BaseRecordBatch {
         }
         setupSchema();
         hasMore = false;
+        logger.info("CollaspingAgg return OK_NEW_SCHEMA");
         return IterOutcome.OK_NEW_SCHEMA;
     }
     return IterOutcome.NONE;
