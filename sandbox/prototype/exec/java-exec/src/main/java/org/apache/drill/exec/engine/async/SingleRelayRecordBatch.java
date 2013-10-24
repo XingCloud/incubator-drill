@@ -1,12 +1,10 @@
 package org.apache.drill.exec.engine.async;
 
-import com.google.common.collect.Lists;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.impl.VectorHolder;
 import org.apache.drill.exec.record.BatchSchema;
 import org.apache.drill.exec.record.RecordBatch;
-import org.apache.drill.exec.record.TransferPair;
 import org.apache.drill.exec.record.WritableBatch;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
@@ -15,9 +13,8 @@ import org.apache.drill.exec.vector.ValueVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 public class SingleRelayRecordBatch implements RelayRecordBatch {
@@ -27,7 +24,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   RecordBatch incoming;
   RecordBatch parent;
 
-  ArrayBlockingQueue<RecordFrame> resultQueue = new ArrayBlockingQueue<>(1024);
+  LinkedBlockingDeque<RecordFrame> resultQueue = new LinkedBlockingDeque<>(1024);
 
   RecordFrame current = new RecordFrame();
 
