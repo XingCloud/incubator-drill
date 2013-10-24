@@ -8,6 +8,7 @@ import org.apache.drill.exec.physical.impl.VectorHolder;
 import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
+import org.apache.drill.exec.vector.TransferHelper;
 import org.apache.drill.exec.vector.ValueVector;
 
 import java.util.ArrayList;
@@ -101,12 +102,12 @@ public class UnionRecordBatch implements RecordBatch {
       switch (upstream) {
         case OK_NEW_SCHEMA:
         case OK:
+          doTransfer();
           if (upstream == IterOutcome.OK_NEW_SCHEMA || recordBatch != current) {
             current = recordBatch;
             upstream = IterOutcome.OK_NEW_SCHEMA;
             setupSchema();
           }
-          doTransfer();
           return upstream;
         case NOT_YET:
           continue;
@@ -125,35 +126,11 @@ public class UnionRecordBatch implements RecordBatch {
 
   private void doTransfer() {
     outRecordCount = current.getRecordCount();
-    if (outSchema.getSelectionVectorMode() == BatchSchema.SelectionVectorMode.TWO_BYTE) {
-      this.sv = current.getSelectionVector2();
-    }
-    for (TransferPair transfer : transfers) {
-      transfer.transfer();
-    }
-
-    for (ValueVector v : this.outputVectors) {
-      v.getMutator().setValueCount(outRecordCount);
-    }
-
+    this.outputVectors = TransferHelper.transferVectors(current);
   }
 
   private void setupSchema() {
-    if (outputVectors != null) {
-      for (ValueVector v : outputVectors) {
-        v.close();
-      }
-    }
-    this.outputVectors = Lists.newArrayList();
-    this.vh = new VectorHolder(outputVectors);
-    transfers = Lists.newArrayList();
-
-    for (ValueVector v : current) {
-      TransferPair pair = v.getTransferPair();
-      outputVectors.add(pair.getTo());
-      transfers.add(pair);
-    }
-    SchemaBuilder bldr = BatchSchema.newBuilder().setSelectionVectorMode(current.getSchema().getSelectionVectorMode());
+    SchemaBuilder bldr = BatchSchema.newBuilder();
     for (ValueVector v : outputVectors) {
       bldr.addField(v.getField());
     }
