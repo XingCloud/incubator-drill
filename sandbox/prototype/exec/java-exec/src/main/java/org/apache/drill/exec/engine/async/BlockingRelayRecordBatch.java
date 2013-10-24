@@ -32,9 +32,6 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
       executor.start();
     }
     try {
-      if(current!= null){
-        cleanupVectors(current);
-      }
       current = resultQueue.poll(Long.MAX_VALUE, TimeUnit.SECONDS);
       if(current.nextErrorCause != null){
         throw current.nextErrorCause;

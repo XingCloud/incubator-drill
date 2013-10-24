@@ -532,7 +532,7 @@ public class JoinBatch extends BaseRecordBatch {
 
     @Override
     public void clear() {
-      if(valuesIndexMap != null){
+      if (valuesIndexMap != null) {
         valuesIndexMap.release();
       }
       super.clear();

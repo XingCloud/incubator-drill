@@ -17,10 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class AsyncExecutor {
 
@@ -40,7 +37,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(1024), new NamedThreadFactory("Executor-"));
+  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>(),new NamedThreadFactory("Executor-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
@@ -192,7 +189,7 @@ public class AsyncExecutor {
     executor.shutdown();
     try {
       driversStopped.await();
-      executor.awaitTermination(10,TimeUnit.MINUTES);
+      executor.awaitTermination(10, TimeUnit.MINUTES);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -215,20 +212,21 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.info("UnionedScanBatch driver[{}] start",unionedScanBatch);
+        logger.info("UnionedScanBatch driver[{}] start", unionedScanBatch);
         loopSplit:
         for (int i = 0; i < splits.size(); i++) {
           UnionedScanBatch.UnionedScanSplitBatch split = splits.get(i);
           loopNext:
           while (!stopped) {
             RecordBatch.IterOutcome o = split.next();
-            logger.info("{} , {}",this.getClass(),o);
             upward(split, o);
             if (o == IterOutcome.NONE)
               break loopNext;
           }
         }
-        logger.info("UnionedScanBatch driver[{}] exit",unionedScanBatch);
+        logger.info("UnionedScanBatch driver[{}] exit", unionedScanBatch);
+      } catch (Exception e) {
+        e.printStackTrace();
       } finally {
         driverStopped(this);
       }
@@ -267,14 +265,16 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
-        logger.info("ScanBatch driver[{}] start .",scanBatch);
+        logger.info("ScanBatch driver[{}] start .", scanBatch);
         while (!stopped) {
           IterOutcome o = scanBatch.next();
           upward(scanBatch, o);
           if (o == IterOutcome.NONE)
             break;
         }
-        logger.info("ScanBatch driver[{}] exit .",scanBatch);
+        logger.info("ScanBatch driver[{}] exit .", scanBatch);
+      } catch (Exception e) {
+        e.printStackTrace();
       } finally {
         driverStopped(this);
       }
@@ -292,29 +292,30 @@ public class AsyncExecutor {
   }
 
   public void upward(RecordBatch recordBatch, IterOutcome o) {
-    List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
-    for (RelayRecordBatch parent : parents) {
-      logger.info("Mirror {} to {}",o,parent);
-      parent.mirrorAndStash(o);
-    }
-    for(RelayRecordBatch parent : parents){
-      if (parent instanceof SingleRelayRecordBatch) {
-         logger.info("{} to {} , {}",recordBatch.getClass().getName(),((SingleRelayRecordBatch) parent).parent.getClass().getName(),o);
-        addTask(((SingleRelayRecordBatch) parent).parent);
-      }else{
-        logger.info("Output to BlockRelayRecordBatch .");
+    try {
+      List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
+      for (RelayRecordBatch parent : parents) {
+        parent.mirrorAndStash(o);
       }
-    }
-    if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
-      for (ValueVector v : recordBatch) {
-        v.clear();
+      for (RelayRecordBatch parent : parents) {
+        if (parent instanceof SingleRelayRecordBatch) {
+          addTask(((SingleRelayRecordBatch) parent).parent);
+        }
       }
+      if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
+        for (ValueVector v : recordBatch) {
+          v.clear();
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
   public void addTask(RecordBatch recordBatch) {
     Task task = new Task(recordBatch);
-    executor.submit(task);
+    if(!executor.isShutdown())
+      executor.submit(task);
   }
 
   class Task implements Runnable {
@@ -328,19 +329,24 @@ public class AsyncExecutor {
     public void run() {
       synchronized (recordBatch) {
         while (true) {
-          IterOutcome o = recordBatch.next();
+          IterOutcome o;
+          try {
+            o = recordBatch.next();
+          } catch (Exception e) {
+            e.printStackTrace();
+            upward(recordBatch, IterOutcome.STOP);
+            return;
+          }
           switch (o) {
             case OK_NEW_SCHEMA:
             case OK:
             case NONE:
               upward(recordBatch, o);
               if (o == IterOutcome.NONE) {
-                logger.info("{} end with None . ",recordBatch.getClass().getName());
                 return;
               }
               break;
             case NOT_YET:
-              logger.info("{} end with Not_Yet .",recordBatch.getClass().getName());
               return;
             case STOP:
               submitKill();
