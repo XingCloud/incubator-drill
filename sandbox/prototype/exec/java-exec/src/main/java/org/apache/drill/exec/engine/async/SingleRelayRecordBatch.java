@@ -81,6 +81,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
     current = resultQueue.poll();
     if(current == null)
       return IterOutcome.NOT_YET ;
+    logger.info("{} get {} " ,parent.getClass(), current.outcome) ;
     return current.outcome ;
   }
 
@@ -124,6 +125,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   public void stash(RecordFrame recordFrame) {
     try {
       resultQueue.offer(recordFrame, Long.MAX_VALUE, TimeUnit.SECONDS);
+      logger.info("Stash {} to {}",recordFrame.outcome,parent.getClass());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -131,7 +133,6 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
 
   public RecordFrame mirror(IterOutcome o) {
-    logger.info("Mirror {} to {}",o,parent.getClass());
     RecordFrame recordFrame = new RecordFrame();
     recordFrame.outcome = o;
     switch (o) {
