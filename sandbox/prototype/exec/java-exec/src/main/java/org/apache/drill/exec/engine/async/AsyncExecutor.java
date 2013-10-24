@@ -297,14 +297,14 @@ public class AsyncExecutor {
       for (RelayRecordBatch parent : parents) {
         parent.mirrorAndStash(o);
       }
-      for (RelayRecordBatch parent : parents) {
-        if (parent instanceof SingleRelayRecordBatch) {
-          addTask(((SingleRelayRecordBatch) parent).parent);
-        }
-      }
       if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
         for (ValueVector v : recordBatch) {
           v.clear();
+        }
+      }
+      for (RelayRecordBatch parent : parents) {
+        if (parent instanceof SingleRelayRecordBatch) {
+          addTask(((SingleRelayRecordBatch) parent).parent);
         }
       }
     } catch (Exception e) {
