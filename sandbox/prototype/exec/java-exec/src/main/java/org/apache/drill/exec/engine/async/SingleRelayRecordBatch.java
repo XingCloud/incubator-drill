@@ -78,7 +78,6 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
     current = resultQueue.poll();
     if(current == null)
       return IterOutcome.NOT_YET ;
-    logger.info("{} get {} " ,parent.getClass(), current.outcome) ;
     return current.outcome ;
   }
 
