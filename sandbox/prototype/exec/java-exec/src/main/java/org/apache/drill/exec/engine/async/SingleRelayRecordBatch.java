@@ -134,13 +134,14 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   public RecordFrame mirror(IterOutcome o) {
     RecordFrame recordFrame = new RecordFrame();
     recordFrame.outcome = o;
+    recordFrame.context = incoming.getContext();
+    recordFrame.schema = incoming.getSchema();
     switch (o) {
       case OK_NEW_SCHEMA:
       case OK:
         recordFrame.vectors = TransferHelper.mirrorVectors(incoming);
         recordFrame.recordCount = incoming.getRecordCount();
       case NONE:
-        recordFrame.schema = incoming.getSchema();
       case NOT_YET:
       case STOP:
     }
