@@ -24,7 +24,7 @@ public class SingleAllocator extends BufferAllocator {
   @Override
   public ByteBuf buffer(int size) {
     ByteBuf byteBuf = buffer.buffer(size);
-    allocatedSize.addAndGet(size);
+    allocatedSize.addAndGet(byteBuf.capacity());
     return new WrappedByteBuf(byteBuf, this);
   }
 
