@@ -40,6 +40,10 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
       if(ret == null){
         logger.warn("current outcome null!", new NullPointerException());
       }
+      // test
+      if(ret == IterOutcome.NONE){
+          kill();
+      }
       return ret;
     } catch (InterruptedException e) {
       e.printStackTrace();  
