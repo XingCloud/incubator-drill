@@ -146,8 +146,11 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
 
   public void cleanupVectors(RecordFrame current) {
     // test
+    if(current == null){
+      return;
+    }
     if(current.outcome != IterOutcome.NONE){
-      logger.info("Close {},{}",current.outcome , parent);
+      logger.info("Close {},{}",current.outcome , parent == null ? ":" : parent);
     }
     if (current.vectors != null) {
       for (int i = 0; i < current.vectors.size(); i++) {
