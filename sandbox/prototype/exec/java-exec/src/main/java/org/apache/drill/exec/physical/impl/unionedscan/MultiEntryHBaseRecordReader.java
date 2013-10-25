@@ -463,8 +463,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void allocateNew() {
     for (ValueVector v : valueVectors) {
+      v.clear();
       AllocationHelper.allocate(v, batchSize, 8);
     }
+    entryIndexVector.clear();
     AllocationHelper.allocate(entryIndexVector, 1, 4);
   }
 

@@ -42,6 +42,7 @@ public class BlockingRelayRecordBatch extends SingleRelayRecordBatch implements 
       }
       // test
       if(ret == IterOutcome.NONE){
+        executor.worker.shutdown();
           kill();
       }
       return ret;

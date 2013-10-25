@@ -65,8 +65,6 @@ public class MockRecordReader implements RecordReader {
     MaterializedField f = MaterializedField.create(new SchemaPath(name, ExpressionPosition.UNKNOWN), type);
     ValueVector v;
     v = TypeHelper.getNewVector(f, context.getAllocator());
-    AllocationHelper.allocate(v, length, 50);
-    
     return v;
 
   }
