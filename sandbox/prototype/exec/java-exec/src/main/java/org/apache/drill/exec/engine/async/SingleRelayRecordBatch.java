@@ -119,11 +119,7 @@ public class SingleRelayRecordBatch implements RelayRecordBatch {
   }
 
   public void stash(RecordFrame recordFrame) {
-    try {
-      resultQueue.offer(recordFrame, Long.MAX_VALUE, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    resultQueue.add(recordFrame) ;
   }
 
 

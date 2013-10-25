@@ -37,7 +37,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  private ThreadPoolExecutor executor = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>(),new NamedThreadFactory("Executor-"));
+  public ThreadPoolExecutor worker = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>(),new NamedThreadFactory("Worker-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
@@ -186,10 +186,10 @@ public class AsyncExecutor {
       LeafDriver driver = drivers.get(i);
       driver.stop();
     }
-    executor.shutdown();
+    worker.shutdown();
     try {
       driversStopped.await();
-      executor.awaitTermination(10, TimeUnit.MINUTES);
+      worker.awaitTermination(10, TimeUnit.MINUTES);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -314,8 +314,8 @@ public class AsyncExecutor {
 
   public void addTask(RecordBatch recordBatch) {
     Task task = new Task(recordBatch);
-    if(!executor.isShutdown())
-      executor.submit(task);
+    if(!worker.isShutdown())
+      worker.submit(task);
   }
 
   class Task implements Runnable {
