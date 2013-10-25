@@ -31,8 +31,9 @@ public class DirectBufferAllocator extends BufferAllocator{
 
   @Override
   public ByteBuf buffer(int size) {
-    allocateSize.addAndGet(size) ;
-    return buffer.directBuffer(size);
+    ByteBuf buf = buffer.directBuffer(size) ;
+    allocateSize.addAndGet(buf.capacity()) ;
+    return buf;
   }
   
   @Override
