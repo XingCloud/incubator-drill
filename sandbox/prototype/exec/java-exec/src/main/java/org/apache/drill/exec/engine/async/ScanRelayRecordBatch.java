@@ -2,6 +2,7 @@ package org.apache.drill.exec.engine.async;
 
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 // for split scan & scan   , call to stash() will block until there is enough space
 public class ScanRelayRecordBatch extends AbstractRelayRecordBatch {
-  private final int DEFAULT_CAPACITY = 2;
+  private final static int DEFAULT_CAPACITY = 1;
 
   private int capacity;
 
@@ -27,7 +28,7 @@ public class ScanRelayRecordBatch extends AbstractRelayRecordBatch {
   }
 
   private void init(int capacity) {
-    recordFrames = new LinkedBlockingDeque<>(capacity);
+    recordFrames = new ArrayBlockingQueue<>(capacity);
   }
 
   @Override

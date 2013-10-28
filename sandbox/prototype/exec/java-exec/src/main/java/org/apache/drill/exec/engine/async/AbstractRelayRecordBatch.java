@@ -12,7 +12,7 @@ import org.apache.drill.exec.vector.TransferHelper;
 import org.apache.drill.exec.vector.ValueVector;
 
 import java.util.Iterator;
-import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,7 +21,7 @@ import java.util.concurrent.BlockingDeque;
  * Time: 9:37 AM
  */
 public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
-  protected BlockingDeque<RecordFrame> recordFrames;
+  protected BlockingQueue<RecordFrame> recordFrames;
   protected RecordFrame current;
   protected RecordBatch incoming;
   public RecordBatch parent;
