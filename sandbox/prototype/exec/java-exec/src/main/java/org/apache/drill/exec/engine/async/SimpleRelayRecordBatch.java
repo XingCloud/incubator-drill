@@ -35,6 +35,6 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
   @Override
   public void kill() {
     cleanUp();
-    kill();
+    incoming.kill();
   }
 }
