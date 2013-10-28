@@ -37,7 +37,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  public ThreadPoolExecutor worker = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>(),new NamedThreadFactory("Worker-"));
+  public ThreadPoolExecutor worker = new ThreadPoolExecutor(24, 24, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>(), new NamedThreadFactory("Worker-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
@@ -51,7 +51,7 @@ public class AsyncExecutor {
   public <T extends PhysicalOperator> RootExec createRootBatchWithChildren(RootCreator<T> creator, T operator, FragmentContext context, AsyncImplCreator asyncImplCreator) throws ExecutionSetupException {
     PhysicalOperator child = operator.iterator().next();
     RecordBatch childBatch = child.accept(asyncImplCreator, context);
-    BlockingRelayRecordBatch relay = new BlockingRelayRecordBatch(this);
+    ScreenRelayRecordBatch relay = new ScreenRelayRecordBatch(this);
     getParentRelaysFor(childBatch).add(relay);
     relay.setIncoming(childBatch);
     relay.setParent(null);//no parent batch; only parent RootExec
@@ -96,15 +96,20 @@ public class AsyncExecutor {
     if (relayChildren) {
       for (int i = 0; i < children.size(); i++) {
         RecordBatch child = children.get(i);
-        childRelays.add((SingleRelayRecordBatch) child);
-        ((SingleRelayRecordBatch) child).setParent(batch);
+        childRelays.add((AbstractRelayRecordBatch) child);
+        ((AbstractRelayRecordBatch) child).setParent(batch);
       }
     }
     return batch;
   }
 
   private RecordBatch createOutputRelay(RecordBatch incoming) {
-    SingleRelayRecordBatch relay = new SingleRelayRecordBatch();
+    AbstractRelayRecordBatch relay = null;
+    if (incoming instanceof UnionedScanBatch || incoming instanceof ScanBatch ) {
+      relay = new ScanRelayRecordBatch();
+    } else {
+      relay = new SimpleRelayRecordBatch();
+    }
     relay.setIncoming(incoming);
     List<RelayRecordBatch> relays = getParentRelaysFor(incoming);
     relays.add(relay);
@@ -303,8 +308,10 @@ public class AsyncExecutor {
         }
       }
       for (RelayRecordBatch parent : parents) {
-        if (parent instanceof SingleRelayRecordBatch) {
-          addTask(((SingleRelayRecordBatch) parent).parent);
+        if (parent instanceof ScreenRelayRecordBatch) {
+          // do nothing
+        } else {
+          addTask(((AbstractRelayRecordBatch) parent).parent);
         }
       }
     } catch (Exception e) {
@@ -314,7 +321,7 @@ public class AsyncExecutor {
 
   public void addTask(RecordBatch recordBatch) {
     Task task = new Task(recordBatch);
-    if(!worker.isShutdown())
+    if (!worker.isShutdown())
       worker.submit(task);
   }
 
