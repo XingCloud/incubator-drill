@@ -31,13 +31,15 @@ public class AsyncExecutor {
 
   private Map<RecordBatch, List<RelayRecordBatch>> batch2DirectChildren = new HashMap<>();
 
+  private Map<RecordBatch, Integer> batchPriority = new HashMap<>();
+
   private boolean started = false;
 
   private List<LeafDriver> drivers = new ArrayList<>();
 
   private CountDownLatch driversStopped = null;
 
-  public ThreadPoolExecutor worker = new ThreadPoolExecutor(24, 24, 60, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>(), new NamedThreadFactory("Worker-"));
+  public ThreadPoolExecutor worker = new ThreadPoolExecutor(24, 24, 60, TimeUnit.MINUTES, new PriorityBlockingQueue<Runnable>(), new NamedThreadFactory("Worker-"));
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
@@ -55,6 +57,7 @@ public class AsyncExecutor {
     getParentRelaysFor(childBatch).add(relay);
     relay.setIncoming(childBatch);
     relay.setParent(null);//no parent batch; only parent RootExec
+    initPriority(childBatch);
     return creator.getRoot(context, operator, Arrays.asList((RecordBatch) relay));
   }
 
@@ -325,11 +328,16 @@ public class AsyncExecutor {
       worker.submit(task);
   }
 
-  class Task implements Runnable {
+  class Task implements Runnable, Comparator<Task> {
     RecordBatch recordBatch;
 
     Task(RecordBatch recordBatch) {
       this.recordBatch = recordBatch;
+    }
+
+    @Override
+    public int compare(Task left, Task right) {
+      return getPriority(left.recordBatch).compareTo(getPriority(right.recordBatch));
     }
 
     @Override
@@ -361,7 +369,30 @@ public class AsyncExecutor {
           }
         }
       }
+
     }
+
+  }
+
+  public void initPriority(RecordBatch recordBatch) {
+    Integer priority = batchPriority.get(recordBatch);
+    if (priority == null){
+      priority = 0;
+      batchPriority.put(recordBatch,priority);
+    }
+    List<RelayRecordBatch> incomingRelays = batch2DirectChildren.get(recordBatch);
+    if (incomingRelays != null) {
+      int incomingPriority = priority + 1;
+      for (RelayRecordBatch relay : incomingRelays) {
+        RecordBatch incoming = relay.getIncoming();
+        batchPriority.put(incoming, incomingPriority);
+        initPriority(incoming);
+      }
+    }
+  }
+
+  public Integer getPriority(RecordBatch recordBatch) {
+    return batchPriority.get(recordBatch);
   }
 
 }

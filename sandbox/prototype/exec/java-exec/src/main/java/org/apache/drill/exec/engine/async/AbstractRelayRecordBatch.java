@@ -78,6 +78,16 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
   }
 
   @Override
+  public RecordBatch getParent() {
+    return parent;
+  }
+
+  @Override
+  public RecordBatch getIncoming() {
+    return incoming;
+  }
+
+  @Override
   public FragmentContext getContext() {
     return current.context;
   }
