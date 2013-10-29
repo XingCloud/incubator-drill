@@ -311,7 +311,8 @@ public class AsyncExecutor {
         if (parent instanceof ScreenRelayRecordBatch) {
           // do nothing
         } else {
-          addTask(((AbstractRelayRecordBatch) parent).parent);
+          if(!parent.isRunning())
+            addTask(((AbstractRelayRecordBatch) parent).parent);
         }
       }
     } catch (Exception e) {
@@ -344,7 +345,7 @@ public class AsyncExecutor {
               case NONE:
                 upward(recordBatch, o);
                 if (o == IterOutcome.NONE) {
-                  logger.info("{} finished .",recordBatch);
+                  logger.info("{} finished.",recordBatch);
                   return;
                 }
                 break;

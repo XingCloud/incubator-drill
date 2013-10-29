@@ -26,6 +26,11 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
   protected RecordBatch incoming;
   public RecordBatch parent;
 
+  protected volatile State state = State.WAITING ;
+
+  enum State{
+    WAITING,RUNNING
+  }
 
   @Override
   public void mirrorAndStash(IterOutcome o) {
@@ -47,6 +52,15 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
       case STOP:
     }
     return recordFrame;
+  }
+
+  @Override
+  public boolean isRunning() {
+    return state == State.RUNNING;
+  }
+
+  public void changeState(State state){
+    this.state = state ;
   }
 
   protected abstract void stash(RecordFrame recordFrame);

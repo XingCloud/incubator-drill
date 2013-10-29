@@ -25,8 +25,10 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
 
   @Override
   public IterOutcome next() {
+    changeState(State.RUNNING);
     current = recordFrames.poll();
     if (current == null) {
+      changeState(State.WAITING);
       return IterOutcome.NOT_YET;
     }
     return current.outcome;
