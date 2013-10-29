@@ -105,7 +105,7 @@ public class AsyncExecutor {
 
   private RecordBatch createOutputRelay(RecordBatch incoming) {
     AbstractRelayRecordBatch relay = null;
-    if (incoming instanceof UnionedScanBatch || incoming instanceof ScanBatch ) {
+    if (incoming instanceof UnionedScanBatch || incoming instanceof ScanBatch) {
       relay = new ScanRelayRecordBatch();
     } else {
       relay = new SimpleRelayRecordBatch();
@@ -321,7 +321,7 @@ public class AsyncExecutor {
 
   public void addTask(RecordBatch recordBatch) {
     Task task = new Task(recordBatch);
-    if (!worker.isShutdown())
+    if (!worker.isShutdown() && !worker.isTerminating())
       worker.submit(task);
   }
 
@@ -336,29 +336,29 @@ public class AsyncExecutor {
     public void run() {
       synchronized (recordBatch) {
         while (true) {
-          IterOutcome o;
           try {
-            o = recordBatch.next();
+            IterOutcome o = recordBatch.next();
+            switch (o) {
+              case OK_NEW_SCHEMA:
+              case OK:
+              case NONE:
+                upward(recordBatch, o);
+                if (o == IterOutcome.NONE) {
+                  logger.info("{} finished .",recordBatch);
+                  return;
+                }
+                break;
+              case NOT_YET:
+                return;
+              case STOP:
+                submitKill();
+                upward(recordBatch, IterOutcome.STOP);
+                return;
+            }
           } catch (Exception e) {
             e.printStackTrace();
-            upward(recordBatch, IterOutcome.STOP);
-            return;
-          }
-          switch (o) {
-            case OK_NEW_SCHEMA:
-            case OK:
-            case NONE:
-              upward(recordBatch, o);
-              if (o == IterOutcome.NONE) {
-                return;
-              }
-              break;
-            case NOT_YET:
-              return;
-            case STOP:
-              submitKill();
-              upward(recordBatch,IterOutcome.STOP);
-              return;
+            upward(recordBatch,IterOutcome.STOP);
+            return ;
           }
         }
       }
