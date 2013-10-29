@@ -329,7 +329,7 @@ public class AsyncExecutor {
       worker.submit(task);
   }
 
-  class Task implements Runnable, Comparator<Task> {
+  class Task implements Runnable, Comparable<Task> {
     RecordBatch recordBatch;
 
     Task(RecordBatch recordBatch) {
@@ -337,8 +337,8 @@ public class AsyncExecutor {
     }
 
     @Override
-    public int compare(Task left, Task right) {
-      return getPriority(left.recordBatch).compareTo(getPriority(right.recordBatch));
+    public int compareTo(Task o) {
+      return getPriority(recordBatch).compareTo(getPriority(o.recordBatch));
     }
 
     @Override
