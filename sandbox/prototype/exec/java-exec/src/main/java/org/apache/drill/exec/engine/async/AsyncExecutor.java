@@ -344,7 +344,6 @@ public class AsyncExecutor {
               case NONE:
                 upward(recordBatch, o);
                 if (o == IterOutcome.NONE) {
-                  logger.info("{} finished.", recordBatch);
                   return;
                 }
                 break;
