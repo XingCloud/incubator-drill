@@ -41,7 +41,7 @@ public class PriorityThreadPoolExecutor extends ThreadPoolExecutor {
     public int compareTo(ComparableFutureTask<V> o) {
       if(o == null)
         return -1 ;
-      return ((Comparable)object).compareTo(o);
+      return ((Comparable)object).compareTo(o.object);
     }
   }
 }
