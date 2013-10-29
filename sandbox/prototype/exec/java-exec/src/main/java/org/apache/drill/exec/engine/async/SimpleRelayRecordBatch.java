@@ -23,27 +23,13 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
 
   @Override
   public IterOutcome next() {
-    synchronized (this) {
-      current = recordFrames.poll();
-      if (current == null) {
-        changeState(State.WAITING);
-        return IterOutcome.NOT_YET;
-      }
-      changeState(State.RUNNING);
-      return current.outcome;
+    current = recordFrames.poll();
+    if (current == null) {
+      return IterOutcome.NOT_YET;
     }
+    return current.outcome;
   }
 
-  @Override
-  public boolean isSubmittable() {
-    synchronized (this) {
-      if (state == State.WAITING) {
-        state = State.RUNNABLE;
-        return true;
-      }
-      return false;
-    }
-  }
 
   @Override
   public void kill() {
