@@ -39,7 +39,8 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  public ThreadPoolExecutor worker = new ThreadPoolExecutor(24, 24, 60, TimeUnit.MINUTES, new PriorityBlockingQueue<Runnable>(), new NamedThreadFactory("Worker-"));
+  public ThreadPoolExecutor worker = new PriorityThreadPoolExecutor(24, 24, 60, TimeUnit.MINUTES, new PriorityBlockingQueue<Runnable>(), new NamedThreadFactory("Worker-"));
+
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
 
