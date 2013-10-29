@@ -1,7 +1,5 @@
 package org.apache.drill.exec.engine.async;
 
-import org.apache.drill.exec.record.RecordBatch;
-
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
@@ -25,13 +23,26 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
 
   @Override
   public IterOutcome next() {
-    changeState(State.RUNNING);
-    current = recordFrames.poll();
-    if (current == null) {
-      changeState(State.WAITING);
-      return IterOutcome.NOT_YET;
+    synchronized (this) {
+      current = recordFrames.poll();
+      if (current == null) {
+        changeState(State.WAITING);
+        return IterOutcome.NOT_YET;
+      }
+      changeState(State.RUNNING);
+      return current.outcome;
     }
-    return current.outcome;
+  }
+
+  @Override
+  public boolean isSubmittable() {
+    synchronized (this) {
+      if (state == State.WAITING) {
+        state = State.RUNNABLE;
+        return true;
+      }
+      return false;
+    }
   }
 
   @Override

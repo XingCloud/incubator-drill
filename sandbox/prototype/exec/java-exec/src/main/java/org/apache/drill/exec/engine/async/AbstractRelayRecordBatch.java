@@ -26,10 +26,10 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
   protected RecordBatch incoming;
   public RecordBatch parent;
 
-  protected volatile State state = State.WAITING ;
+  protected  State state = State.WAITING ;
 
   enum State{
-    WAITING,RUNNING
+    WAITING,RUNNING,RUNNABLE
   }
 
   @Override
@@ -55,8 +55,8 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
   }
 
   @Override
-  public boolean isRunning() {
-    return state == State.RUNNING;
+  public boolean isSubmittable() {
+    return true ;
   }
 
   public void changeState(State state){

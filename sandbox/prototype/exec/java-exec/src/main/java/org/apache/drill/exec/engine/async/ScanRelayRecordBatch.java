@@ -3,7 +3,6 @@ package org.apache.drill.exec.engine.async;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,13 +41,26 @@ public class ScanRelayRecordBatch extends AbstractRelayRecordBatch {
 
   @Override
   public IterOutcome next() {
-    changeState(State.RUNNING);
-    current = recordFrames.poll();
-    if (current == null) {
-      changeState(State.WAITING);
-      return IterOutcome.NOT_YET;
+    synchronized (this) {
+      current = recordFrames.poll();
+      if (current == null) {
+        changeState(State.WAITING);
+        return IterOutcome.NOT_YET;
+      }
+      changeState(State.RUNNING);
+      return current.outcome;
     }
-    return current.outcome;
+  }
+
+  @Override
+  public boolean isSubmittable() {
+    synchronized (this) {
+      if (state == State.WAITING) {
+        state = State.RUNNABLE;
+        return true;
+      }
+      return false;
+    }
   }
 
   @Override

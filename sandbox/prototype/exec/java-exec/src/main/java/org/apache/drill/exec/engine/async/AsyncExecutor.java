@@ -311,7 +311,7 @@ public class AsyncExecutor {
         if (parent instanceof ScreenRelayRecordBatch) {
           // do nothing
         } else {
-          if(!parent.isRunning())
+          if(parent.isSubmittable())
             addTask(((AbstractRelayRecordBatch) parent).parent);
         }
       }
