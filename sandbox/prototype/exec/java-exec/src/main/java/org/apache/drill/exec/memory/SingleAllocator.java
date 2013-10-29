@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBufAllocator;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SingleAllocator extends BufferAllocator {
 
   BufferAllocator buffer;
-  AtomicInteger allocatedSize = new AtomicInteger(0);
+  AtomicLong allocatedSize = new AtomicLong(0);
 
   public SingleAllocator(BufferAllocator buffer) {
     this.buffer = buffer;
@@ -46,7 +47,7 @@ public class SingleAllocator extends BufferAllocator {
   @Override
   public void close() {
     logger.info("Allocated direct memory : {} bytes .", buffer.getAllocatedMemory());
-    int size = allocatedSize.get();
+    long size = allocatedSize.get();
     if (size != 0) {
       logger.error("Memory leak exist , {} bytes are not released .", size);
     }

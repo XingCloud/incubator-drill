@@ -22,12 +22,13 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class DirectBufferAllocator extends BufferAllocator{
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DirectBufferAllocator.class);
 
   private final PooledByteBufAllocator buffer = new PooledByteBufAllocator(true);
-  private AtomicInteger allocateSize  = new AtomicInteger(0) ;
+  private AtomicLong allocateSize  = new AtomicLong(0) ;
 
   @Override
   public ByteBuf buffer(int size) {
