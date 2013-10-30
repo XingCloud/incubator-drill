@@ -22,6 +22,11 @@ public class ScreenRelayRecordBatch extends AbstractRelayRecordBatch {
   }
 
   @Override
+  public boolean nextStash() {
+    return true;
+  }
+
+  @Override
   protected void stash(RecordFrame recordFrame) {
     recordFrames.add(recordFrame);
   }

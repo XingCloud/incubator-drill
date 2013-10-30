@@ -7,4 +7,5 @@ public interface RelayRecordBatch extends RecordBatch {
   void cleanUp();
   RecordBatch getIncoming();
   RecordBatch getParent();
+  boolean nextStash();
 }

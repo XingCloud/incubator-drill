@@ -26,6 +26,8 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
   protected RecordBatch incoming;
   public RecordBatch parent;
 
+  private final static int STASH_WEAK_LIMIT = 2 ;
+
   @Override
   public void mirrorAndStash(IterOutcome o) {
     stash(mirror(o));
@@ -46,6 +48,11 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
       case STOP:
     }
     return recordFrame;
+  }
+
+  @Override
+  public boolean nextStash() {
+    return recordFrames.size() <= STASH_WEAK_LIMIT;
   }
 
   protected abstract void stash(RecordFrame recordFrame);

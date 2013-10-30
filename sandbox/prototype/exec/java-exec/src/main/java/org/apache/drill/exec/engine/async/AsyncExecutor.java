@@ -300,11 +300,13 @@ public class AsyncExecutor {
     logger.info("Running drivers : {} ", driversStopped.getCount());
   }
 
-  public void upward(RecordBatch recordBatch, IterOutcome o) {
+  public boolean upward(RecordBatch recordBatch, IterOutcome o) {
+    boolean nextStash = true ;
     try {
       List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
       for (RelayRecordBatch parent : parents) {
         parent.mirrorAndStash(o);
+        nextStash &= parent.nextStash();
       }
       if (o == IterOutcome.OK_NEW_SCHEMA || o == IterOutcome.OK) {
         for (ValueVector v : recordBatch) {
@@ -322,6 +324,7 @@ public class AsyncExecutor {
       logger.error("{} upward {} failed .",recordBatch,o);
       e.printStackTrace();
     }
+    return nextStash;
   }
 
   public void addTask(RecordBatch recordBatch) {
@@ -352,9 +355,13 @@ public class AsyncExecutor {
               case OK_NEW_SCHEMA:
               case OK:
               case NONE:
-                upward(recordBatch, o);
+                boolean next = upward(recordBatch, o);
                 if (o == IterOutcome.NONE) {
                   return;
+                }
+                if(!next){
+                  addTask(recordBatch);
+                  return ;
                 }
                 break;
               case NOT_YET:
