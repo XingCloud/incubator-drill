@@ -110,7 +110,7 @@ public class AsyncExecutor {
 
   private RecordBatch createOutputRelay(RecordBatch incoming) {
     AbstractRelayRecordBatch relay = null;
-    if (incoming instanceof UnionedScanBatch || incoming instanceof ScanBatch) {
+    if (incoming instanceof UnionedScanBatch.UnionedScanSplitBatch || incoming instanceof ScanBatch) {
       relay = new ScanRelayRecordBatch();
     } else {
       relay = new SimpleRelayRecordBatch();
