@@ -319,6 +319,7 @@ public class AsyncExecutor {
         }
       }
     } catch (Exception e) {
+      logger.error("{} upward {} failed .",recordBatch,o);
       e.printStackTrace();
     }
   }
