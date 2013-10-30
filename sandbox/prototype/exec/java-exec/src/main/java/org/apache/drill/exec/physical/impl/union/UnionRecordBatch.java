@@ -119,7 +119,7 @@ public class UnionRecordBatch implements RecordBatch {
           it.remove();
       }
     }
-    if(children.size()==0){
+    if(children.isEmpty()){
       return IterOutcome.NONE;
     }
     return IterOutcome.NOT_YET;

@@ -1,5 +1,8 @@
 package org.apache.drill.exec.engine.async;
 
+import org.apache.log4j.spi.LoggerFactory;
+import org.slf4j.Logger;
+
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
@@ -12,20 +15,42 @@ import java.util.concurrent.LinkedBlockingDeque;
 // for common physical operator except scan & screen
 public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
 
+  // for test
+  private boolean finished = false ;
+  private final static Logger logger = org.slf4j.LoggerFactory.getLogger(SimpleRelayRecordBatch.class);
+
   public SimpleRelayRecordBatch() {
     recordFrames = new LinkedBlockingDeque<>();
   }
 
   @Override
   protected void stash(RecordFrame recordFrame) {
+    if(finished){
+      if(recordFrame.outcome != IterOutcome.NONE){
+         logger.error("{} after NONE in {}.",recordFrame.outcome,incoming);
+      }
+      return ;
+    }
     recordFrames.add(recordFrame);
   }
 
   @Override
   public IterOutcome next() {
+    if(finished){
+      while((current = recordFrames.poll()) != null){
+        if(current.outcome != IterOutcome.NONE){
+          logger.error("{} after NONE in {}",current.outcome,incoming);
+        }
+      }
+      return IterOutcome.NONE;
+    }
     current = recordFrames.poll();
     if (current == null) {
       return IterOutcome.NOT_YET;
+    }
+    if(current.outcome == IterOutcome.NONE){
+      logger.info("{} finished .",incoming);
+      finished = true ;
     }
     return current.outcome;
   }

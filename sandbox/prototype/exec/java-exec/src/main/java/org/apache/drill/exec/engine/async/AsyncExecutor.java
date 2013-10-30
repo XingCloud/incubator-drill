@@ -1,6 +1,7 @@
 package org.apache.drill.exec.engine.async;
 
 import com.google.common.collect.Lists;
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
@@ -39,7 +40,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  public ThreadPoolExecutor worker = new PriorityThreadPoolExecutor(24, 24, 60, TimeUnit.MINUTES, new PriorityBlockingQueue<Runnable>(), new NamedThreadFactory("Worker-"));
+  public ThreadPoolExecutor worker = new PriorityThreadPoolExecutor(16, 16, 60, TimeUnit.MINUTES, new PriorityBlockingQueue<Runnable>(), new NamedThreadFactory("Worker-"));
 
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
@@ -301,7 +302,7 @@ public class AsyncExecutor {
   }
 
   public boolean upward(RecordBatch recordBatch, IterOutcome o) {
-    boolean nextStash = true ;
+    boolean nextStash = true;
     try {
       List<RelayRecordBatch> parents = getParentRelaysFor(recordBatch);
       for (RelayRecordBatch parent : parents) {
@@ -321,16 +322,20 @@ public class AsyncExecutor {
         }
       }
     } catch (Exception e) {
-      logger.error("{} upward {} failed .",recordBatch,o);
-      e.printStackTrace();
+      logger.error("{} upward {} failed .", recordBatch, o);
+      throw e;
     }
     return nextStash;
   }
 
   public void addTask(RecordBatch recordBatch) {
     Task task = new Task(recordBatch);
-    if (!worker.isShutdown() && !worker.isTerminating())
+    try {
       worker.submit(task);
+    } catch (Exception e) {
+      if (!worker.isTerminating() && !worker.isShutdown())
+        throw new DrillRuntimeException("Submit task failed .");
+    }
   }
 
   class Task implements Runnable, Comparable<Task> {
@@ -359,9 +364,9 @@ public class AsyncExecutor {
                 if (o == IterOutcome.NONE) {
                   return;
                 }
-                if(!next){
+                if (!next) {
                   addTask(recordBatch);
-                  return ;
+                  return;
                 }
                 break;
               case NOT_YET:
@@ -385,9 +390,9 @@ public class AsyncExecutor {
 
   public void initPriority(RecordBatch recordBatch) {
     Integer priority = batchPriority.get(recordBatch);
-    if (priority == null){
+    if (priority == null) {
       priority = 0;
-      batchPriority.put(recordBatch,priority);
+      batchPriority.put(recordBatch, priority);
     }
     List<RelayRecordBatch> incomingRelays = batch2DirectChildren.get(recordBatch);
     if (incomingRelays != null) {
