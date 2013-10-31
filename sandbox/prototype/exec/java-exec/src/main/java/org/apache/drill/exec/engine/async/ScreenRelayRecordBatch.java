@@ -1,5 +1,7 @@
 package org.apache.drill.exec.engine.async;
 
+import org.slf4j.Logger;
+
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -12,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 // for screen root  , call to next() will block until result is ready
 public class ScreenRelayRecordBatch extends AbstractRelayRecordBatch {
+
+  private final static Logger logger = org.slf4j.LoggerFactory.getLogger(ScreenRelayRecordBatch.class);
 
 
   private AsyncExecutor asyncExecutor;
@@ -40,9 +44,11 @@ public class ScreenRelayRecordBatch extends AbstractRelayRecordBatch {
       current = recordFrames.poll(3600, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       asyncExecutor.checkStatus();
+      logger.error("Query stopped .");
       return IterOutcome.STOP;
     }
     if (current.outcome == IterOutcome.NONE) {
+      logger.info("Query finished .");
       asyncExecutor.worker.shutdown();
     }
     return current.outcome;
