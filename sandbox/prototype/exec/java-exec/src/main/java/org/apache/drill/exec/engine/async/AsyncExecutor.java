@@ -34,6 +34,9 @@ public class AsyncExecutor {
 
   private Map<RecordBatch, Integer> batchPriority = new HashMap<>();
 
+  // for debug , record record batches which are not finished .
+  private Set<RecordBatch> recordBatches = new HashSet<>();
+
   private boolean started = false;
 
   private List<LeafDriver> drivers = new ArrayList<>();
@@ -113,7 +116,8 @@ public class AsyncExecutor {
     if (incoming instanceof UnionedScanBatch.UnionedScanSplitBatch || incoming instanceof ScanBatch) {
       relay = new ScanRelayRecordBatch();
     } else {
-      relay = new SimpleRelayRecordBatch();
+      relay = new SimpleRelayRecordBatch(this);
+      recordBatches.add(incoming);
     }
     relay.setIncoming(incoming);
     List<RelayRecordBatch> relays = getParentRelaysFor(incoming);
@@ -152,6 +156,17 @@ public class AsyncExecutor {
   public void start() {
     this.started = true;
     startDrivers();
+  }
+
+  // for debug
+  public void recordFinish(RecordBatch recordBatch){
+    recordBatches.remove(recordBatch);
+  }
+
+  public void checkStatus(){
+    for(RecordBatch recordBatch : recordBatches){
+      logger.error("{} not finised . ",recordBatch);
+    }
   }
 
   private void startDrivers() {
@@ -372,7 +387,6 @@ public class AsyncExecutor {
               case NOT_YET:
                 return;
               case STOP:
-                submitKill();
                 upward(recordBatch, IterOutcome.STOP);
                 return;
             }

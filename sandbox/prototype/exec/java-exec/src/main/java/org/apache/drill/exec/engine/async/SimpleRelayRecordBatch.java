@@ -17,9 +17,11 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
 
   // for test
   private boolean finished = false ;
+  private AsyncExecutor asyncExecutor ;
   private final static Logger logger = org.slf4j.LoggerFactory.getLogger(SimpleRelayRecordBatch.class);
 
-  public SimpleRelayRecordBatch() {
+  public SimpleRelayRecordBatch(AsyncExecutor asyncExecutor) {
+    this.asyncExecutor = asyncExecutor ;
     recordFrames = new LinkedBlockingDeque<>();
   }
 
@@ -49,7 +51,7 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
       return IterOutcome.NOT_YET;
     }
     if(current.outcome == IterOutcome.NONE){
-      logger.info("{} finished .",incoming);
+      asyncExecutor.recordFinish(incoming);
       finished = true ;
     }
     return current.outcome;

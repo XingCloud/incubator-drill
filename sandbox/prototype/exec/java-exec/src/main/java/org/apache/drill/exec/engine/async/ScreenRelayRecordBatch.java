@@ -37,9 +37,9 @@ public class ScreenRelayRecordBatch extends AbstractRelayRecordBatch {
       asyncExecutor.start();
     }
     try {
-      current = recordFrames.poll(60000, TimeUnit.SECONDS);
+      current = recordFrames.poll(3600, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      asyncExecutor.checkStatus();
       return IterOutcome.STOP;
     }
     if (current.outcome == IterOutcome.NONE) {
