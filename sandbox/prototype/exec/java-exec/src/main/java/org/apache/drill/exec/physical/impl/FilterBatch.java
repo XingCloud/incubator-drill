@@ -49,7 +49,7 @@ public class FilterBatch extends BaseRecordBatch {
 
   @Override
   public BatchSchema getSchema() {
-    return schema;
+    return incoming.getSchema();
   }
 
   @Override
@@ -61,7 +61,6 @@ public class FilterBatch extends BaseRecordBatch {
   @Override
   public IterOutcome next() {
     IterOutcome o = incoming.next();
-    schema = incoming.getSchema();
     switch (o) {
       case NONE:
       case STOP:
