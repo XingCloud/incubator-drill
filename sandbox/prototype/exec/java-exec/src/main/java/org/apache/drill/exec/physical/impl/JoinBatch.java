@@ -44,6 +44,7 @@ public class JoinBatch extends BaseRecordBatch {
   private boolean leftFinished = false;
   private boolean rightFinished = false;
   private boolean newSchema = true;
+  private BatchSchema leftSchema ;
 
 
   public JoinBatch(FragmentContext context, JoinPOP config, RecordBatch leftIncoming, RecordBatch rightIncoming) {
@@ -108,6 +109,7 @@ public class JoinBatch extends BaseRecordBatch {
         case NOT_YET:
           break;
         case NONE:
+          leftSchema = leftIncoming.getSchema();
           leftFinished = true;
       }
     }
@@ -516,8 +518,8 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public List<MaterializedField> getFields() {
       if (fields.size() == 0) {
-        if (leftIncoming.getSchema() != null) {
-          for (MaterializedField f : leftIncoming.getSchema()) {
+        if (leftSchema != null) {
+          for (MaterializedField f : leftSchema) {
             fields.add(f);
             Collections.sort(fields, new MaterializedFieldComparator());
           }

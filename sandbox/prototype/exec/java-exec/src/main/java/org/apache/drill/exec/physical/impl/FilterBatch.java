@@ -27,6 +27,7 @@ public class FilterBatch extends BaseRecordBatch {
   private BooleanEvaluator eval;
   private boolean new_schema = true;
   private BitVector bitVector = null;
+  private BatchSchema schema ;
 
 
   public FilterBatch(FragmentContext context, Filter config, RecordBatch incoming) {
@@ -48,7 +49,7 @@ public class FilterBatch extends BaseRecordBatch {
 
   @Override
   public BatchSchema getSchema() {
-    return incoming.getSchema();
+    return schema;
   }
 
   @Override
@@ -60,6 +61,7 @@ public class FilterBatch extends BaseRecordBatch {
   @Override
   public IterOutcome next() {
     IterOutcome o = incoming.next();
+    schema = incoming.getSchema();
     switch (o) {
       case NONE:
       case STOP:
