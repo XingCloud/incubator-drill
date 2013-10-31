@@ -35,7 +35,7 @@ public class AsyncExecutor {
   private Map<RecordBatch, Integer> batchPriority = new HashMap<>();
 
   // for debug , record record batches which are not finished .
-  private Set<RecordBatch> recordBatches = new HashSet<>();
+  private Set<RecordBatch> recordBatches = new ConcurrentSkipListSet<>();
 
   private boolean started = false;
 
