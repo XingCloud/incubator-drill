@@ -12,6 +12,7 @@ import org.apache.drill.exec.vector.BigIntVector;
 import org.apache.drill.exec.vector.IntVector;
 import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.VarCharVector;
+import org.slf4j.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -27,6 +28,8 @@ public class XAEvaluators {
 
   private static SimpleDateFormat sf1;
   private static SimpleDateFormat sf2;
+
+  private static final Logger logger = org.slf4j.LoggerFactory.getLogger(XAEvaluators.class);
 
   static {
     sf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -308,6 +311,7 @@ public class XAEvaluators {
       Date date = sf2.parse(String.valueOf(sqldate));
       return (int) (date.getTime() / period);
     } catch (Exception e) {
+      logger.error("Parse sqldate failed , {}",sqldate);
       e.printStackTrace();
       // Do nothing
     }
