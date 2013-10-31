@@ -1,6 +1,7 @@
 package org.apache.drill.exec.engine.async;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.exec.ops.FragmentContext;
@@ -35,7 +36,7 @@ public class AsyncExecutor {
   private Map<RecordBatch, Integer> batchPriority = new HashMap<>();
 
   // for debug , record record batches which are not finished .
-  private Set<RecordBatch> recordBatches = new ConcurrentSkipListSet<>();
+  private Map<RecordBatch,Object> recordBatches = Maps.newConcurrentMap();
 
   private boolean started = false;
 
@@ -117,7 +118,7 @@ public class AsyncExecutor {
       relay = new ScanRelayRecordBatch();
     } else {
       relay = new SimpleRelayRecordBatch(this);
-      recordBatches.add(incoming);
+      recordBatches.put(incoming,new Object());
     }
     relay.setIncoming(incoming);
     List<RelayRecordBatch> relays = getParentRelaysFor(incoming);
@@ -164,7 +165,7 @@ public class AsyncExecutor {
   }
 
   public void checkStatus(){
-    for(RecordBatch recordBatch : recordBatches){
+    for(RecordBatch recordBatch : recordBatches.keySet()){
       logger.error("{} not finised . ",recordBatch);
     }
   }
