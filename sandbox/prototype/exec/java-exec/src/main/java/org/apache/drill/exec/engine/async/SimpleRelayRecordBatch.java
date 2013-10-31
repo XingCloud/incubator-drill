@@ -39,9 +39,10 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
   @Override
   public IterOutcome next() {
     if(finished){
-      while((current = recordFrames.poll()) != null){
-        if(current.outcome != IterOutcome.NONE){
-          logger.error("{} after NONE in {}",current.outcome,incoming);
+      RecordFrame recordFrame ;
+      while((recordFrame = recordFrames.poll()) != null){
+        if(recordFrame.outcome != IterOutcome.NONE){
+          logger.error("{} after NONE in {}",recordFrame.outcome,incoming);
         }
       }
       return IterOutcome.NONE;
