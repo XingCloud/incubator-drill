@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.netflix.curator.x.discovery.ServiceCache;
 import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.exec.ExecConstants;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
@@ -40,7 +41,6 @@ import com.netflix.curator.retry.RetryNTimes;
 import com.netflix.curator.x.discovery.ServiceDiscovery;
 import com.netflix.curator.x.discovery.ServiceDiscoveryBuilder;
 import com.netflix.curator.x.discovery.ServiceInstance;
-import com.netflix.curator.x.discovery.details.ServiceCache;
 import com.netflix.curator.x.discovery.details.ServiceCacheListener;
 
 /**
@@ -73,7 +73,7 @@ public class ZKClusterCoordinator extends ClusterCoordinator {
     serviceCache = discovery.
       serviceCacheBuilder()
       .name(serviceName)
-      .refreshPaddingMs(config.getInt(ExecConstants.ZK_REFRESH))
+      //.refreshPaddingMs(config.getInt(ExecConstants.ZK_REFRESH))
       .build();
   }
 
