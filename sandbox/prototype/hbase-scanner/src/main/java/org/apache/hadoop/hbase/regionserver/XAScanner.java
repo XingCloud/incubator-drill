@@ -12,7 +12,8 @@ import java.util.List;
  * Time: 8:55 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface XAScanner {
+public interface
+        XAScanner {
     public boolean next(List<KeyValue> results) throws IOException;
     public void close() throws IOException;
 

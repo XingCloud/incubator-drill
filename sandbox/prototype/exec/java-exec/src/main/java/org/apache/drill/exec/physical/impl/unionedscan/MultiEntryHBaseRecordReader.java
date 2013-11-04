@@ -284,9 +284,6 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
             "\tEnd key: " + Bytes.toStringBinary(endRowKey) +
             "\nStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
                     + "\nKey range size: " + slot.size()+"\n");
-//    for (KeyRange range : slot) {
-//      summary.append(range).append("\n");
-//    }
     logger.info(summary.toString());
 
     //test
@@ -463,10 +460,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void allocateNew() {
     for (ValueVector v : valueVectors) {
-      v.clear();
       AllocationHelper.allocate(v, batchSize, 8);
     }
-    entryIndexVector.clear();
     AllocationHelper.allocate(entryIndexVector, 1, 4);
   }
 
