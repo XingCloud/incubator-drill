@@ -218,7 +218,7 @@ public class HBaseRecordReader implements RecordReader {
         }
       }
       filters = null;
-      if (patterns.size() >= 1) {       //todo should depend on hbase schema to generate row key
+      if (patterns.size() > 0) {       //todo should depend on hbase schema to generate row key
         List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
         patterns = null;
 
@@ -236,6 +236,14 @@ public class HBaseRecordReader implements RecordReader {
       }
     }
     config.setFilters(null);
+    if (slot.size() == 0) {
+      //如果没有key range，则需要加入start row和end row
+      KeyRange keyRange = new KeyRange(startRowKey, true, endRowKey, false);
+      slot.add(keyRange);
+      logger.info("Slot size is 0 to skip uid range, add key range: " + keyRange);
+      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
+      filterList.addFilter(skipScanFilter);
+    }
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
