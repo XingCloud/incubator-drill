@@ -40,7 +40,8 @@ public class XAFunctions implements CallProvider {
         .operator("sgmt3600", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "sgmt3600"),
       FunctionDefinition.operator("date", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsAnySoft(), "date"),
       FunctionDefinition
-        .operator("hid2inner", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "hid2inner")
+        .operator("hid2inner", new AnyTypeAllowed(1), new OutputTypeDeterminer.SameAsFirstInput(), "hid2inner"),
+      FunctionDefinition.operator("in", new AnyTypeAllowed(10000), new OutputTypeDeterminer.SameAsFirstInput(), "in")
     };
   }
 }
