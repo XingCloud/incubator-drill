@@ -1,6 +1,5 @@
 package org.apache.hadoop.hbase.regionserver;
 
-import com.xingcloud.hbase.manager.HBaseResourceManager;
 import com.xingcloud.hbase.meta.HBaseMeta;
 import com.xingcloud.hbase.util.FileManager;
 
@@ -19,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 

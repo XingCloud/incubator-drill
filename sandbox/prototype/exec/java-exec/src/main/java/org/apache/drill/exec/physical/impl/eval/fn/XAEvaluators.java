@@ -12,6 +12,7 @@ import org.apache.drill.exec.vector.BigIntVector;
 import org.apache.drill.exec.vector.IntVector;
 import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.VarCharVector;
+import org.slf4j.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,15 +26,32 @@ import java.util.TimeZone;
  */
 public class XAEvaluators {
 
-  private static SimpleDateFormat sf1;
-  private static SimpleDateFormat sf2;
 
-  static {
-    sf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-    sf1.setTimeZone(TimeZone.getTimeZone("GMT+8"));
-    sf2 = new SimpleDateFormat("yyyyMMddHHmmss");
-    sf2.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+  private static final Logger logger = org.slf4j.LoggerFactory.getLogger(XAEvaluators.class);
+
+  private static final ThreadLocal sdf1 = new ThreadLocal();
+  private static final ThreadLocal sdf2 = new ThreadLocal();
+
+  public static SimpleDateFormat getSDF1(){
+    SimpleDateFormat sdf = (SimpleDateFormat) sdf1.get();
+    if(sdf == null){
+      sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+      sdf.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+      sdf1.set(sdf);
+    }
+    return sdf;
   }
+
+  public static SimpleDateFormat getSDF2(){
+    SimpleDateFormat sdf = (SimpleDateFormat) sdf2.get();
+    if(sdf == null){
+      sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+      sdf.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+      sdf2.set(sdf);
+    }
+    return sdf ;
+  }
+
 
   public static abstract class DivEvaluator extends BaseBasicEvaluator {
     protected BasicEvaluator child;
@@ -118,8 +136,9 @@ public class XAEvaluators {
       int recordCount = accessor.getValueCount();
       value.allocateNew(recordCount);
       IntVector.Mutator mutator = value.getMutator();
+      SimpleDateFormat sdf = getSDF2();
       for (int i = 0; i < recordCount; i++) {
-        mutator.set(i, getIntKeySpecificPeriod(accessor.get(i), period));
+        mutator.set(i, getIntKeySpecificPeriod(accessor.get(i), period,sdf));
       }
       bigIntVector.close();
       mutator.setValueCount(recordCount);
@@ -180,9 +199,10 @@ public class XAEvaluators {
       timeStr.allocateNew(10 * recordCount, recordCount);
       VarCharVector.Mutator mutator = timeStr.getMutator();
 
+      SimpleDateFormat sdf = getSDF1();
 
       for (int i = 0; i < recordCount; i++) {
-        mutator.set(i, getStrKeyBySpecificPeriod(accessor.get(i), period).getBytes());
+        mutator.set(i, getStrKeyBySpecificPeriod(accessor.get(i), period,sdf).getBytes());
       }
 
       intVector.close();
@@ -303,11 +323,12 @@ public class XAEvaluators {
   }
 
 
-  public static int getIntKeySpecificPeriod(long sqldate, int period) {
+  public static int getIntKeySpecificPeriod(long sqldate, int period,SimpleDateFormat sdf) {
     try {
-      Date date = sf2.parse(String.valueOf(sqldate));
+      Date date = sdf.parse(String.valueOf(sqldate));
       return (int) (date.getTime() / period);
     } catch (Exception e) {
+      logger.error("Parse sqldate failed , {}",sqldate);
       e.printStackTrace();
       // Do nothing
     }
@@ -315,9 +336,9 @@ public class XAEvaluators {
   }
 
 
-  public static String getStrKeyBySpecificPeriod(long quotient, int period) {
+  public static String getStrKeyBySpecificPeriod(long quotient, int period,SimpleDateFormat sdf) {
     long timestamp = quotient * period;
-    String[] yhm = sf1.format(timestamp).split(" ");
+    String[] yhm = sdf.format(timestamp).split(" ");
     String[] hm = yhm[1].split(":");
     int minutes = Integer.parseInt(hm[1]);
     int val = minutes % (period/60000);

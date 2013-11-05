@@ -24,16 +24,16 @@ import java.nio.charset.Charset;
  */
 public class WrappedByteBuf extends ByteBuf {
 
-  static final Logger logger = LoggerFactory.getLogger(WrappedByteBuf.class) ;
+  static final Logger logger = LoggerFactory.getLogger(WrappedByteBuf.class);
 
-  private ByteBuf byteBuf ;
-  private BufferAllocator allocator ;
+  private ByteBuf byteBuf;
+  private BufferAllocator allocator;
   private int refCount;
 
-  public WrappedByteBuf(ByteBuf byteBuf ,BufferAllocator allocator) {
+  public WrappedByteBuf(ByteBuf byteBuf, BufferAllocator allocator) {
     this.byteBuf = byteBuf;
-    this.allocator = allocator ;
-    this.refCount = 1 ;
+    this.allocator = allocator;
+    this.refCount = 1;
   }
 
   @Override
@@ -98,7 +98,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf setIndex(int readerIndex, int writerIndex) {
-    return byteBuf.setIndex(readerIndex,writerIndex);
+    return byteBuf.setIndex(readerIndex, writerIndex);
   }
 
   @Override
@@ -178,7 +178,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public int ensureWritable(int minWritableBytes, boolean force) {
-    return byteBuf.ensureWritable(minWritableBytes,force);
+    return byteBuf.ensureWritable(minWritableBytes, force);
   }
 
   @Override
@@ -248,132 +248,132 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf getBytes(int index, ByteBuf dst) {
-    return byteBuf.getBytes(index,dst);
+    return byteBuf.getBytes(index, dst);
   }
 
   @Override
   public ByteBuf getBytes(int index, ByteBuf dst, int length) {
-    return byteBuf.getBytes(index,dst,length);
+    return byteBuf.getBytes(index, dst, length);
   }
 
   @Override
   public ByteBuf getBytes(int index, ByteBuf dst, int dstIndex, int length) {
-    return byteBuf.getBytes(index,dst,dstIndex,length);
+    return byteBuf.getBytes(index, dst, dstIndex, length);
   }
 
   @Override
   public ByteBuf getBytes(int index, byte[] dst) {
-    return byteBuf.getBytes(index,dst);
+    return byteBuf.getBytes(index, dst);
   }
 
   @Override
   public ByteBuf getBytes(int index, byte[] dst, int dstIndex, int length) {
-    return byteBuf.getBytes(index,dst,dstIndex,length);
+    return byteBuf.getBytes(index, dst, dstIndex, length);
   }
 
   @Override
   public ByteBuf getBytes(int index, ByteBuffer dst) {
-    return byteBuf.getBytes(index,dst);
+    return byteBuf.getBytes(index, dst);
   }
 
   @Override
   public ByteBuf getBytes(int index, OutputStream out, int length) throws IOException {
-    return byteBuf.getBytes(index,out,length);
+    return byteBuf.getBytes(index, out, length);
   }
 
   @Override
   public int getBytes(int index, GatheringByteChannel out, int length) throws IOException {
-    return byteBuf.getBytes(index,out,length);
+    return byteBuf.getBytes(index, out, length);
   }
 
   @Override
   public ByteBuf setBoolean(int index, boolean value) {
-    return byteBuf.setBoolean(index,value);
+    return byteBuf.setBoolean(index, value);
   }
 
   @Override
   public ByteBuf setByte(int index, int value) {
-    return byteBuf.setByte(index,value);
+    return byteBuf.setByte(index, value);
   }
 
   @Override
   public ByteBuf setShort(int index, int value) {
-    return byteBuf.setShort(index,value);
+    return byteBuf.setShort(index, value);
   }
 
   @Override
   public ByteBuf setMedium(int index, int value) {
-    return byteBuf.setMedium(index,value);
+    return byteBuf.setMedium(index, value);
   }
 
   @Override
   public ByteBuf setInt(int index, int value) {
-    return byteBuf.setInt(index,value);
+    return byteBuf.setInt(index, value);
   }
 
   @Override
   public ByteBuf setLong(int index, long value) {
-    return byteBuf.setLong(index,value);
+    return byteBuf.setLong(index, value);
   }
 
   @Override
   public ByteBuf setChar(int index, int value) {
-    return byteBuf.setChar(index,value);
+    return byteBuf.setChar(index, value);
   }
 
   @Override
   public ByteBuf setFloat(int index, float value) {
-    return byteBuf.setFloat(index,value);
+    return byteBuf.setFloat(index, value);
   }
 
   @Override
   public ByteBuf setDouble(int index, double value) {
-    return byteBuf.setDouble(index,value);
+    return byteBuf.setDouble(index, value);
   }
 
   @Override
   public ByteBuf setBytes(int index, ByteBuf src) {
-    return byteBuf.setBytes(index,src);
+    return byteBuf.setBytes(index, src);
   }
 
   @Override
   public ByteBuf setBytes(int index, ByteBuf src, int length) {
-    return byteBuf.setBytes(index,src,length);
+    return byteBuf.setBytes(index, src, length);
   }
 
   @Override
   public ByteBuf setBytes(int index, ByteBuf src, int srcIndex, int length) {
-    return byteBuf.setBytes(index,src,srcIndex,length);
+    return byteBuf.setBytes(index, src, srcIndex, length);
   }
 
   @Override
   public ByteBuf setBytes(int index, byte[] src) {
-    return byteBuf.setBytes(index,src);
+    return byteBuf.setBytes(index, src);
   }
 
   @Override
   public ByteBuf setBytes(int index, byte[] src, int srcIndex, int length) {
-    return byteBuf.setBytes(index,src,srcIndex,length);
+    return byteBuf.setBytes(index, src, srcIndex, length);
   }
 
   @Override
   public ByteBuf setBytes(int index, ByteBuffer src) {
-    return byteBuf.setBytes(index,src);
+    return byteBuf.setBytes(index, src);
   }
 
   @Override
   public int setBytes(int index, InputStream in, int length) throws IOException {
-    return byteBuf.setBytes(index,in,length);
+    return byteBuf.setBytes(index, in, length);
   }
 
   @Override
   public int setBytes(int index, ScatteringByteChannel in, int length) throws IOException {
-    return byteBuf.setBytes(index,in,length);
+    return byteBuf.setBytes(index, in, length);
   }
 
   @Override
   public ByteBuf setZero(int index, int length) {
-    return byteBuf.setZero(index,length);
+    return byteBuf.setZero(index, length);
   }
 
   @Override
@@ -458,12 +458,12 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf readBytes(ByteBuf dst, int length) {
-    return byteBuf.readBytes(dst,length);
+    return byteBuf.readBytes(dst, length);
   }
 
   @Override
   public ByteBuf readBytes(ByteBuf dst, int dstIndex, int length) {
-    return byteBuf.readBytes(dst,dstIndex,length);
+    return byteBuf.readBytes(dst, dstIndex, length);
   }
 
   @Override
@@ -473,7 +473,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf readBytes(byte[] dst, int dstIndex, int length) {
-    return byteBuf.readBytes(dst,dstIndex,length);
+    return byteBuf.readBytes(dst, dstIndex, length);
   }
 
   @Override
@@ -483,12 +483,12 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf readBytes(OutputStream out, int length) throws IOException {
-    return byteBuf.readBytes(out,length);
+    return byteBuf.readBytes(out, length);
   }
 
   @Override
   public int readBytes(GatheringByteChannel out, int length) throws IOException {
-    return byteBuf.readBytes(out,length);
+    return byteBuf.readBytes(out, length);
   }
 
   @Override
@@ -548,12 +548,12 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf writeBytes(ByteBuf src, int length) {
-    return byteBuf.writeBytes(src,length);
+    return byteBuf.writeBytes(src, length);
   }
 
   @Override
   public ByteBuf writeBytes(ByteBuf src, int srcIndex, int length) {
-    return byteBuf.writeBytes(src,srcIndex,length);
+    return byteBuf.writeBytes(src, srcIndex, length);
   }
 
   @Override
@@ -563,7 +563,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf writeBytes(byte[] src, int srcIndex, int length) {
-    return byteBuf.writeBytes(src,srcIndex,length);
+    return byteBuf.writeBytes(src, srcIndex, length);
   }
 
   @Override
@@ -573,12 +573,12 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public int writeBytes(InputStream in, int length) throws IOException {
-    return byteBuf.writeBytes(in,length);
+    return byteBuf.writeBytes(in, length);
   }
 
   @Override
   public int writeBytes(ScatteringByteChannel in, int length) throws IOException {
-    return byteBuf.writeBytes(in,length);
+    return byteBuf.writeBytes(in, length);
   }
 
   @Override
@@ -588,7 +588,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public int indexOf(int fromIndex, int toIndex, byte value) {
-    return byteBuf.indexOf(fromIndex,toIndex,value);
+    return byteBuf.indexOf(fromIndex, toIndex, value);
   }
 
   @Override
@@ -598,12 +598,12 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public int bytesBefore(int length, byte value) {
-    return byteBuf.bytesBefore(length,value);
+    return byteBuf.bytesBefore(length, value);
   }
 
   @Override
   public int bytesBefore(int index, int length, byte value) {
-    return byteBuf.bytesBefore(index,length,value);
+    return byteBuf.bytesBefore(index, length, value);
   }
 
   @Override
@@ -613,7 +613,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public int forEachByte(int index, int length, ByteBufProcessor processor) {
-    return byteBuf.forEachByte(index,length,processor);
+    return byteBuf.forEachByte(index, length, processor);
   }
 
   @Override
@@ -623,7 +623,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public int forEachByteDesc(int index, int length, ByteBufProcessor processor) {
-    return byteBuf.forEachByteDesc(index,length,processor);
+    return byteBuf.forEachByteDesc(index, length, processor);
   }
 
   @Override
@@ -633,7 +633,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf copy(int index, int length) {
-    return byteBuf.copy(index,length);
+    return byteBuf.copy(index, length);
   }
 
   @Override
@@ -643,7 +643,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf slice(int index, int length) {
-    return byteBuf.slice(index,length);
+    return byteBuf.slice(index, length);
   }
 
   @Override
@@ -663,12 +663,12 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuffer nioBuffer(int index, int length) {
-    return byteBuf.nioBuffer(index,length);
+    return byteBuf.nioBuffer(index, length);
   }
 
   @Override
   public ByteBuffer internalNioBuffer(int index, int length) {
-    return byteBuf.internalNioBuffer(index,length);
+    return byteBuf.internalNioBuffer(index, length);
   }
 
   @Override
@@ -713,7 +713,7 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public String toString(int index, int length, Charset charset) {
-    return byteBuf.toString(index,length,charset);
+    return byteBuf.toString(index, length, charset);
   }
 
   @Override
@@ -738,14 +738,18 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public ByteBuf retain(int increment) {
-    refCount += increment ;
-    return byteBuf.retain(increment);
+    synchronized (this){
+      refCount += increment;
+      return byteBuf.retain(increment);
+    }
   }
 
   @Override
   public ByteBuf retain() {
-    refCount ++ ;
-    return byteBuf.retain();
+    synchronized (this){
+      refCount++;
+      return byteBuf.retain();
+    }
   }
 
   @Override
@@ -755,19 +759,23 @@ public class WrappedByteBuf extends ByteBuf {
 
   @Override
   public boolean release() {
-    refCount -- ;
-    if(refCount == 0){
-      allocator.free(byteBuf);
-    }else if(refCount < 0){
-      logger.error("Ref count zero .");
-      throw new DrillRuntimeException("Ref count zero") ;
+    synchronized (this) {
+      refCount--;
+      if (refCount == 0) {
+        allocator.free(byteBuf);
+      } else if (refCount < 0) {
+        logger.error("Ref count zero .");
+        throw new DrillRuntimeException("Ref count zero");
+      }
+      return byteBuf.release();
     }
-    return byteBuf.release();
   }
 
   @Override
   public boolean release(int decrement) {
-    refCount -= decrement ;
-    return byteBuf.release(decrement);
+    synchronized (this){
+      refCount -= decrement;
+      return byteBuf.release(decrement);
+    }
   }
 }

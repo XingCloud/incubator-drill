@@ -64,6 +64,9 @@ public class JoinBatch extends BaseRecordBatch {
       case INNER:
         connector = new InnerConnector();
         break;
+      case ANTI:
+        connector = new AntiConnector();
+        break;
     }
 
     setupEvals();
@@ -451,6 +454,40 @@ public class JoinBatch extends BaseRecordBatch {
     }
   }
 
+  // anti join
+  class AntiConnector extends Connector{
+
+    private final static int INVALID_INDEX = -1 ;
+
+    @Override
+    public boolean connect() {
+      IntVector.Accessor accessor = rightJoinKey.getAccessor();
+      for(int i = 0 ; i < accessor.getValueCount(); i++){
+        if(!leftValueMap.containsKey(accessor.get(i))){
+          outRecords.add(new int[]{INVALID_INDEX,INVALID_INDEX,i});
+        }
+      }
+      return !outRecords.isEmpty();
+    }
+
+    @Override
+    public void beforeCopy() {
+      super.beforeCopy();
+      recordCount = outRecords.size();
+    }
+
+    @Override
+    public void copyLeft() {
+      // Do nothing
+      // no need to upstream left values
+    }
+
+    @Override
+    public MaterializedField getMaterializedField(MaterializedField f) {
+      return f;
+    }
+  }
+
   class Cache {
     Collection<List<ValueVector>> incomings;
     List<MaterializedField> fields;
@@ -532,7 +569,7 @@ public class JoinBatch extends BaseRecordBatch {
 
     @Override
     public void clear() {
-      if(valuesIndexMap != null){
+      if (valuesIndexMap != null) {
         valuesIndexMap.release();
       }
       super.clear();

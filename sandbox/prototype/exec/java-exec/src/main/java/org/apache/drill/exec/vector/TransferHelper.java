@@ -22,6 +22,14 @@ public class TransferHelper {
     return newVectors;
   }
 
+  public static List<ValueVector> mirrorVectors(Iterable<ValueVector> vectors){
+    List<ValueVector> newVectors = Lists.newArrayList();
+    for(ValueVector v : vectors){
+      newVectors.add(mirrorVector(v));
+    }
+    return newVectors ;
+  }
+
   public static ValueVector transferVector(ValueVector v) {
     TransferPair transferPair = v.getTransferPair();
     transferPair.transfer();

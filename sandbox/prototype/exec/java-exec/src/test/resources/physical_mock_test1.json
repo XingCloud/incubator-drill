@@ -17,7 +17,7 @@
           types: [
             {
               name: "blue",
-              type: "BIGINT",
+              type: "INT",
               mode: "REQUIRED"
             },
             {
@@ -47,31 +47,54 @@
       ]
     },
     {
-      @id: 3,
+          pop: "PhysicalCollapsingAggregate",
+          @id: 3,
+          child: 2,
+          within: "segment",
+          carryovers: [
+            "green"
+          ],
+          aggregations: [
+            {
+              ref: "count",
+              expr: "count(blue) "
+            },
+            {
+              ref: "user_num",
+              expr: "count_distinct(blue) "
+            },
+            {
+              ref: "sum",
+              expr: "sum(red) "
+            }
+          ]
+        },
+    {
+      @id: 4,
       pop: "project",
-      child: 2,
+      child: 3,
       exprs: [
         {
           ref: "count",
-          expr: "green"
+          expr: "count"
         },
         {
           ref: "user_num",
-          expr: "red"
+          expr: "user_num"
         },
         {
           ref: "sum",
           expr: "sum"
         },
         {
-          ref: "query_id",
-          expr: "'1'"
+        ref: "green",
+        expr: "green"
         }
       ]
     },
     {
-      @id: 4,
-      child: 3,
+      @id: 5,
+      child: 4,
       pop: "screen"
     }
   ]

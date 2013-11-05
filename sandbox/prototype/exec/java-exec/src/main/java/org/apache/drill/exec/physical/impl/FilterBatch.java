@@ -27,6 +27,7 @@ public class FilterBatch extends BaseRecordBatch {
   private BooleanEvaluator eval;
   private boolean new_schema = true;
   private BitVector bitVector = null;
+  private BatchSchema schema ;
 
 
   public FilterBatch(FragmentContext context, Filter config, RecordBatch incoming) {
