@@ -204,7 +204,7 @@ public class DFARowKeyParser {
             case SMALLINT:
               return Bytes.toShort(orig, start);
             case TINYINT:
-              return orig[0];
+              return orig[start];
             case STRING:
               byte[] result;
               int len = end-start;
