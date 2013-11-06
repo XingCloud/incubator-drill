@@ -248,6 +248,8 @@ public class AsyncExecutor {
             upward(split, o);
             if (o == IterOutcome.NONE)
               break loopNext;
+            if(o == IterOutcome.STOP)
+              break loopSplit;
           }
         }
         logger.info("UnionedScanBatch driver[{}] exit", unionedScanBatch);
@@ -295,7 +297,7 @@ public class AsyncExecutor {
         while (!stopped) {
           IterOutcome o = scanBatch.next();
           upward(scanBatch, o);
-          if (o == IterOutcome.NONE)
+          if (o == IterOutcome.NONE || o == IterOutcome.STOP)
             break;
         }
         logger.info("ScanBatch driver[{}] exit .", scanBatch);
