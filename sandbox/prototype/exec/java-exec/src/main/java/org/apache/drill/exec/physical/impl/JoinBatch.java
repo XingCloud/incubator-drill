@@ -558,20 +558,18 @@ public class JoinBatch extends BaseRecordBatch {
 
 
     private void cacheJoinKey(IntVector joinKey) {
-      if (publicCacheStatus.compareAndSet(localCacheStatus, localCacheStatus + 1)) {
-        int index = incomings.size() - 1;
-        IntVector.Accessor accessor = joinKey.getAccessor();
-        synchronized (valuesIndexMap) {
+      synchronized (valuesIndexMap) {
+        if (publicCacheStatus.compareAndSet(localCacheStatus, localCacheStatus + 1)) {
+          int index = incomings.size() - 1;
+          IntVector.Accessor accessor = joinKey.getAccessor();
           for (int i = 0; i < accessor.getValueCount(); i++) {
             valuesIndexMap.put(accessor.get(i), encode(index, i));
           }
         }
         localCacheStatus++;
-      } else {
-        localCacheStatus = publicCacheStatus.get();
+        keyField = joinKey.getField();
+        joinKey.close();
       }
-      keyField = joinKey.getField();
-      joinKey.close();
     }
 
     @Override
