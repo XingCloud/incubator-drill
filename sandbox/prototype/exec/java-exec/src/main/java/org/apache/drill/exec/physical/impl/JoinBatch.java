@@ -561,8 +561,10 @@ public class JoinBatch extends BaseRecordBatch {
       if (publicCacheStatus.compareAndSet(localCacheStatus, localCacheStatus + 1)) {
         int index = incomings.size() - 1;
         IntVector.Accessor accessor = joinKey.getAccessor();
-        for (int i = 0; i < accessor.getValueCount(); i++) {
-          valuesIndexMap.put(accessor.get(i), encode(index, i));
+        synchronized (valuesIndexMap) {
+          for (int i = 0; i < accessor.getValueCount(); i++) {
+            valuesIndexMap.put(accessor.get(i), encode(index, i));
+          }
         }
         localCacheStatus++;
       } else {
@@ -702,7 +704,7 @@ public class JoinBatch extends BaseRecordBatch {
         } else {
           pair.second.retain();
         }
-        logger.info("Cached keymap size : {}",keyCacheMap.size());
+        logger.info("Cached keymap size : {}", keyCacheMap.size());
         return pair;
       }
     }
@@ -710,7 +712,7 @@ public class JoinBatch extends BaseRecordBatch {
     public void remove(RecordBatch recordBatch) {
       synchronized (this) {
         keyCacheMap.remove(recordBatch);
-        logger.info("Cached keymap size : {}",keyCacheMap.size());
+        logger.info("Cached keymap size : {}", keyCacheMap.size());
       }
     }
 
