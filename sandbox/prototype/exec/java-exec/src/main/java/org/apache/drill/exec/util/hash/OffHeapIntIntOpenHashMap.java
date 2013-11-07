@@ -306,7 +306,7 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    * release the internal direct buffer
    */
   public boolean release() {
-    if (refCnt.get() == 0) {
+    if (refCnt.decrementAndGet() == 0) {
       releaseByteBuf(allocated, keys, values);
       allocated = DeadBuf.DEAD_BUFFER;
       keys = DeadBuf.DEAD_BUFFER;
