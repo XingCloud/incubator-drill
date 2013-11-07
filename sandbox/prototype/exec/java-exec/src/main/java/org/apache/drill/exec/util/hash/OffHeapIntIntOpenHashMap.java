@@ -6,6 +6,7 @@ import org.apache.drill.exec.record.DeadBuf;
 
 import java.nio.ByteOrder;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * User: liuxiong
@@ -78,6 +79,8 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
    * @see #lget
    */
   protected int lastSlot;
+
+  private AtomicInteger refCnt = new AtomicInteger(1);
 
   /**
    * Creates a hash map with the default capacity of {@value #DEFAULT_CAPACITY},
@@ -302,12 +305,21 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
   /**
    * release the internal direct buffer
    */
-  public void release(){
-    releaseByteBuf(allocated, keys, values);
-    allocated = DeadBuf.DEAD_BUFFER ;
-    keys = DeadBuf.DEAD_BUFFER;
-    values = DeadBuf.DEAD_BUFFER;
+  public boolean release() {
+    if (refCnt.get() == 0) {
+      releaseByteBuf(allocated, keys, values);
+      allocated = DeadBuf.DEAD_BUFFER;
+      keys = DeadBuf.DEAD_BUFFER;
+      values = DeadBuf.DEAD_BUFFER;
+      return true;
+    }
+    return false;
   }
+
+  public void retain(){
+    refCnt.incrementAndGet();
+  }
+
 
   public int size(){
     return assigned;
