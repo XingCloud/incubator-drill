@@ -395,6 +395,7 @@ public class AsyncExecutor {
             }
           } catch (Exception e) {
             e.printStackTrace();
+            recordBatch.getContext().fail(e);
             upward(recordBatch, IterOutcome.STOP);
             return;
           }

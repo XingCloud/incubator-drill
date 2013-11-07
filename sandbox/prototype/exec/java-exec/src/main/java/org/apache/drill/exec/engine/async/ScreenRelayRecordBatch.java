@@ -1,5 +1,6 @@
 package org.apache.drill.exec.engine.async;
 
+import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.slf4j.Logger;
 
 import java.util.concurrent.LinkedBlockingDeque;
@@ -45,7 +46,7 @@ public class ScreenRelayRecordBatch extends AbstractRelayRecordBatch {
     } catch (InterruptedException e) {
       asyncExecutor.checkStatus();
       logger.error("Query stopped .");
-      return IterOutcome.STOP;
+      throw new DrillRuntimeException("Time out");
     }
     if (current.outcome == IterOutcome.NONE) {
       logger.info("Query finished .");
