@@ -1,7 +1,7 @@
 package org.apache.drill.exec.store;
 
 import com.google.common.collect.Maps;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.xingcloud.mysql.MySqlResourceManager;
 import com.xingcloud.mysql.MySql_16seqid;
 import com.xingcloud.mysql.UserProp;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MysqlRecordReader implements RecordReader {
 
-  static ComboPooledDataSource cpds = null;
   static Logger logger = LoggerFactory.getLogger(MysqlRecordReader.class);
   private FragmentContext context;
   private MysqlReadEntry config;
@@ -54,19 +53,7 @@ public class MysqlRecordReader implements RecordReader {
   private final int batchSize = 16 * 1024;
   private int count = 0 ;
 
-  private static AtomicInteger pooledSize = new AtomicInteger(0) ;
-
   private static PropManager propManager = new PropManager();
-
-  static{
-    cpds = new ComboPooledDataSource() ;
-  }
-
-  public static  Connection getConnection() throws Exception {
-    logger.info("Get new connection , Pooled size : {} ",pooledSize.incrementAndGet());
-    return cpds.getConnection();
-  }
-
 
   public MysqlRecordReader(FragmentContext context, MysqlReadEntry config) {
     this.context = context;
@@ -219,7 +206,7 @@ public class MysqlRecordReader implements RecordReader {
 
   private void initStmtExecutor() throws SQLException, Exception {
     long start = System.nanoTime();
-    conn = getConnection();
+    conn = MySqlResourceManager.getInstance().getConnLocalNode();
     stmt = conn.createStatement();
     rs = stmt.executeQuery(sql);
     logger.info("Init connection cost {} mills .", (System.nanoTime() - start) / 1000000);
@@ -239,7 +226,6 @@ public class MysqlRecordReader implements RecordReader {
     if (conn != null) {
       try {
         logger.info("MysqlRecordReader finished ,[sql:{},count:{}]",sql,count);
-        logger.info("Recycle connection resource . Pooled size : {}",pooledSize.decrementAndGet());
         rs.close();
         stmt.close();
         conn.close();
@@ -275,7 +261,7 @@ public class MysqlRecordReader implements RecordReader {
     }
 
     private Map<String, UserProp> getUserPropMap(String pID) throws SQLException {
-      List<UserProp> userPropList = MySql_16seqid.getInstance().getUserProps(pID);
+      List<UserProp> userPropList = MySqlResourceManager.getInstance().getUserPropsFromLocal(pID);
       Map<String, UserProp> userPropMap = Maps.newHashMap();
       for (UserProp userProp : userPropList) {
         userPropMap.put(userProp.getPropName(), userProp);
