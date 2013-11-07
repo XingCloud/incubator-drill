@@ -261,7 +261,10 @@ public class MysqlRecordReader implements RecordReader {
     }
 
     private Map<String, UserProp> getUserPropMap(String pID) throws SQLException {
+      long st = System.nanoTime();
       List<UserProp> userPropList = MySqlResourceManager.getInstance().getUserPropsFromLocal(pID);
+      logger.info("Get user property form mysql taken " + (System.nanoTime()-st)/1.0e9 + " sec."
+              + pID + " property size: " + userPropList.size());
       Map<String, UserProp> userPropMap = Maps.newHashMap();
       for (UserProp userProp : userPropList) {
         userPropMap.put(userProp.getPropName(), userProp);
