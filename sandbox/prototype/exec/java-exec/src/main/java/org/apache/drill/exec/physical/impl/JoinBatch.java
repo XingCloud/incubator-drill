@@ -542,6 +542,7 @@ public class JoinBatch extends BaseRecordBatch {
     OffHeapIntIntOpenHashMap valuesIndexMap = new OffHeapIntIntOpenHashMap(context.getAllocator());
     AtomicInteger publicCacheStatus = null;
     int localCacheStatus = 0;
+    boolean init = false ;
 
     LeftCache() {
       super();
@@ -549,12 +550,13 @@ public class JoinBatch extends BaseRecordBatch {
     }
 
     public void cache(List<ValueVector> incoming, IntVector joinKey) {
-      if (valuesIndexMap == null) {
+      if (!init) {
         Pair<AtomicInteger, OffHeapIntIntOpenHashMap> pair = leftKeyCacheManager.getKeyMap(((AbstractRelayRecordBatch) leftIncoming).getIncoming(), context.getAllocator());
         publicCacheStatus = pair.first;
         // release default map
         valuesIndexMap.release();
         valuesIndexMap = pair.second;
+        init = true ;
       }
 
       Collections.sort(incoming, new VectorComparator());
