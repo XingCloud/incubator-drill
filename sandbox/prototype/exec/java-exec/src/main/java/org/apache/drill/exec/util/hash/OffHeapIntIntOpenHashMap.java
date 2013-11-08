@@ -4,7 +4,6 @@ import io.netty.buffer.ByteBuf;
 import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.record.DeadBuf;
 
-import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,10 +32,16 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
   public final static float DEFAULT_LOAD_FACTOR = HashMapUtils.DEFAULT_LOAD_FACTOR;
 
   /**
+   *  Return by get() when the value not exists . Be careful when handle it .
+   */
+  public final static int EMPTY_VALUE = -1 ;
+
+  /**
    * Hash-indexed array holding all keys.
    * interpret this bytebuf as an int array
    * @see #values
    */
+
   public ByteBuf keys;
 
   /**
@@ -162,7 +167,7 @@ public class OffHeapIntIntOpenHashMap implements Iterable<IntIntCursor> {
       slot = (slot + 1) & mask;
       if (slot == wrappedAround) break;
     }
-    return 0;
+    return EMPTY_VALUE;
   }
 
   /**

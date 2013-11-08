@@ -332,8 +332,9 @@ public class JoinBatch extends BaseRecordBatch {
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       Pair<Integer, Integer> pair = new Pair<>();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        if (leftValueMap.containsKey(accessor.get(i))) {
-          decode(leftValueMap.lget(), pair);
+        int value = leftValueMap.get(accessor.get(i)) ;
+        if (value != OffHeapIntIntOpenHashMap.EMPTY_VALUE) {
+          decode(value, pair);
           outRecords.add(new int[]{pair.first, pair.second, i});
         }
       }
@@ -413,8 +414,9 @@ public class JoinBatch extends BaseRecordBatch {
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       Pair<Integer, Integer> pair = new Pair<>();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        if (leftValueMap.containsKey(accessor.get(i))) {
-          decode(leftValueMap.lget(), pair);
+        int value = leftValueMap.get(accessor.get(i));
+        if (value != OffHeapIntIntOpenHashMap.EMPTY_VALUE) {
+          decode(value, pair);
           outRecords.add(new int[]{pair.first, pair.second, i});
           mutator.set(i, 1);
         }
