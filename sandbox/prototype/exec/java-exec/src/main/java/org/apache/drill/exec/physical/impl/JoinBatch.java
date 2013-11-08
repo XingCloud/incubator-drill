@@ -536,7 +536,10 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   class LeftCache extends Cache {
-    OffHeapIntIntOpenHashMap valuesIndexMap = null;
+
+    //  Empty map for default
+
+    OffHeapIntIntOpenHashMap valuesIndexMap = new OffHeapIntIntOpenHashMap(context.getAllocator());
     AtomicInteger publicCacheStatus = null;
     int localCacheStatus = 0;
 
@@ -549,6 +552,8 @@ public class JoinBatch extends BaseRecordBatch {
       if (valuesIndexMap == null) {
         Pair<AtomicInteger, OffHeapIntIntOpenHashMap> pair = leftKeyCacheManager.getKeyMap(((AbstractRelayRecordBatch) leftIncoming).getIncoming(), context.getAllocator());
         publicCacheStatus = pair.first;
+        // release default map
+        valuesIndexMap.release();
         valuesIndexMap = pair.second;
       }
 
