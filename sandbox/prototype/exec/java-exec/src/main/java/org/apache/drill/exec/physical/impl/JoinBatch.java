@@ -537,12 +537,9 @@ public class JoinBatch extends BaseRecordBatch {
 
   class LeftCache extends Cache {
 
-    //  Empty map for default
-
     OffHeapIntIntOpenHashMap valuesIndexMap = null;
     AtomicInteger publicCacheStatus = null;
     int localCacheStatus = 0;
-    boolean init = false ;
 
     LeftCache() {
       super();
