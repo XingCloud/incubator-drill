@@ -702,9 +702,9 @@ public class JoinBatch extends BaseRecordBatch {
           pair = new Pair<>(new AtomicInteger(0), new OffHeapIntIntOpenHashMap(allocator));
           keyCacheMap.put(recordBatch, pair);
         } else {
+          logger.info("Cache hit . ");
           pair.second.retain();
         }
-        logger.info("Cached keymap size : {}", keyCacheMap.size());
         return pair;
       }
     }
