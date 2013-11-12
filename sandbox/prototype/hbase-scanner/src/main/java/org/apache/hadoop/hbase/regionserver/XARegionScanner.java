@@ -158,6 +158,7 @@ public class XARegionScanner implements XAScanner{
     if (null == b) {
       return a;
     }
-    return comparator.compareRows(a, b) <= 0 ? a: b;
+    //compare方法会考虑到row key和ts相同时，后写入覆盖掉先写入的情况(memstore ts)
+    return comparator.compare(a, b) <= 0 ? a: b;
   }  
 }
