@@ -332,7 +332,7 @@ public class JoinBatch extends BaseRecordBatch {
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       Pair<Integer, Integer> pair = new Pair<>();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        int value = leftValueMap.get(accessor.get(i)) ;
+        int value = leftValueMap.get(accessor.get(i));
         if (value != OffHeapIntIntOpenHashMap.EMPTY_VALUE) {
           decode(value, pair);
           outRecords.add(new int[]{pair.first, pair.second, i});
@@ -537,12 +537,9 @@ public class JoinBatch extends BaseRecordBatch {
 
   class LeftCache extends Cache {
 
-    //  Empty map for default
-
     OffHeapIntIntOpenHashMap valuesIndexMap = null;
     AtomicInteger publicCacheStatus = null;
     int localCacheStatus = 0;
-    boolean init = false ;
 
     LeftCache() {
       super();
@@ -599,6 +596,7 @@ public class JoinBatch extends BaseRecordBatch {
         if (valuesIndexMap.release()) {
           leftKeyCacheManager.remove(((AbstractRelayRecordBatch) leftIncoming).getIncoming());
         }
+        valuesIndexMap = null;
       }
       super.clear();
     }
