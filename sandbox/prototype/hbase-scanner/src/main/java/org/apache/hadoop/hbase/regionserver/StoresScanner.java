@@ -66,6 +66,8 @@ public class StoresScanner implements XAScanner {
 
   private final KeyValue KV_LIMIT = new KeyValue();
 
+  private boolean hasData = true;
+
 
   Map<String, KeyValueScanner> storeScanners =  new HashMap<>();
 
@@ -89,10 +91,12 @@ public class StoresScanner implements XAScanner {
     this.fs = FileSystem.get(conf);
     this.filter = scan.getFilter();
 
-
     initColFamily(hRegionInfo, familyName);
-    initStoreFiles(hRegionInfo);
-    initKVScanners(scan);
+    this.hasData = initStoreFiles(hRegionInfo);
+    if (this.hasData) {
+      //如果有数据才进行scanner的初始化
+      initKVScanners(scan);
+    }
   }
 
   private void initColFamily(HRegionInfo hRegionInfo, String familyName) {
@@ -120,7 +124,7 @@ public class StoresScanner implements XAScanner {
     }
   }
 
-  private void initStoreFiles(HRegionInfo hRegionInfo) throws IOException {
+  private boolean initStoreFiles(HRegionInfo hRegionInfo) throws IOException {
     LOG.info("Init store files...");
     String tableDir = HBaseMeta.getTablePath(hRegionInfo.getTableNameAsString(), conf);
     String regionName = getRegionName(hRegionInfo);
@@ -134,7 +138,7 @@ public class StoresScanner implements XAScanner {
       storeFiles.add(sf);
       LOG.info("Add store file " + path.toString());
     }
-
+    return storeFiles.size() > 0;
   }
 
   private String getRegionName(HRegionInfo hRegionInfo) {
@@ -185,6 +189,10 @@ public class StoresScanner implements XAScanner {
   }
   
   public boolean next(List<KeyValue> outResults) throws IOException {
+    if (!hasData) {
+      //空表
+      return false;
+    }
     boolean hasMore = next(outResults, scan.getBatch());
     numKV.addAndGet(outResults.size());
     return hasMore;
