@@ -53,7 +53,7 @@ public class StoresScanner implements XAScanner {
   private KeyValue.KVComparator comparator;
   private HColumnDescriptor family;
   private List<StoreFile> storeFiles = new ArrayList<>();
-  private List<KeyValueScanner> scanners;
+  private List<KeyValueScanner> scanners = new ArrayList<KeyValueScanner>();
   private ScanQueryMatcher matcher;
   private Store.ScanInfo scanInfo;
 
@@ -164,7 +164,6 @@ public class StoresScanner implements XAScanner {
         this.matcher = new ScanQueryMatcher(scan, this.scanInfo, entry.getValue(), ScanType.USER_SCAN,
                 Long.MAX_VALUE, HConstants.LATEST_TIMESTAMP, oldestUnexpiredTS);
         List<StoreFileScanner> sfScanners = StoreFileScanner.getScannersForStoreFiles(storeFiles, false, false);
-        this.scanners = new ArrayList<KeyValueScanner>(sfScanners.size());
         this.scanners.addAll(sfScanners);
 
         StoreScanner storeScanner = new StoreScanner(scan, scanInfo, ScanType.USER_SCAN, entry.getValue(), scanners);
