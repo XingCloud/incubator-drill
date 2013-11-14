@@ -86,17 +86,16 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
 
         }
       }
-      
-      // If this isn't a finished stop, we'll inform other batches to finish up.
-      if(state.get() != FragmentState.FINISHED_VALUE){
-        root.stop();
-      }
-      
+
     }catch(Exception ex){
       ex.printStackTrace();
       logger.debug("Caught exception while running fragment: {} ", ex);
       internalFail(ex);
     }finally{
+      // If this isn't a finished stop, we'll inform other batches to finish up.
+      if(state.get() != FragmentState.FINISHED_VALUE){
+        root.stop();
+      }
       t.stop();
     }
     long endTime = System.currentTimeMillis() ;
