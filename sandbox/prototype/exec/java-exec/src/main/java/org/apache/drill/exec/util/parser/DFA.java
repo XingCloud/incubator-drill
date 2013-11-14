@@ -30,6 +30,7 @@ public class DFA {
 
     Arrays.fill(wordTable, '!', '.', true);
     Arrays.fill(wordTable, '.' + 1, '~' + 1, true);
+    wordTable[32] = true; //special character of space(' ')
 
     textTable = new boolean[256];
     Arrays.fill(textTable, false);
