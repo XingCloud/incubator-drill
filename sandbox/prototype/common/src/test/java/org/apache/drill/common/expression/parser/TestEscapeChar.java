@@ -19,6 +19,7 @@ public class TestEscapeChar {
   public void test() throws IOException {
     ObjectMapper mapper= DrillConfig.create().getMapper();
     String str = "COMMON,ram,2013-10-01,2013-10-02,visit.*,{\"identifier\":\"\\\"null\\\"\"},VF-ALL-0-0,PERIOD";
+    str = "GROUP,ba2,2013-11-12,2013-11-12,adcalc.cost.*,{\"ref\":\"utm_source\\u003dtapjoy\"},VF-ALL-0-0,USER_PROPERTIES,ref0"  ;
     System.out.println(str);
     LogicalExpression qs = new ValueExpressions.QuotedString(str, ExpressionPosition.UNKNOWN);
     String str2 = mapper.writeValueAsString(qs);
