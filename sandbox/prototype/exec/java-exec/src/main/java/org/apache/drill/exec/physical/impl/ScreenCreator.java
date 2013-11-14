@@ -100,6 +100,7 @@ public class ScreenCreator implements RootCreator<Screen>{
               .addError(ErrorHelper.logAndConvertError(context.getIdentity(), "Screen received stop request sent.", context.getFailureCause(), logger))
               .setDef(RecordBatchDef.getDefaultInstance()) //
               .setIsLastChunk(true) //
+              .setQueryState(QueryResult.QueryState.FAILED) //
               .build();
           QueryWritableBatch batch1 = new QueryWritableBatch(header1);
 
