@@ -44,7 +44,7 @@ public class AsyncExecutor {
 
   private CountDownLatch driversStopped = null;
 
-  public ThreadPoolExecutor worker = new PriorityThreadPoolExecutor(16, 16, 60, TimeUnit.MINUTES, new PriorityBlockingQueue<Runnable>(), new NamedThreadFactory("Worker-"));
+  public ThreadPoolExecutor worker = new PriorityThreadPoolExecutor(12, 12, 60, TimeUnit.MINUTES, new PriorityBlockingQueue<Runnable>(), new NamedThreadFactory("Worker-"));
 
 
   static private Logger logger = LoggerFactory.getLogger(AsyncExecutor.class);
@@ -160,11 +160,11 @@ public class AsyncExecutor {
   }
 
   // for debug
-  public void recordFinish(RecordBatch recordBatch){
+  public void markRecordBatchFinish(RecordBatch recordBatch){
     recordBatches.remove(recordBatch);
   }
 
-  public void checkStatus(){
+  public void checkFinishStatus(){
     for(RecordBatch recordBatch : recordBatches.keySet()){
       logger.error("{} not finised . ",recordBatch);
     }

@@ -1,6 +1,5 @@
 package org.apache.drill.exec.engine.async;
 
-import org.apache.log4j.spi.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.concurrent.LinkedBlockingDeque;
@@ -52,7 +51,7 @@ public class SimpleRelayRecordBatch extends AbstractRelayRecordBatch {
       return IterOutcome.NOT_YET;
     }
     if(current.outcome == IterOutcome.NONE){
-      asyncExecutor.recordFinish(incoming);
+      asyncExecutor.markRecordBatchFinish(incoming);
       finished = true ;
     }
     return current.outcome;

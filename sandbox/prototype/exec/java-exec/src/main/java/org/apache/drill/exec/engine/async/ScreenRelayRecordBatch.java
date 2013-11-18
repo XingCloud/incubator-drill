@@ -44,11 +44,12 @@ public class ScreenRelayRecordBatch extends AbstractRelayRecordBatch {
     try {
       current = recordFrames.poll(3600, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
-      asyncExecutor.checkStatus();
+      asyncExecutor.checkFinishStatus();
       logger.error("Query stopped .");
       throw new DrillRuntimeException("Time out");
     }
     if (current.outcome == IterOutcome.NONE) {
+      asyncExecutor.checkFinishStatus();
       logger.info("Query finished .");
       asyncExecutor.worker.shutdown();
     }
