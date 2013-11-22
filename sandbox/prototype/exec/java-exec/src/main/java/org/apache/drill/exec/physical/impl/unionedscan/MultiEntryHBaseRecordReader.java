@@ -55,7 +55,7 @@ import java.util.*;
 public class MultiEntryHBaseRecordReader implements RecordReader {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MultiEntryHBaseRecordReader.class);
   private HbaseScanPOP.HbaseScanEntry[] entries;
-  private Pair<byte[],byte[]>[] entryKeys ;
+  private Pair<byte[], byte[]>[] entryKeys;
 
   private FragmentContext context;
   private byte[] startRowKey;
@@ -123,89 +123,88 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       "---End key: " + Bytes.toStringBinary(endRowKey) + "\tStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "---End uid: " +
       Bytes.toStringBinary(uidRange.getSecond()));
 
-    for (int i=0; i<entries.length; i++) {
+    for (int i = 0; i < entries.length; i++) {
       useDFA.add(false);
     }
 
-    try{
-    List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, null);
-    for (HBaseFieldInfo col : cols) {
-      fieldInfoMap.put(col.fieldSchema.getName(), col);
-    }
-    for (int i = 0; i < entries.length; i++) {
-      entryKeys[i] = new Pair<>(entries[i].getStartRowKey(),entries[i].getEndRowKey()) ;
-      this.entryFilters.add(entries[i].getFilters());
+    try {
+      List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, null);
+      for (HBaseFieldInfo col : cols) {
+        fieldInfoMap.put(col.fieldSchema.getName(), col);
+      }
+      for (int i = 0; i < entries.length; i++) {
+        entryKeys[i] = new Pair<>(entries[i].getStartRowKey(), entries[i].getEndRowKey());
+        this.entryFilters.add(entries[i].getFilters());
 
-      entries[i].setFilters(null);
+        entries[i].setFilters(null);
 
-      List<NamedExpression> exprs = entries[i].getProjections();
-      NamedExpression[] exprArr = new NamedExpression[exprs.size()];
-      HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];
-      Map<String, HBaseFieldInfo> rkProjs = new HashMap<>();
-      Map<String, HBaseFieldInfo> otherProjs = new HashMap<>();
-      for (int j = 0; j < exprs.size(); j++) {
-        exprArr[j] = exprs.get(j);
-        try{
-           infos[j] = fieldInfoMap.get( ((SchemaPath)exprArr[j].getExpr()).getPath().toString());
-        }catch (Exception e){
-            logger.info(" error !"+ exprArr[j].getExpr().toString()+ " is not schemaPath");
+        List<NamedExpression> exprs = entries[i].getProjections();
+        NamedExpression[] exprArr = new NamedExpression[exprs.size()];
+        HBaseFieldInfo[] infos = new HBaseFieldInfo[exprs.size()];
+        Map<String, HBaseFieldInfo> rkProjs = new HashMap<>();
+        Map<String, HBaseFieldInfo> otherProjs = new HashMap<>();
+        for (int j = 0; j < exprs.size(); j++) {
+          exprArr[j] = exprs.get(j);
+          try {
+            infos[j] = fieldInfoMap.get(((SchemaPath) exprArr[j].getExpr()).getPath().toString());
+          } catch (Exception e) {
+            logger.info(" error !" + exprArr[j].getExpr().toString() + " is not schemaPath");
             e.printStackTrace();
             throw e;
-        }
-
-        if (infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey) {
-          rkProjs.put(infos[j].fieldSchema.getName(), infos[j]);
-          if (infos[j].serLength <= 0) {
-            logger.debug("Need DFA parser to parse " + infos[j].fieldSchema.getName());
-            useDFA.set(i, true);
           }
-        } else {
-          otherProjs.put(infos[j].fieldSchema.getName(), infos[j]);
+
+          if (infos[j].fieldType == HBaseFieldInfo.FieldType.rowkey) {
+            rkProjs.put(infos[j].fieldSchema.getName(), infos[j]);
+            if (infos[j].serLength <= 0) {
+              logger.debug("Need DFA parser to parse " + infos[j].fieldSchema.getName());
+              useDFA.set(i, true);
+            }
+          } else {
+            otherProjs.put(infos[j].fieldSchema.getName(), infos[j]);
+          }
         }
+        entriesRowKeyProjs.add(rkProjs);
+        entriesOtherProjs.add(otherProjs);
+        entryProjFieldInfos.add(infos);
       }
-      entriesRowKeyProjs.add(rkProjs);
-      entriesOtherProjs.add(otherProjs);
-      entryProjFieldInfos.add(infos);
-    }
-    primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
-    dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
+      primaryRowKeyParts = TableInfo.getRowKey(tableName, null);
+      dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
 
 
-    }catch (Exception e){
-        e.printStackTrace();
-        throw e;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
     }
   }
 
   private void initDirectScanner() throws IOException {
-    long initStart = System.nanoTime() ;
+    long initStart = System.nanoTime();
     FilterList filterList = new FilterList();
     Set<String> patterns = new HashSet<>();
     List<KeyRange> slot = new ArrayList<>();
-    for(int i=0; i<entryFilters.size(); i++){
+    for (int i = 0; i < entryFilters.size(); i++) {
       List<HbaseScanPOP.RowkeyFilterEntry> filters = entryFilters.get(i);
-      if(filters == null || filters.size() == 0){
+      if (filters == null || filters.size() == 0) {
         KeyRange range = new KeyRange(entries[i].getStartRowKey(), true,
-                entries[i].getEndRowKey(), false);
+          entries[i].getEndRowKey(), false);
         slot.add(range);
         logger.debug("Add key range: " + range);
-      }
-      else {
+      } else {
         for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
           Constants.FilterType type = entry.getFilterType();
           switch (type) {
             case XaRowKeyPattern:
               for (String pattern : entry.getFilterExpressions()) {
-                if (!patterns.contains(pattern)){
+                if (!patterns.contains(pattern)) {
                   patterns.add(pattern);
                 }
               }
               break;
             case HbaseOrig:
-              RowKeyRange range=new RowKeyRange(entries[i].getStartRowKey(),entries[i].getEndRowKey());
+              RowKeyRange range = new RowKeyRange(entries[i].getStartRowKey(), entries[i].getEndRowKey());
               for (String filterExpr : entry.getFilterExpressions()) {
-                LogicalExpression e=
-                  context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr,LogicalExpression.class);
+                LogicalExpression e =
+                  context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr, LogicalExpression.class);
                 if (e instanceof FunctionCall) {
                   FunctionCall c = (FunctionCall) e;
                   Iterator iter = ((FunctionCall) e).iterator();
@@ -240,13 +239,13 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                           .toBytes(
                             rightField
                               .getLong())));
-                      XARkConditionFilter conditionValueFilter=new XARkConditionFilter(range,valueFilter);
+                      XARkConditionFilter conditionValueFilter = new XARkConditionFilter(range, valueFilter);
                       filterList.addFilter(conditionValueFilter);
                       break;
                     case cqname:
                       Filter qualifierFilter = new QualifierFilter(op, new BinaryComparator(
                         Bytes.toBytes(rightField.getLong())));
-                      XARkConditionFilter conditionQfFilter=new XARkConditionFilter(range,qualifierFilter);
+                      XARkConditionFilter conditionQfFilter = new XARkConditionFilter(range, qualifierFilter);
                       filterList.addFilter(conditionQfFilter);
                     default:
                       break;
@@ -262,7 +261,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
     //Release JVM memory
     entryFilters = null;
-    if(patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
+    if (patterns.size() > 0 || slot.size() > 0) {  //todo should depend on hbase schema to generate row key
       if (patterns.size() > 0) {
 
         for (String event : patterns) {
@@ -275,35 +274,35 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
         }
       }
       patterns = null;
-      Collections.sort(slot,keyRangeComparator);
+      Collections.sort(slot, keyRangeComparator);
       Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
       filterList.addFilter(skipScanFilter);
     }
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     StringBuilder summary = new StringBuilder("Start key: " + Bytes.toStringBinary(startRowKey) +
-            "\tEnd key: " + Bytes.toStringBinary(endRowKey) +
-            "\nStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
-                    + "\nKey range size: " + slot.size()+"\n");
+      "\tEnd key: " + Bytes.toStringBinary(endRowKey) +
+      "\nStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
+      + "\nKey range size: " + slot.size() + "\n");
     logger.info(summary.toString());
 
     //test
     //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
-    logger.info("Init scanner cost {} mills .",(System.nanoTime() - initStart)/1000000);
+    logger.info("Init scanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
   }
 
   private static Comparator keyRangeComparator = new Comparator() {
-        @Override
-        public int compare(Object o1, Object o2) {
-            KeyRange range1 = (KeyRange)o1;
-            byte[] lowerRange1 = range1.getLowerRange();
-            KeyRange range2 = (KeyRange)o2;
-            byte[] lowerRange2 = range2.getLowerRange();
-            return Bytes.compareTo(lowerRange1, lowerRange2);
-        }
+    @Override
+    public int compare(Object o1, Object o2) {
+      KeyRange range1 = (KeyRange) o1;
+      byte[] lowerRange1 = range1.getLowerRange();
+      KeyRange range2 = (KeyRange) o2;
+      byte[] lowerRange2 = range2.getLowerRange();
+      return Bytes.compareTo(lowerRange1, lowerRange2);
+    }
   };
 
 
-    @Override
+  @Override
   public void setup(OutputMutator output) throws ExecutionSetupException {
     this.outputMutator = output;
     try {
@@ -363,12 +362,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   }
 
   public int next() {
-    if(scanner == null){
-      try{
+    if (scanner == null) {
+      try {
         initDirectScanner();
-      } catch (Exception e){
+      } catch (Exception e) {
         e.printStackTrace();
-        throw new DrillRuntimeException("Init scanner failed .",e) ;
+        throw new DrillRuntimeException("Init scanner failed .", e);
       }
     }
     start = System.currentTimeMillis();
@@ -379,10 +378,10 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       while (true) {
         if (valIndex < curRes.size()) {
           int readerEntry = getEntryIndex(curRes.get(valIndex));
-          if(readerEntry != currentEntry){
+          if (readerEntry != currentEntry) {
             nextEntry = readerEntry;
-            newEntry = true ;
-            if(recordSetIndex == 0){
+            newEntry = true;
+            if (recordSetIndex == 0) {
               setUpNewEntry();
               allocateNew();
               continue;
@@ -393,19 +392,19 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           setValues(curRes, valIndex, length, recordSetIndex);
           recordSetIndex += length;
           if (length + valIndex != curRes.size()) {
-            valIndex += length ;
+            valIndex += length;
             return endNext(recordSetIndex);
           } else {
             valIndex = 0;
             curRes.clear();
           }
         }
-        if(hasMore){
+        if (hasMore) {
           hasMore = scanner.next(curRes);
         }
         if (curRes.isEmpty()) {
-          hasMore = false ;
-          valIndex = 0 ;
+          hasMore = false;
+          valIndex = 0;
           return endNext(recordSetIndex);
         }
       }
@@ -415,30 +414,30 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     }
   }
 
-  private void setUpNewEntry() throws SchemaChangeException{
+  private void setUpNewEntry() throws SchemaChangeException {
     releaseEntry();
-    if(currentEntry >= nextEntry){
-      logger.error("Overlap {} {}",currentEntry,nextEntry);
-      throw new DrillRuntimeException("Overlap") ;
+    if (currentEntry >= nextEntry) {
+      logger.error("Overlap {} {}", currentEntry, nextEntry);
+      throw new DrillRuntimeException("Overlap");
     }
-    currentEntry = nextEntry ;
+    currentEntry = nextEntry;
     setupEntry(currentEntry);
     newEntry = false;
   }
 
-  private int endNext(int valueCount){
-    timeCost += System.currentTimeMillis() - start ;
-    if(valueCount == 0)
+  private int endNext(int valueCount) {
+    timeCost += System.currentTimeMillis() - start;
+    if (valueCount == 0)
       return 0;
     setValueCount(valueCount);
-    entryIndexVector.getMutator().setObject(0,currentEntry);
+    entryIndexVector.getMutator().setObject(0, currentEntry);
     return valueCount;
   }
 
   private int splitKeyValues(List<KeyValue> keyValues, int offset, int maxSize) {
-    int length = Math.min(maxSize, keyValues.size()  - offset );
-    if(length == 0){
-      return  0;
+    int length = Math.min(maxSize, keyValues.size() - offset);
+    if (length == 0) {
+      return 0;
     }
     int lastEntry = getEntryIndex(keyValues.get(offset + length - 1));
     if (lastEntry != currentEntry) {
@@ -453,8 +452,13 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
     for (int i = offset; i < offset + length; i++) {
-      setValues(keyValues.get(i), setIndex);
-      setIndex ++ ;
+      try {
+        setValues(keyValues.get(i), setIndex);
+        setIndex++;
+      } catch (Exception e) {
+        e.printStackTrace();
+        logger.error("Ignore this keyvalue . ");
+      }
     }
   }
 
@@ -512,9 +516,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     logger.info("MultiEntryHBaseRecordReader finished . ");
     logger.debug("Cost time " + timeCost + "mills");
     try {
-      if(scanner != null){
+      if (scanner != null) {
         scanner.close();
-        scanner = null ;
+        scanner = null;
       }
     } catch (IOException e) {
       logger.info("closing scanner failed", e);
