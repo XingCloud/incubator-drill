@@ -33,8 +33,9 @@ public class ScanRelayRecordBatch extends AbstractRelayRecordBatch {
   @Override
   protected void stash(RecordFrame recordFrame) {
     try {
-      recordFrames.offer(recordFrame, 60000, TimeUnit.SECONDS);
+      recordFrames.offer(recordFrame, 1800, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
+      cleanRecordFrame(recordFrame);
       throw new DrillRuntimeException("Stash timeout ");
     }
   }

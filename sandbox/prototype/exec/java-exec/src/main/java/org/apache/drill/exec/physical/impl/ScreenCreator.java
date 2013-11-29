@@ -105,6 +105,7 @@ public class ScreenCreator implements RootCreator<Screen>{
           QueryWritableBatch batch1 = new QueryWritableBatch(header1);
 
           connection.sendResult(listener, batch1);
+          stop();
           return false;
       }
       case NONE: {

@@ -74,7 +74,7 @@ public abstract class AbstractRelayRecordBatch implements RelayRecordBatch {
     }
   }
 
-  private void cleanRecordFrame(RecordFrame recordFrame) {
+  protected void cleanRecordFrame(RecordFrame recordFrame) {
     if (recordFrame == null)
       return;
     if (recordFrame.outcome == IterOutcome.OK_NEW_SCHEMA || recordFrame.outcome == IterOutcome.OK) {
