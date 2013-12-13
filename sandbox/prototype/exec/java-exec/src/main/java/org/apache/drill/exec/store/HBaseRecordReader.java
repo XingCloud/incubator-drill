@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.regionserver.DirectScanner;
 import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.*;
@@ -67,10 +68,7 @@ public class HBaseRecordReader implements RecordReader {
 
   private Map<String, ValueVector> vvMap;
 
-
-  private List<HbaseScanPOP.RowkeyFilterEntry> filters;
   private OutputMutator output;
-
 
   private XAScanner scanner;
   private List<KeyValue> curRes = new ArrayList<>();
@@ -81,7 +79,9 @@ public class HBaseRecordReader implements RecordReader {
   private long parseCost = 0;
   private long setVectorCost = 0;
   boolean hasMore = true;
-  int totalCount = 0 ;
+  int totalCount = 0;
+
+  private Pair<byte[], byte[]> uidRange = new Pair<>();
 
   public HBaseRecordReader(FragmentContext context, HbaseScanPOP.HbaseScanEntry config) {
     this.context = context;
@@ -89,10 +89,11 @@ public class HBaseRecordReader implements RecordReader {
   }
 
   private void initConfig() throws Exception {
-    startRowKey = ByteUtils.toBytesBinary(config.getStartRowKey());
-    endRowKey = ByteUtils.toBytesBinary(config.getEndRowKey());
-    if (Arrays.equals(startRowKey, endRowKey))
-      increaseBytesByOne(endRowKey);
+    startRowKey = config.getStartRowKey();
+    endRowKey = config.getEndRowKey();
+    uidRange.setFirst(Arrays.copyOfRange(startRowKey, startRowKey.length - 5, startRowKey.length));
+    uidRange.setSecond(Arrays.copyOfRange(endRowKey, endRowKey.length - 5, endRowKey.length));
+
     String tableFields[] = config.getTableName().split("\\.");
     tableName = tableFields[0];
     projections = new ArrayList<>();
@@ -130,7 +131,6 @@ public class HBaseRecordReader implements RecordReader {
         }
       }
     }
-    filters = config.getFilters();
 
     primaryRowKeyParts = TableInfo.getRowKey(tableName, options);
     dfaParser = new DFARowKeyParser(primaryRowKeyParts, fieldInfoMap);
@@ -148,21 +148,24 @@ public class HBaseRecordReader implements RecordReader {
     long start = System.nanoTime();
     FilterList filterList = new FilterList();
     List<KeyRange> slot = new ArrayList<>();
+
+    List<HbaseScanPOP.RowkeyFilterEntry> filters = config.getFilters();
     if (filters != null) {
       Set<String> patterns = new HashSet<>();
       for (HbaseScanPOP.RowkeyFilterEntry entry : filters) {
         Constants.FilterType type = entry.getFilterType();
         switch (type) {
           case XaRowKeyPattern:
-            for (LogicalExpression e : entry.getFilterExpressions()) {
-              String pattern = ((ValueExpressions.QuotedString) e).value;
+            for (String pattern : entry.getFilterExpressions()) {
               if (!patterns.contains(pattern)) {
                 patterns.add(pattern);
               }
             }
             break;
           case HbaseOrig:
-            for (LogicalExpression e : entry.getFilterExpressions()) {
+            for (String filterExpr : entry.getFilterExpressions()) {
+              LogicalExpression e =
+                context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr, LogicalExpression.class);
               if (e instanceof FunctionCall) {
                 FunctionCall c = (FunctionCall) e;
                 Iterator iter = ((FunctionCall) e).iterator();
@@ -214,8 +217,10 @@ public class HBaseRecordReader implements RecordReader {
             throw new IllegalArgumentException("unsupported filter type:" + type);
         }
       }
-      if (patterns.size() >= 1) {       //todo should depend on hbase schema to generate row key
+      filters = null;
+      if (patterns.size() > 0) {       //todo should depend on hbase schema to generate row key
         List<String> sortedEvents = EventTableUtil.sortEventList(new ArrayList<>(patterns));
+        patterns = null;
 
         for (String event : sortedEvents) {
           byte[] eventBytes = Bytes.toBytesBinary(event);
@@ -225,9 +230,19 @@ public class HBaseRecordReader implements RecordReader {
           logger.debug("Add Key range: " + keyRange);
           slot.add(keyRange);
         }
-        Filter skipScanFilter = new SkipScanFilter(slot);
+        Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
         filterList.addFilter(skipScanFilter);
+        sortedEvents = null;
       }
+    }
+    config.setFilters(null);
+    if (slot.size() == 0) {
+      //如果没有key range，则需要加入start row和end row
+      KeyRange keyRange = new KeyRange(startRowKey, true, endRowKey, false);
+      slot.add(keyRange);
+      logger.info("Slot size is 0 to skip uid range, add key range: " + keyRange);
+      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
+      filterList.addFilter(skipScanFilter);
     }
 
     scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
@@ -329,13 +344,18 @@ public class HBaseRecordReader implements RecordReader {
 
   private void setValues(List<KeyValue> keyValues, int offset, int length, int setIndex) {
     for (int i = offset; i < offset + length; i++) {
-      setValues(keyValues.get(i), setIndex);
-      setIndex++;
+      try {
+        setValues(keyValues.get(i), setIndex);
+        setIndex++;
+      } catch (Exception e) {
+        logger.error("Ignore this keyvalue .");
+        e.printStackTrace();
+      }
     }
   }
 
   public int endNext(int valueCount) {
-    totalCount += valueCount ;
+    totalCount += valueCount;
     if (valueCount == 0)
       return 0;
     setValueCount(valueCount);
@@ -378,7 +398,7 @@ public class HBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    logger.info("Record count for entry [keyRange:[{}:{}],count:{}]",config.getStartRowKey(),config.getEndRowKey(),totalCount);
+    logger.info("Record count for entry [tableName:{},keyRange:[{}:{}],count:{}]", config.getTableName(), Bytes.toStringBinary(config.getStartRowKey()), Bytes.toStringBinary(config.getEndRowKey()), totalCount);
     logger.info("HbaseRecordReader finished . ");
     for (int i = 0; i < valueVectors.length; i++) {
       try {
@@ -389,9 +409,9 @@ public class HBaseRecordReader implements RecordReader {
       valueVectors[i].close();
     }
     try {
-      if(scanner != null){
+      if (scanner != null) {
         scanner.close();
-        scanner = null ;
+        scanner = null;
       }
     } catch (Exception e) {
       logger.error("Scanners close failed : " + e.getMessage());

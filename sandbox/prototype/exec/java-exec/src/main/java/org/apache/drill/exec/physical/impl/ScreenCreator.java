@@ -20,12 +20,14 @@ package org.apache.drill.exec.physical.impl;
 import io.netty.buffer.ByteBuf;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.Screen;
 import org.apache.drill.exec.physical.impl.materialize.QueryWritableBatch;
 import org.apache.drill.exec.physical.impl.materialize.RecordMaterializer;
 import org.apache.drill.exec.physical.impl.materialize.VectorRecordMaterializer;
+import org.apache.drill.exec.proto.GeneralRPCProtos;
 import org.apache.drill.exec.proto.GeneralRPCProtos.Ack;
 import org.apache.drill.exec.proto.UserBitShared.DrillPBError;
 import org.apache.drill.exec.proto.UserBitShared.RecordBatchDef;
@@ -58,6 +60,8 @@ public class ScreenCreator implements RootCreator<Screen>{
     final FragmentContext context;
     final UserClientConnection connection;
     private RecordMaterializer materializer;
+    private AtomicInteger batchesSendSuccess = new AtomicInteger(0);
+    private boolean finished = false ;
     
     public ScreenRoot(FragmentContext context, RecordBatch incoming){
       assert context.getConnection() != null : "A screen root should only be run on the driving node which is connected directly to the client.  As such, this should always be true.";
@@ -96,10 +100,12 @@ public class ScreenCreator implements RootCreator<Screen>{
               .addError(ErrorHelper.logAndConvertError(context.getIdentity(), "Screen received stop request sent.", context.getFailureCause(), logger))
               .setDef(RecordBatchDef.getDefaultInstance()) //
               .setIsLastChunk(true) //
+              .setQueryState(QueryResult.QueryState.FAILED) //
               .build();
           QueryWritableBatch batch1 = new QueryWritableBatch(header1);
 
           connection.sendResult(listener, batch1);
+          stop();
           return false;
       }
       case NONE: {
@@ -107,6 +113,7 @@ public class ScreenCreator implements RootCreator<Screen>{
           // receive no results.
           context.batchesCompleted.inc(1);
           context.recordsCompleted.inc(incoming.getRecordCount());
+          finished = true ;
           QueryResult header2 = QueryResult.newBuilder() //
               .setQueryId(context.getHandle().getQueryId()) //
               .setRowCount(0) //
@@ -148,7 +155,18 @@ public class ScreenCreator implements RootCreator<Screen>{
         ErrorHelper.logAndConvertError(context.getIdentity(), "Failure while sending fragment to client.", ex, logger);
         ok = false;
       }
-      
+
+      @Override
+      public void success(Ack value, ByteBuf buffer) {
+        super.success(value, buffer);
+        checkStatus();
+      }
+
+      private void checkStatus(){
+        if(batchesSendSuccess.incrementAndGet() ==  context.batchesCompleted.get() && finished ){
+          context.getAllocator().close();
+        }
+      }
     }
 
     RecordBatch getIncoming() {

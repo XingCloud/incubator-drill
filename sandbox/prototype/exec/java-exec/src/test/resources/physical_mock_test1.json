@@ -1,58 +1,101 @@
 {
-    head:{
-        type:"APACHE_DRILL_PHYSICAL",
-        version:"1",
-        generator:{
-            type:"manual"
-        }
-    },
-	graph:[
+  head: {
+    type: "APACHE_DRILL_PHYSICAL",
+    version: "1",
+    generator: {
+      type: "manual"
+    }
+  },
+  graph: [
+    {
+      @id: 1,
+      pop: "mock-scan",
+      url: "http://apache.org",
+      entries: [
         {
-            @id:1,
-            pop:"mock-scan",
-            url: "http://apache.org",
-            entries:[
-            	{records: 100, types: [
-            	  {name: "blue", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "red", type: "BIGINT", mode: "REQUIRED"},
-            	  {name: "green", type: "BIGINT", mode: "REQUIRED"}
-            	]}
-            ]
-        },
-        {
-              pop: "segment",
-              @id:2,
-              child : 1,
-              ref: "segment",
-              exprs :[ { ref: "blue", expr: "blue"}]
+          records: 100,
+          types: [
+            {
+              name: "blue",
+              type: "INT",
+              mode: "REQUIRED"
             },
+            {
+              name: "red",
+              type: "BIGINT",
+              mode: "REQUIRED"
+            },
+            {
+              name: "green",
+              type: "BIGINT",
+              mode: "REQUIRED"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      pop: "segment",
+      @id: 2,
+      child: 1,
+      ref: "segment",
+      exprs: [
         {
-              pop: "PhysicalCollapsingAggregate",
-              @id: 3,
-              child: 2,
-              within: "segment",
-              carryovers: [
-                "blue"
-              ],
-              aggregations: [
-                {
-                  ref: "count",
-                  expr: "count(blue) "
-                },
-                {
-                  ref: "count_distinct",
-                  expr: "count_distinct(blue) "
-                },
-                {
-                  ref: "sum",
-                  expr: "sum(blue) "
-                }
-              ]
+          ref: "green",
+          expr: "green"
+        }
+      ]
+    },
+    {
+          pop: "PhysicalCollapsingAggregate",
+          @id: 3,
+          child: 2,
+          within: "segment",
+          carryovers: [
+            "green"
+          ],
+          aggregations: [
+            {
+              ref: "count",
+              expr: "count(blue) "
+            },
+            {
+              ref: "user_num",
+              expr: "count_distinct(blue) "
+            },
+            {
+              ref: "sum",
+              expr: "sum(red) "
+            }
+          ]
+        },
+    {
+      @id: 4,
+      pop: "project",
+      child: 3,
+      exprs: [
+        {
+          ref: "count",
+          expr: "count"
         },
         {
-            @id: 4,
-            child: 3,
-            pop: "screen"
+          ref: "user_num",
+          expr: "user_num"
+        },
+        {
+          ref: "sum",
+          expr: "sum"
+        },
+        {
+        ref: "green",
+        expr: "green"
         }
-    ]
+      ]
+    },
+    {
+      @id: 5,
+      child: 4,
+      pop: "screen"
+    }
+  ]
 }

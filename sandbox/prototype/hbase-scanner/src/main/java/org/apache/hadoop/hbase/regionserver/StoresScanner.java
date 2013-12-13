@@ -1,6 +1,5 @@
 package org.apache.hadoop.hbase.regionserver;
 
-import com.xingcloud.hbase.manager.HBaseResourceManager;
 import com.xingcloud.hbase.meta.HBaseMeta;
 import com.xingcloud.hbase.util.FileManager;
 
@@ -19,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -55,7 +53,7 @@ public class StoresScanner implements XAScanner {
   private KeyValue.KVComparator comparator;
   private HColumnDescriptor family;
   private List<StoreFile> storeFiles = new ArrayList<>();
-  private List<KeyValueScanner> scanners;
+  private List<KeyValueScanner> scanners = new ArrayList<KeyValueScanner>();
   private ScanQueryMatcher matcher;
   private Store.ScanInfo scanInfo;
 
@@ -67,6 +65,8 @@ public class StoresScanner implements XAScanner {
   private final byte[] stopRow;
 
   private final KeyValue KV_LIMIT = new KeyValue();
+
+  private boolean hasData = true;
 
 
   Map<String, KeyValueScanner> storeScanners =  new HashMap<>();
@@ -84,14 +84,19 @@ public class StoresScanner implements XAScanner {
     }
 
     this.conf = HBaseConfiguration.create();
+    //Disable hbase block cache,因为会出现两个UnionedScan同时初始化一个StoreFile，两个不同的reader却有一个CacheConfig(Singleton)。
+    //导致更新LruCache时异常 Cached an already cached block
+    this.conf.set("hfile.block.cache.size", "0");
     this.cacheConf = new CacheConfig(this.conf);
     this.fs = FileSystem.get(conf);
     this.filter = scan.getFilter();
 
-
     initColFamily(hRegionInfo, familyName);
-    initStoreFiles(hRegionInfo);
-    initKVScanners(scan);
+    this.hasData = initStoreFiles(hRegionInfo);
+    if (this.hasData) {
+      //如果有数据才进行scanner的初始化
+      initKVScanners(scan);
+    }
   }
 
   private void initColFamily(HRegionInfo hRegionInfo, String familyName) {
@@ -119,7 +124,7 @@ public class StoresScanner implements XAScanner {
     }
   }
 
-  private void initStoreFiles(HRegionInfo hRegionInfo) throws IOException {
+  private boolean initStoreFiles(HRegionInfo hRegionInfo) throws IOException {
     LOG.info("Init store files...");
     String tableDir = HBaseMeta.getTablePath(hRegionInfo.getTableNameAsString(), conf);
     String regionName = getRegionName(hRegionInfo);
@@ -133,7 +138,7 @@ public class StoresScanner implements XAScanner {
       storeFiles.add(sf);
       LOG.info("Add store file " + path.toString());
     }
-
+    return storeFiles.size() > 0;
   }
 
   private String getRegionName(HRegionInfo hRegionInfo) {
@@ -159,7 +164,6 @@ public class StoresScanner implements XAScanner {
         this.matcher = new ScanQueryMatcher(scan, this.scanInfo, entry.getValue(), ScanType.USER_SCAN,
                 Long.MAX_VALUE, HConstants.LATEST_TIMESTAMP, oldestUnexpiredTS);
         List<StoreFileScanner> sfScanners = StoreFileScanner.getScannersForStoreFiles(storeFiles, false, false);
-        this.scanners = new ArrayList<KeyValueScanner>(sfScanners.size());
         this.scanners.addAll(sfScanners);
 
         StoreScanner storeScanner = new StoreScanner(scan, scanInfo, ScanType.USER_SCAN, entry.getValue(), scanners);
@@ -184,6 +188,10 @@ public class StoresScanner implements XAScanner {
   }
   
   public boolean next(List<KeyValue> outResults) throws IOException {
+    if (!hasData) {
+      //空表
+      return false;
+    }
     boolean hasMore = next(outResults, scan.getBatch());
     numKV.addAndGet(outResults.size());
     return hasMore;

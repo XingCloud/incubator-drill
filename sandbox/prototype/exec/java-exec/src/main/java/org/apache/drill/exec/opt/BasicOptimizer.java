@@ -145,7 +145,7 @@ public class BasicOptimizer extends Optimizer {
         JSONOptions selection = scan.getSelection();
         FieldReference ref = scan.getOutputReference();
         if (selection == null) {
-          throw new OptimizerException("Selection is null");
+          throw new OptimizerException("UnionedScan's selection is null");
         }
         List<HbaseScanEntry> entries = new ArrayList<>();
         long start = System.nanoTime();
@@ -161,52 +161,26 @@ public class BasicOptimizer extends Optimizer {
       OptimizerException {
       //TODO where is ref?
       ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
-      JsonNode root = selections.getRoot(), filter, rowkey, projections, filters;
-      String table, rowkeyStart, rowkeyEnd, tailSrt, tailEnd, projectionString, filterString, filterType;
-      int selectionSize = root.size();
+      JsonNode root = selections.getRoot(), filter, rowkey, projections;
+      String table, rowkeyStart, rowkeyEnd, projectionString;
       HbaseScanPOP.HbaseScanEntry entry;
-      List<LogicalExpression> filterList;
       List<NamedExpression> projectionList;
       NamedExpression ne;
 
-      HbaseScanPOP.RowkeyFilterEntry rowkeyFilterEntry;
-      Constants.FilterType filterTypeFR;
       for (JsonNode selection : root) {
         // Table name
         table = selection.get(SELECTION_KEY_WORD_TABLE).textValue();
         // Rowkey range
         rowkey = selection.get(SELECTION_KEY_WORD_ROWKEY);
-        String filterExpr = selection.get(SELECTION_KEY_WORD_FILTER).textValue();
         rowkeyStart = rowkey.get(SELECTION_KEY_WORD_ROWKEY_START).textValue();
         rowkeyEnd = rowkey.get(SELECTION_KEY_WORD_ROWKEY_END).textValue();
-        JsonNode tail = selection.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
-        if (tail != null && !(tail instanceof NullNode)) {
-          tailSrt = tail.get(SELECTION_KEY_ROWKEY_TAIL_START).textValue();
-          tailEnd = tail.get(SELECTION_KEY_ROWKEY_TAIL_END).textValue();
-        } else {
-          tailSrt = "\\x00\\x00\\x00\\x00\\x00";
-          tailEnd = "\\xFF\\xFF\\xFF\\xFF\\xFF";
-        }
-        //rowkeyStart+=tailSrt;
-        //rowkeyEnd+=tailEnd;
+
         // Filters
         List<HbaseScanPOP.RowkeyFilterEntry> filterEntries = new ArrayList<>();
         filter = selection.get(SELECTION_KEY_WORD_FILTER);
-        File sourcedir = new File("/data/log/drill/sourcePatterns");
-        if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
-          List<LogicalExpression> patterns = getPatterns(filter, table, config);
 
-          String filterExpression = filter.get("expression").textValue();
-//                    File sourcepttFile=new File(sourcedir.getAbsolutePath()+"_"+System.nanoTime());
-//                    try {
-//                        Writer writer=new FileWriter(sourcepttFile);
-//                        for(int i=0;i<patterns.size();i++){
-//                            writer.write(((ValueExpressions.QuotedString)patterns.get(i)).value+" ");
-//                        }
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                        throw  new OptimizerException(e.getMessage());
-//                    }
+        if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
+          List<String> patterns = getPatterns(filter, table, config);
           HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
             Constants.FilterType.XaRowKeyPattern, patterns);
           filterEntries.add(filterEntry);
@@ -226,7 +200,11 @@ public class BasicOptimizer extends Optimizer {
           }
           projectionList.add(ne);
         }
-        entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterEntries, projectionList);
+        JsonNode tailRange = selection.get(SELECTION_KEY_ROWKEY_TAIL_RANGE);
+        String startUid = tailRange.get(SELECTION_KEY_ROWKEY_TAIL_START).textValue();
+        String endUid = tailRange.get(SELECTION_KEY_ROWKEY_TAIL_END).textValue();
+
+        entry = new HbaseScanEntry(table, rowkeyStart, rowkeyEnd, filterEntries, projectionList, startUid, endUid);
         entries.add(entry);
       }
     }
@@ -400,7 +378,7 @@ public class BasicOptimizer extends Optimizer {
       return pop;
     }
 
-    public List<LogicalExpression> getPatterns(JsonNode filter, String tableName, DrillConfig config) throws
+    public List<String> getPatterns(JsonNode filter, String tableName, DrillConfig config) throws
       OptimizerException {
       LogicalExpression filterExpr = null;
       try {
@@ -412,22 +390,22 @@ public class BasicOptimizer extends Optimizer {
       return new ArrayList<>(getPatternsFromExpr(filterExpr, tableName, config));
     }
 
-    private Set<LogicalExpression> getPatternsFromExpr(LogicalExpression filterExpr, String tableName,
+    private Set<String> getPatternsFromExpr(LogicalExpression filterExpr, String tableName,
                                                        DrillConfig config) throws OptimizerException {
       if (!(filterExpr instanceof FunctionCall))
         return null;
 
       try {
-        Set<LogicalExpression> patterns = new HashSet<>();
+        Set<String> patterns = new HashSet<>();
         String projectId = tableName.contains("deu_") ? tableName.substring(4, tableName.length()) : tableName;
         if (!((FunctionCall) filterExpr).getDefinition().getName().contains("or")) {
           Map<String, UnitFunc> fieldFunc = parseFunctionCall((FunctionCall) filterExpr);
-          Set<LogicalExpression> tmpPatterns = new HashSet<>(getPatternsFromColVals(fieldFunc, projectId));
+          Set<String> tmpPatterns = new HashSet<>(getPatternsFromColVals(fieldFunc, projectId));
 
           return tmpPatterns;
         } else {
           for (LogicalExpression le : (FunctionCall) filterExpr) {
-            Set<LogicalExpression> tmpPatterns = getPatternsFromExpr(le, tableName, config);
+            Set<String> tmpPatterns = getPatternsFromExpr(le, tableName, config);
             patterns.addAll(tmpPatterns);
           }
           return patterns;
@@ -438,9 +416,9 @@ public class BasicOptimizer extends Optimizer {
       }
     }
 
-    private List<LogicalExpression> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap,
+    private List<String> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap,
                                                            String projectId) throws OptimizerException {
-      List<LogicalExpression> patterns = new ArrayList<>();
+      List<String> patterns = new ArrayList<>();
 
       String eventFilter = getEventFilter(fieldValueMap);
       UnitFunc dateUF = fieldValueMap.get(DrillConstants.DATE);
@@ -462,7 +440,7 @@ public class BasicOptimizer extends Optimizer {
       if (events != null) {
         try {
           for (XEvent childEvent : events) {
-            patterns.add(new ValueExpressions.QuotedString(date + childEvent.nameRowkeyStyle() + "\\xFF", ExpressionPosition.UNKNOWN));
+            patterns.add(date + childEvent.nameRowkeyStyle() + "\\xFF");
           }
         } catch (XEventException e) {
           throw new OptimizerException(e.getMessage());

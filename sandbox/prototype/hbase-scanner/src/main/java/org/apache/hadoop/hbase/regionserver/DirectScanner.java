@@ -1,17 +1,23 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import com.xingcloud.hbase.manager.*;
+import com.xingcloud.xa.hbase.filter.SkipScanFilter;
+import com.xingcloud.xa.hbase.model.KeyRange;
 import com.xingcloud.xa.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.SkipFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -70,6 +76,7 @@ public class DirectScanner implements XAScanner {
     scan.setCaching(Helper.CACHE_SIZE);
     scan.setMemOnly(isMemOnly);
     scan.setFilesOnly(isFileOnly);
+    scan.setCacheBlocks(false);
     if (filter != null)
       scan.setFilter(filter);
     if (family != null && qualifier != null) {
@@ -127,31 +134,51 @@ public class DirectScanner implements XAScanner {
     String tableName = args[0];
     byte[] srkPre = Bytes.toBytes(args[1]);
     byte[] erkPre = Bytes.toBytes(args[2]);
-    byte[] tailStart = Helper.produceTail(true);
-    byte[] tailEnd = Helper.produceTail(false);
+    int buckets = Integer.parseInt(args[3]);
+    int len = Integer.parseInt(args[4]);
+    File file = new File("/tmp/ds.txt");
+    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
-    byte[] srk = Helper.bytesCombine(srkPre, tailStart);
-    byte[] erk = Helper.bytesCombine(erkPre, tailEnd);
+    Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
+    uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
+    uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(),
+            3, uidRange.getSecond().length));
+    byte[] MAX = {-1};
 
-    LOG.info("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
-    boolean isFileOnly = Boolean.parseBoolean(args[3]);
-    boolean isMemOnly = Boolean.parseBoolean(args[4]);
-    DirectScanner scanner = new DirectScanner(srk, erk, tableName, isFileOnly, isMemOnly);
+    byte[] srk = Helper.bytesCombine(srkPre, MAX, uidRange.getFirst());
+    byte[] erk = Helper.bytesCombine(erkPre, MAX, uidRange.getSecond());
+
+    System.out.println("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
+    boolean isFileOnly = false;
+    boolean isMemOnly = false;
+
+    buckets += len;
+    List<KeyRange> slot = new ArrayList<>();
+    KeyRange range = new KeyRange(srk, true, erk, false);
+    slot.add(range);
+    Filter filter = new SkipScanFilter(slot, uidRange);
+
+    DirectScanner scanner = new DirectScanner(srk, erk, tableName, filter, isFileOnly, isMemOnly);
     long counter = 0;
     long sum = 0;
     long st = System.nanoTime();
     List<KeyValue> results = new ArrayList<KeyValue>();
     boolean done = false;
-    Set<Long> uids = new HashSet<>();
+    Set<Integer> uids = new HashSet<>();
     try {
       do {
         results.clear();
         done = scanner.next(results);
         for (KeyValue kv : results) {
-          long uid = HBaseEventUtils.getUidOfLongFromDEURowKey(kv.getRow());
+          int uid = Helper.getUidOfIntFromDEURowKey(kv.getRow());
           uids.add(uid);
           counter++;
-          sum += Bytes.toLong(kv.getValue());
+          long sumTmp = Bytes.toLong(kv.getValue());
+          sum += sumTmp;
+          String event = Helper.getEvent(kv.getRow());
+          int bucket = Helper.getBucketNum(kv.getRow());
+          writer.write(event + "\t" + bucket + "\t" + uid + "\t"
+                  + sumTmp + "\t" + kv.getTimestamp() + "\n");
         }
 
       } while (done);
@@ -166,7 +193,11 @@ public class DirectScanner implements XAScanner {
         }
       }
     }
+    writer.flush();
+    writer.close();
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
     LOG.info("Uids number: " + uids.size() + "\tCount: " + counter + "\tSum: " + sum);
   }
+
+
 }

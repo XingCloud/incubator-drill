@@ -119,6 +119,7 @@ public class ProjectBatch extends BaseRecordBatch {
   private ValueVector padConstant(ValueVector v) {
     if (v.getAccessor().getValueCount() < recordCount) {
       Object constant = v.getAccessor().getObject(0);
+      v.clear();
       AllocationHelper.allocate(v, recordCount, 8);
       ValueVector.Mutator mutator = v.getMutator();
       for (int i = 0; i < recordCount; i++) {

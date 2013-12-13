@@ -78,12 +78,14 @@ public class CoordinationQueue {
     public void operationComplete(ChannelFuture future) throws Exception {
 
       if (!future.isSuccess()) {
+        Throwable cause = future.cause();
+        cause.printStackTrace();
         RpcOutcome<?> rpc = removeFromMap(coordinationId);
         RpcException e = null;
         if (future.channel().isActive()) {
-          e = new RpcException("Future failed .");
+          e = new RpcException("Future failed ,"  + cause.getMessage(),cause);
         } else {
-          e = new ChannelClosedException();
+          e = new ChannelClosedException(cause);
         }
         rpc.setException(e);
       }

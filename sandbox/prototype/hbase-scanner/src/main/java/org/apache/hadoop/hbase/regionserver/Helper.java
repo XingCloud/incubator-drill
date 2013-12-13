@@ -125,4 +125,31 @@ public class Helper {
     }
     return tail;
   }
+
+  public static Pair<byte[], byte[]> getLocalSEUidOfBucket(int startBucketPos, int offsetBucketLen) {
+    long endBucket = 0;
+    if (startBucketPos + offsetBucketLen >= 255) {
+      endBucket = (1l << 40) - 1l;
+    } else {
+      endBucket = startBucketPos + offsetBucketLen;
+      endBucket = endBucket << 32;
+    }
+    long startBucket = (long)startBucketPos << 32;
+    return new Pair(Bytes.toBytes(startBucket), Bytes.toBytes(endBucket));
+  }
+
+  public static int getUidOfIntFromDEURowKey(byte[] rk) {
+    byte[] uid = Arrays.copyOfRange(rk, rk.length-4, rk.length);
+    return Bytes.toInt(uid);
+  }
+
+  public static int getBucketNum(byte[] rk) {
+    byte[] prefix = {0,0,0};
+    byte[] bucket = Arrays.copyOfRange(rk, rk.length-5, rk.length-4);
+    return Bytes.toInt(bytesCombine(prefix, bucket));
+  }
+
+  public static String getEvent(byte[] rk) {
+    return Bytes.toString(Arrays.copyOfRange(rk, 8, rk.length-6));
+  }
 }

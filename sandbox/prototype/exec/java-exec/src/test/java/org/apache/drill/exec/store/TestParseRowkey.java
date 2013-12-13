@@ -169,9 +169,10 @@ public class TestParseRowkey {
   
   @Test
   public void testParseRowKey(){
-    String rowKey = "20130918response.agei.report.241427s.pend.2s5s.\\xFF[\\x00\\x00\\x00@"  ;
-    assertParseRowKey(rowKey, 20130918, "response", "agei", "report", "241427s", "pend", "2s5s", 50, 64);
-
+    String rowKey1 = "20130918response.agei.report.241427s.pend.2s5s.\\xFF[\\x00\\x00\\x00@";
+    assertParseRowKey(rowKey1, 20130918, "response", "agei", "report", "241427s", "pend", "2s5s", 91, 64);
+    String rowKey2 = "20130710pay.sites.click.Jogos da Barbie.\\xFFj\\x00\\x00\\x00\\x90";
+    assertParseRowKey(rowKey2, 20130710, "pay", "sites", "click", "Jogos da Barbie", null, null, 106, 144);
   }
 
     @Test

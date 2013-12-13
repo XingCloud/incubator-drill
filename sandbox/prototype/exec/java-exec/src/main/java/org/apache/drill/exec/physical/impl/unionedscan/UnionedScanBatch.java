@@ -15,6 +15,7 @@ import org.apache.drill.exec.record.*;
 import org.apache.drill.exec.record.selection.SelectionVector2;
 import org.apache.drill.exec.record.selection.SelectionVector4;
 import org.apache.drill.exec.vector.ValueVector;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,9 +78,7 @@ public class UnionedScanBatch implements RecordBatch {
     for (int i = 0; i < sortedEntries.size(); i++) {
       HbaseScanPOP.HbaseScanEntry scanEntry = sortedEntries.get(i);
       if(i<sortedEntries.size()-1){
-        byte[] thisEnd = ByteUtils.toBytesBinary(scanEntry.getEndRowKey());
-        byte[] nextStart = ByteUtils.toBytesBinary(sortedEntries.get(i+1).getStartRowKey());
-        if(ByteUtils.compareBytes(thisEnd, nextStart) > 0){
+        if(Bytes.compareTo(scanEntry.getEndRowKey(), sortedEntries.get(i+1).getStartRowKey()) > 0){
           throw new ExecutionSetupException("entry rowkey overlap: "+i+"'th endKey:"+scanEntry.getEndRowKey()+" vs next startKey:"+sortedEntries.get(i+1).getStartRowKey());
         }
       }
@@ -99,10 +98,10 @@ public class UnionedScanBatch implements RecordBatch {
     }
     HbaseScanPOP.HbaseScanEntry[] sorted = 
     new ArrayList<>(originalEntries).toArray(new HbaseScanPOP.HbaseScanEntry[originalEntries.size()]);
-    Arrays.sort(sorted, new Comparator<HbaseScanPOP.HbaseScanEntry>() {
+    Arrays.sort(sorted,  new Comparator<HbaseScanPOP.HbaseScanEntry>() {
       @Override
       public int compare(HbaseScanPOP.HbaseScanEntry o1, HbaseScanPOP.HbaseScanEntry o2) {
-        return o1.getStartRowKey().compareTo(o2.getStartRowKey());
+        return Bytes.compareTo(o1.getStartRowKey(),o2.getStartRowKey());
       }
     });
     int[] original2sorted = new int[sorted.length];
@@ -262,9 +261,10 @@ public class UnionedScanBatch implements RecordBatch {
   
     @Override
     public int getRecordCount() {
+      /*
       if(lastReaderEntry != mySortedEntry){
         throw new IllegalStateException("last reader entry:"+lastReaderEntry+", current split index:"+original2sorted[pop.getEntries()[0]]);
-      }
+      }*/
       return recordCount;
       
     }
@@ -328,7 +328,7 @@ public class UnionedScanBatch implements RecordBatch {
       }
       if(outcome == IterOutcome.NONE){
         HbaseScanPOP.HbaseScanEntry scanEntry =  sortedEntries.get(mySortedEntry) ;
-        logger.info("Record count for entry [id:{},keyRange:[{}:{}],count: {}]", mySortedEntry,scanEntry.getStartRowKey(),scanEntry.getEndRowKey(), totalCount);
+        logger.info("Record count for entry [id:{},tableName:{},keyRange:[{}:{}],count: {}]", mySortedEntry,scanEntry.getTableName(),Bytes.toStringBinary(scanEntry.getStartRowKey()),Bytes.toStringBinary(scanEntry.getEndRowKey()), totalCount);
       }
       return outcome;
     }

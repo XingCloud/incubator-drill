@@ -30,9 +30,9 @@ public class Graph<G extends GraphValue<G>, R extends G, T extends G> implements
 
   static final Logger logger = LoggerFactory.getLogger(Graph.class);
 
-  private AdjacencyList<G> adjList;
-  private final List<R> roots;
-  private final List<T> leaves;
+  private  AdjacencyList<G> adjList;
+  private  final List<R> roots;
+  private  final List<T> leaves;
 
   public Graph(List<G> operators, Class<R> root, Class<T> leaf) {
     adjList = AdjacencyList.newInstance(operators);

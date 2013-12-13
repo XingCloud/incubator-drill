@@ -1,24 +1,27 @@
 package org.apache.drill.exec.physical.impl;
 
 import com.beust.jcommander.internal.Lists;
-import com.carrotsearch.hppc.IntIntOpenHashMap;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.expression.ExpressionPosition;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.data.JoinCondition;
 import org.apache.drill.common.types.Types;
+import org.apache.drill.exec.engine.async.AbstractRelayRecordBatch;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.JoinPOP;
 import org.apache.drill.exec.physical.impl.eval.BasicEvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorFactory;
 import org.apache.drill.exec.physical.impl.eval.EvaluatorTypes.BasicEvaluator;
 import org.apache.drill.exec.record.*;
+import org.apache.drill.exec.util.hash.OffHeapIntIntOpenHashMap;
 import org.apache.drill.exec.vector.*;
-import org.apache.drill.exec.vector.ValueVector.*;
+import org.apache.drill.exec.vector.ValueVector.Mutator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,6 +32,7 @@ import java.util.*;
 public class JoinBatch extends BaseRecordBatch {
 
   final static Logger logger = LoggerFactory.getLogger(JoinBatch.class);
+  private static LeftKeyCacheManager leftKeyCacheManager = new LeftKeyCacheManager();
   private FragmentContext context;
   private JoinPOP config;
   private RecordBatch leftIncoming;
@@ -62,6 +66,9 @@ public class JoinBatch extends BaseRecordBatch {
         break;
       case INNER:
         connector = new InnerConnector();
+        break;
+      case ANTI:
+        connector = new AntiConnector();
         break;
     }
 
@@ -152,6 +159,7 @@ public class JoinBatch extends BaseRecordBatch {
         }
       }
       if (rightFinished) {
+        clearCache();
         return IterOutcome.NONE;
       }
       return IterOutcome.NOT_YET;
@@ -209,7 +217,7 @@ public class JoinBatch extends BaseRecordBatch {
   abstract class Connector {
 
     protected List<int[]> outRecords = Lists.newArrayList();
-    IntIntOpenHashMap leftValueMap;
+    OffHeapIntIntOpenHashMap leftValueMap;
     protected List<List<ValueVector>> leftIncomings;
     protected List<MaterializedField> leftFields;
     protected List<ValueVector> rightVectors;
@@ -324,8 +332,9 @@ public class JoinBatch extends BaseRecordBatch {
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       Pair<Integer, Integer> pair = new Pair<>();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        if (leftValueMap.containsKey(accessor.get(i))) {
-          decode(leftValueMap.lget(), pair);
+        int value = leftValueMap.get(accessor.get(i));
+        if (value != OffHeapIntIntOpenHashMap.EMPTY_VALUE) {
+          decode(value, pair);
           outRecords.add(new int[]{pair.first, pair.second, i});
         }
       }
@@ -405,8 +414,9 @@ public class JoinBatch extends BaseRecordBatch {
       IntVector.Accessor accessor = rightJoinKey.getAccessor();
       Pair<Integer, Integer> pair = new Pair<>();
       for (int i = 0; i < accessor.getValueCount(); i++) {
-        if (leftValueMap.containsKey(accessor.get(i))) {
-          decode(leftValueMap.lget(), pair);
+        int value = leftValueMap.get(accessor.get(i));
+        if (value != OffHeapIntIntOpenHashMap.EMPTY_VALUE) {
+          decode(value, pair);
           outRecords.add(new int[]{pair.first, pair.second, i});
           mutator.set(i, 1);
         }
@@ -446,6 +456,40 @@ public class JoinBatch extends BaseRecordBatch {
     @Override
     public MaterializedField getMaterializedField(MaterializedField f) {
       return null;
+    }
+  }
+
+  // anti join
+  class AntiConnector extends Connector {
+
+    private final static int INVALID_INDEX = -1;
+
+    @Override
+    public boolean connect() {
+      IntVector.Accessor accessor = rightJoinKey.getAccessor();
+      for (int i = 0; i < accessor.getValueCount(); i++) {
+        if (!leftValueMap.containsKey(accessor.get(i))) {
+          outRecords.add(new int[]{INVALID_INDEX, INVALID_INDEX, i});
+        }
+      }
+      return !outRecords.isEmpty();
+    }
+
+    @Override
+    public void beforeCopy() {
+      super.beforeCopy();
+      recordCount = outRecords.size();
+    }
+
+    @Override
+    public void copyLeft() {
+      // Do nothing
+      // no need to upstream left values
+    }
+
+    @Override
+    public MaterializedField getMaterializedField(MaterializedField f) {
+      return f;
     }
   }
 
@@ -492,23 +536,41 @@ public class JoinBatch extends BaseRecordBatch {
   }
 
   class LeftCache extends Cache {
-    IntIntOpenHashMap valuesIndexMap = new IntIntOpenHashMap();
+
+    OffHeapIntIntOpenHashMap valuesIndexMap = null;
+    AtomicInteger publicCacheStatus = null;
+    int localCacheStatus = 0;
 
     LeftCache() {
       super();
+      Pair<AtomicInteger, OffHeapIntIntOpenHashMap> pair = leftKeyCacheManager.getKeyMap(((AbstractRelayRecordBatch) leftIncoming).getIncoming(), context.getAllocator());
+      publicCacheStatus = pair.first;
+      valuesIndexMap = pair.second;
       incomings = Lists.newArrayList();
     }
 
     public void cache(List<ValueVector> incoming, IntVector joinKey) {
+
       Collections.sort(incoming, new VectorComparator());
       incomings.add(incoming);
-      int index = incomings.size() - 1;
-      IntVector.Accessor accessor = joinKey.getAccessor();
-      for (int i = 0; i < accessor.getValueCount(); i++) {
-        valuesIndexMap.put(accessor.get(i), encode(index, i));
+      cacheJoinKey(joinKey);
+
+    }
+
+
+    private void cacheJoinKey(IntVector joinKey) {
+      synchronized (valuesIndexMap) {
+        if (publicCacheStatus.compareAndSet(localCacheStatus, localCacheStatus + 1)) {
+          int index = incomings.size() - 1;
+          IntVector.Accessor accessor = joinKey.getAccessor();
+          for (int i = 0; i < accessor.getValueCount(); i++) {
+            valuesIndexMap.put(accessor.get(i), encode(index, i));
+          }
+        }
+        localCacheStatus++;
+        keyField = joinKey.getField();
+        joinKey.close();
       }
-      keyField = joinKey.getField();
-      joinKey.close();
     }
 
     @Override
@@ -524,8 +586,19 @@ public class JoinBatch extends BaseRecordBatch {
       return super.getFields();
     }
 
-    IntIntOpenHashMap getValuesIndexMap() {
+    OffHeapIntIntOpenHashMap getValuesIndexMap() {
       return valuesIndexMap;
+    }
+
+    @Override
+    public void clear() {
+      if (valuesIndexMap != null) {
+        if (valuesIndexMap.release()) {
+          leftKeyCacheManager.remove(((AbstractRelayRecordBatch) leftIncoming).getIncoming());
+        }
+        valuesIndexMap = null;
+      }
+      super.clear();
     }
   }
 
@@ -562,7 +635,7 @@ public class JoinBatch extends BaseRecordBatch {
     }
   }
 
-  public class Pair<First, Second> {
+  public static class Pair<First, Second> {
     First first;
     Second second;
 
@@ -591,7 +664,7 @@ public class JoinBatch extends BaseRecordBatch {
     }
   }
 
-  public class Tuple<First, Second, Third> {
+  public static class Tuple<First, Second, Third> {
 
     First first;
     Second second;
@@ -616,6 +689,36 @@ public class JoinBatch extends BaseRecordBatch {
     }
   }
 
+  public static class LeftKeyCacheManager {
+
+    final static Logger logger = org.slf4j.LoggerFactory.getLogger(LeftKeyCacheManager.class);
+
+    Map<RecordBatch, Pair<AtomicInteger, OffHeapIntIntOpenHashMap>> keyCacheMap = new HashMap<>();
+
+    public Pair<AtomicInteger, OffHeapIntIntOpenHashMap> getKeyMap(RecordBatch recordBatch, BufferAllocator allocator) {
+      synchronized (this) {
+        Pair<AtomicInteger, OffHeapIntIntOpenHashMap> pair = keyCacheMap.get(recordBatch);
+        if (pair == null) {
+          pair = new Pair<>(new AtomicInteger(0), new OffHeapIntIntOpenHashMap(allocator));
+          keyCacheMap.put(recordBatch, pair);
+        } else {
+          logger.info("Cache hit . ");
+          pair.second.retain();
+        }
+        return pair;
+      }
+    }
+
+    public void remove(RecordBatch recordBatch) {
+      synchronized (this) {
+        keyCacheMap.remove(recordBatch);
+        logger.info("Cached keymap size : {}", keyCacheMap.size());
+      }
+    }
+
+
+  }
+
   public class VectorComparator implements Comparator<ValueVector> {
     @Override
     public int compare(ValueVector left, ValueVector right) {
@@ -629,6 +732,5 @@ public class JoinBatch extends BaseRecordBatch {
       return left.getName().compareTo(right.getName());
     }
   }
-
 
 }

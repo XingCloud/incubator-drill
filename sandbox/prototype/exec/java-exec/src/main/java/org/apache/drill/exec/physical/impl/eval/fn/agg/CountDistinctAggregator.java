@@ -65,6 +65,7 @@ public class CountDistinctAggregator extends AbstractAggregatingEvaluator {
       m.set(i, distinctCounters.get(i).cardinality());
     }
     m.setValueCount(recordCount);
+    distinctCounters = null ;
     return value;
   }
 

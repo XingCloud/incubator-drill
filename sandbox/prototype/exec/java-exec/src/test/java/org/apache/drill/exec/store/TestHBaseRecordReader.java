@@ -26,6 +26,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class TestHBaseRecordReader {
+  public static final String MIN_UID = "\\x00\\x00\\x00\\x00\\x00";
+  public static final String MAX_UID = "\\xFF\\xFF\\xFF\\xFF\\xFF";
+
    @Test
    public void  readEventTable(){
        String startKey = System.getProperty("hbase.start");
@@ -136,11 +139,11 @@ public class TestHBaseRecordReader {
                 projections.add(ue1);
                 projections.add(ue2);
                 projections.add(ue3);
-                entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,null,projections);
+                entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,null,projections, MAX_UID, MIN_UID);
                 return entry;
            case "event":
 
-               List<LogicalExpression> includes=new ArrayList<>();
+               List<String> includes=new ArrayList<>();
                /*
                FunctionDefinition funcDef=new BooleanFunctions().getFunctionDefintions()[3];
                List<LogicalExpression> funcArgs=new ArrayList<>();
@@ -149,7 +152,7 @@ public class TestHBaseRecordReader {
                FunctionCall func=new FunctionCall(funcDef,funcArgs,ExpressionPosition.UNKNOWN);
                includes.add(func);
                */
-               includes.add(new ValueExpressions.QuotedString("20130101visit.auto",null));
+               includes.add("20130101visit.auto");
                Constants.FilterType type= Constants.FilterType.XaRowKeyPattern;
                HbaseScanPOP.RowkeyFilterEntry filterEntry=new HbaseScanPOP.RowkeyFilterEntry(type,includes);
                filters.add(filterEntry);
@@ -160,7 +163,7 @@ public class TestHBaseRecordReader {
                projections.add(e1);
                projections.add(e2);
                projections.add(e3);
-               entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,filters,projections);
+               entry=new HbaseScanPOP.HbaseScanEntry(table,startKey,stopKey,filters,projections, MAX_UID, MIN_UID);
                return entry;
 
     }

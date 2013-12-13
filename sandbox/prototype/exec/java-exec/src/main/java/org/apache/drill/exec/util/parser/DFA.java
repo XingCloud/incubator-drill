@@ -2,6 +2,7 @@ package org.apache.drill.exec.util.parser;
 
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.*;
 
@@ -29,6 +30,7 @@ public class DFA {
 
     Arrays.fill(wordTable, '!', '.', true);
     Arrays.fill(wordTable, '.' + 1, '~' + 1, true);
+    wordTable[32] = true; //special character of space(' ')
 
     textTable = new boolean[256];
     Arrays.fill(textTable, false);
@@ -335,7 +337,7 @@ public class DFA {
         } else {
           c = target[end];
           if (current.nexts[toUInt(c)] == null) {
-            throw new NullPointerException("current state:" + current + ", next char:" + c + ", no next status!");
+            throw new NullPointerException("current state:" + current + ", next char:" + c + ", no next status! Row key: " + Bytes.toStringBinary(target));
           }
           current = current.nexts[toUInt(c)];
         }
@@ -355,7 +357,7 @@ public class DFA {
           current = DFA.this.end;
         } else {
           if (current.nexts[toUInt(c)] == null) {
-            throw new NullPointerException("current state:" + current + ", next char:" + c + ", no next status!");
+            throw new NullPointerException("current state:" + current + ", next char:" + c + ", no next status! Row key: " + Bytes.toStringBinary(target));
           }
           current = current.nexts[toUInt(c)];
         }

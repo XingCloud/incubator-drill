@@ -18,6 +18,7 @@
 package org.apache.drill.exec.work;
 
 import com.yammer.metrics.Timer;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.impl.RootExec;
 import org.apache.drill.exec.proto.ExecProtos.FragmentStatus;
@@ -72,7 +73,7 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
     }
     
     Timer.Context t = context.fragmentTime.time();
-    
+
     // run the query until root.next returns false.
     try{
       while(state.get() == FragmentState.RUNNING_VALUE){
@@ -85,17 +86,16 @@ public class FragmentRunner implements Runnable, CancelableQuery, StatusProvider
 
         }
       }
-      
-      // If this isn't a finished stop, we'll inform other batches to finish up.
-      if(state.get() != FragmentState.FINISHED_VALUE){
-        root.stop();
-      }
-      
+
     }catch(Exception ex){
       ex.printStackTrace();
       logger.debug("Caught exception while running fragment: {} ", ex);
       internalFail(ex);
     }finally{
+      // If this isn't a finished stop, we'll inform other batches to finish up.
+      if(state.get() != FragmentState.FINISHED_VALUE){
+        root.stop();
+      }
       t.stop();
     }
     long endTime = System.currentTimeMillis() ;

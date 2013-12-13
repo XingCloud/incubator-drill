@@ -98,7 +98,7 @@ public class SegmentBatch extends BaseRecordBatch {
 
   @Override
   public IterOutcome next() {
-    if (groups.size() != 0) {
+    if (!groups.isEmpty()) {
       writeOutput();
       return IterOutcome.OK;
     }

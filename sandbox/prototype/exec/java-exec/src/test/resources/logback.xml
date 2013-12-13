@@ -1,24 +1,37 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
-	<appender name="SOCKET"
-		class="de.huxhorn.lilith.logback.appender.ClassicMultiplexSocketAppender">
-		<Compressing>true</Compressing>
-		<ReconnectionDelay>10000</ReconnectionDelay>
-		<IncludeCallerData>true</IncludeCallerData>
-		<RemoteHosts>localhost</RemoteHosts>
-	</appender>
+    <property name="LOG_HOME" value="/data/log/drill"/>
 
-	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-			</pattern>
-		</encoder>
-	</appender>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Encoding>UTF-8</Encoding>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME}/drillbit.log.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n
+            </pattern>
+        </layout>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>10MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
 
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
 
-	<root>
-		<level value="INFO" />
-		<appender-ref ref="STDOUT" />
-	</root>
+    <logger name="org.apache.drill" additivity="true">
+        <level value="info"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <root>
+        <level value="INFO"/>
+        <appender-ref ref="STDOUT"/>
+    </root>
 
 </configuration>

@@ -36,7 +36,7 @@ public class FunctionCall extends LogicalExpressionBase implements Iterable<Logi
     this.func = func;
     
     if(args == null) args = Lists.newArrayList();
-    
+
     if (!(args instanceof ImmutableList)) {
       args = ImmutableList.copyOf(args);
     }
