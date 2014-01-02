@@ -170,9 +170,19 @@
             <version>1.0</version>
         </dependency>
         <dependency>
-            <groupId>com.xingcloud.xa</groupId>
+            <groupId>hbase-filters</groupId>
             <artifactId>hbase-filters</artifactId>
-            <version>1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging-api</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
