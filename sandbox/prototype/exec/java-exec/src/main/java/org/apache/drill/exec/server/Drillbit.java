@@ -100,6 +100,7 @@ public class Drillbit implements Closeable{
     manager.start(md, cache, engine.getBitCom(), coord);
     logger.info("coord register drillEndpoint");
     handle = coord.register(md);
+    logger.info("coord register drillEndpoint completed");
   }
 
   public void close() {
