@@ -91,8 +91,10 @@ public class Drillbit implements Closeable{
   }
 
   public void run() throws Exception {
+    logger.info("Drillbit run ");
     coord.start(10000);
     DrillbitEndpoint md = engine.start();
+    logger.info("cache run ");
     cache.run();
     logger.info("manager starting.....");
     manager.start(md, cache, engine.getBitCom(), coord);
