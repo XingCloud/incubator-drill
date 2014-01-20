@@ -14,6 +14,7 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
 
 import com.beust.jcommander.internal.Lists;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -387,6 +388,7 @@ public class BasicOptimizer extends Optimizer {
         e.printStackTrace();
         throw new OptimizerException(e.getMessage());
       }
+      logger.debug("get patterns ");
       return new ArrayList<>(getPatternsFromExpr(filterExpr, tableName, config));
     }
 
@@ -394,7 +396,11 @@ public class BasicOptimizer extends Optimizer {
                                                        DrillConfig config) throws OptimizerException {
       if (!(filterExpr instanceof FunctionCall))
         return null;
-
+      try {
+        logger.debug("get patterns from expr "+config.getMapper().writeValueAsString(filterExpr));
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
       try {
         Set<String> patterns = new HashSet<>();
         String projectId = tableName.contains("deu_") ? tableName.substring(4, tableName.length()) : tableName;
@@ -418,6 +424,7 @@ public class BasicOptimizer extends Optimizer {
 
     private List<String> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap,
                                                            String projectId) throws OptimizerException {
+      logger.debug("get patterns from col vals...");
       List<String> patterns = new ArrayList<>();
 
       String eventFilter = getEventFilter(fieldValueMap);
