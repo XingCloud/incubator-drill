@@ -181,11 +181,17 @@ public class BasicOptimizer extends Optimizer {
         filter = selection.get(SELECTION_KEY_WORD_FILTER);
 
         if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
+          try {
+            logger.debug(config.getMapper().writeValueAsString(filter)+"need get include patterns");
+          } catch (JsonProcessingException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          }
           List<String> patterns = getPatterns(filter, table, config);
           HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
             Constants.FilterType.XaRowKeyPattern, patterns);
           filterEntries.add(filterEntry);
         } else {
+          logger.debug("filterEntries is null");
           filterEntries = null;
         }
 
