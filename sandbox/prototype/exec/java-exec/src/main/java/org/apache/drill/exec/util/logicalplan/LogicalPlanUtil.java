@@ -1,5 +1,6 @@
 package org.apache.drill.exec.util.logicalplan;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
@@ -7,7 +8,8 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.exec.exception.OptimizerException;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -23,7 +25,7 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
  * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
-    public static Logger logger = Logger.getLogger(LogicalPlanUtil.class);
+    public static Logger logger = LoggerFactory.getLogger(LogicalPlanUtil.class);
 
     public static String getRkPattern(Scan scan, DrillConfig config) throws IOException {
         JsonNode filterNode = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
@@ -76,7 +78,12 @@ public class LogicalPlanUtil {
 
     public static boolean needIncludes(JsonNode filterNode,DrillConfig config,String tableName) throws OptimizerException {
         LogicalExpression le= null;
-        try {
+      try {
+        logger.debug("test needIncludes for "+config.getMapper().writeValueAsString(filterNode));
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+      try {
             le = config.getMapper().readValue(filterNode.get("expression").traverse(),LogicalExpression.class);
         } catch (IOException e) {
             e.printStackTrace();
@@ -86,7 +93,7 @@ public class LogicalPlanUtil {
             return false;
         List<String> rkPatterns=getRkPatterns((FunctionCall)le,config,tableName);
         for(String rkPattern : rkPatterns){
-            if(!rkPattern.contains(".*."))
+            if(!rkPattern.contains("*."))
                 return false;
         }
         return true;

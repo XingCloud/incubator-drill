@@ -14,6 +14,7 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 import static org.apache.drill.exec.physical.config.HbaseScanPOP.HbaseScanEntry;
 
 import com.beust.jcommander.internal.Lists;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -394,7 +395,11 @@ public class BasicOptimizer extends Optimizer {
                                                        DrillConfig config) throws OptimizerException {
       if (!(filterExpr instanceof FunctionCall))
         return null;
-
+      try {
+        logger.debug("enter get patterns from expr "+config.getMapper().writeValueAsString(filterExpr));
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
+      }
       try {
         Set<String> patterns = new HashSet<>();
         String projectId = tableName.contains("deu_") ? tableName.substring(4, tableName.length()) : tableName;
