@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER_EXPRESSION;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 
 /**
@@ -77,11 +78,17 @@ public class LogicalPlanUtil {
 
   public static boolean needIncludes(JsonNode filterNode, DrillConfig config, String tableName) throws OptimizerException {
     LogicalExpression le = null;
+    logger.debug("test if need includes");
     try {
-      le = config.getMapper().readValue(filterNode.get("expression").traverse(), LogicalExpression.class);
+      le = config.getMapper().readValue(filterNode.get(SELECTION_KEY_WORD_FILTER_EXPRESSION).traverse(), LogicalExpression.class);
     } catch (IOException e) {
       e.printStackTrace();
       throw new OptimizerException(e.getMessage());
+    }
+    try {
+      logger.debug("le is "+config.getMapper().writeValueAsString(le));
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
     if (!(le instanceof FunctionCall)){
       try {
