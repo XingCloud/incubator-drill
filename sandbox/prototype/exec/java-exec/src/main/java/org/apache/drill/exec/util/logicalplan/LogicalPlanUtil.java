@@ -109,7 +109,7 @@ public class LogicalPlanUtil {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
     for (String rkPattern : rkPatterns) {
-      if (!rkPattern.contains(".*."))
+      if (!rkPattern.contains("*."))
         return false;
     }
     return true;
