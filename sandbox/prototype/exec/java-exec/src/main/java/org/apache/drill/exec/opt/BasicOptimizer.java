@@ -178,7 +178,14 @@ public class BasicOptimizer extends Optimizer {
 
         // Filters
         List<HbaseScanPOP.RowkeyFilterEntry> filterEntries = new ArrayList<>();
+
         filter = selection.get(SELECTION_KEY_WORD_FILTER);
+        try {
+          logger.debug("selection is "+config.getMapper().writeValueAsString(selection));
+          logger.debug("filter is "+config.getMapper().writeValueAsString(filter));
+        } catch (JsonProcessingException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
 
         if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
           try {
