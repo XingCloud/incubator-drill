@@ -181,24 +181,37 @@ public class BasicOptimizer extends Optimizer {
 
         filter = selection.get(SELECTION_KEY_WORD_FILTER);
         try {
-          logger.debug("selection is "+config.getMapper().writeValueAsString(selection));
-          logger.debug("filter is "+config.getMapper().writeValueAsString(filter));
+          logger.debug("selection is " + config.getMapper().writeValueAsString(selection));
+          logger.debug("filter is " + config.getMapper().writeValueAsString(filter));
         } catch (JsonProcessingException e) {
           e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
-
-        if (filter != null && LogicalPlanUtil.needIncludes(filter, config, table)) {
-          try {
-            logger.debug(config.getMapper().writeValueAsString(filter)+"need get include patterns");
-          } catch (JsonProcessingException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        // for test
+        if (filter == null) {
+          logger.debug("filter is null");
+        }
+        // for test
+        boolean filterNotNull= (filter!=null);
+        if (filterNotNull) {
+          logger.debug("filter is not null");
+          logger.debug("enter needIncludes");
+          boolean needPatterns=LogicalPlanUtil.needIncludes(filter,config,table);
+          logger.debug("needPatterns is "+needPatterns);
+          if (needPatterns) {
+            try {
+              logger.debug(config.getMapper().writeValueAsString(filter) + "need get include patterns");
+            } catch (JsonProcessingException e) {
+              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            List<String> patterns = getPatterns(filter, table, config);
+            HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
+              Constants.FilterType.XaRowKeyPattern, patterns);
+            filterEntries.add(filterEntry);
+          } else {
+            logger.debug("filterEntries is null");
+            filterEntries = null;
           }
-          List<String> patterns = getPatterns(filter, table, config);
-          HbaseScanPOP.RowkeyFilterEntry filterEntry = new HbaseScanPOP.RowkeyFilterEntry(
-            Constants.FilterType.XaRowKeyPattern, patterns);
-          filterEntries.add(filterEntry);
         } else {
-          logger.debug("filterEntries is null");
           filterEntries = null;
         }
 
@@ -307,7 +320,7 @@ public class BasicOptimizer extends Optimizer {
       PhysicalOperator pop = operatorMap.get(project);
       if (pop == null) {
         pop = new org.apache.drill.exec.physical.config.Project(Arrays.asList(project.getSelections()),
-                                                                project.getInput().accept(this, obj));
+          project.getInput().accept(this, obj));
         operatorMap.put(project, pop);
       }
       return pop;
@@ -406,11 +419,11 @@ public class BasicOptimizer extends Optimizer {
     }
 
     private Set<String> getPatternsFromExpr(LogicalExpression filterExpr, String tableName,
-                                                       DrillConfig config) throws OptimizerException {
+                                            DrillConfig config) throws OptimizerException {
       if (!(filterExpr instanceof FunctionCall))
         return null;
       try {
-        logger.debug("get patterns from expr "+config.getMapper().writeValueAsString(filterExpr));
+        logger.debug("get patterns from expr " + config.getMapper().writeValueAsString(filterExpr));
       } catch (JsonProcessingException e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
@@ -436,7 +449,7 @@ public class BasicOptimizer extends Optimizer {
     }
 
     private List<String> getPatternsFromColVals(Map<String, UnitFunc> fieldValueMap,
-                                                           String projectId) throws OptimizerException {
+                                                String projectId) throws OptimizerException {
       logger.debug("get patterns from col vals...");
       List<String> patterns = new ArrayList<>();
 
@@ -456,7 +469,7 @@ public class BasicOptimizer extends Optimizer {
         t2 = System.currentTimeMillis();
       }
       logger.info("[BASIC-OPTIMIZER] - Get event(" + eventFilter + ") in thread(" + Thread.currentThread()
-                                                                                           .getName() + ") using " + (t2 - t1) + " milliseconds.");
+        .getName() + ") using " + (t2 - t1) + " milliseconds.");
       if (events != null) {
         try {
           for (XEvent childEvent : events) {
@@ -534,8 +547,8 @@ public class BasicOptimizer extends Optimizer {
       return eventFilter.toString();
     }
 
-    public String formatToSql(String filter){
-      return filter.replaceAll("==","=");
+    public String formatToSql(String filter) {
+      return filter.replaceAll("==", "=");
     }
 
     public class UnitFunc {
@@ -583,8 +596,6 @@ public class BasicOptimizer extends Optimizer {
       }
     }
   }
-
-
 
 
 }
