@@ -1,7 +1,5 @@
 package org.apache.drill.exec.util;
 
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -19,6 +17,7 @@ import java.util.Queue;
  * To change this template use File | Settings | File Templates.
  */
 public class HazelCastTest {
+  /*
   @Test
   public void test1(){
     Config cfg = new Config();
@@ -55,4 +54,5 @@ public class HazelCastTest {
     IMap map = client.getMap("customers");
     System.out.println("Map Size:" + map.size());
   }
+  */
 }

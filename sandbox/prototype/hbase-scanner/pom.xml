@@ -149,9 +149,9 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.xingcloud</groupId>
+            <groupId>com.xingcloud.xa</groupId>
             <artifactId>hashutil</artifactId>
-            <version>1.0.0</version>
+            <version>1.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>

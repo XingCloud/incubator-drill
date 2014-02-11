@@ -8,12 +8,12 @@ import org.apache.drill.common.config.DrillConfig;
 import org.apache.drill.common.expression.*;
 import org.apache.drill.common.logical.data.Scan;
 import org.apache.drill.exec.exception.OptimizerException;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
 
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER;
+import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_FILTER_EXPRESSION;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
 
 /**
@@ -24,7 +24,7 @@ import static org.apache.drill.common.util.Selections.SELECTION_KEY_WORD_TABLE;
  * To change this template use File | Settings | File Templates.
  */
 public class LogicalPlanUtil {
-  public static Logger logger = Logger.getLogger(LogicalPlanUtil.class);
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LogicalPlanUtil.class);
 
   public static String getRkPattern(Scan scan, DrillConfig config) throws IOException {
     JsonNode filterNode = scan.getSelection().getRoot().get(0).get(SELECTION_KEY_WORD_FILTER).get("expression");
@@ -76,12 +76,18 @@ public class LogicalPlanUtil {
   }
 
   public static boolean needIncludes(JsonNode filterNode, DrillConfig config, String tableName) throws OptimizerException {
+    logger.info("test if need includes");
     LogicalExpression le = null;
     try {
-      le = config.getMapper().readValue(filterNode.get("expression").traverse(), LogicalExpression.class);
+      le = config.getMapper().readValue(filterNode.get(SELECTION_KEY_WORD_FILTER_EXPRESSION).traverse(), LogicalExpression.class);
     } catch (IOException e) {
       e.printStackTrace();
       throw new OptimizerException(e.getMessage());
+    }
+    try {
+      logger.debug("le is "+config.getMapper().writeValueAsString(le));
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
     if (!(le instanceof FunctionCall)){
       try {
@@ -103,7 +109,7 @@ public class LogicalPlanUtil {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
     for (String rkPattern : rkPatterns) {
-      if (!rkPattern.contains(".*."))
+      if (!rkPattern.contains("*."))
         return false;
     }
     return true;
