@@ -127,9 +127,9 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.xingcloud</groupId>
+            <groupId>com.xingcloud.xa</groupId>
             <artifactId>basis</artifactId>
-            <version>0.0.5</version>
+            <version>1.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
