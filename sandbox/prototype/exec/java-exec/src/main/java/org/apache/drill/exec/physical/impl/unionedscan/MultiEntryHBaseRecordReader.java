@@ -129,6 +129,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
     try {
       List<HBaseFieldInfo> cols = TableInfo.getCols(tableName, null);
+      logger.debug("get Field Infos Success.");
       for (HBaseFieldInfo col : cols) {
         fieldInfoMap.put(col.fieldSchema.getName(), col);
       }
@@ -175,6 +176,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       e.printStackTrace();
       throw e;
     }
+    logger.debug("init Config Completed");
   }
 
   private void initDirectScanner() throws IOException {
