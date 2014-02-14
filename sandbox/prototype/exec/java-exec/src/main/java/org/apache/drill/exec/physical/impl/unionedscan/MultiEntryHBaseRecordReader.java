@@ -310,6 +310,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     try {
       initConfig();
       setupEntry(currentEntry);
+      logger.debug("setup OutputMutator completed.");
     } catch (Exception e) {
       e.printStackTrace();
       throw new ExecutionSetupException("MultiEntryHbaseRecordReader");
@@ -366,6 +367,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
   public int next() {
     if (scanner == null) {
       try {
+        logger.debug("start to init DirectScanner");
         initDirectScanner();
       } catch (Exception e) {
         e.printStackTrace();
