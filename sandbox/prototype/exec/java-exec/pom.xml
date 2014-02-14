@@ -66,13 +66,13 @@
             <version>1.0-beta-1</version>
             <scope>test</scope>
         </dependency>
-      <!--
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>parquet-column</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        -->
+        <!--
+          <dependency>
+              <groupId>com.twitter</groupId>
+              <artifactId>parquet-column</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+          </dependency>
+          -->
         <dependency>
             <groupId>com.yammer.metrics</groupId>
             <artifactId>metrics-core</artifactId>
@@ -82,12 +82,6 @@
             <groupId>org.apache.drill</groupId>
             <artifactId>common</artifactId>
             <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.drill</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <classifier>tests</classifier>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
@@ -138,16 +132,12 @@
             <artifactId>hbase-scanner</artifactId>
             <exclusions>
                 <exclusion>
-                    <artifactId>log4j-over-slf4j</artifactId>
-                    <groupId>org.slf4j</groupId>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging-api</artifactId>
                 </exclusion>
             </exclusions>
             <version>1.0-SNAPSHOT</version>
@@ -157,16 +147,12 @@
             <artifactId>metastore</artifactId>
             <exclusions>
                 <exclusion>
-                    <artifactId>log4j-over-slf4j</artifactId>
-                    <groupId>org.slf4j</groupId>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging-api</artifactId>
                 </exclusion>
             </exclusions>
             <version>1.0-SNAPSHOT</version>
@@ -200,25 +186,6 @@
             <groupId>com.xingcloud.xa</groupId>
             <artifactId>dbutil</artifactId>
             <version>1.4.2</version>
-          <exclusions>
-            <exclusion>
-              <groupId>commons-logging</groupId>
-              <artifactId>commons-logging</artifactId>
-            </exclusion>
-            <exclusion>
-              <groupId>commons-logging</groupId>
-              <artifactId>commons-logging-api</artifactId>
-            </exclusion>
-          </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.xingcloud.xa</groupId>
-            <artifactId>encoding</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.xingcloud.xa</groupId>
-            <artifactId>basis</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -229,7 +196,36 @@
                     <artifactId>commons-logging-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.xingcloud.xa</groupId>
+            <artifactId>encoding</artifactId>
             <version>1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.xingcloud.xa</groupId>
+            <artifactId>basis</artifactId>
+            <version>1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!--
         <dependency>
@@ -317,6 +313,16 @@
         <dependency>
             <groupId>com.xingcloud.xa</groupId>
             <artifactId>hbase-filters</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging-api</artifactId>
+                </exclusion>
+            </exclusions>
             <version>1.0</version>
         </dependency>
         <dependency>
