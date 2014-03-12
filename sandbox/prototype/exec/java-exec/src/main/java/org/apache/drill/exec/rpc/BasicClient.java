@@ -84,7 +84,12 @@ public abstract class BasicClient<T extends EnumLite, R extends RemoteConnection
   }
 
   public boolean isActive(){
-    return connection.getChannel().isActive() ;
+    Channel channel=connection.getChannel();
+    if(channel==null){
+      logger.info("Channel is null");
+      return false;
+    }
+    return channel.isActive() ;
   }
 
   protected abstract void validateHandshake(HANDSHAKE_RESPONSE validateHandshake) throws RpcException;
