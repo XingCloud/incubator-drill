@@ -2,15 +2,11 @@ package org.apache.drill.exec.physical.impl.unionedscan;
 
 import com.xingcloud.hbase.util.Constants;
 import com.xingcloud.hbase.util.RowKeyUtils;
-import com.xingcloud.meta.ByteUtils;
 import com.xingcloud.meta.HBaseFieldInfo;
 import com.xingcloud.meta.KeyPart;
 import com.xingcloud.meta.TableInfo;
 import com.xingcloud.xa.hbase.filter.SkipScanFilter;
-import com.xingcloud.xa.hbase.filter.XARkConditionFilter;
-import com.xingcloud.xa.hbase.filter.XARkConditionFilter.*;
 import com.xingcloud.xa.hbase.model.KeyRange;
-import com.xingcloud.xa.hbase.util.EventTableUtil;
 import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.ExpressionPosition;
@@ -179,7 +175,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   private void initDirectScanner() throws IOException {
     long initStart = System.nanoTime();
-    FilterList filterList = new FilterList();
+    FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
     Set<String> patterns = new HashSet<>();
     List<KeyRange> slot = new ArrayList<>();
     for (int i = 0; i < entryFilters.size(); i++) {
@@ -201,7 +197,12 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
               }
               break;
             case HbaseOrig:
-              RowKeyRange range = new RowKeyRange(entries[i].getStartRowKey(), entries[i].getEndRowKey());
+              KeyRange range = new KeyRange(entries[i].getStartRowKey(), true,entries[i].getEndRowKey(),false);
+              List<KeyRange> ranges=new ArrayList<KeyRange>();
+              ranges.add(range);
+              SkipScanFilter rangeFilter=new SkipScanFilter(ranges);
+              FilterList fieldFilter=new FilterList(FilterList.Operator.MUST_PASS_ALL);
+              fieldFilter.addFilter(rangeFilter);
               for (String filterExpr : entry.getFilterExpressions()) {
                 LogicalExpression e =
                   context.getDrillbitContext().getConfig().getMapper().readValue(filterExpr, LogicalExpression.class);
@@ -239,20 +240,19 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
                           .toBytes(
                             rightField
                               .getLong())));
-                      XARkConditionFilter conditionValueFilter = new XARkConditionFilter(range, valueFilter);
-                      filterList.addFilter(conditionValueFilter);
+                      fieldFilter.addFilter(valueFilter);
                       break;
                     case cqname:
                       Filter qualifierFilter = new QualifierFilter(op, new BinaryComparator(
                         Bytes.toBytes(rightField.getLong())));
-                      XARkConditionFilter conditionQfFilter = new XARkConditionFilter(range, qualifierFilter);
-                      filterList.addFilter(conditionQfFilter);
+                      fieldFilter.addFilter(qualifierFilter);
                     default:
                       break;
                   }
 
                 }
               }
+              filterList.addFilter(fieldFilter);
               break;
           }
         }
