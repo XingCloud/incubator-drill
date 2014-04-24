@@ -1,15 +1,13 @@
 package org.apache.hadoop.hbase.regionserver;
 
-import com.xingcloud.hbase.manager.*;
+import com.xingcloud.hbase.manager.HBaseResourceManager;
 import com.xingcloud.xa.hbase.filter.SkipScanFilter;
 import com.xingcloud.xa.hbase.model.KeyRange;
-import com.xingcloud.xa.hbase.util.HBaseEventUtils;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.SkipFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
@@ -19,15 +17,16 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Wang Yufei
- * Date: 13-3-7
- * Time: 下午5:07
- * To change this template use File | Settings | File Templates.
+ * Created with IntelliJ IDEA. User: Wang Yufei Date: 13-3-7 Time: 下午5:07 To change this template use File | Settings |
+ * File Templates.
  */
 public class DirectScanner implements XAScanner {
   private static Logger LOG = LoggerFactory.getLogger(DirectScanner.class);
@@ -49,19 +48,18 @@ public class DirectScanner implements XAScanner {
 
   private AtomicLong numKV = new AtomicLong();
 
-  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName,
-                       boolean isFileOnly, boolean isMemOnly) throws IOException {
+  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, boolean isFileOnly,
+                       boolean isMemOnly) throws IOException {
     this(startRowKey, endRowKey, tableName, null, null, null, isFileOnly, isMemOnly);
   }
 
-  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
-                       boolean isFileOnly, boolean isMemOnly) {
+  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter, boolean isFileOnly,
+                       boolean isMemOnly) {
     this(startRowKey, endRowKey, tableName, filter, null, null, isFileOnly, isMemOnly);
   }
 
-  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter,
-                       byte[] family, byte[] qualifier,
-                       boolean isFileOnly, boolean isMemOnly) {
+  public DirectScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter, byte[] family,
+                       byte[] qualifier, boolean isFileOnly, boolean isMemOnly) {
     this.isFileOnly = isFileOnly;
     this.isMemOnly = isMemOnly;
     this.startRowKey = startRowKey;
@@ -105,7 +103,7 @@ public class DirectScanner implements XAScanner {
       return false;
     }
 
-    if(currentScanner == null){
+    if (currentScanner == null) {
       currentScanner = new XARegionScanner(regionList.get(currentIndex), scan);
     }
     hasNext = currentScanner.next(results);
@@ -114,7 +112,7 @@ public class DirectScanner implements XAScanner {
       //Move to next region
       currentScanner.close();
       currentIndex++;
-      if (currentIndex == regionList.size()){
+      if (currentIndex == regionList.size()) {
         currentScanner = null;
         return false;
       }
@@ -141,8 +139,7 @@ public class DirectScanner implements XAScanner {
 
     Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
     uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
-    uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(),
-            3, uidRange.getSecond().length));
+    uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(), 3, uidRange.getSecond().length));
     byte[] MAX = {-1};
 
     byte[] srk = Helper.bytesCombine(srkPre, MAX, uidRange.getFirst());
@@ -177,8 +174,7 @@ public class DirectScanner implements XAScanner {
           sum += sumTmp;
           String event = Helper.getEvent(kv.getRow());
           int bucket = Helper.getBucketNum(kv.getRow());
-          writer.write(event + "\t" + bucket + "\t" + uid + "\t"
-                  + sumTmp + "\t" + kv.getTimestamp() + "\n");
+          writer.write(event + "\t" + bucket + "\t" + uid + "\t" + sumTmp + "\t" + kv.getTimestamp() + "\n");
         }
 
       } while (done);
@@ -198,6 +194,5 @@ public class DirectScanner implements XAScanner {
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
     LOG.info("Uids number: " + uids.size() + "\tCount: " + counter + "\tSum: " + sum);
   }
-
 
 }

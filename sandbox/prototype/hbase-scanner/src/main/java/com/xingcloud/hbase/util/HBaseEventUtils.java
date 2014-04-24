@@ -1,6 +1,5 @@
 package com.xingcloud.hbase.util;
 
-import com.xingcloud.hbase.filter.UidRangeFilter;
 import com.xingcloud.hbase.filter.XARowKeyFilter;
 import com.xingcloud.mongodb.MongoDBOperation;
 import com.xingcloud.xa.uidmapping.UidMappingUtil;
@@ -12,19 +11,21 @@ import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
- * User: IvyTang
- * Date: 13-4-1
- * Time: 下午3:44
+ * User: IvyTang Date: 13-4-1 Time: 下午3:44
  */
 public class HBaseEventUtils {
 
   private static final Log LOG = LogFactory.getLog(HBaseEventUtils.class);
 
   private static Log logger = LogFactory.getLog(HBaseEventUtils.class);
-
 
   public static String getEventFromDEURowKey(byte[] rowKey) {
     //DEU Uid为0xff+5个字节
@@ -70,14 +71,16 @@ public class HBaseEventUtils {
   }
 
   public static List<String> getSortedEvents(String pID, List<String> eventFilterList) throws IOException {
-      Set<String> events = new HashSet<String>();
-      for (String eventFilter : eventFilterList) {
-          events.addAll(MongoDBOperation.getEventSet(pID, eventFilter));
-      }
-      return sortEventList(new ArrayList<String>(events));
+    Set<String> events = new HashSet<String>();
+    for (String eventFilter : eventFilterList) {
+      events.addAll(MongoDBOperation.getEventSet(pID, eventFilter));
+    }
+    return sortEventList(new ArrayList<String>(events));
   }
 
-  public static Pair<byte[], byte[]> getStartEndRowKey(String startDate, String endDate, List<String> sortedEvents, long startBucket, long offsetBucket) throws UnsupportedEncodingException {
+  public static Pair<byte[], byte[]> getStartEndRowKey(String startDate, String endDate, List<String> sortedEvents,
+                                                       long startBucket, long offsetBucket) throws
+    UnsupportedEncodingException {
     long startUid = startBucket << 32;
     long endBucket = offsetBucket + startBucket;
     long endUid = 0l;
@@ -88,20 +91,20 @@ public class HBaseEventUtils {
     }
 
     byte[] realSK = UidMappingUtil.getInstance().getRowKeyV2(startDate.replace("-", ""), sortedEvents.get(0), startUid);
-    byte[] realEK = UidMappingUtil.getInstance().getRowKeyV2(endDate.replace("-", ""), sortedEvents.get(sortedEvents.size() - 1), endUid);
+    byte[] realEK = UidMappingUtil.getInstance()
+                                  .getRowKeyV2(endDate.replace("-", ""), sortedEvents.get(sortedEvents.size() - 1),
+                                               endUid);
     return new Pair<byte[], byte[]>(realSK, realEK);
   }
 
-
   public static Filter getRowKeyFilter(List<String> sortedEvents, List<String> dates) {
-      Pair<Long, Long> up = getStartEndUidPair();
-      return new XARowKeyFilter(up.getFirst(), up.getSecond(), sortedEvents, dates);
+    Pair<Long, Long> up = getStartEndUidPair();
+    return new XARowKeyFilter(up.getFirst(), up.getSecond(), sortedEvents, dates);
   }
 
   public static Filter getRowKeyFilter(List<String> sortedEvents, List<String> dates, long startUid, long endUid) {
     return new XARowKeyFilter(startUid, endUid, sortedEvents, dates);
   }
-
 
   public static Pair<Long, Long> getStartEndUidPair() {
     long startUid = 0l << 32;
@@ -111,16 +114,16 @@ public class HBaseEventUtils {
   }
 
   public static Pair<Long, Long> getStartEndUidPair(long startBucket, long offsetBucket) {
-      long startUid = startBucket << 32;
-      long endBucket = offsetBucket + startBucket;
-      long endUid = 0l;
-      if (endBucket >= 256) {
-          endUid = (1l << 40) - 1l;
-      } else {
-          endUid = endBucket << 32;
-      }
+    long startUid = startBucket << 32;
+    long endBucket = offsetBucket + startBucket;
+    long endUid = 0l;
+    if (endBucket >= 256) {
+      endUid = (1l << 40) - 1l;
+    } else {
+      endUid = endBucket << 32;
+    }
 
-      return new Pair<Long, Long>(startUid, endUid);
+    return new Pair<Long, Long>(startUid, endUid);
   }
 
   /**
@@ -140,29 +143,27 @@ public class HBaseEventUtils {
     return results;
   }
 
-    public static long getUidOfLongFromDEURowKey(byte[] rowKey) {
-        byte[] uid = new byte[8];
-        int i = 0;
-        for (; i < 3; i++) {
-            uid[i] = 0;
-        }
-
-        for (int j = rowKey.length - 5; j < rowKey.length; j++) {
-            uid[i++] = rowKey[j];
-        }
-
-        return Bytes.toLong(uid);
+  public static long getUidOfLongFromDEURowKey(byte[] rowKey) {
+    byte[] uid = new byte[8];
+    int i = 0;
+    for (; i < 3; i++) {
+      uid[i] = 0;
     }
 
-    public static int getInnerUidFromSuid(long suid) {
-        return (int)(0xffffffffl & suid);
+    for (int j = rowKey.length - 5; j < rowKey.length; j++) {
+      uid[i++] = rowKey[j];
     }
 
-    public static String getDate(byte[] rk) {
-      byte[] date = Arrays.copyOfRange(rk, 0, 8);
-      return Bytes.toString(date);
-    }
+    return Bytes.toLong(uid);
+  }
 
+  public static int getInnerUidFromSuid(long suid) {
+    return (int) (0xffffffffl & suid);
+  }
 
+  public static String getDate(byte[] rk) {
+    byte[] date = Arrays.copyOfRange(rk, 0, 8);
+    return Bytes.toString(date);
+  }
 
 }
