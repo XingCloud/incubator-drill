@@ -151,12 +151,16 @@ public class MysqlRecordReader implements RecordReader {
   }
 
   public boolean setValues(ResultSet rs, ValueVector[] valueVectors, int index) {
+      String fields[] = config.getTableName().split("\\.");
     boolean next = true;
     for (int i = 0; i < projections.size(); i++) {
       ValueVector valueVector = valueVectors[i];
       Object result = null;
       try {
         result = rs.getObject(i + 1);
+          if("337uid".equals(fields[1])){
+              logger.info("337uid : " + (String)result);
+          }
       } catch (SQLException e) {
         logger.error("" + e.getMessage());
         throw new DrillRuntimeException("Scan mysql failed : " + e.getMessage());

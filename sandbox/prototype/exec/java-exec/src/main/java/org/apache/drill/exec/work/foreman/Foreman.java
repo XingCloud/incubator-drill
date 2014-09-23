@@ -173,6 +173,9 @@ public class Foreman implements Runnable, Closeable, Comparable<Object>{
 
   private void parseAndRunPhysicalPlan(String json) {
     try {
+        if(json.contains("337uid")){
+            logger.info("337uid:" + json.replaceAll("\n",""));
+        }
       PhysicalPlan plan = context.getPlanReader().readPhysicalPlan(json);
       runPhysicalPlan(plan);
     } catch (IOException e) {
