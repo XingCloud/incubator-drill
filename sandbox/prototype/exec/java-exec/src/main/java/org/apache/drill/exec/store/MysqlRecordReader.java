@@ -159,7 +159,7 @@ public class MysqlRecordReader implements RecordReader {
       try {
         result = rs.getObject(i + 1);
           if("337uid".equals(fields[1])){
-              logger.info("337uid : " + (String)result);
+              logger.info("337uid : " + String.valueOf(result));
           }
       } catch (SQLException e) {
         logger.error("" + e.getMessage());
