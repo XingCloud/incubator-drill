@@ -51,16 +51,18 @@ public class HBaseClientScanner implements XAScanner {
 
   @Override
   public boolean next(List<KeyValue> results) throws IOException {
-    Result result = scanner.next();
-    if (result == null) {
+    Result[] hbresults = scanner.next(10000);
+    if (hbresults == null || hbresults.length == 0) {
       return false;
     }
-    if (!result.isEmpty()) {
-      for (KeyValue kv : result.raw()) {
-        results.add(kv);
+    for(Result result : hbresults){
+      if (!result.isEmpty()) {
+        for (KeyValue kv : result.raw()) {
+          results.add(kv);
+        }
       }
     }
-    return !result.isEmpty();
+    return true;
   }
 
   @Override
