@@ -245,11 +245,11 @@ public class HBaseRecordReader implements RecordReader {
       filterList.addFilter(skipScanFilter);
     }
 
-    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+//    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
       "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
     //test
-    //scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
     logger.info("Init scanner cost {} mills .", (System.nanoTime() - start) / 1000000);
   }
 
