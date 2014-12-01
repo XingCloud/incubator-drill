@@ -23,7 +23,7 @@ import java.util.List;
 public class HBaseClientScanner implements XAScanner {
   private static Log LOG = LogFactory.getLog(HBaseClientScanner.class);
 
-  private static final int cacheSize = 16 * 1024;
+  private static final int cacheSize = 32 * 1024;
   private static final int batchSize = 32 * 1024;
   private byte[] startRowKey;
   private byte[] endRowKey;
