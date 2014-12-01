@@ -3,6 +3,7 @@ package com.xingcloud.hbase.manager;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTablePool;
@@ -18,7 +19,8 @@ public class HBaseResourceManager {
     private HTablePool pool;
     private final int max_size = 200;
     private static HBaseResourceManager m_instance;
-    
+    private static HConnection conn = null;
+
     static {
         conf = HBaseConfiguration.create();
     }
@@ -27,6 +29,7 @@ public class HBaseResourceManager {
         if (m_instance == null) {
             m_instance = new HBaseResourceManager();
         }
+        conn = HConnectionManager.createConnection(conf);
         return m_instance;
     }
     
