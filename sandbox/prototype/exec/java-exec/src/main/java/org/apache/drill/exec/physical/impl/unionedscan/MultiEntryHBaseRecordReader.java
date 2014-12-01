@@ -191,9 +191,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
           switch (type) {
             case XaRowKeyPattern:
               for (String pattern : entry.getFilterExpressions()) {
-                if (!patterns.contains(pattern)) {
+//                if (!patterns.contains(pattern)) {
                   patterns.add(pattern);
-                }
+//                }
               }
               break;
             case HbaseOrig:
