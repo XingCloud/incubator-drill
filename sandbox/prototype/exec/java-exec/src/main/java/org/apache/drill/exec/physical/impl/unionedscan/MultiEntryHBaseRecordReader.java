@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
+import org.apache.hadoop.hbase.regionserver.HBaseClientMultiScanner;
 import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -275,18 +276,20 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       }
       patterns = null;
       Collections.sort(slot, keyRangeComparator);
-      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
-      filterList.addFilter(skipScanFilter);
+//      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
+//      filterList.addFilter(skipScanFilter);
     }
 //    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-    StringBuilder summary = new StringBuilder("Start key: " + Bytes.toStringBinary(startRowKey) +
-      "\tEnd key: " + Bytes.toStringBinary(endRowKey) +
-      "\nStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
-      + "\nKey range size: " + slot.size() + "\n");
+
+      //test
+//    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+      scanner = new HBaseClientMultiScanner(startRowKey,endRowKey,tableName,filterList,slot);
+    StringBuilder summary = new StringBuilder(tableName +"　StartKey: " + Bytes.toStringBinary(startRowKey) +
+      "\tEndKey: " + Bytes.toStringBinary(endRowKey) +
+      "\tStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
+      + "\tKey range size: " + slot.size());
     logger.info(summary.toString());
 
-    //test
-    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
     logger.info("Init HBaseClientScanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
   }
 
