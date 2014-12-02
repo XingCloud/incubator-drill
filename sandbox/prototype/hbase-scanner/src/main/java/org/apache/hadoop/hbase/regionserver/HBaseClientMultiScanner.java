@@ -79,7 +79,7 @@ public class HBaseClientMultiScanner implements XAScanner {
 
     private boolean nextScanner(){
         LOG.debug("nextScanner " + position + " " + (slot ==null ? 0: slot.size() ));
-        System.out.println("HBaseClientMultiScanner nextScanner " + position + " " + slot.size() );
+        System.out.println("HBaseClientMultiScanner nextScanner " + position + " " + (slot ==null ? 0: slot.size() ) );
         try{
             if(slot == null || slot.size() == 0){
                 if(position == 0){
