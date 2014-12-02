@@ -67,6 +67,9 @@ public class HBaseClientScanner implements XAScanner {
 
   @Override
   public void close() throws IOException {
+      if(scanner != null){
+          scanner.close();
+      }
     if (hTable != null) {
       hTable.close();
     }
