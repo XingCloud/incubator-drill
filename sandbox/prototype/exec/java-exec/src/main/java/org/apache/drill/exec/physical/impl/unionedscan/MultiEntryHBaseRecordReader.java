@@ -283,6 +283,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
       //test
 //    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+      logger.info("Init HBaseClientMultiScanner begin");
       scanner = new HBaseClientMultiScanner(startRowKey,endRowKey,tableName,filterList,slot);
     StringBuilder summary = new StringBuilder(tableName +"　StartKey: " + Bytes.toStringBinary(startRowKey) +
       "\tEndKey: " + Bytes.toStringBinary(endRowKey) +
@@ -290,7 +291,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       + "\tKey range size: " + slot.size());
     logger.info(summary.toString());
 
-    logger.info("Init HBaseClientScanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
+    logger.info("Init HBaseClientMultiScanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
   }
 
   private static Comparator keyRangeComparator = new Comparator() {
