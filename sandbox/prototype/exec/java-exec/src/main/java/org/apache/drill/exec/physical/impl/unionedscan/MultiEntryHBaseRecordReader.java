@@ -278,7 +278,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
       filterList.addFilter(skipScanFilter);
     }
-    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+//    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     StringBuilder summary = new StringBuilder("Start key: " + Bytes.toStringBinary(startRowKey) +
       "\tEnd key: " + Bytes.toStringBinary(endRowKey) +
       "\nStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
@@ -286,8 +286,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     logger.info(summary.toString());
 
     //test
-    //scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
-    logger.info("Init scanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
+    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    logger.info("Init HBaseClientScanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
   }
 
   private static Comparator keyRangeComparator = new Comparator() {
