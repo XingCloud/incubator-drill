@@ -81,6 +81,7 @@ public class HBaseClientMultiScanner implements XAScanner {
             if(slot == null || slot.size() == 0){
                 if(position == 0){
                     Scan scan = initScan(startRowKey, endRowKey);
+                    position ++;
                     scanner = hTable.getScanner(scan);
                     return true;
                 }
