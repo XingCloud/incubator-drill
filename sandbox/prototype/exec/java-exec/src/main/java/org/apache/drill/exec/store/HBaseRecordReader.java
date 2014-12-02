@@ -157,9 +157,7 @@ public class HBaseRecordReader implements RecordReader {
         switch (type) {
           case XaRowKeyPattern:
             for (String pattern : entry.getFilterExpressions()) {
-              if (!patterns.contains(pattern)) {
                 patterns.add(pattern);
-              }
             }
             break;
           case HbaseOrig:
@@ -250,7 +248,7 @@ public class HBaseRecordReader implements RecordReader {
       "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
     //test
     scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
-    logger.info("Init scanner cost {} mills .", (System.nanoTime() - start) / 1000000);
+    logger.info("Init HBaseClientScanner cost {} mills .", (System.nanoTime() - start) / 1000000);
   }
 
 
