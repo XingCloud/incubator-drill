@@ -278,7 +278,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
       filterList.addFilter(skipScanFilter);
     }
-//    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
+    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
     StringBuilder summary = new StringBuilder("Start key: " + Bytes.toStringBinary(startRowKey) +
       "\tEnd key: " + Bytes.toStringBinary(endRowKey) +
       "\nStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
@@ -286,7 +286,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
     logger.info(summary.toString());
 
     //test
-    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+//    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
     logger.info("Init HBaseClientScanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
   }
 
@@ -513,8 +513,8 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    logger.info("MultiEntryHBaseRecordReader finished . ");
-    logger.debug("Cost time " + timeCost + "mills");
+    logger.info("MultiEntryHBaseRecordReader finished , cost time " + timeCost + " mills");
+    //logger.debug("Cost time " + timeCost + "mills");
     try {
       if (scanner != null) {
         scanner.close();
