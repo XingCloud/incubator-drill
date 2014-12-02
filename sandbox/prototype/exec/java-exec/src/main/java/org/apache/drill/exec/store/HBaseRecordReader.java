@@ -28,6 +28,7 @@ import org.apache.drill.exec.vector.*;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.regionserver.DirectScanner;
+import org.apache.hadoop.hbase.regionserver.HBaseClientMultiScanner;
 import org.apache.hadoop.hbase.regionserver.HBaseClientScanner;
 import org.apache.hadoop.hbase.regionserver.XAScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -239,15 +240,17 @@ public class HBaseRecordReader implements RecordReader {
       KeyRange keyRange = new KeyRange(startRowKey, true, endRowKey, false);
       slot.add(keyRange);
       logger.info("Slot size is 0 to skip uid range, add key range: " + keyRange);
-      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
-      filterList.addFilter(skipScanFilter);
+//      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
+//      filterList.addFilter(skipScanFilter);
     }
 
 //    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
-    logger.info("Start key: " + Bytes.toStringBinary(startRowKey) +
-      "\tEnd key: " + Bytes.toStringBinary(endRowKey) + "\tKey range size: " + slot.size());
-    //test
-    scanner=new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+      //test
+//    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+      scanner = new HBaseClientMultiScanner(startRowKey,endRowKey,tableName,filterList,slot);
+      StringBuilder summary = new StringBuilder(tableName +"　StartKey: " + Bytes.toStringBinary(startRowKey) +
+              "\tEndKey: " + Bytes.toStringBinary(endRowKey)  + "\tKey range size: " + slot.size());
+      logger.info(summary.toString());
     logger.info("Init HBaseClientScanner cost {} mills .", (System.nanoTime() - start) / 1000000);
   }
 
