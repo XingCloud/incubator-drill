@@ -37,6 +37,7 @@ public class HBaseClientMultiScanner implements XAScanner {
 
     public HBaseClientMultiScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter, List<KeyRange> slot) {
         LOG.info(" new HBaseClientMultiScanner ");
+        System.out.println(" new HBaseClientMultiScanner ");
         this.startRowKey = startRowKey;
         this.endRowKey = endRowKey;
         this.tableName = tableName;
@@ -78,6 +79,7 @@ public class HBaseClientMultiScanner implements XAScanner {
 
     private boolean nextScanner(){
         LOG.debug("nextScanner " + position + " " + slot.size() );
+        System.out.println("HBaseClientMultiScanner nextScanner " + position + " " + slot.size() );
         try{
             if(slot == null || slot.size() == 0){
                 if(position == 0){
