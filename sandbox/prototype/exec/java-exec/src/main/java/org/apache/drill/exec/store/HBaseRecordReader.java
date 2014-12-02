@@ -240,15 +240,15 @@ public class HBaseRecordReader implements RecordReader {
       KeyRange keyRange = new KeyRange(startRowKey, true, endRowKey, false);
       slot.add(keyRange);
       logger.info("Slot size is 0 to skip uid range, add key range: " + keyRange);
-//      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
-//      filterList.addFilter(skipScanFilter);
+      Filter skipScanFilter = new SkipScanFilter(slot, uidRange);
+      filterList.addFilter(skipScanFilter);
     }
 
 //    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
       //test
-//    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
-      logger.info("Init HBaseClientMultiScanner begin");
-      scanner = new HBaseClientMultiScanner(startRowKey,endRowKey,tableName,filterList,slot);
+    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+//      logger.info("Init HBaseClientMultiScanner begin");
+//      scanner = new HBaseClientMultiScanner(startRowKey,endRowKey,tableName,filterList,slot);
       StringBuilder summary = new StringBuilder(tableName +"　StartKey: " + Bytes.toStringBinary(startRowKey) +
               "\tEndKey: " + Bytes.toStringBinary(endRowKey)  + "\tKey range size: " + slot.size());
       logger.info(summary.toString());
