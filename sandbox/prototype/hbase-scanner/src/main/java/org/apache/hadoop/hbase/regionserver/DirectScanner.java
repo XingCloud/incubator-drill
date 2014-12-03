@@ -147,7 +147,7 @@ public class DirectScanner implements XAScanner {
       byte[] erkPre = Bytes.toBytes("20141203tugs.installer.omigaplus.ds.");
       int buckets = 255;
       int len = 255;*/
-    File file = new File("d:/hbasetest/tt.txt");
+    File file = new File("/home/hadoop/liqiang/drilltest/tt.txt");
     BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
     Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
