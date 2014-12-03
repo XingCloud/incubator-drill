@@ -141,13 +141,13 @@ public class DirectScanner implements XAScanner {
     int buckets = Integer.parseInt(args[3]);
     int len = Integer.parseInt(args[4]);
       String type  = args[5];
-
-/*      String tableName = "sof-installer";
+/*      String type = "d";
+      String tableName = "deu_sof-installer";
       byte[] srkPre = Bytes.toBytes("20141203tugs.installer.omigaplus.ds.");
       byte[] erkPre = Bytes.toBytes("20141203tugs.installer.omigaplus.ds.");
       int buckets = 255;
       int len = 255;*/
-    File file = new File("/home/hadoop/liqiang/drilltest/tt.txt");
+    File file = new File("d:/hbasetest/tt.txt");
     BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
     Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
@@ -168,9 +168,10 @@ public class DirectScanner implements XAScanner {
     slot.add(range);
     Filter filter = new SkipScanFilter(slot, uidRange);
 
-//    DirectScanner scanner = new DirectScanner(srk, erk, tableName, filter, isFileOnly, isMemOnly);
       XAScanner scanner;
       if("d".equals(type)){
+          scanner= new DirectScanner(srk, erk, tableName, filter, isFileOnly, isMemOnly);
+      }else if("c".equals(type)){
           scanner= new HBaseClientScanner(srk,erk,tableName,filter);
       }else{
           scanner = new HBaseClientMultiScanner(srk,erk,tableName,null,slot);
