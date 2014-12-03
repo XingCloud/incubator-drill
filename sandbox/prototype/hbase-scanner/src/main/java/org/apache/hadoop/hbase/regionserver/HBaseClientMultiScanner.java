@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,6 +27,12 @@ import java.util.List;
 public class HBaseClientMultiScanner implements XAScanner {
     private static Log LOG = LogFactory.getLog(HBaseClientMultiScanner.class);
     private static Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(255, 255);
+    static{
+        uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
+        uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(), 3, uidRange.getSecond().length));
+    }
+
+    private static byte[] MAX = {-1};
 
     private static final int cacheSize = 32 * 1024;
     private static final int batchSize = 32 * 1024;
@@ -125,13 +132,13 @@ public class HBaseClientMultiScanner implements XAScanner {
     private Pair<byte[],byte[]> getStartStopRow(byte[] startRowKey, byte[] endRowKey){
         //开始和结束
         byte[] startRow = startRowKey;
-        byte[] endRow = startRowKey;
+        byte[] endRow = endRowKey;
         if(Bytes.equals(Bytes.tail(startRowKey,uidRange.getFirst().length), uidRange.getFirst()) &&
                 Bytes.equals(Bytes.tail(endRowKey,uidRange.getSecond().length), uidRange.getSecond())){
                 //TODO: 目前所有的start结束都为0000,end结束都为ffff,可以去掉这层判断
-            byte[] start = Bytes.head(startRowKey, startRowKey.length - uidRange.getFirst().length);
-            byte[] end = Bytes.head(endRowKey, endRowKey.length - uidRange.getSecond().length);
-
+            byte[] start = Bytes.head(startRowKey, startRowKey.length - uidRange.getFirst().length -1);
+            byte[] end = Bytes.head(endRowKey, endRowKey.length - uidRange.getSecond().length -1);
+            System.out.println("start: " + Bytes.toStringBinary(start) + ", end:" + Bytes.toStringBinary(end));
             if(start.length > end.length){
                 int len = start.length - end.length;
                 byte[] tail = new byte[len];
@@ -159,7 +166,7 @@ public class HBaseClientMultiScanner implements XAScanner {
 
         }
         System.out.println("startrow: " + Bytes.toStringBinary(startRow) + ", stoprow:" + Bytes.toStringBinary(endRow));
-        return new Pair<>(startRow,endRow);
+        return new Pair<>(Bytes.add(startRow,MAX), Bytes.add(endRow, MAX));
     }
 
     private Scan initScan(byte[] startRowKey, byte[] endRowKey) {
