@@ -171,14 +171,14 @@ public class DirectScanner implements XAScanner {
     buckets += len;
     List<KeyRange> slot = new ArrayList<>();
     KeyRange range = new KeyRange(srk, true, erk, false);
-      LOG.debug("Add Key range: " + range);
+      System.out.println("Add Key range: " + range);
     slot.add(range);
     Filter filter = new SkipScanFilter(slot, uidRange);
       StringBuilder summary = new StringBuilder(tableName +"　StartKey: " + Bytes.toStringBinary(srk) +
               "\tEndKey: " + Bytes.toStringBinary(erk) +
               "\tStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
               + "\tKey range size: " + slot.size());
-      LOG.info(summary.toString());
+      System.out.println(summary.toString());
 
       XAScanner scanner;
       if("d".equals(type)){
