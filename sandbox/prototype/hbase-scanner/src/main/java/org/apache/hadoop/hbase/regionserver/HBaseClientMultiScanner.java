@@ -26,10 +26,12 @@ import java.util.List;
  */
 public class HBaseClientMultiScanner implements XAScanner {
     private static Log LOG = LogFactory.getLog(HBaseClientMultiScanner.class);
-    private static Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(255, 255);
+    private static Pair<byte[], byte[]> uidRange = new Pair<>();
     static{
-        uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
-        uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(), 3, uidRange.getSecond().length));
+        byte[] first = new byte[]{0,0,0,0,0};
+        byte[] second = new byte[]{(byte)255,(byte)255,(byte)255,(byte)255,(byte)255};
+        uidRange.setFirst(first);
+        uidRange.setSecond(second);
     }
 
     private static byte[] MAX = {-1};
