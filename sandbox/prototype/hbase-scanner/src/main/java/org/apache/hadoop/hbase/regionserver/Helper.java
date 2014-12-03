@@ -150,6 +150,7 @@ public class Helper {
   }
 
   public static String getEvent(byte[] rk) {
-    return Bytes.toString(Arrays.copyOfRange(rk, 8, rk.length-6));
+//    return Bytes.toString(Arrays.copyOfRange(rk, 8, rk.length-6));
+      return Bytes.toStringBinary(Bytes.head(rk,rk.length-6));
   }
 }
