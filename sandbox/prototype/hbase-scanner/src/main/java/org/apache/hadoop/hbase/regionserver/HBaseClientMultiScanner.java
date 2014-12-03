@@ -158,6 +158,7 @@ public class HBaseClientMultiScanner implements XAScanner {
             }
 
         }
+        System.out.println("startrow: " + Bytes.toStringBinary(startRow) + ", stoprow:" + Bytes.toStringBinary(endRow));
         return new Pair<>(startRow,endRow);
     }
 
