@@ -173,9 +173,10 @@ public class HBaseClientMultiScanner implements XAScanner {
     }
 
     private Scan initScan(byte[] startRowKey, byte[] endRowKey) {
-        Pair<byte[],byte[]> startStopRow = getStartStopRow(startRowKey,endRowKey);
-        System.out.println("startrow: " + Bytes.toStringBinary(startStopRow.getFirst()) + ", stoprow:" + Bytes.toStringBinary( startStopRow.getSecond()));
-        Scan scan = new Scan(startStopRow.getFirst(), startStopRow.getSecond());
+//        Pair<byte[],byte[]> startStopRow = getStartStopRow(startRowKey,endRowKey);
+//        System.out.println("startrow: " + Bytes.toStringBinary(startStopRow.getFirst()) + ", stoprow:" + Bytes.toStringBinary( startStopRow.getSecond()));
+//        Scan scan = new Scan(startStopRow.getFirst(), startStopRow.getSecond());
+        Scan scan = new Scan(startRowKey, endRowKey);
         scan.setBatch(batchSize);
         scan.setCaching(cacheSize);
         scan.setMaxVersions();
