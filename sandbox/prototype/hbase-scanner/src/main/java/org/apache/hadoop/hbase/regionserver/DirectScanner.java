@@ -176,7 +176,7 @@ public class DirectScanner implements XAScanner {
 
     List<KeyRange> slot = new ArrayList<>();
       if(slots != null){
-          String[] ss = slots.split(";");
+          String[] ss = slots.split(",");
           for(String s : ss){
               String[] se = s.split(":");
               byte[] st = Bytes.add(Bytes.toBytes(se[0]), MAX, first);
