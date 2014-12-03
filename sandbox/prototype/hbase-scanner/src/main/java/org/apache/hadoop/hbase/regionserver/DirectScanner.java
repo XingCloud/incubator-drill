@@ -45,6 +45,7 @@ public class DirectScanner implements XAScanner {
   private XAScanner currentScanner;
   private boolean hasNext = true;
   private Scan scan;
+  private HTable table = null;
 
   private AtomicLong numKV = new AtomicLong();
 
@@ -85,7 +86,6 @@ public class DirectScanner implements XAScanner {
 
     // get regions 
     Pair<byte[], byte[]> seKey = new Pair(startRowKey, endRowKey);
-    HTable table = null;
     try {
       table = (HTable) HBaseResourceManager.getInstance().getTable(Bytes.toBytes(tableName)).getWrappedTable();
       this.regionList = Helper.getRegionInfoList(table, seKey);
@@ -125,6 +125,12 @@ public class DirectScanner implements XAScanner {
 
   @Override
   public void close() throws IOException {
+      if(currentScanner != null){
+          currentScanner.close();
+      }
+      if(table != null){
+          table.close();
+      }
     LOG.info("Direct scanner closed. Total records from memstore and hfile: " + numKV.get());
   }
 
@@ -134,7 +140,14 @@ public class DirectScanner implements XAScanner {
     byte[] erkPre = Bytes.toBytes(args[2]);
     int buckets = Integer.parseInt(args[3]);
     int len = Integer.parseInt(args[4]);
-    File file = new File("/tmp/ds.txt");
+      String type  = args[5];
+
+/*      String tableName = "sof-installer";
+      byte[] srkPre = Bytes.toBytes("20141203tugs.installer.omigaplus.ds.");
+      byte[] erkPre = Bytes.toBytes("20141203tugs.installer.omigaplus.ds.");
+      int buckets = 255;
+      int len = 255;*/
+    File file = new File("/home/hadoop/liqiang/drilltest/tt.txt");
     BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
     Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
@@ -155,7 +168,14 @@ public class DirectScanner implements XAScanner {
     slot.add(range);
     Filter filter = new SkipScanFilter(slot, uidRange);
 
-    DirectScanner scanner = new DirectScanner(srk, erk, tableName, filter, isFileOnly, isMemOnly);
+//    DirectScanner scanner = new DirectScanner(srk, erk, tableName, filter, isFileOnly, isMemOnly);
+      XAScanner scanner;
+      if("d".equals(type)){
+          scanner= new HBaseClientScanner(srk,erk,tableName,filter);
+      }else{
+          scanner = new HBaseClientMultiScanner(srk,erk,tableName,null,slot);
+      }
+
     long counter = 0;
     long sum = 0;
     long st = System.nanoTime();
