@@ -130,7 +130,7 @@ public class HBaseClientMultiScanner implements XAScanner {
                 Bytes.equals(Bytes.tail(endRowKey,uidRange.getSecond().length), uidRange.getSecond())){
                 //TODO: 目前所有的start结束都为0000,end结束都为ffff,可以去掉这层判断
             byte[] start = Bytes.head(startRowKey, startRowKey.length - uidRange.getFirst().length);
-            byte[] end = Bytes.head(startRowKey, endRowKey.length - uidRange.getSecond().length);
+            byte[] end = Bytes.head(endRowKey, endRowKey.length - uidRange.getSecond().length);
 
             if(start.length > end.length){
                 int len = start.length - end.length;
