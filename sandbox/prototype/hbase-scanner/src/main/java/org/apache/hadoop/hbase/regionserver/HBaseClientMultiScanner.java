@@ -34,6 +34,7 @@ public class HBaseClientMultiScanner implements XAScanner {
         uidRange.setSecond(second);
     }
 
+
     private static byte[] MAX = {-1};
 
     private static final int cacheSize = 32 * 1024;
