@@ -159,8 +159,6 @@ public class DirectScanner implements XAScanner {
     BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
     Pair<byte[], byte[]> uidRange = new Pair<>();
-    uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
-    uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(), 3, uidRange.getSecond().length));
     byte[] MAX = {-1};
 
     byte[] first = new byte[]{0,0,0,0,0};
