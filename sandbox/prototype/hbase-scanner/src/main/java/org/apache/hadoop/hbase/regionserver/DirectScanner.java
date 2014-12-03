@@ -155,8 +155,14 @@ public class DirectScanner implements XAScanner {
     uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(), 3, uidRange.getSecond().length));
     byte[] MAX = {-1};
 
-    byte[] srk = Bytes.add(srkPre, MAX, uidRange.getFirst());
-    byte[] erk = Bytes.add(erkPre, MAX, uidRange.getSecond());
+    byte[] first = new byte[]{0,0,0,0,0};
+    byte[] second = new byte[]{(byte)255,(byte)255,(byte)255,(byte)255,(byte)255};
+    uidRange.setFirst(first);
+    uidRange.setFirst(second);
+
+
+    byte[] srk = Bytes.add(srkPre, MAX, first);
+    byte[] erk = Bytes.add(erkPre, MAX, second);
 
     System.out.println("Start row: " + Bytes.toStringBinary(srk) + "\tEnd row: " + Bytes.toStringBinary(erk));
     boolean isFileOnly = false;
