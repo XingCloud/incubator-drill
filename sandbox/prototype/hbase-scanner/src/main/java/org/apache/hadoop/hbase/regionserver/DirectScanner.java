@@ -138,9 +138,17 @@ public class DirectScanner implements XAScanner {
     String tableName = args[0];
     byte[] srkPre = Bytes.toBytes(args[1]);
     byte[] erkPre = Bytes.toBytes(args[2]);
-    int buckets = Integer.parseInt(args[3]);
-    int len = Integer.parseInt(args[4]);
-      String type  = args[5];
+
+      String type  = args[3];
+
+      String slots = null;
+      if(args.length == 5){
+          slots = args[4];
+      }
+
+
+
+
 /*      String type = "d";
       String tableName = "deu_sof-installer";
       byte[] srkPre = Bytes.toBytes("20141203tugs.installer.omigaplus.ds.");
@@ -150,7 +158,7 @@ public class DirectScanner implements XAScanner {
     File file = new File("/home/hadoop/liqiang/drilltest/tt.txt");
     BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
-    Pair<byte[], byte[]> uidRange = Helper.getLocalSEUidOfBucket(buckets, len);
+    Pair<byte[], byte[]> uidRange = new Pair<>();
     uidRange.setFirst(Arrays.copyOfRange(uidRange.getFirst(), 3, uidRange.getFirst().length));
     uidRange.setSecond(Arrays.copyOfRange(uidRange.getSecond(), 3, uidRange.getSecond().length));
     byte[] MAX = {-1};
@@ -168,11 +176,22 @@ public class DirectScanner implements XAScanner {
     boolean isFileOnly = false;
     boolean isMemOnly = false;
 
-    buckets += len;
     List<KeyRange> slot = new ArrayList<>();
+      if(slots != null){
+          String[] ss = slots.split(";");
+          for(String s : ss){
+              String[] se = s.split(":");
+              byte[] st = Bytes.add(Bytes.toBytes(se[0]), MAX, first);
+              byte[] e = Bytes.add(Bytes.toBytes(se[1]), MAX, second);
+              KeyRange range = new KeyRange(st, true, e, false);
+              System.out.println("Add Key range: " + range);
+              slot.add(range);
+          }
+      }else{
     KeyRange range = new KeyRange(srk, true, erk, false);
       System.out.println("Add Key range: " + range);
     slot.add(range);
+      }
     Filter filter = new SkipScanFilter(slot, uidRange);
       StringBuilder summary = new StringBuilder(tableName +"　StartKey: " + Bytes.toStringBinary(srk) +
               "\tEndKey: " + Bytes.toStringBinary(erk) +
