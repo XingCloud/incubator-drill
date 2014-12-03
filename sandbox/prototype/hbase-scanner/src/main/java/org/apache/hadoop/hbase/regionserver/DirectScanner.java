@@ -158,7 +158,7 @@ public class DirectScanner implements XAScanner {
     byte[] first = new byte[]{0,0,0,0,0};
     byte[] second = new byte[]{(byte)255,(byte)255,(byte)255,(byte)255,(byte)255};
     uidRange.setFirst(first);
-    uidRange.setFirst(second);
+    uidRange.setSecond(second);
 
 
     byte[] srk = Bytes.add(srkPre, MAX, first);
