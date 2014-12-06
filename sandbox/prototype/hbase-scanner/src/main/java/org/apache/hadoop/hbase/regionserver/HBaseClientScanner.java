@@ -77,7 +77,7 @@ public class HBaseClientScanner implements XAScanner {
 
   private Scan initScan(byte[] startRowKey, byte[] endRowKey) {
     Scan scan = new Scan(startRowKey, endRowKey);
-//    scan.setCacheBlocks(false);
+    scan.setCacheBlocks(false);
     scan.setBatch(batchSize);
     scan.setCaching(cacheSize);
     scan.setMaxVersions();
