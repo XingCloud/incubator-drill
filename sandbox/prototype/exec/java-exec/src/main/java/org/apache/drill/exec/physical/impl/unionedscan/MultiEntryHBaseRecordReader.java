@@ -291,7 +291,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
       + "\tKey range size: " + slot.size());
     logger.info(summary.toString());
 
-    logger.info("Init HBaseClientMultiScanner cost {} mills .", (System.nanoTime() - initStart) / 1000000);
+    logger.info("Init HBaseClientMultiScanner "+ tableName +" " + Bytes.toStringBinary(startRowKey) + " cost {} mills .", (System.nanoTime() - initStart) / 1000000);
   }
 
   private static Comparator keyRangeComparator = new Comparator() {
@@ -517,7 +517,7 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 
   @Override
   public void cleanup() {
-    logger.info("MultiEntryHBaseRecordReader finished , cost time " + timeCost + " mills");
+    logger.info("MultiEntryHBaseRecordReader "+ tableName + " " + Bytes.toStringBinary(startRowKey)+" finished , cost " + timeCost + " mills");
     //logger.debug("Cost time " + timeCost + "mills");
     try {
       if (scanner != null) {
