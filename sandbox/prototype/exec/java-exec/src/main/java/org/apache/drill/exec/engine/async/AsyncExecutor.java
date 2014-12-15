@@ -238,6 +238,7 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
+          long start = System.currentTimeMillis();
         logger.info("UnionedScanBatch driver[{}] start", unionedScanBatch);
         loopSplit:
         for (int i = 0; i < splits.size(); i++) {
@@ -252,7 +253,7 @@ public class AsyncExecutor {
               break loopSplit;
           }
         }
-        logger.info("UnionedScanBatch driver[{}] exit", unionedScanBatch);
+        logger.info("UnionedScanBatch driver[{}] exit, cost " +(System.currentTimeMillis() - start)+" mills", unionedScanBatch);
       } catch (Exception e) {
         e.printStackTrace();
       } finally {
@@ -293,6 +294,7 @@ public class AsyncExecutor {
     @Override
     public void run() {
       try {
+          long start = System.currentTimeMillis();
         logger.info("ScanBatch driver[{}] start .", scanBatch);
         while (!stopped) {
           IterOutcome o = scanBatch.next();
@@ -300,7 +302,7 @@ public class AsyncExecutor {
           if (o == IterOutcome.NONE || o == IterOutcome.STOP)
             break;
         }
-        logger.info("ScanBatch driver[{}] exit .", scanBatch);
+        logger.info("ScanBatch driver[{}] exit, cost "+ (System.currentTimeMillis() - start)+ " mills .", scanBatch);
       } catch (Exception e) {
         e.printStackTrace();
       } finally {
