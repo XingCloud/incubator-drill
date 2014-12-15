@@ -209,7 +209,7 @@ public class MysqlRecordReader implements RecordReader {
     conn = MySqlResourceManager.getInstance().getConnLocalNode();
     stmt = conn.createStatement();
     rs = stmt.executeQuery(sql);
-    logger.info("Init connection cost {} mills .", (System.nanoTime() - start) / 1000000);
+    logger.info("Init " + project + "connection cost {} mills .", (System.nanoTime() - start) / 1000000);
   }
 
 
