@@ -12,7 +12,7 @@ public class DriverPoolExecutor {
   private ThreadPoolExecutor executor;
 
   public DriverPoolExecutor() {
-    executor = new ThreadPoolExecutor(48, 48, 60000, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2048),
+    executor = new ThreadPoolExecutor(128, 128, 60000, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2048),
       new NamedThreadFactory("Drivers"));
   }
 
