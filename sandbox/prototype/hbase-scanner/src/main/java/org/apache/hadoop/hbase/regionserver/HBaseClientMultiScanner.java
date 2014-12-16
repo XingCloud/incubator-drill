@@ -77,6 +77,7 @@ public class HBaseClientMultiScanner implements XAScanner {
         if(pos < scans.size()){
             try {
                 List<KeyValue> kvs = scans.get(pos).get();
+                System.out.println("pos "+ pos +" get " + kvs.size() );
                 for (KeyValue kv : kvs) {
                     results.add(kv);
                 }
@@ -194,7 +195,7 @@ public class HBaseClientMultiScanner implements XAScanner {
                         }
                     }
                 }
-                LOG.info("InnerScanner scan " + tableName + " " + Bytes.toStringBinary(kr.getLowerRange()) + " cost " + (System.currentTimeMillis() - begin) + "mills");
+                LOG.info("InnerScanner scan " + tableName + " " + Bytes.toStringBinary(kr.getLowerRange()) + ", count "+ iresults.size() +", cost " + (System.currentTimeMillis() - begin) + "mills");
                 return iresults;
             }finally {
                 if(iscanner != null){

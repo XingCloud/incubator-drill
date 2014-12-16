@@ -241,8 +241,10 @@ public class DirectScanner implements XAScanner {
     }
     writer.flush();
     writer.close();
+      System.out.println(" finished ");
     LOG.info("Scan finish. Total rows: " + counter + " Taken: " + (System.nanoTime() - st) / 1.0e9 + " sec");
     LOG.info("Uids number: " + uids.size() + "\tCount: " + counter + "\tSum: " + sum);
+      HBaseUtil.executor.shutdown();
   }
 
 }
