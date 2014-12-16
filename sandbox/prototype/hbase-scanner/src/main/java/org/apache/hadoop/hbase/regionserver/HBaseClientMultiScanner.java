@@ -74,25 +74,30 @@ public class HBaseClientMultiScanner implements XAScanner {
     @Override
     public boolean next(List<KeyValue> results) throws IOException {
 
-        if(pos < scans.size()){
-            try {
-                List<KeyValue> kvs = scans.get(pos).get();
-                System.out.println("pos "+ pos +" get " + kvs.size() );
-                for (KeyValue kv : kvs) {
-                    results.add(kv);
+        while(true){
+            if(pos < scans.size()){
+                try {
+                    List<KeyValue> kvs = scans.get(pos).get();
+                    pos ++;
+                    if(kvs.size() > 0){
+                        for (KeyValue kv : kvs) {
+                            results.add(kv);
+                        }
+                        return true;
+                    }
+                } catch (Exception e) {
+                    throw new IOException("Error query hbase", e.getCause());
                 }
-                pos ++;
-                return true;
-            } catch (Exception e) {
-                throw new IOException("Error query hbase", e.getCause());
+            }else{
+                break;
             }
         }
+
         return false;
     }
 
     private boolean init(){
         LOG.debug("HBaseClientMultiScanner init " + tableName + " " + (slot ==null ? 1 : slot.size() ));
-        System.out.println("HBaseClientMultiScanner init " + tableName + " " + (slot ==null ? 1 : slot.size() ));
 
         if(slot == null || slot.size() == 0){
             scans.add(HBaseUtil.executor.submit(new InnerScanner(new KeyRange(startRowKey, true, endRowKey, false))));
