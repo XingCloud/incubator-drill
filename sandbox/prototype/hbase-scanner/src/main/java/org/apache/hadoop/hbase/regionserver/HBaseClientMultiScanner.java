@@ -172,6 +172,7 @@ public class HBaseClientMultiScanner implements XAScanner {
 
         @Override
         public List<KeyValue> call() throws Exception {
+            long begin = System.currentTimeMillis();
             ResultScanner iscanner = null;
             HTableInterface htable = null;
             try{
@@ -193,6 +194,7 @@ public class HBaseClientMultiScanner implements XAScanner {
                         }
                     }
                 }
+                LOG.info("InnerScanner scan " + tableName + " " + Bytes.toStringBinary(kr.getLowerRange()) + " cost " + (System.currentTimeMillis() - begin) + "mills");
                 return iresults;
             }finally {
                 if(iscanner != null){
