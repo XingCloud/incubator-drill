@@ -14,8 +14,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,16 +41,16 @@ public class HBaseClientMultiScanner implements XAScanner {
 
     private static byte[] MAX = {-1};
 
-    private static final int cacheSize = 32 * 1024;
-    private static final int batchSize = 32 * 1024;
+    private static final int cacheSize = 16 * 1024;
+    private static final int batchSize = 16 * 1024;
     private byte[] startRowKey;
     private byte[] endRowKey;
     private String tableName;
     private Filter filter;
-    private HTableInterface hTable;
-    private ResultScanner scanner;
+//    private HTableInterface hTable;
     private List<KeyRange> slot;
-    private int position = 0;
+    private List<Future<List<KeyValue>>> scans = new ArrayList<Future<List<KeyValue>>>();
+    private int pos = 0;
 
     public HBaseClientMultiScanner(byte[] startRowKey, byte[] endRowKey, String tableName, Filter filter, List<KeyRange> slot) {
         LOG.info(" new HBaseClientMultiScanner ");
@@ -57,79 +61,51 @@ public class HBaseClientMultiScanner implements XAScanner {
         this.filter = filter;
         this.slot = slot;
         try {
-            hTable = HBaseResourceManager.getInstance().getTable(tableName);
-            nextScanner();
-        } catch (IOException e) {
+//            hTable = HBaseResourceManager.getInstance().getTable(tableName);
+            init();
+        } catch (Exception e) {
             e.printStackTrace();
             LOG.error("Init hbase client scanner failure!", e);
-            hTable = null;
+//            hTable = null;
         }
 
     }
 
     @Override
     public boolean next(List<KeyValue> results) throws IOException {
-        Result[] hbresults;
 
-        while(true){ //一直往下查，直到有数据返回
-            hbresults = scanner.next(10000);
-            if ( (hbresults == null || hbresults.length == 0) && !nextScanner() ) {
-                return false;
-            }
-
-            if(hbresults.length > 0){
-                break;
-            }
-        }
-        for (Result result : hbresults) {
-            if (!result.isEmpty()) {
-                for (KeyValue kv : result.raw()) {
+        if(pos < scans.size()){
+            try {
+                List<KeyValue> kvs = scans.get(pos).get();
+                for (KeyValue kv : kvs) {
                     results.add(kv);
                 }
-            }
-        }
-        return true;
-    }
-
-    private boolean nextScanner(){
-        LOG.debug("nextScanner " + position + " " + (slot ==null ? 0: slot.size() ));
-        System.out.println("HBaseClientMultiScanner nextScanner " + position + " " + (slot ==null ? 0: slot.size() ) );
-        try{
-            if(slot == null || slot.size() == 0){
-                if(position == 0){
-                    Scan scan = initScan(startRowKey, endRowKey);
-                    position ++;
-                    scanner = hTable.getScanner(scan);
-                    return true;
-                }
-            }else if(position < slot.size()){
-                KeyRange kr = slot.get(position);
-                position ++;
-
-                Scan scan = initScan(kr.getLowerRange(), kr.getUpperRange());
-                if(scanner!=null){
-                    scanner.close();
-                }
-                scanner = hTable.getScanner(scan);
+                pos ++;
                 return true;
+            } catch (Exception e) {
+                throw new IOException("Error query hbase", e.getCause());
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            LOG.error("Init hbase client scanner failure!", e);
-            hTable = null;
         }
         return false;
     }
 
+    private boolean init(){
+        LOG.debug("HBaseClientMultiScanner init " + tableName + " " + (slot ==null ? 1 : slot.size() ));
+        System.out.println("HBaseClientMultiScanner init " + tableName + " " + (slot ==null ? 1 : slot.size() ));
+
+        if(slot == null || slot.size() == 0){
+            scans.add(HBaseUtil.executor.submit(new InnerScanner(new KeyRange(startRowKey, true, endRowKey, false))));
+        }else {
+            for(KeyRange kr : slot){
+                scans.add(HBaseUtil.executor.submit(new InnerScanner(kr)));
+            }
+        }
+        return true;
+
+    }
+
     @Override
     public void close() throws IOException {
-        if(scanner != null){
-            scanner.close();
-        }
-        if (hTable != null) {
-            hTable.close();
-        }
     }
 
     private Pair<byte[],byte[]> getStartStopRow(byte[] startRowKey, byte[] endRowKey){
@@ -185,5 +161,47 @@ public class HBaseClientMultiScanner implements XAScanner {
             scan.setFilter(filter);
         }
         return scan;
+    }
+
+    class InnerScanner implements Callable<List<KeyValue>>{
+
+        KeyRange kr;
+        public InnerScanner(KeyRange kr){
+            this.kr = kr;
+        }
+
+        @Override
+        public List<KeyValue> call() throws Exception {
+            ResultScanner iscanner = null;
+            HTableInterface htable = null;
+            try{
+                htable = HBaseResourceManager.getInstance().getTable(tableName);
+                Scan scan = initScan(kr.getLowerRange(), kr.getUpperRange());
+                iscanner = htable.getScanner(scan);
+                List<KeyValue> iresults = new ArrayList<KeyValue>();
+                Result[] hbresults;
+                while(true){ //一直往下查，直到有数据返回
+                    hbresults = iscanner.next(10000);
+                    if(hbresults == null || hbresults.length == 0){
+                        break;
+                    }
+                    for (Result result : hbresults) {
+                        if (!result.isEmpty()) {
+                            for (KeyValue kv : result.raw()) {
+                                iresults.add(kv);
+                            }
+                        }
+                    }
+                }
+                return iresults;
+            }finally {
+                if(iscanner != null){
+                    iscanner.close();
+                }
+                if(htable != null){
+                    htable.close();
+                }
+            }
+        }
     }
 }
