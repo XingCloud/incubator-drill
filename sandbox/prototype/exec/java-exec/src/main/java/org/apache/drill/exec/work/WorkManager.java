@@ -62,8 +62,8 @@ public class WorkManager implements Closeable{
   private final UserWorker userWorker;
   private final WorkerBee bee;
 
-  private Executor executor = Executors.newFixedThreadPool(10, new NamedThreadFactory("Working Thread - "));
-//  private Executor executor = Executors.newCachedThreadPool(new NamedThreadFactory("Working Thread - "));
+//  private Executor executor = Executors.newFixedThreadPool(10, new NamedThreadFactory("Working Thread - "));
+  private Executor executor = Executors.newCachedThreadPool(new NamedThreadFactory("Working Thread - "));
   private final EventThread eventThread;
   private final FunctionImplementationRegistry functionImpRegistry ;
   
@@ -158,7 +158,8 @@ public class WorkManager implements Closeable{
     try {
     while(true){
       logger.debug("Polling for pending work tasks.");
-      Runnable r = pendingTasks.poll(10, TimeUnit.SECONDS);
+//      Runnable r = pendingTasks.poll(10, TimeUnit.SECONDS);
+      Runnable r = pendingTasks.take();
       if(r != null){
         logger.debug("Starting pending task {}", r);
         executor.execute(r);  
