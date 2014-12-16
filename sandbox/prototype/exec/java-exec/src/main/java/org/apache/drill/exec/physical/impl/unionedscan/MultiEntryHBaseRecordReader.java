@@ -282,9 +282,9 @@ public class MultiEntryHBaseRecordReader implements RecordReader {
 //    scanner = new DirectScanner(startRowKey, endRowKey, tableName, filterList, false, false);
 
       //test
-//    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
+    scanner= new HBaseClientScanner(startRowKey,endRowKey,tableName,filterList);
 //      logger.info("Init HBaseClientMultiScanner begin");
-      scanner = new HBaseClientMultiScanner(startRowKey,endRowKey,tableName,filterList,slot);
+//      scanner = new HBaseClientMultiScanner(startRowKey,endRowKey,tableName,filterList,slot);
     StringBuilder summary = new StringBuilder(tableName +"　StartKey: " + Bytes.toStringBinary(startRowKey) +
       "\tEndKey: " + Bytes.toStringBinary(endRowKey) +
       "\tStart uid: " + Bytes.toStringBinary(uidRange.getFirst()) + "\tEnd uid: " + Bytes.toStringBinary(uidRange.getSecond())
