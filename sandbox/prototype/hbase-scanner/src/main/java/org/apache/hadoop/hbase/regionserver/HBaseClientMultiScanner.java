@@ -11,14 +11,11 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -30,16 +27,7 @@ import java.util.concurrent.Future;
  */
 public class HBaseClientMultiScanner implements XAScanner {
     private static Log LOG = LogFactory.getLog(HBaseClientMultiScanner.class);
-    private static Pair<byte[], byte[]> uidRange = new Pair<>();
-    static{
-        byte[] first = new byte[]{0,0,0,0,0};
-        byte[] second = new byte[]{(byte)255,(byte)255,(byte)255,(byte)255,(byte)255};
-        uidRange.setFirst(first);
-        uidRange.setSecond(second);
-    }
 
-
-    private static byte[] MAX = {-1};
 
     private static final int cacheSize = 16 * 1024;
     private static final int batchSize = 16 * 1024;
@@ -47,7 +35,6 @@ public class HBaseClientMultiScanner implements XAScanner {
     private byte[] endRowKey;
     private String tableName;
     private Filter filter;
-//    private HTableInterface hTable;
     private List<KeyRange> slot;
     private List<Future<List<KeyValue>>> scans = new ArrayList<Future<List<KeyValue>>>();
     private int pos = 0;
@@ -61,12 +48,10 @@ public class HBaseClientMultiScanner implements XAScanner {
         this.filter = filter;
         this.slot = slot;
         try {
-//            hTable = HBaseResourceManager.getInstance().getTable(tableName);
             init();
         } catch (Exception e) {
             e.printStackTrace();
             LOG.error("Init hbase client scanner failure!", e);
-//            hTable = null;
         }
 
     }
@@ -107,57 +92,13 @@ public class HBaseClientMultiScanner implements XAScanner {
             }
         }
         return true;
-
     }
 
     @Override
     public void close() throws IOException {
     }
 
-    private Pair<byte[],byte[]> getStartStopRow(byte[] startRowKey, byte[] endRowKey){
-        //开始和结束
-        byte[] startRow = startRowKey;
-        byte[] endRow = endRowKey;
-        if(Bytes.equals(Bytes.tail(startRowKey,uidRange.getFirst().length), uidRange.getFirst()) &&
-                Bytes.equals(Bytes.tail(endRowKey,uidRange.getSecond().length), uidRange.getSecond())){
-                //TODO: 目前所有的start结束都为0000,end结束都为ffff,可以去掉这层判断
-            byte[] start = Bytes.head(startRowKey, startRowKey.length - uidRange.getFirst().length -1);
-            byte[] end = Bytes.head(endRowKey, endRowKey.length - uidRange.getSecond().length -1);
-            System.out.println("start: " + Bytes.toStringBinary(start) + ", end:" + Bytes.toStringBinary(end));
-            if(start.length > end.length){
-                int len = start.length - end.length;
-                byte[] tail = new byte[len];
-                for(int i=0;i<len;i++){
-                    tail[i] = (byte)255;
-                }
-                startRow = start;
-                endRow = Bytes.add(end, tail);
-            }else if(start.length < end.length){
-                int len = end.length - start.length;
-                byte[] tail = new byte[len];
-                for(int i=0;i<len;i++){
-                    tail[i] = (byte)0;
-                }
-                startRow = Bytes.add(start, tail);
-                endRow = end;
-            }else if(Bytes.equals(start,end)){
-                startRow = start;
-                endRow = end;
-                endRow[endRow.length-1] = (byte)((int)endRow[endRow.length-1]+1);
-            }else{
-                startRow = start;
-                endRow = end;
-            }
-
-        }
-
-        return new Pair<>(Bytes.add(startRow,MAX), Bytes.add(endRow, MAX));
-    }
-
     private Scan initScan(byte[] startRowKey, byte[] endRowKey) {
-//        Pair<byte[],byte[]> startStopRow = getStartStopRow(startRowKey,endRowKey);
-//        System.out.println("startrow: " + Bytes.toStringBinary(startStopRow.getFirst()) + ", stoprow:" + Bytes.toStringBinary( startStopRow.getSecond()));
-//        Scan scan = new Scan(startStopRow.getFirst(), startStopRow.getSecond());
         Scan scan = new Scan(startRowKey, endRowKey);
         scan.setCacheBlocks(false);
         scan.setBatch(batchSize);
@@ -188,7 +129,7 @@ public class HBaseClientMultiScanner implements XAScanner {
                 List<KeyValue> iresults = new ArrayList<KeyValue>();
                 Result[] hbresults;
                 while(true){ //一直往下查，直到有数据返回
-                    hbresults = iscanner.next(10000);
+                    hbresults = iscanner.next(20000);
                     if(hbresults == null || hbresults.length == 0){
                         break;
                     }
