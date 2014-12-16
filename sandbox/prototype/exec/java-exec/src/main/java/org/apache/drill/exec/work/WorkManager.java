@@ -22,11 +22,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import org.apache.drill.exec.cache.DistributedCache;
 import org.apache.drill.exec.coord.ClusterCoordinator;
@@ -52,7 +48,8 @@ public class WorkManager implements Closeable{
   
   private Set<IncomingFragmentHandler> incomingFragments = Collections.newSetFromMap(Maps.<IncomingFragmentHandler, Boolean> newConcurrentMap());
 
-  private PriorityBlockingQueue<Runnable> pendingTasks = Queues.newPriorityBlockingQueue();
+//  private PriorityBlockingQueue<Runnable> pendingTasks = Queues.newPriorityBlockingQueue();
+  private LinkedBlockingQueue<Runnable> pendingTasks = Queues.newLinkedBlockingQueue();
   
   private Map<FragmentHandle, FragmentRunner> runningFragments = Maps.newConcurrentMap();
   
@@ -65,7 +62,7 @@ public class WorkManager implements Closeable{
   private final UserWorker userWorker;
   private final WorkerBee bee;
 
-  private Executor executor = Executors.newFixedThreadPool(8, new NamedThreadFactory("Working Thread - "));
+  private Executor executor = Executors.newFixedThreadPool(10, new NamedThreadFactory("Working Thread - "));
 //  private Executor executor = Executors.newCachedThreadPool(new NamedThreadFactory("Working Thread - "));
   private final EventThread eventThread;
   private final FunctionImplementationRegistry functionImpRegistry ;
