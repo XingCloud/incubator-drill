@@ -63,6 +63,7 @@ public class WorkManager implements Closeable{
   private final WorkerBee bee;
 
   private Executor executor = Executors.newFixedThreadPool(32, new NamedThreadFactory("Working Thread - "));
+
 //  private Executor executor = Executors.newCachedThreadPool(new NamedThreadFactory("Working Thread - "));
   private final EventThread eventThread;
   private final FunctionImplementationRegistry functionImpRegistry ;
