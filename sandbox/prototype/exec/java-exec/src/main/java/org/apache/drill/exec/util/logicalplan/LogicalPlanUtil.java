@@ -184,6 +184,8 @@ public class LogicalPlanUtil {
                 field = ((SchemaPath) le).getPath().toString();
             } else if (le instanceof ValueExpressions.QuotedString) {
                 value = new UnitFunc(func);
+            }  else if (le instanceof  ValueExpressions.LongExpression){
+                value = new UnitFunc(func);
             }
         }
         if (field != null && value != null) {
@@ -195,6 +197,29 @@ public class LogicalPlanUtil {
                 result.put(field, resultFunc);
             } else
                 result.put(field, value);
+        }
+        return result;
+    }
+
+    public static List<UnitFunc> parseUserFunctionCall(FunctionCall func, DrillConfig config) {
+        List<UnitFunc> result = new ArrayList<>();
+        String field = null;
+        UnitFunc value = null;
+        for (LogicalExpression le : func) {
+            if (le instanceof FunctionCall) {
+                for (Map.Entry<String, UnitFunc> entry : parseFunctionCall(((FunctionCall) le), config).entrySet()) {
+                    result.add(entry.getValue());
+                }
+            } else if (le instanceof SchemaPath) {
+                field = ((SchemaPath) le).getPath().toString();
+            } else if (le instanceof ValueExpressions.QuotedString) {
+                value = new UnitFunc(func);
+            }  else if (le instanceof  ValueExpressions.LongExpression){
+                value = new UnitFunc(func);
+            }
+        }
+        if (field != null && value != null) {
+            result.add(value);
         }
         return result;
     }
@@ -228,6 +253,8 @@ public class LogicalPlanUtil {
                     field = ((SchemaPath) le).getPath().toString();
                 } else if (le instanceof ValueExpressions.QuotedString) {
                     value = ((ValueExpressions.QuotedString) le).value;
+                } else if (le instanceof  ValueExpressions.LongExpression){
+                    value = String.valueOf(((ValueExpressions.LongExpression) le).getLong());
                 }
             }
             op = func.getDefinition().getName();
