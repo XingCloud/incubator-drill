@@ -26,7 +26,7 @@ public class TestUserRecordReader {
         int aid = Integer.parseInt(args[3]);
         String filter = args[4];
 
-        filter = filter.replaceAll("$ge",">=").replaceAll("$le","<=").replaceAll("$g",">").replaceAll("$l","<");
+        filter = filter.replaceAll("_ge",">=").replaceAll("_le","<=").replaceAll("_g",">").replaceAll("_l","<");
 
         DrillConfig c = DrillConfig.create();
 
