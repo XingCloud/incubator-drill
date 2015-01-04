@@ -63,7 +63,7 @@ public class UserRecordReader implements RecordReader {
     private static String cqName = "v";
     private byte[] startRowKey;
     private byte[] endRowKey;
-    private FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+    private FilterList filterList = new FilterList();
     private XAScanner scanner;
     private String tableName = "user_attribute";
     private List<KeyValue> curRes = new ArrayList<>();
@@ -281,6 +281,7 @@ public class UserRecordReader implements RecordReader {
                 if(!"val".equals(func.getField())) {
                     continue;
                 }
+
                 CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
                 switch (func.getOp()) {
                     case "greater than":
@@ -299,6 +300,7 @@ public class UserRecordReader implements RecordReader {
                         op = CompareFilter.CompareOp.LESS_OR_EQUAL;
                         break;
                 }
+                System.out.println(func.getField() + " " +func.getOp() + " " + op.name());
 
                 WritableByteArrayComparable comparable = null;
                 switch (userProp.getPropType()) {
