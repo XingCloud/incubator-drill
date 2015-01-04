@@ -10,6 +10,7 @@ public class DrillConstants {
 
   public static final String SE_HBASE = "hbase";
   public static final String SE_MYSQL = "mysql";
+  public static final String SE_USER = "user";
 
   public static final String HBASE_TABLE_PREFIX_EVENT = "deu_";
   public static final String HBASE_TABLE_PREFIX_USER = "_user";
