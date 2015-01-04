@@ -26,6 +26,8 @@ public class TestUserRecordReader {
         int aid = Integer.parseInt(args[3]);
         String filter = args[4];
 
+        filter = filter.replaceAll("$ge",">=").replaceAll("$le","<=").replaceAll("$g",">").replaceAll("$l","<");
+
         DrillConfig c = DrillConfig.create();
 
         String tableName = project + "." + propertyName + "." + pid + "." + aid;
@@ -39,6 +41,8 @@ public class TestUserRecordReader {
         projections.add(uid);
 
         UserScanPOP.UserReadEntry readEntry = new UserScanPOP.UserReadEntry(tableName, filter, projections);
+
+
 
         UserRecordReader userRecordReader = new UserRecordReader(null, readEntry);
         List<RecordReader> recordReaders = Lists.newArrayList();
