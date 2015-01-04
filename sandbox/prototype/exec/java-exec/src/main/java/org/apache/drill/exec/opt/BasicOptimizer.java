@@ -2,6 +2,7 @@ package org.apache.drill.exec.opt;
 
 import static org.apache.drill.common.util.DrillConstants.SE_HBASE;
 import static org.apache.drill.common.util.DrillConstants.SE_MYSQL;
+import static org.apache.drill.common.util.DrillConstants.SE_USER;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_END;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_RANGE;
 import static org.apache.drill.common.util.Selections.SELECTION_KEY_ROWKEY_TAIL_START;
@@ -55,14 +56,7 @@ import org.apache.drill.exec.exception.OptimizerException;
 import org.apache.drill.exec.ops.QueryContext;
 import org.apache.drill.exec.physical.PhysicalPlan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
-import org.apache.drill.exec.physical.config.CollapsingAggregatePOP;
-import org.apache.drill.exec.physical.config.HbaseScanPOP;
-import org.apache.drill.exec.physical.config.JoinPOP;
-import org.apache.drill.exec.physical.config.MysqlScanPOP;
-import org.apache.drill.exec.physical.config.Screen;
-import org.apache.drill.exec.physical.config.SegmentPOP;
-import org.apache.drill.exec.physical.config.UnionedScanPOP;
-import org.apache.drill.exec.physical.config.UnionedScanSplitPOP;
+import org.apache.drill.exec.physical.config.*;
 import org.apache.drill.exec.util.logicalplan.LogicalPlanUtil;
 
 import java.io.File;
@@ -250,7 +244,22 @@ public class BasicOptimizer extends Optimizer {
             readEntries.add(getMysqlEntry(selection, config));
           pop = new MysqlScanPOP(readEntries);
 
-        } else {
+        } else if (SE_USER.equals(storageEngine)) {
+            JSONOptions root = scan.getSelection();
+            if (root == null) {
+                throw new OptimizerException("Selection is null");
+            }
+            JsonNode selection = root.getRoot(), projections;
+            List<UserScanPOP.UserReadEntry> readEntries = Lists.newArrayList();
+            if (selection instanceof ArrayNode) {
+                for (JsonNode selectionNode : selection)
+                    readEntries.add(getUserEntry(selectionNode, config));
+            } else{
+                readEntries.add(getUserEntry(selection, config));
+            }
+            pop = new UserScanPOP(readEntries);
+
+        }else {
           throw new OptimizerException("Unsupported storage engine - " + storageEngine);
         }
         operatorMap.put(scan, pop);
@@ -279,6 +288,27 @@ public class BasicOptimizer extends Optimizer {
       }
       return new MysqlScanPOP.MysqlReadEntry(tableName, filter, projectionList);
     }
+
+     private UserScanPOP.UserReadEntry getUserEntry(JsonNode selectionNode, DrillConfig config) throws
+              OptimizerException {
+          String tableName, filter = null;
+          JsonNode projections;
+          List<NamedExpression> projectionList = Lists.newArrayList();
+          tableName = selectionNode.get(SELECTION_KEY_WORD_TABLE).textValue();
+          if (selectionNode.get(SELECTION_KEY_WORD_FILTER) != null) {
+              filter = selectionNode.get(SELECTION_KEY_WORD_FILTER).get(SELECTION_KEY_WORD_FILTER_EXPRESSION).textValue();
+          }
+          projections = selectionNode.get(SELECTION_KEY_WORD_PROJECTIONS);
+          ObjectMapper mapper = BasicOptimizer.this.config.getMapper();
+          for (JsonNode projection : projections) {
+              try {
+                  projectionList.add(mapper.readValue(projection.toString(), NamedExpression.class));
+              } catch (IOException e) {
+                  throw new OptimizerException("Cannot parse projection : " + projection.toString());
+              }
+          }
+          return new UserScanPOP.UserReadEntry(tableName, filter, projectionList);
+      }
 
     @Override
     public Screen visitStore(Store store, Object obj) throws OptimizerException {
