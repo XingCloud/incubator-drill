@@ -63,7 +63,7 @@ public class UserRecordReader implements RecordReader {
     private static String cqName = "v";
     private byte[] startRowKey;
     private byte[] endRowKey;
-    private FilterList filterList = new FilterList();
+    private FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
     private XAScanner scanner;
     private String tableName = "user_attribute";
     private List<KeyValue> curRes = new ArrayList<>();
@@ -300,7 +300,6 @@ public class UserRecordReader implements RecordReader {
                         break;
                 }
 
-                Object value = func.getValue();
                 WritableByteArrayComparable comparable = null;
                 switch (userProp.getPropType()) {
                     case sql_bigint:
