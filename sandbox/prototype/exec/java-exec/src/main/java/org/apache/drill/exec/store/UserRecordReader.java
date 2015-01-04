@@ -20,6 +20,7 @@ import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.exception.SchemaChangeException;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.MysqlScanPOP.MysqlReadEntry;
+import org.apache.drill.exec.physical.config.UserScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.record.MaterializedField;
 import org.apache.drill.exec.util.logicalplan.LogicalPlanUtil;
@@ -50,17 +51,13 @@ public class UserRecordReader implements RecordReader {
 
     static Logger logger = LoggerFactory.getLogger(UserRecordReader.class);
     private FragmentContext context;
-    private MysqlReadEntry config;
+    private UserScanPOP.UserReadEntry config;
     private String sql;
-    private Connection conn = null;
-    private Statement stmt = null;
-    private ResultSet rs = null;
     private ValueVector[] valueVectors;
     private OutputMutator output;
     private Map<String, UserProp> propMap = Maps.newHashMap();
     private List<Pair<String, String>> projections;
     private String project;
-    private int count = 0;
     private static String cfName = "v";
     private static String cqName = "v";
     private byte[] startRowKey;
@@ -81,7 +78,7 @@ public class UserRecordReader implements RecordReader {
 
     private static PropManager propManager = new PropManager();
 
-    public UserRecordReader(FragmentContext context, MysqlReadEntry config) {
+    public UserRecordReader(FragmentContext context, UserScanPOP.UserReadEntry config) {
         this.context = context;
         this.config = config;
     }
@@ -99,8 +96,7 @@ public class UserRecordReader implements RecordReader {
                 if (field.equals("uid")) {
                     type = Types.required(MinorType.INT);
                 }
-                valueVectors[i] =
-                        getVector(field, type);
+                valueVectors[i] = getVector(field, type);
                 output.addField(valueVectors[i]);
                 output.setNewSchema();
             }
@@ -153,21 +149,6 @@ public class UserRecordReader implements RecordReader {
         for (ValueVector v : valueVectors) {
             AllocationHelper.allocate(v, batchSize, 8);
         }
-/*        try {
-            int recordSetIndex = 0;
-            while (rs.next()) {
-                boolean next = setValues(rs, valueVectors, recordSetIndex);
-                recordSetIndex++;
-                if (!next)
-                    break;
-            }
-            setValueCount(recordSetIndex);
-            count += recordSetIndex;
-            return recordSetIndex;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new DrillRuntimeException("Scan mysql failed : " + e.getMessage());
-        }*/
 
         int recordSetIndex = 0;
         while (true) {
@@ -230,10 +211,8 @@ public class UserRecordReader implements RecordReader {
                 break;
             case sql_string:
                 result = keyValue.getValue();
-
         }
 
-        String value = Bytes.toStringBinary(keyValue.getValue());
         for (int i = 0; i < projections.size(); i++) {
             ValueVector valueVector = valueVectors[i];
 
@@ -283,12 +262,11 @@ public class UserRecordReader implements RecordReader {
         sql = selection;
         logger.info("SQL : {}", sql);
 
-        startRowKey = Bytes.add(Bytes.toBytes(Integer.parseInt(fields[2])), Bytes.toBytes(Integer.parseInt(tableName)));
-        endRowKey = Bytes.add(Bytes.toBytes(Integer.parseInt(fields[3])), Bytes.toBytes(Integer.parseInt(tableName) + 1));
+        startRowKey = Bytes.add(Bytes.toBytes(Integer.parseInt(fields[2])), Bytes.toBytes(Integer.parseInt(fields[3])));
+        endRowKey = Bytes.add(Bytes.toBytes(Integer.parseInt(fields[2])), Bytes.toBytes(Integer.parseInt(fields[3]) + 1));
 
         //filter
         if (filter != null && !filter.equals("")) {
-            filter = filter.replaceAll(" = ", " == ");
             LogicalExpression e = parseExpr(filter);
 
             List<LogicalPlanUtil.UnitFunc> funcs = LogicalPlanUtil.parseUserFunctionCall((FunctionCall) e, DrillConfig.create());
@@ -350,6 +328,8 @@ public class UserRecordReader implements RecordReader {
 
     @Override
     public void cleanup() {
+        logger.info("Record count for entry [tableName:{},keyRange:[{}:{}],count:{}]", config.getTableName(), Bytes.toStringBinary(startRowKey), Bytes.toStringBinary(endRowKey), totalCount);
+        logger.info("HbaseRecordReader finished . ");
         for (int i = 0; i < valueVectors.length; i++) {
             try {
                 output.removeField(valueVectors[i].getField());
@@ -358,17 +338,15 @@ public class UserRecordReader implements RecordReader {
             }
             valueVectors[i].close();
         }
-        if (conn != null) {
-            try {
-                logger.info("MysqlRecordReader finished ,[sql:{},count:{}]", sql, count);
-                rs.close();
-                stmt.close();
-                conn.close();
-                conn = null;
-            } catch (Exception e) {
-                logger.error("Mysql connection close failed : " + e.getMessage());
+        try {
+            if (scanner != null) {
+                scanner.close();
+                scanner = null;
             }
+        } catch (Exception e) {
+            logger.error("Scanners close failed : " + e.getMessage());
         }
+        logger.debug("User scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
     }
 
     private int getInnerUidFromSamplingUid(long suid) {
