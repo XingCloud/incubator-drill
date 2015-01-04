@@ -12,6 +12,7 @@ import org.apache.drill.exec.record.RecordBatch;
 import org.apache.drill.exec.store.HBaseRecordReader;
 import org.apache.drill.exec.store.MysqlRecordReader;
 import org.apache.drill.exec.store.RecordReader;
+import org.apache.drill.exec.store.UserRecordReader;
 
 import java.util.List;
 
@@ -43,6 +44,11 @@ public class ScanBatchCreator implements BatchCreator<Scan> {
           for(MysqlScanPOP.MysqlReadEntry entry:readEntries){
             readers.add(new MysqlRecordReader(context,entry));
           }
+        }else if(config instanceof  UserScanPOP){
+            List<UserScanPOP.UserReadEntry> readEntries = ((UserScanPOP) config).getReadEntries();
+            for(UserScanPOP.UserReadEntry entry:readEntries){
+                readers.add(new UserRecordReader(context,entry));
+            }
         }
 
         return new ScanBatch(context, readers.iterator());
