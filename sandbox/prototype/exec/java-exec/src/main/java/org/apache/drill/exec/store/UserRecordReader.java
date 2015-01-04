@@ -300,11 +300,24 @@ public class UserRecordReader implements RecordReader {
                         break;
                 }
 
+                Object value = func.getValue();
+                WritableByteArrayComparable comparable = null;
+                switch (userProp.getPropType()) {
+                    case sql_bigint:
+                        comparable = new BinaryComparator(Bytes.toBytes(Long.parseLong(func.getValue())));
+                        break;
+                    case sql_datetime:
+                        comparable = new BinaryComparator(Bytes.toBytes(Long.parseLong(func.getValue())));
+                        break;
+                    default:
+                        comparable = new BinaryComparator(Bytes.toBytes(func.getValue()));
+                }
+
                 SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
                         Bytes.toBytes(cfName),
                         Bytes.toBytes(cqName),
                         op,
-                        new BinaryComparator(Bytes.toBytes(func.getValue()))
+                        comparable
                 );
                 filterList.addFilter(valueFilter);
             }
