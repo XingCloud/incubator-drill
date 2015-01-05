@@ -18,6 +18,7 @@ import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.exception.SchemaChangeException;
+import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
 import org.apache.drill.exec.physical.config.UserScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
@@ -70,7 +71,7 @@ public class UserRecordReader implements RecordReader {
     boolean hasMore = true;
     int totalCount = 0;
     private UserProp userProp;
-//    private BufferAllocator allocator;
+    private BufferAllocator allocator;
 
 
     private static PropManager propManager = new PropManager();
@@ -79,7 +80,7 @@ public class UserRecordReader implements RecordReader {
         this.context = context;
         this.config = config;
         //for test
-//        allocator = BufferAllocator.getAllocator(DrillConfig.create());
+        allocator = BufferAllocator.getAllocator(DrillConfig.create());
     }
 
 
@@ -133,9 +134,9 @@ public class UserRecordReader implements RecordReader {
         if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
         MaterializedField f = MaterializedField.create(new SchemaPath(field, ExpressionPosition.UNKNOWN), type);
 
-        return TypeHelper.getNewVector(f, context.getAllocator());
+//        return TypeHelper.getNewVector(f, context.getAllocator());
         //for test
-//        return TypeHelper.getNewVector(f, allocator);
+        return TypeHelper.getNewVector(f, allocator);
     }
 
     @Override
