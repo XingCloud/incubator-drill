@@ -194,7 +194,7 @@ public class UserRecordReader implements RecordReader {
                 setValues(keyValues.get(i), setIndex);
                 setIndex++;
             } catch (Exception e) {
-                logger.error("Ignore this keyvalue .");
+                logger.error("Ignore this keyvalue ." + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -204,25 +204,27 @@ public class UserRecordReader implements RecordReader {
         long uid = Bytes.toLong(Bytes.tail(keyValue.getRow(), 8));
 
         Object result = null;
-        switch (userProp.getPropType()) {
-            case sql_bigint:
-                result = Bytes.toLong(keyValue.getValue());
-                break;
-            case sql_datetime:
-                result = Bytes.toLong(keyValue.getValue());
-                break;
-            case sql_string:
-                result = keyValue.getValue();
-        }
 
         for (int i = 0; i < projections.size(); i++) {
             ValueVector valueVector = valueVectors[i];
 
             if (projections.get(i).getSecond().equals("uid")) {
                 result = getInnerUidFromSamplingUid(uid);
+            }else{
+                switch (userProp.getPropType()) {
+                    case sql_bigint:
+                        result = Bytes.toLong(keyValue.getValue());
+                        break;
+                    case sql_datetime:
+                        result = Bytes.toLong(keyValue.getValue());
+                        break;
+                    case sql_string:
+                        result = keyValue.getValue();
+                }
             }
             valueVector.getMutator().setObject(index, result);
         }
+
     }
 
     public int endNext(int valueCount) {
