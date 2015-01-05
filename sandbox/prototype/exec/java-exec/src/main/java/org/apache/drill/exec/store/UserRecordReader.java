@@ -145,13 +145,12 @@ public class UserRecordReader implements RecordReader {
                 initScanner();
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new DrillRuntimeException("Init mysql connection failed : " + e.getMessage());
+                throw new DrillRuntimeException("Init scanner failed .", e);
             }
         }
         for (ValueVector v : valueVectors) {
-            AllocationHelper.allocate(v, batchSize, 8);
+            AllocationHelper.allocate(v, batchSize, 4);
         }
-
         int recordSetIndex = 0;
         while (true) {
             if (valIndex < curRes.size()) {
@@ -201,6 +200,7 @@ public class UserRecordReader implements RecordReader {
     }
 
     public void setValues(KeyValue keyValue, int index) {
+        long setVecotorStart = System.nanoTime();
         long uid = Bytes.toLong(Bytes.tail(keyValue.getRow(), 8));
 
         Object result = null;
@@ -222,9 +222,10 @@ public class UserRecordReader implements RecordReader {
                         result = keyValue.getValue();
                 }
             }
+            logger.info("result : " + projections.get(i).getFirst() + " " + result);
             valueVector.getMutator().setObject(index, result);
         }
-
+        setVectorCost += System.nanoTime() - setVecotorStart;
     }
 
     public int endNext(int valueCount) {
@@ -264,7 +265,7 @@ public class UserRecordReader implements RecordReader {
             selection += " WHERE " + filter;
         }
         sql = selection;
-        logger.info("SQL : {}", sql);
+
 
         startRowKey = Bytes.add(Bytes.toBytes(Integer.parseInt(fields[2])), Bytes.toBytes(Integer.parseInt(fields[3])));
         endRowKey = Bytes.add(Bytes.toBytes(Integer.parseInt(fields[2])), Bytes.toBytes(Integer.parseInt(fields[3]) + 1));
@@ -275,9 +276,12 @@ public class UserRecordReader implements RecordReader {
 
             List<LogicalPlanUtil.UnitFunc> funcs = LogicalPlanUtil.parseUserFunctionCall((FunctionCall) e, DrillConfig.create());
             for (LogicalPlanUtil.UnitFunc func : funcs) {
+
                 if(!"val".equals(func.getField())) {
                     continue;
                 }
+
+                logger.info("filter: " + func.getField() + " " + userProp.getPropType() + " " + func.getOp());
 
                 CompareFilter.CompareOp op = CompareFilter.CompareOp.GREATER;
                 switch (func.getOp()) {
@@ -319,6 +323,7 @@ public class UserRecordReader implements RecordReader {
                 filterList.addFilter(valueFilter);
             }
         }
+        logger.info("SQL : {}", sql);
 
     }
 
