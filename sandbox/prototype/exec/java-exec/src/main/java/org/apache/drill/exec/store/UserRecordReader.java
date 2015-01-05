@@ -80,7 +80,7 @@ public class UserRecordReader implements RecordReader {
         this.context = context;
         this.config = config;
         //for test
-        allocator = BufferAllocator.getAllocator(DrillConfig.create());
+//        allocator = BufferAllocator.getAllocator(DrillConfig.create());
     }
 
 
@@ -134,9 +134,9 @@ public class UserRecordReader implements RecordReader {
         if (type.getMode() != DataMode.REQUIRED) throw new UnsupportedOperationException();
         MaterializedField f = MaterializedField.create(new SchemaPath(field, ExpressionPosition.UNKNOWN), type);
 
-//        return TypeHelper.getNewVector(f, context.getAllocator());
+        return TypeHelper.getNewVector(f, context.getAllocator());
         //for test
-        return TypeHelper.getNewVector(f, allocator);
+//        return TypeHelper.getNewVector(f, allocator);
     }
 
     @Override
