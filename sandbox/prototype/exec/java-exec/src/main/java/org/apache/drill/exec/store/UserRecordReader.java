@@ -18,9 +18,7 @@ import org.apache.drill.common.types.TypeProtos.MajorType;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.exception.SchemaChangeException;
-import org.apache.drill.exec.memory.BufferAllocator;
 import org.apache.drill.exec.ops.FragmentContext;
-import org.apache.drill.exec.physical.config.MysqlScanPOP.MysqlReadEntry;
 import org.apache.drill.exec.physical.config.UserScanPOP;
 import org.apache.drill.exec.physical.impl.OutputMutator;
 import org.apache.drill.exec.record.MaterializedField;
@@ -36,10 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -300,7 +295,6 @@ public class UserRecordReader implements RecordReader {
                         op = CompareFilter.CompareOp.LESS_OR_EQUAL;
                         break;
                 }
-                System.out.println(func.getField() + " " +func.getOp() + " " + op.name());
 
                 WritableByteArrayComparable comparable = null;
                 switch (userProp.getPropType()) {
