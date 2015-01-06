@@ -150,7 +150,7 @@ public class UserRecordReader implements RecordReader {
             }
         }
         for (ValueVector v : valueVectors) {
-            AllocationHelper.allocate(v, batchSize, 4);
+            AllocationHelper.allocate(v, batchSize, 8);
         }
         int recordSetIndex = 0;
         while (true) {
@@ -369,7 +369,7 @@ public class UserRecordReader implements RecordReader {
         } catch (Exception e) {
             logger.error("Scanners close failed : " + e.getMessage());
         }
-        logger.debug("User scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
+        logger.info("User scan cost {} , parse cost {} ,setVectorCost {} ", scanCost, parseCost / 1000000, (setVectorCost - parseCost) / 1000000);
     }
 
     private int getInnerUidFromSamplingUid(long suid) {
