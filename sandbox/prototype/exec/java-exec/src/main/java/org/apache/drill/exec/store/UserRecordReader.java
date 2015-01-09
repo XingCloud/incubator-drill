@@ -223,7 +223,7 @@ public class UserRecordReader implements RecordReader {
                         result = keyValue.getValue();
                 }
             }
-            logger.info("result : " + projections.get(i).getFirst() + " " + result);
+//            logger.info("result : " + projections.get(i).getFirst() + " " + result);
             valueVector.getMutator().setObject(index, result);
         }
         setVectorCost += System.nanoTime() - setVecotorStart;
