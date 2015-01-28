@@ -440,10 +440,10 @@ public class BasicOptimizer extends Optimizer {
             events = XEventOperation.getInstance().getEvents(projectId, eventFilter);
             break;
           } catch (Exception e) {
-              if(retry < 3){
+              if(retry < 5){
                   retry ++;
                   try {
-                      Thread.sleep(1000);
+                      Thread.sleep(10000);
                   } catch (InterruptedException e1) {
                       throw new OptimizerException("Cannot get events list.");
                   }
