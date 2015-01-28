@@ -432,14 +432,28 @@ public class BasicOptimizer extends Optimizer {
       }
       String date = dateUF.getValue();
       List<XEvent> events = null;
-      long t1 = System.currentTimeMillis(), t2;
-      try {
-        events = XEventOperation.getInstance().getEvents(projectId, eventFilter);
-      } catch (Exception e) {
-        throw new OptimizerException("Cannot get events list.");
-      } finally {
-        t2 = System.currentTimeMillis();
-      }
+      long t1 = System.currentTimeMillis();
+      long t2 = 0;
+      int retry = 0;
+        while(true){
+          try {
+            events = XEventOperation.getInstance().getEvents(projectId, eventFilter);
+            break;
+          } catch (Exception e) {
+              if(retry < 3){
+                  retry ++;
+                  try {
+                      Thread.sleep(1000);
+                  } catch (InterruptedException e1) {
+                      throw new OptimizerException("Cannot get events list.");
+                  }
+              }else{
+                 throw new OptimizerException("Cannot get events list.");
+              }
+          } finally {
+            t2 = System.currentTimeMillis();
+          }
+        }
       logger.info("[BASIC-OPTIMIZER] - Get event(" + eventFilter + ") in thread(" + Thread.currentThread()
                                                                                            .getName() + ") using " + (t2 - t1) + " milliseconds.");
       if (events != null) {
